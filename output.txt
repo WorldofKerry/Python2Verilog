@@ -1,3 +1,4 @@
-For(int i 0; i < width; i++) {Assign(targets=[Subscript(value=Subscript(value=Name(id='grid', ctx=Load()), slice=Name(id='x', ctx=Load()), ctx=Load()), slice=BinOp(left=Name(id='y', ctx=Load()), op=Add(), right=Name(id='i', ctx=Load())), ctx=Store())], value=Constant(value=1))
-Assign(targets=[Subscript(value=Subscript(value=Name(id='grid', ctx=Load()), slice=BinOp(left=BinOp(left=Name(id='x', ctx=Load()), op=Add(), right=Name(id='height', ctx=Load())), op=Sub(), right=Constant(value=1)), ctx=Load()), slice=BinOp(left=Name(id='y', ctx=Load()), op=Add(), right=Name(id='i', ctx=Load())), ctx=Store())], value=Constant(value=1))
+For(int i 0; i < width; i++) {
+    gridxy + i = 1
+    gridx + height + 1y + i = 1
 
