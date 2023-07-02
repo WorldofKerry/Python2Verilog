@@ -11,7 +11,7 @@ height = 3
 width = 4
 
 
-for i in range(width):
+for i in range(0, width):
     grid[x][y + i] = 1
     grid[x + height - 1][y + i] = 1
 
@@ -21,74 +21,51 @@ for i in range(height):
 
 
 """
-if grid:
-    for row in grid:
-        for e in row:
-            print(e, end="")
-        print()
+# if grid:
+#     for row in grid:
+#         for e in row:
+#             print(e, end="")
+#         print()
 
 tree = ast.parse(code)
 
 
-print(ast.dump(tree, indent=4))
+# print(ast.dump(tree, indent=4))
 
 
-def print_indented(*args, indentor=" ", indent=0, **kwargs):
-    print(indentor * indent, *args, **kwargs)
+def dump(node: ast.AST):
+    return ast.dump(node)
 
 
-def codeGen(theType):
-    def _subscript(node: ast.Subscript, print: callable, traverse: callable):
-        print(ast.dump(node))
-
-    def _assign(node: ast.Assign, print: callable, traverse: callable):
-        pass
-
-    def _name(node: ast.Name, print: callable, traverse: callable):
-        print(node.id, end="")
-        pass
-
-    def _store(node: ast.Store, print: callable, travsere: callable):
-        pass
-
-    def _constant(node: ast.Constant, _print: callable, traverse: callable):
-        print(" = ", node.value)
-
-    def _for(node: ast.For, print: callable):
-        print("for (", end="")
-
-    def _module(node: ast.Module, print: callable, traverse: callable):
-        print("called")
-        for child in ast.iter_child_nodes(node):
-            traverse(child)
-
-    generate_verilog = {
-        ast.Assign: _assign,
-        ast.Name: _name,
-        ast.Subscript: _subscript,
-        ast.Store: _store,
-        ast.Constant: _constant,
-        ast.For: _for,
-        ast.Module: _module,
-    }
-    try:
-        return generate_verilog[theType]
-    except KeyError:
-        print(theType)
-        return lambda x, y, z: None
+forLoop = tree.body[4]
+# print(dump(forLoop))
 
 
-def traverse(node: ast.AST, indent: int = 0):
-    print = lambda *args, **kwargs: print_indented(
-        *args, indent=indent, indentor=" " * 4, **kwargs
+def indentify(indent: int, text: str, *args, **kwargs):
+    return " " * 4 * indent + text
+
+
+def stringify_range(node: ast.Call, iteratorName: str):
+    # TODO: support more range function types
+    assert node.func.id == "range"
+    assert len(node.args) == 2
+    return (
+        str(node.args[0].value)
+        + "; "
+        + iteratorName
+        + " < "
+        + node.args[1].id
+        + "; i++) {"
     )
-    if node == None:
-        return
-    # print(ast.dump(node))
-    _traverse = lambda node: traverse(node, indent + 1)
-    codeGen(type(node))(node, print, _traverse)
-    # for child in ast.iter_child_nodes(node):
-    #     traverse(child, indent + 1)
 
 
-traverse(tree)
+def parse_for(node: ast.For, indent: int = 0):
+    buffer = (
+        "For(int " + node.target.id + " " + stringify_range(node.iter, node.target.id)
+    )
+    for child in node.body:
+        buffer += indentify(indent, dump(child)) + "\n"
+    return buffer
+
+
+print(parse_for(forLoop))
