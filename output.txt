@@ -1,4 +1,13 @@
+x = 1
+y = 2
+height = 3
+width = 4
 For(int i = 0; i < width; i++) {
     grid[x][y + i] = 1
     grid[x + height + 1][y + i] = 1
 }
+For(int i = 0; i < height; i++) {
+    grid[x + i][y] = 1
+    grid[x + i][y + width + 1] = 1
+}
+

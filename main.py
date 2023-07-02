@@ -48,16 +48,11 @@ def indentify(indent: int, text: str, *args, **kwargs):
 def stringify_range(node: ast.Call, iteratorName: str):
     # TODO: support more range function types
     assert node.func.id == "range"
-    assert len(node.args) == 2
-    return (
-        str(node.args[0].value)
-        + "; "
-        + iteratorName
-        + " < "
-        + node.args[1].id
-        + "; i++) {"
-        + "\n"
-    )
+    if len(node.args) == 2:
+        start, end = str(node.args[0].value), node.args[1].id
+    else:
+        start, end = "0", node.args[0].id
+    return start + "; " + iteratorName + " < " + end + "; i++) {" + "\n"
 
 
 def parse_for(node: ast.For, indent: int = 0) -> str:
@@ -70,17 +65,15 @@ def parse_for(node: ast.For, indent: int = 0) -> str:
     )
 
     buffer += parse_body(node.body, indent + 1)
-    buffer += indentify(indent, "}")
+    buffer += indentify(indent, "}\n")
     return buffer
 
 
 def parse_targets(nodes: list[ast.AST], indent: int = 0) -> str:
     buffer = ""
+    assert len(nodes) == 1
     for node in nodes:
-        if isinstance(node, ast.Subscript):
-            buffer += parse_subscript(node, indent)
-        else:
-            print("Error: unexpected target")
+        buffer += parse_value(node, indent)
     return buffer
 
 
@@ -99,6 +92,10 @@ def parse_body(nodes: list[ast.AST], indent: int = 0) -> str:
         # buffer += indentify(indent, dump(child)) + "\n"
         if isinstance(node, ast.Assign):
             buffer += parse_assign(node, indent)
+        elif isinstance(node, ast.For):
+            buffer += parse_for(node, indent)
+        else:
+            print("Error: unexpected body")
     return buffer
 
 
@@ -125,4 +122,5 @@ def parse_subscript(node: ast.Subscript, indent: int = 0) -> str:
     return buffer
 
 
-print(parse_for(forLoop))
+# print(parse_for(forLoop))
+print(parse_body(tree.body))
