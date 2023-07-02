@@ -61,10 +61,16 @@ def stringify_range(node: ast.Call, iteratorName: str):
 
 
 def parse_for(node: ast.For, indent: int = 0) -> str:
-    buffer = (
-        "For(int " + node.target.id + " " + stringify_range(node.iter, node.target.id)
+    buffer = indentify(
+        indent,
+        "For(int "
+        + node.target.id
+        + " = "
+        + stringify_range(node.iter, node.target.id),
     )
+
     buffer += parse_body(node.body, indent + 1)
+    buffer += indentify(indent, "}")
     return buffer
 
 
@@ -96,17 +102,6 @@ def parse_body(nodes: list[ast.AST], indent: int = 0) -> str:
     return buffer
 
 
-def parse_slice(node: ast.AST, indent: int = 0) -> str:
-    if isinstance(node, ast.Name):
-        return node.id
-    if isinstance(node, ast.BinOp):
-        return parse_slice(node.left) + " + " + parse_slice(node.right)
-    if isinstance(node, ast.Constant):
-        return str(node.value)
-    print("Error: unexpected slice", type(node))
-    return ""
-
-
 def parse_value(node: ast.AST, indent: int = 0) -> str:
     if isinstance(node, ast.Constant):
         # print("a")
@@ -117,6 +112,8 @@ def parse_value(node: ast.AST, indent: int = 0) -> str:
     if isinstance(node, ast.Subscript):
         # print("c")
         return parse_subscript(node, indent)
+    if isinstance(node, ast.BinOp):
+        return parse_value(node.left) + " + " + parse_value(node.right)
     return ""
 
 
@@ -124,7 +121,7 @@ def parse_subscript(node: ast.Subscript, indent: int = 0) -> str:
     if not node:
         return ""
     buffer = parse_value(node.value, indent)
-    buffer += parse_slice(node.slice, indent)
+    buffer += "[" + parse_value(node.slice, indent) + "]"
     return buffer
 
 

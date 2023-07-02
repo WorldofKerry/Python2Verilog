@@ -1,4 +1,4 @@
-For(int i 0; i < width; i++) {
-    gridxy + i = 1
-    gridx + height + 1y + i = 1
-
+For(int i = 0; i < width; i++) {
+    grid[x][y + i] = 1
+    grid[x + height + 1][y + i] = 1
+}
