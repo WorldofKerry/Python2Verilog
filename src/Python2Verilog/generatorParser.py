@@ -66,7 +66,7 @@ class GeneratorParser:
 
     def generate_verilog(self, indent: int = 0) -> str:
         """
-        Master function
+        Generates the verilog (does the most work, calls other functions)
         """
         body_string = self.parse_statements(
             self.root.body, indent + 3, f"", endStatements="_done = 1;\n"
@@ -133,6 +133,9 @@ class GeneratorParser:
         return [startBuffers, endBuffers]
 
     def __init__(self, root: ast.FunctionDef):
+        """
+        Initializes the parser, does quick setup work
+        """
         self.name = root.name
         self.yieldVars = self.generate_return_vars(root.returns, f"")
         self.unique_name_counter = 0
@@ -140,6 +143,9 @@ class GeneratorParser:
         self.root = root
 
     def parse_for(self, node: ast.For, indent: int = 0, prefix: str = "") -> str:
+        """
+        Creates a conditional while loop from for loop
+        """
         def parse_iter(iter: ast.AST, node: ast.AST) -> tuple[list[str], list[str]]:
             assert type(iter) == ast.Call
             assert iter.func.id == "range"
@@ -170,6 +176,9 @@ class GeneratorParser:
         return buffer
 
     def parse_targets(self, nodes: list[ast.AST], indent: int = 0) -> str:
+        """
+        <target0, target1, ...> = <value>;
+        """
         buffer = ""
         assert len(nodes) == 1
         for node in nodes:
@@ -177,6 +186,9 @@ class GeneratorParser:
         return buffer
 
     def parse_assign(self, node: ast.Assign, indent: int = 0) -> str:
+        """
+        <target0, target1, ...> = <value>;
+        """
         buffer = indentify(indent)
         buffer += self.parse_targets(node.targets, indent)
         buffer += " = "
@@ -185,6 +197,9 @@ class GeneratorParser:
         return buffer
 
     def parse_statement(self, stmt: ast.AST, indent: int, prefix: str = "") -> str:
+        """
+        <statement> (e.g. assign, for loop, etc., those that do not return a value)
+        """
         match type(stmt):
             case ast.Assign:
                 return self.parse_assign(stmt, indent)
@@ -206,6 +221,13 @@ class GeneratorParser:
         endStatements: str = "",
         resetToZero: bool = False
     ) -> str:
+        """
+        {
+            <statement0>
+            <statement1>
+            ...
+        }
+        """
         state_var = self.add_global_var("0", f"{prefix}_STATE")
         buffer = indentify(indent, f"case ({state_var})\n")
         state_counter = 0
@@ -234,6 +256,9 @@ class GeneratorParser:
         return buffer
 
     def parse_yield(self, node: ast.Yield, indent: int, prefix: str) -> str:
+        """
+        yield <value>;
+        """
         assert type(node.value) == ast.Tuple
         buffer = ""
         for i, e in enumerate(node.value.elts):
@@ -244,6 +269,9 @@ class GeneratorParser:
         return buffer
 
     def parse_binop(self, node: ast.BinOp): 
+        """
+        <left> <op> <right>
+        """
         match type(node.op):
             case ast.Add:
                 return " + "
@@ -253,6 +281,9 @@ class GeneratorParser:
                 print("Error: unexpected binop type", type(node.op))
 
     def parse_expression(self, expr: ast.AST, indent: int = 0) -> str:
+        """
+        <expression> (e.g. constant, name, subscript, etc., those that return a value)
+        """
         match type(expr):
             case ast.Constant:
                 return str(expr.value)
@@ -271,4 +302,8 @@ class GeneratorParser:
                 return ""
 
     def parse_subscript(self, node: ast.Subscript, indent: int = 0) -> str:
+        """
+        <value>[<slice>]
+        Note: built from right to left, e.g. [z] -> [y][z] -> [x][y][z] -> matrix[x][y][z]
+        """
         return f"{self.parse_expression(node.value, indent)}[{self.parse_expression(node.slice, indent)}]"
