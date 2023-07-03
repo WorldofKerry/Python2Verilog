@@ -35,5 +35,7 @@ print(ast.dump(tree, indent=4))
 
 from package import Python2Verilog as P2V
 
-p2v = P2V.GeneratorParser(tree.body[0])
-print(p2v.parse_statements(tree.body[0].body))
+func = tree.body[0]
+p2v = P2V.GeneratorParser(func)
+print(p2v.getVerilog())
+# print(p2v.parse_statements(func.body))

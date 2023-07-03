@@ -114,16 +114,22 @@ Module(
                     ctx=Load()),
                 ctx=Load()))],
     type_ignores=[])
-For(int i = 0; i < width; i++) {
-    _OUTPUT_draw_rectangle_0 = s_x
-    _OUTPUT_draw_rectangle_1 = s_y + i
-    _OUTPUT_draw_rectangle_0 = s_x + height + 1
-    _OUTPUT_draw_rectangle_1 = s_y + i
-}
-For(int i = 0; i < height; i++) {
-    _OUTPUT_draw_rectangle_0 = s_x + i
-    _OUTPUT_draw_rectangle_1 = s_y
-    _OUTPUT_draw_rectangle_0 = s_x + i
-    _OUTPUT_draw_rectangle_1 = s_y + width + 1
-}
+int _FOR_ITER_2 = 0;
+int _FOR_ITER_4 = 0;
+int _draw_rectangle_STATE = 0;
+case (_draw_rectangle_STATE)
+    _draw_rectangle_STATE_1: begin
+        if (_FOR_ITER_2 < width) _draw_rectangle_STATE++;
+        _OUTPUT_draw_rectangle_0 = s_x
+        _OUTPUT_draw_rectangle_1 = s_y + i
+        _OUTPUT_draw_rectangle_0 = s_x + height + 1
+        _OUTPUT_draw_rectangle_1 = s_y + i
+    end
+    _draw_rectangle_STATE_3: begin
+        if (_FOR_ITER_4 < height) _draw_rectangle_STATE++;
+        _OUTPUT_draw_rectangle_0 = s_x + i
+        _OUTPUT_draw_rectangle_1 = s_y
+        _OUTPUT_draw_rectangle_0 = s_x + i
+        _OUTPUT_draw_rectangle_1 = s_y + width + 1
+    end
 

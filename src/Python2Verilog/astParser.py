@@ -89,7 +89,7 @@ class AstParser:
         return f"{self.parse_expression(node.value, indent)}[{self.parse_expression(node.slice, indent)}]"
 
 
-def indentify(indent: int, text: str) -> str:
+def indentify(indent: int = 0, text: str = "") -> str:
     return " " * 4 * indent + text
 
 
@@ -151,7 +151,7 @@ class GeneratorParser:
         buffer = indentify(indent, "")
         for i, e in enumerate(node.value.elts):
             buffer += self.yieldVars[i] + " = " + self.parse_expression(e, indent)
-            buffer += "\n"
+            buffer += "\n" + indentify(indent, "")
         return buffer
 
     def parse_statement(self, stmt: ast.AST, indent: int = 0) -> str:
