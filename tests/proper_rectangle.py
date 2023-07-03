@@ -31,4 +31,4 @@ from package import Python2Verilog as P2V
 
 func = tree.body[0]
 p2v = P2V.GeneratorParser(func)
-print(p2v.getVerilog())
+print(p2v.generateVerilog())

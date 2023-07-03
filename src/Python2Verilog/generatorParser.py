@@ -10,20 +10,20 @@ class GeneratorParser:
     Parses python generator functions
     """
 
-    def setup_func_return(self, node: ast.AST, functionName: str) -> str:
+    def setup_func_return(self, node: ast.AST, prefix: str) -> str:
         """
         Parser for FunctionDef.returns
         """
         assert type(node) == ast.Subscript
         assert type(node.slice) == ast.Tuple
-        return [f"_OUTPUT_{functionName}_{str(i)}" for i in range(len(node.slice.elts))]
+        return [f"{prefix}_out{str(i)}" for i in range(len(node.slice.elts))]
 
-    def getUniqueName(self) -> str:
+    def get_unique_name(self) -> str:
         self.unique_name_counter += 1
         return f"{self.unique_name_counter}"
 
     def add_unique_global_var(self, initial_value: str, name_prefix: str = "") -> None:
-        name = f"{name_prefix}_{self.getUniqueName()}"
+        name = f"{name_prefix}_{self.get_unique_name()}"
         self.add_global_var(initial_value, name)
         return name
 
@@ -31,20 +31,37 @@ class GeneratorParser:
         self.global_vars[name] = initial_value
         return name
 
-    def getVerilog(self) -> str:
+    def generateVerilog(self, indent: int = 0) -> str:
+        moduleStart, moduleEnd = self.generate_module(indent)
+        self.buffer = indentify(indent, moduleStart)
+        body = indentify(indent + 1, "always @(*) begin\n")
+        body += self.parse_statements(
+            self.root.body, indent=indent + 2, prefix=f"_{self.name}"
+        )
+        for var in self.global_vars:
+            self.buffer += indentify(indent + 1, f"reg [31:0] {var};\n")
+        self.buffer += "\n"
+        self.buffer += body
+        self.buffer += indentify(indent + 1, "end\n\n")
+        self.buffer += indentify(indent, moduleEnd)
         return self.buffer
+
+    def generate_module(self, indent: int) -> tuple[str, str]:
+        startBuffer = f"module {self.name}(\n"
+        for var in self.root.args.args:
+            startBuffer += indentify(indent + 1, f"input wire [31:0] {var.arg},\n")
+        for var in self.yieldVars:
+            startBuffer += indentify(indent + 1, f"output wire [31:0] {var},\n")
+        startBuffer = startBuffer.removesuffix(",\n") + "\n);\n"
+        endBuffer = "endmodule"
+        return [startBuffer, endBuffer]
 
     def __init__(self, root: ast.FunctionDef):
         self.name = root.name
-        self.yieldVars = self.setup_func_return(root.returns, root.name)
+        self.yieldVars = self.setup_func_return(root.returns, f"_{root.name}")
         self.unique_name_counter = 0
         self.global_vars: dict[str, str] = {}
-
-        self.buffer = ""
-        body = self.parse_statements(root.body, indent=0, prefix=f"_{self.name}")
-        for var in self.global_vars:
-            self.buffer += f"int {var} = {self.global_vars[var]};\n"
-        self.buffer += body
+        self.root = root
 
     def stringify_range(self, node: ast.Call, iteratorName: str) -> str:
         assert node.func.id == "range"
@@ -62,10 +79,10 @@ class GeneratorParser:
                 start, end = str(node.args[0].value), node.args[1].id
             else:
                 start, end = "0", node.args[0].id
-            name = self.add_unique_global_var(start, "_FOR_ITER")
+            name = self.add_unique_global_var(start, f"{prefix}_FOR_ITER")
             return f"if ({name} < {end}) {prefix}_STATE++;\n"
 
-        buffer = indentify(indent + 1, parse_iter(node.iter))
+        buffer = indentify(indent, parse_iter(node.iter))
         buffer += self.parse_statements(node.body, indent + 1, f"{prefix}_INNER")
         return buffer
 
@@ -98,11 +115,9 @@ class GeneratorParser:
                 print("Error: unexpected statement type", type(stmt))
                 return ""
 
-    def parse_statements(
-        self, stmts: list[ast.AST], indent: int, prefix: str = ""
-    ) -> str:
+    def parse_statements(self, stmts: list[ast.AST], indent: int, prefix: str) -> str:
         state_var = self.add_global_var("0", f"{prefix}_STATE")
-        buffer = indentify(indent, f"case ({state_var}):\n")
+        buffer = indentify(indent, f"case ({state_var})\n")
         state_counter = 0
         for stmt in stmts:
             state = self.add_global_var(
@@ -112,11 +127,13 @@ class GeneratorParser:
 
             buffer += indentify(indent + 1, f"{state}: begin\n")
             buffer += self.parse_statement(stmt, indent + 2, prefix)
+            if type(stmt) != ast.For:
+                # TODO: better conditionals
+                buffer += indentify(indent + 2, f"{state_var} <= {state_var} + 1;\n")
             buffer += indentify(indent + 1, f"end\n")
         return buffer
 
     def parse_yield(self, node: ast.Yield, indent: int, prefix: str) -> str:
-        # TODO: reduce code duplication with parse_statements
         assert type(node.value) == ast.Tuple
         buffer = ""
         for i, e in enumerate(node.value.elts):
@@ -124,19 +141,6 @@ class GeneratorParser:
                 indent,
                 self.yieldVars[i] + " = " + self.parse_expression(e, indent) + "\n",
             )
-        return buffer
-        state_var = self.add_global_var("0", f"{prefix}_STATE")
-        buffer = indentify(indent, f"case ({state_var}):\n")
-        state_counter = 0
-        for stmt in stmts:
-            state = self.add_global_var(
-                str(state_counter), f"{prefix}_STATE_{state_counter}"
-            )
-            state_counter += 1
-
-            buffer += indentify(indent + 1, f"{state}: begin\n")
-            buffer += self.parse_statement(stmt, indent + 2, prefix)
-            buffer += indentify(indent + 1, f"end\n")
         return buffer
 
     def parse_expression(self, expr: ast.AST, indent: int = 0) -> str:
