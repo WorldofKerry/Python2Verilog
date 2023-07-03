@@ -1,6 +1,7 @@
 import ast
 from .utils import *
 
+
 class GeneratorParser:
     """
     Parses python generator functions
@@ -36,22 +37,22 @@ class GeneratorParser:
         self.global_vars[name] = initial_value
         return name
 
-    def stringify_var_declaration(self, indent: int) -> list[str]:
+    def stringify_var_declaration(self) -> list[StringBuffer]:
         """
         reg [31:0] <name>
         Warning: requires self.global_vars to be complete
         """
-        buffers = []
+        buffers = StringBuffer()
         for var in self.global_vars:
-            buffers.append(f"reg [31:0] {var}\n")
+            buffers += f"reg [31:0] {var}"
         return buffers
 
-    def stringify_always_block(self):
+    def stringify_always_block(self) -> tuple[StringBuffer, StringBuffer]:
         """
         always @(posedge _clock) begin
         end
         """
-        return [["always @(posedge _clock) begin\n"], ["end\n"]]
+        return [StringBuffer(["always @(posedge _clock) begin"]), StringBuffer(["end"])]
 
     def generate_verilog(self, indent: int = 0) -> str:
         """
@@ -60,24 +61,31 @@ class GeneratorParser:
         body_string = self.parse_statements(
             self.root.body, indent + 3, f"", endStatements="_done = 1;\n"
         )  # TODO: remove 'arbitrary' + 3
-        moduleStartBuffers, moduleEndBuffers = self.stringify_module()
-        declStartBuffers, _ = self.stringify_declarations()
-        alwaysStartBuffers, alwaysEndBuffers = self.stringify_always_block()
-        initStartBuffers, initEndBuffers = self.stringify_init()
+        moduleBuffers = self.stringify_module()
+        declBuffers = self.stringify_declarations()
+        alwaysBuffers = self.stringify_always_block()
+        initBuffers = self.stringify_init()
+        print("==========s")
+        print(initBuffers[0])
+        print("=========e")
+        
+        print(body_string)
+        print("========f")
 
-        self.buffer = ""
-        self.buffer += buffer_indentify(indent, moduleStartBuffers)
-        self.buffer += buffer_indentify(indent + 1, declStartBuffers)
-        self.buffer += buffer_indentify(indent + 1, alwaysStartBuffers)
-        self.buffer += buffer_indentify(indent + 2, initStartBuffers)
-        self.buffer += body_string
-        self.buffer += buffer_indentify(indent + 2, initEndBuffers)
-        self.buffer += buffer_indentify(indent + 1, alwaysEndBuffers)
-        self.buffer += buffer_indentify(indent, moduleEndBuffers)
+        buffers = ListBuffer(
+            [
+                moduleBuffers,
+                declBuffers,
+                alwaysBuffers,
+                initBuffers,
+                [StringBuffer([body_string]), StringBuffer()],
+            ]
+        )
+        self.buffer = buffers.toString(indent)
 
         return self.buffer
 
-    def stringify_init(self) -> tuple[list[str], list[str]]:
+    def stringify_init(self) -> tuple[StringBuffer, StringBuffer]:
         """
         if (_start) begin
             <var> = <value>;
@@ -86,39 +94,43 @@ class GeneratorParser:
         ...
         end
         """
-        startBuffers = []
-        endBuffers = []
-        startBuffers.append(f"if (_start) begin\n")
-        startBuffers.append(indentify(1, "_done <= 0;\n"))
+        startBuffers = StringBuffer()
+        endBuffers = StringBuffer()
+        # print("==========s")
+        # print(startBuffers, endBuffers)
+        # print("=========e")
+        startBuffers += f"if (_start) begin"
+        startBuffers += indentify(1, "_done <= 0;")
         for v in self.global_vars:
-            startBuffers.append(indentify(1, f"{v} <= {self.global_vars[v]};\n"))
-        startBuffers.append(f"end else begin\n")
-        endBuffers.append("end\n")
+            startBuffers += indentify(1, f"{v} <= {self.global_vars[v]};")
+        startBuffers += f"end else begin"
+        endBuffers += "end"
         return [startBuffers, endBuffers]
 
-    def stringify_declarations(self) -> tuple[list[str], list[str]]:
+    def stringify_declarations(self) -> tuple[StringBuffer, StringBuffer]:
         """
         reg [31:0] <name>;
         ...
         """
-        return [[f"reg [31:0] {v};\n" for v in self.global_vars], []]
+        return [StringBuffer([f"reg [31:0] {v};" for v in self.global_vars]), StringBuffer()]
 
-    def stringify_module(self) -> tuple[list[str], list[str]]:
+    def stringify_module(self) -> tuple[StringBuffer, StringBuffer]:
         """
         module <name>(...);
         endmodule
         """
-        startBuffers, endBuffers = [], []
-        startBuffers.append(f"module {self.name}(\n")
-        startBuffers.append(indentify(1, "input wire _clock,\n"))
-        startBuffers.append(indentify(1, "input wire _start,\n"))
+        startBuffers = StringBuffer()
+        endBuffers = StringBuffer()
+        startBuffers += f"module {self.name}("
+        startBuffers += indentify(1, "input wire _clock,")
+        startBuffers += indentify(1, "input wire _start,")
         for var in self.root.args.args:
-            startBuffers.append(indentify(1, f"input wire [31:0] {var.arg},\n"))
+            startBuffers += indentify(1, f"input wire [31:0] {var.arg},")
         for var in self.yieldVars:
-            startBuffers.append(indentify(1, f"output reg [31:0] {var},\n"))
-        startBuffers.append(indentify(1, "output reg _done,\n"))
-        startBuffers[-1] = startBuffers[-1].removesuffix(",\n") + "\n);\n"
-        endBuffers.append("endmodule")
+            startBuffers += indentify(1, f"output reg [31:0] {var},")
+        startBuffers += indentify(1, "output reg _done,\n")
+        startBuffers[-1] = startBuffers[-1].removesuffix(",\n") + "\n);"
+        endBuffers += "endmodule"
         return [startBuffers, endBuffers]
 
     def __init__(self, root: ast.FunctionDef):
@@ -135,6 +147,7 @@ class GeneratorParser:
         """
         Creates a conditional while loop from for loop
         """
+
         def parse_iter(iter: ast.AST, node: ast.AST) -> tuple[list[str], list[str]]:
             assert type(iter) == ast.Call
             assert iter.func.id == "range"
@@ -208,7 +221,7 @@ class GeneratorParser:
         indent: int,
         prefix: str,
         endStatements: str = "",
-        resetToZero: bool = False
+        resetToZero: bool = False,
     ) -> str:
         """
         {
@@ -234,7 +247,7 @@ class GeneratorParser:
             buffer += indentify(indent + 1, f"end\n")
         buffer = buffer.removesuffix(indentify(indent + 1, f"end\n"))
 
-        if (resetToZero): # TODO: think about what default should be
+        if resetToZero:  # TODO: think about what default should be
             buffer += indentify(indent + 2, f"{state_var} <= 0;\n")
 
         if endStatements != "":
@@ -257,7 +270,7 @@ class GeneratorParser:
             )
         return buffer
 
-    def parse_binop(self, node: ast.BinOp): 
+    def parse_binop(self, node: ast.BinOp):
         """
         <left> <op> <right>
         """
@@ -266,7 +279,7 @@ class GeneratorParser:
                 return " + "
             case ast.Sub:
                 return " - "
-            case _: 
+            case _:
                 print("Error: unexpected binop type", type(node.op))
 
     def parse_expression(self, expr: ast.AST, indent: int = 0) -> str:

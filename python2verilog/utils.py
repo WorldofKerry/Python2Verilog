@@ -10,14 +10,21 @@ def buffer_indentify(indent: int = 0, buffers: list[str] = []) -> str:
 
 
 class StringBuffer:
-    def __init__(self, buffers: list[str] = []) -> None:
-        self.buffers = buffers
+    def __init__(self, buffers: list[str] = None) -> None:
+        if buffers:
+            self.buffers = buffers
+        else: 
+            self.buffers = []
 
     def __add__(self, other: str) -> None:
-        if isinstance(other, str):
-            self.buffers.append(other)
+        assert isinstance(other, str)
+        self.buffers.append(other)
+        return self
 
     def __str__(self) -> str:
+        return self.toString()
+
+    def __repr__(self) -> str:
         return self.toString()
 
     def toString(self, indent: int = 0) -> str:
@@ -25,15 +32,28 @@ class StringBuffer:
         for buffer in self.buffers:
             output += indentify(indent, buffer) + "\n"
         return output
+    
+    def __len__(self) -> int:
+        return len(self.buffers)
+    
+    def __getitem__(self, key: int) -> str:
+        return self.buffers[key]
+    
+    def __setitem__(self, key: int, value: str) -> None:
+        self.buffers[key] = value
 
+        
 
 class ListBuffer:
-    def __init__(self, buffers: list[tuple[StringBuffer, StringBuffer]] = []):
-        for buffer in buffers:
-            assert isinstance(buffer[0], StringBuffer)
-            assert isinstance(buffer[1], StringBuffer)
-            assert len(buffer) == 2
-        self.buffers = buffers
+    def __init__(self, buffers: list[tuple[StringBuffer, StringBuffer]] = None):
+        if buffers: 
+            for buffer in buffers:
+                assert isinstance(buffer[0], StringBuffer)
+                assert isinstance(buffer[1], StringBuffer)
+                assert len(buffer) == 2
+            self.buffers = buffers
+        else: 
+            self.buffers = []
 
     def __add__(self, other: tuple[StringBuffer, StringBuffer]) -> None:
         assert isinstance(other[0], StringBuffer)
