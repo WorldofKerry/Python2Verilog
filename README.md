@@ -6,6 +6,7 @@
 
 ## TODO
 
+- not require different i names for range
 - add state machines support  
 - test verilog somehow? assert against python output
 - auto-generate verilog testbench

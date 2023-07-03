@@ -34,7 +34,7 @@ Module(
                 defaults=[]),
             body=[
                 For(
-                    target=Name(id='i', ctx=Store()),
+                    target=Name(id='i0', ctx=Store()),
                     iter=Call(
                         func=Name(id='range', ctx=Load()),
                         args=[
@@ -50,7 +50,7 @@ Module(
                                         BinOp(
                                             left=Name(id='s_y', ctx=Load()),
                                             op=Add(),
-                                            right=Name(id='i', ctx=Load()))],
+                                            right=Name(id='i0', ctx=Load()))],
                                     ctx=Load()))),
                         Expr(
                             value=Yield(
@@ -66,11 +66,11 @@ Module(
                                         BinOp(
                                             left=Name(id='s_y', ctx=Load()),
                                             op=Add(),
-                                            right=Name(id='i', ctx=Load()))],
+                                            right=Name(id='i0', ctx=Load()))],
                                     ctx=Load())))],
                     orelse=[]),
                 For(
-                    target=Name(id='i', ctx=Store()),
+                    target=Name(id='i1', ctx=Store()),
                     iter=Call(
                         func=Name(id='range', ctx=Load()),
                         args=[
@@ -84,7 +84,7 @@ Module(
                                         BinOp(
                                             left=Name(id='s_x', ctx=Load()),
                                             op=Add(),
-                                            right=Name(id='i', ctx=Load())),
+                                            right=Name(id='i1', ctx=Load())),
                                         Name(id='s_y', ctx=Load())],
                                     ctx=Load()))),
                         Expr(
@@ -94,7 +94,7 @@ Module(
                                         BinOp(
                                             left=Name(id='s_x', ctx=Load()),
                                             op=Add(),
-                                            right=Name(id='i', ctx=Load())),
+                                            right=Name(id='i1', ctx=Load())),
                                         BinOp(
                                             left=BinOp(
                                                 left=Name(id='s_y', ctx=Load()),
@@ -115,58 +115,66 @@ Module(
                 ctx=Load()))],
     type_ignores=[])
 module draw_rectangle(
-    input wire _clock;
-    input wire _start;
+    input wire _clock,
+    input wire _start,
     input wire [31:0] s_x,
     input wire [31:0] s_y,
     input wire [31:0] height,
     input wire [31:0] width,
-    output wire [31:0] _draw_rectangle_out0,
-    output wire [31:0] _draw_rectangle_out1,
+    output reg [31:0] _draw_rectangle_out0,
+    output reg [31:0] _draw_rectangle_out1,
     output reg _done
 );
+    reg [31:0] _draw_rectangle_STATE;
+    reg [31:0] _draw_rectangle_STATE_0;
+    reg [31:0] i0;
+    reg [31:0] _draw_rectangle_INNER_STATE;
+    reg [31:0] _draw_rectangle_INNER_STATE_0;
+    reg [31:0] _draw_rectangle_INNER_STATE_1;
+    reg [31:0] _draw_rectangle_STATE_1;
+    reg [31:0] i1;
     always @(posedge _clock) begin
         if (_start) begin
-            _done = 0;
-            _draw_rectangle_STATE = 0;
-            _draw_rectangle_STATE_0 = 0;
-            _draw_rectangle_FOR_ITER_1 = 0;
-            _draw_rectangle_INNER_STATE = 0;
-            _draw_rectangle_INNER_STATE_0 = 0;
-            _draw_rectangle_INNER_STATE_1 = 1;
-            _draw_rectangle_STATE_1 = 1;
-            _draw_rectangle_FOR_ITER_2 = 0;
+            _done <= 0;
+            _draw_rectangle_STATE <= 0;
+            _draw_rectangle_STATE_0 <= 0;
+            i0 <= 0;
+            _draw_rectangle_INNER_STATE <= 0;
+            _draw_rectangle_INNER_STATE_0 <= 0;
+            _draw_rectangle_INNER_STATE_1 <= 1;
+            _draw_rectangle_STATE_1 <= 1;
+            i1 <= 0;
         end else begin
             case (_draw_rectangle_STATE)
                 _draw_rectangle_STATE_0: begin
-                    if (_draw_rectangle_FOR_ITER_1 < width) _draw_rectangle_STATE++; // FOR LOOP START
+                    if (i0 < width) _draw_rectangle_STATE = _draw_rectangle_STATE + 1; // FOR LOOP START
                     else begin
                         case (_draw_rectangle_INNER_STATE)
                             _draw_rectangle_INNER_STATE_0: begin
-                                _draw_rectangle_out0 = s_x
-                                _draw_rectangle_out1 = s_y + i
+                                _draw_rectangle_out0 <= s_x;
+                                _draw_rectangle_out1 <= s_y + i0;
                                 _draw_rectangle_INNER_STATE <= _draw_rectangle_INNER_STATE + 1;
                             end
                             _draw_rectangle_INNER_STATE_1: begin
-                                _draw_rectangle_out0 = s_x + height + 1
-                                _draw_rectangle_out1 = s_y + i
+                                _draw_rectangle_out0 <= s_x + height + 1;
+                                _draw_rectangle_out1 <= s_y + i0;
                                 _draw_rectangle_INNER_STATE <= _draw_rectangle_INNER_STATE + 1;
                             end
                         endcase
                     end // FOR LOOP END
                 end
                 _draw_rectangle_STATE_1: begin
-                    if (_draw_rectangle_FOR_ITER_2 < height) _draw_rectangle_STATE++; // FOR LOOP START
+                    if (i1 < height) _draw_rectangle_STATE = _draw_rectangle_STATE + 1; // FOR LOOP START
                     else begin
                         case (_draw_rectangle_INNER_STATE)
                             _draw_rectangle_INNER_STATE_0: begin
-                                _draw_rectangle_out0 = s_x + i
-                                _draw_rectangle_out1 = s_y
+                                _draw_rectangle_out0 <= s_x + i1;
+                                _draw_rectangle_out1 <= s_y;
                                 _draw_rectangle_INNER_STATE <= _draw_rectangle_INNER_STATE + 1;
                             end
                             _draw_rectangle_INNER_STATE_1: begin
-                                _draw_rectangle_out0 = s_x + i
-                                _draw_rectangle_out1 = s_y + width + 1
+                                _draw_rectangle_out0 <= s_x + i1;
+                                _draw_rectangle_out1 <= s_y + width + 1;
                                 _draw_rectangle_INNER_STATE <= _draw_rectangle_INNER_STATE + 1;
                             end
                         endcase

@@ -72,11 +72,13 @@ class GeneratorParser:
             self.root.body, indent + 3, f"_{self.name}", outermostStatements=True
         )  # TODO: remove 'arbitrary' + 3
         moduleStartBuffers, moduleEndBuffers = self.stringify_module()
+        declStartBuffers, _ = self.stringify_declarations()
         alwaysStartBuffers, alwaysEndBuffers = self.stringify_always_block()
         initStartBuffers, initEndBuffers = self.stringify_init()
 
         self.buffer = ""
         self.buffer += buffer_indentify(indent, moduleStartBuffers)
+        self.buffer += buffer_indentify(indent + 1, declStartBuffers)
         self.buffer += buffer_indentify(indent + 1, alwaysStartBuffers)
         self.buffer += buffer_indentify(indent + 2, initStartBuffers)
         self.buffer += body_string
@@ -98,12 +100,19 @@ class GeneratorParser:
         startBuffers = []
         endBuffers = []
         startBuffers.append(f"if (_start) begin\n")
-        startBuffers.append(indentify(1, "_done = 0;\n"))
+        startBuffers.append(indentify(1, "_done <= 0;\n"))
         for v in self.global_vars:
-            startBuffers.append(indentify(1, f"{v} = {self.global_vars[v]};\n"))
+            startBuffers.append(indentify(1, f"{v} <= {self.global_vars[v]};\n"))
         startBuffers.append(f"end else begin\n")
         endBuffers.append("end\n")
         return [startBuffers, endBuffers]
+
+    def stringify_declarations(self) -> tuple[list[str], list[str]]:
+        """
+        reg [31:0] <name>;
+        ...
+        """
+        return [[f"reg [31:0] {v};\n" for v in self.global_vars], []]
 
     def stringify_module(self) -> tuple[list[str], list[str]]:
         """
@@ -112,12 +121,12 @@ class GeneratorParser:
         """
         startBuffers, endBuffers = [], []
         startBuffers.append(f"module {self.name}(\n")
-        startBuffers.append(indentify(1, "input wire _clock;\n"))
-        startBuffers.append(indentify(1, "input wire _start;\n"))
+        startBuffers.append(indentify(1, "input wire _clock,\n"))
+        startBuffers.append(indentify(1, "input wire _start,\n"))
         for var in self.root.args.args:
             startBuffers.append(indentify(1, f"input wire [31:0] {var.arg},\n"))
         for var in self.yieldVars:
-            startBuffers.append(indentify(1, f"output wire [31:0] {var},\n"))
+            startBuffers.append(indentify(1, f"output reg [31:0] {var},\n"))
         startBuffers.append(indentify(1, "output reg _done,\n"))
         startBuffers[-1] = startBuffers[-1].removesuffix(",\n") + "\n);\n"
         endBuffers.append("endmodule")
@@ -131,21 +140,23 @@ class GeneratorParser:
         self.root = root
 
     def parse_for(self, node: ast.For, indent: int = 0, prefix: str = "") -> str:
-        def parse_iter(node: ast.AST) -> tuple[list[str], list[str]]:
-            assert type(node) == ast.Call
-            assert node.func.id == "range"
-            if len(node.args) == 2:
-                start, end = str(node.args[0].value), node.args[1].id
+        def parse_iter(iter: ast.AST, node: ast.AST) -> tuple[list[str], list[str]]:
+            assert type(iter) == ast.Call
+            assert iter.func.id == "range"
+            if len(iter.args) == 2:
+                start, end = str(iter.args[0].value), iter.args[1].id
             else:
-                start, end = "0", node.args[0].id
-            name = self.add_unique_global_var(start, f"{prefix}_FOR_ITER")
-            return [[
-                f"if ({name} < {end}) {prefix}_STATE++; // FOR LOOP START\n",
-                "else begin\n"],[
-                "end // FOR LOOP END\n"],
+                start, end = "0", iter.args[0].id
+            self.add_global_var(start, node.target.id)
+            return [
+                [
+                    f"if ({node.target.id} < {end}) {prefix}_STATE = {prefix}_STATE + 1; // FOR LOOP START\n",
+                    "else begin\n",
+                ],
+                ["end // FOR LOOP END\n"],
             ]
 
-        startBuffers, endBuffers = parse_iter(node.iter)
+        startBuffers, endBuffers = parse_iter(node.iter, node)
         buffer = buffer_indentify(indent, startBuffers)
         buffer += self.parse_statements(node.body, indent + 1, f"{prefix}_INNER")
         buffer += buffer_indentify(indent, endBuffers)
@@ -217,7 +228,7 @@ class GeneratorParser:
         for i, e in enumerate(node.value.elts):
             buffer += indentify(
                 indent,
-                self.yieldVars[i] + " = " + self.parse_expression(e, indent) + "\n",
+                f"{self.yieldVars[i]} <= {self.parse_expression(e, indent)};\n",
             )
         return buffer
 
