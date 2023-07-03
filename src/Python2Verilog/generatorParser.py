@@ -17,41 +17,57 @@ class GeneratorParser:
     Parses python generator functions
     """
 
-    def setup_func_return(self, node: ast.AST, prefix: str) -> str:
+    def generate_return_vars(self, node: ast.AST, prefix: str) -> str:
         """
-        Parser for FunctionDef.returns
+        Generates the yielded variables of the function
         """
         assert type(node) == ast.Subscript
         assert type(node.slice) == ast.Tuple
         return [f"{prefix}_out{str(i)}" for i in range(len(node.slice.elts))]
 
     def get_unique_name(self) -> str:
+        """
+        Generates an id that is unique among all unique global variables
+        """
         self.unique_name_counter += 1
         return f"{self.unique_name_counter}"
 
     def add_unique_global_var(self, initial_value: str, name_prefix: str = "") -> None:
+        """
+        Adds unique global var to global variables
+        """
         name = f"{name_prefix}_{self.get_unique_name()}"
         self.add_global_var(initial_value, name)
         return name
 
     def add_global_var(self, initial_value: str, name: str) -> None:
+        """
+        Adds global variables
+        """
         self.global_vars[name] = initial_value
         return name
 
-    def stringify_var_declaration(self) -> str: 
+    def stringify_var_declaration(self, indent: int) -> list[str]:
         """
-        Requires self.global_vars to be complete
+        reg [31:0] <name>        
+        Warning: requires self.global_vars to be complete
         """
-        buffer = ""
+        buffers = []
+        for var in self.global_vars:
+            buffers.append(f"reg [31:0] {var}\n")
+        return buffers
 
     def generate_verilog(self, indent: int = 0) -> str:
-        moduleStart, moduleEnd = self.create_module_header_footer(indent)
-        self.buffer = indentify(indent, moduleStart)  # module name(...)
+        """
+        Master function
+        """
+        moduleStartBuffers, moduleEndBuffers = self.stringify_module()
+        self.buffer = buffer_indentify(indent, moduleStartBuffers)  # module name(...)
 
         (
             initializationStartBuffer,
             initializationEndBuffer,
-        ) = self.generate_initialization()
+        ) = self.stringify_initialization()
         body = buffer_indentify(indent + 1, initializationStartBuffer)  # if (_start)
 
         body += indentify(indent + 2, "always @(posedge _clock) begin\n")
@@ -59,10 +75,9 @@ class GeneratorParser:
             self.root.body, indent=indent + 3, prefix=f"_{self.name}"
         )
 
-        # TODO: not have functions mutate self.global_vars
-        for var in self.global_vars:
-            self.buffer += indentify(indent + 1, f"reg [31:0] {var};\n")
-        self.buffer += "\n"
+        self.buffer += buffer_indentify(
+            indent + 1, self.stringify_var_declaration(indent)
+        )
 
         self.buffer += body
 
@@ -70,11 +85,16 @@ class GeneratorParser:
 
         self.buffer += buffer_indentify(indent + 1, initializationEndBuffer)
 
-        self.buffer += indentify(indent, moduleEnd)
+        self.buffer += buffer_indentify(indent, moduleEndBuffers)
 
         return self.buffer
 
-    def generate_initialization(self) -> tuple[list[str], list[str]]:
+    def stringify_initialization(self) -> tuple[list[str], list[str]]:
+        """
+        if (_start) begin
+        end else begin
+        end
+        """
         startBuffers = []
         endBuffers = []
         startBuffers.append(f"if (_start) begin\n")
@@ -85,33 +105,30 @@ class GeneratorParser:
         endBuffers.append("end\n")
         return [startBuffers, endBuffers]
 
-    def create_module_header_footer(self, indent: int) -> tuple[str, str]:
-        startBuffer = f"module {self.name}(\n"
-        startBuffer += indentify(indent + 1, "input wire _clock,\n")
-        startBuffer += indentify(indent + 1, "input wire _start,\n")
+    def stringify_module(self) -> tuple[list[str], list[str]]:
+        """
+        module <name>(...);
+        endmodule
+        """
+        startBuffers, endBuffers = [], []
+        startBuffers.append(f"module {self.name}(\n")
+        startBuffers.append(indentify(1, "input wire _clock;\n"))
+        startBuffers.append(indentify(1, "input wire _start;\n"))
         for var in self.root.args.args:
-            startBuffer += indentify(indent + 1, f"input wire [31:0] {var.arg},\n")
+            startBuffers.append(indentify(1, f"input wire [31:0] {var.arg},\n"))
         for var in self.yieldVars:
-            startBuffer += indentify(indent + 1, f"output wire [31:0] {var},\n")
-        startBuffer += indentify(indent + 1, "output reg _done,\n")
-        startBuffer = startBuffer.removesuffix(",\n") + "\n);\n"
-        endBuffer = "endmodule"
-        return [startBuffer, endBuffer]
+            startBuffers.append(indentify(1, f"output wire [31:0] {var},\n"))
+        startBuffers.append(indentify(1, "output reg _done,\n"))
+        startBuffers[-1] = startBuffers[-1].removesuffix(",\n") + "\n);\n"
+        endBuffers.append("endmodule")
+        return [startBuffers, endBuffers]
 
     def __init__(self, root: ast.FunctionDef):
         self.name = root.name
-        self.yieldVars = self.setup_func_return(root.returns, f"_{root.name}")
+        self.yieldVars = self.generate_return_vars(root.returns, f"_{root.name}")
         self.unique_name_counter = 0
         self.global_vars: dict[str, str] = {}
         self.root = root
-
-    def stringify_range(self, node: ast.Call, iteratorName: str) -> str:
-        assert node.func.id == "range"
-        if len(node.args) == 2:
-            start, end = str(node.args[0].value), node.args[1].id
-        else:
-            start, end = "0", node.args[0].id
-        return start + "; " + iteratorName + " < " + end + "; i++) {" + "\n"
 
     def parse_for(self, node: ast.For, indent: int = 0, prefix: str = "") -> str:
         def parse_iter(node: ast.AST) -> tuple[str, str, str]:

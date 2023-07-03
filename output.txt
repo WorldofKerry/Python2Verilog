@@ -115,8 +115,8 @@ Module(
                 ctx=Load()))],
     type_ignores=[])
 module draw_rectangle(
-    input wire _clock,
-    input wire _start,
+    input wire _clock;
+    input wire _start;
     input wire [31:0] s_x,
     input wire [31:0] s_y,
     input wire [31:0] height,
@@ -125,15 +125,14 @@ module draw_rectangle(
     output wire [31:0] _draw_rectangle_out1,
     output reg _done
 );
-    reg [31:0] _draw_rectangle_STATE;
-    reg [31:0] _draw_rectangle_STATE_0;
-    reg [31:0] _draw_rectangle_FOR_ITER_1;
-    reg [31:0] _draw_rectangle_INNER_STATE;
-    reg [31:0] _draw_rectangle_INNER_STATE_0;
-    reg [31:0] _draw_rectangle_INNER_STATE_1;
-    reg [31:0] _draw_rectangle_STATE_1;
-    reg [31:0] _draw_rectangle_FOR_ITER_2;
-
+    reg [31:0] _draw_rectangle_STATE
+    reg [31:0] _draw_rectangle_STATE_0
+    reg [31:0] _draw_rectangle_FOR_ITER_1
+    reg [31:0] _draw_rectangle_INNER_STATE
+    reg [31:0] _draw_rectangle_INNER_STATE_0
+    reg [31:0] _draw_rectangle_INNER_STATE_1
+    reg [31:0] _draw_rectangle_STATE_1
+    reg [31:0] _draw_rectangle_FOR_ITER_2
     if (_start) begin
         _done = 0;
     end else begin
