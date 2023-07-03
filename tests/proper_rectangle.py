@@ -28,8 +28,8 @@ import ast
 tree = ast.parse(code)
 print(ast.dump(tree, indent=4))
 
-from package import Python2Verilog as P2V
+from package import python2verilog as p2v
 
 func = tree.body[0]
-p2v = P2V.GeneratorParser(func)
-print(p2v.generate_verilog())
+genParser = p2v.GeneratorParser(func)
+print(genParser.generate_verilog())

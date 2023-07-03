@@ -1,16 +1,5 @@
 import ast
-
-
-def indentify(indent: int = 0, text: str = "") -> str:
-    return " " * 4 * indent + text
-
-
-def buffer_indentify(indent: int = 0, buffers: list[str] = []) -> str:
-    output = ""
-    for buffer in buffers:
-        output += indentify(indent, buffer)
-    return output
-
+from .utils import *
 
 class GeneratorParser:
     """
