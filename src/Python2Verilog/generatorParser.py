@@ -5,6 +5,13 @@ def indentify(indent: int = 0, text: str = "") -> str:
     return " " * 4 * indent + text
 
 
+def buffer_indentify(indent: int = 0, buffers: list[str] = []) -> str:
+    output = ""
+    for buffer in buffers:
+        output += indentify(indent, buffer)
+    return output
+
+
 class GeneratorParser:
     """
     Parses python generator functions
@@ -31,27 +38,62 @@ class GeneratorParser:
         self.global_vars[name] = initial_value
         return name
 
+    def stringify_var_declaration(self) -> str: 
+        """
+        Requires self.global_vars to be complete
+        """
+        buffer = ""
+
     def generate_verilog(self, indent: int = 0) -> str:
         moduleStart, moduleEnd = self.create_module_header_footer(indent)
-        self.buffer = indentify(indent, moduleStart)
-        body = indentify(indent + 1, "always @(*) begin\n")
+        self.buffer = indentify(indent, moduleStart)  # module name(...)
+
+        (
+            initializationStartBuffer,
+            initializationEndBuffer,
+        ) = self.generate_initialization()
+        body = buffer_indentify(indent + 1, initializationStartBuffer)  # if (_start)
+
+        body += indentify(indent + 2, "always @(posedge _clock) begin\n")
         body += self.parse_statements(
-            self.root.body, indent=indent + 2, prefix=f"_{self.name}"
+            self.root.body, indent=indent + 3, prefix=f"_{self.name}"
         )
+
+        # TODO: not have functions mutate self.global_vars
         for var in self.global_vars:
             self.buffer += indentify(indent + 1, f"reg [31:0] {var};\n")
         self.buffer += "\n"
+
         self.buffer += body
-        self.buffer += indentify(indent + 1, "end\n\n")
+
+        self.buffer += indentify(indent + 2, "end\n\n")
+
+        self.buffer += buffer_indentify(indent + 1, initializationEndBuffer)
+
         self.buffer += indentify(indent, moduleEnd)
+
         return self.buffer
+
+    def generate_initialization(self) -> tuple[list[str], list[str]]:
+        startBuffers = []
+        endBuffers = []
+        startBuffers.append(f"if (_start) begin\n")
+        startBuffers.append(indentify(1, "_done = 0;\n"))
+        for v in self.global_vars:
+            startBuffers.append(indentify(1, f"{v} = {self.global_vars[v]};\n"))
+        startBuffers.append(f"end else begin\n")
+        endBuffers.append("end\n")
+        return [startBuffers, endBuffers]
 
     def create_module_header_footer(self, indent: int) -> tuple[str, str]:
         startBuffer = f"module {self.name}(\n"
+        startBuffer += indentify(indent + 1, "input wire _clock,\n")
+        startBuffer += indentify(indent + 1, "input wire _start,\n")
         for var in self.root.args.args:
             startBuffer += indentify(indent + 1, f"input wire [31:0] {var.arg},\n")
         for var in self.yieldVars:
             startBuffer += indentify(indent + 1, f"output wire [31:0] {var},\n")
+        startBuffer += indentify(indent + 1, "output reg _done,\n")
         startBuffer = startBuffer.removesuffix(",\n") + "\n);\n"
         endBuffer = "endmodule"
         return [startBuffer, endBuffer]
@@ -80,7 +122,11 @@ class GeneratorParser:
             else:
                 start, end = "0", node.args[0].id
             name = self.add_unique_global_var(start, f"{prefix}_FOR_ITER")
-            return [f"if ({name} < {end}) {prefix}_STATE++; // FOR LOOP START\n", "else begin\n", "end // FOR LOOP END\n"]
+            return [
+                f"if ({name} < {end}) {prefix}_STATE++; // FOR LOOP START\n",
+                "else begin\n",
+                "end // FOR LOOP END\n",
+            ]
 
         iterStart0, iterStart1, iterEnd = parse_iter(node.iter)
         buffer = indentify(indent, iterStart0)
