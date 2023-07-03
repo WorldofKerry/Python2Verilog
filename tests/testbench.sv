@@ -51,7 +51,7 @@ module draw_rectangle_tb;
       @(posedge _clock);
       _start = 0; 
       // Display the outputs for every cycle after start
-      $display("Cycle %0d - Output0: %d, Output1: %d", $time, _draw_rectangle_out0, _draw_rectangle_out1);
+      $display("Cycle %0d - Output0: %d, Output1: %d, done: %d", $time, _draw_rectangle_out0, _draw_rectangle_out1, _done);
     end
     
     // Stop the drawing process

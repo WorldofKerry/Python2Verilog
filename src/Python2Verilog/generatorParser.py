@@ -164,6 +164,7 @@ class GeneratorParser:
             indent + 1,
             f"{prefix}_INNER_{self.get_unique_name()}",
             endStatements=f"{node.target.id} <= {node.target.id} + 1;\n",
+            resetToZero=True,
         )
         buffer += buffer_indentify(indent, endBuffers)
         return buffer
@@ -203,6 +204,7 @@ class GeneratorParser:
         indent: int,
         prefix: str,
         endStatements: str = "",
+        resetToZero: bool = False
     ) -> str:
         state_var = self.add_global_var("0", f"{prefix}_STATE")
         buffer = indentify(indent, f"case ({state_var})\n")
@@ -220,7 +222,9 @@ class GeneratorParser:
                 buffer += indentify(indent + 2, f"{state_var} <= {state_var} + 1;\n")
             buffer += indentify(indent + 1, f"end\n")
         buffer = buffer.removesuffix(indentify(indent + 1, f"end\n"))
-        buffer += indentify(indent + 2, f"{state_var} <= 0;\n")
+
+        if (resetToZero): # TODO: think about what default should be
+            buffer += indentify(indent + 2, f"{state_var} <= 0;\n")
 
         if endStatements != "":
             buffer += indentify(indent + 2, endStatements)
