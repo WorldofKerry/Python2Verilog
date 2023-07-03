@@ -33,7 +33,7 @@ tree = ast.parse(code)
 # print(ast.dump(tree, indent=4))
 
 
+from package import Python2Verilog as P2V
 
-
-p2v = Python2Verilog()
+p2v = P2V.AstParser()
 print(p2v.parse_statements(tree.body))

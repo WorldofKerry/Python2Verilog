@@ -1,9 +1,6 @@
 import ast
 
 
-__all__ = ["AstParser"]
-
-
 class AstParser:
     def indentify(self, indent: int, text: str) -> str:
         return " " * 4 * indent + text

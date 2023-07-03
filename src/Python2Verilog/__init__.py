@@ -1,1 +1,3 @@
-from .astParser import *
+from .astParser import AstParser
+
+__all__ = ["AstParser"]
