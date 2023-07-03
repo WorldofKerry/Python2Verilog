@@ -49,7 +49,7 @@ class GeneratorParser:
 
     def stringify_var_declaration(self, indent: int) -> list[str]:
         """
-        reg [31:0] <name>        
+        reg [31:0] <name>
         Warning: requires self.global_vars to be complete
         """
         buffers = []
@@ -57,39 +57,36 @@ class GeneratorParser:
             buffers.append(f"reg [31:0] {var}\n")
         return buffers
 
+    def stringify_always_block(self):
+        """
+        always @(posedge _clock) begin
+        end
+        """
+        return [["always @(posedge _clock) begin\n"], ["end\n"]]
+
     def generate_verilog(self, indent: int = 0) -> str:
         """
         Master function
         """
+        body_string = self.parse_statements(
+            self.root.body, indent + 3, f"_{self.name}"
+        )  # TODO: remove 'arbitrary' + 3
         moduleStartBuffers, moduleEndBuffers = self.stringify_module()
-        self.buffer = buffer_indentify(indent, moduleStartBuffers)  # module name(...)
+        alwaysStartBuffers, alwaysEndBuffers = self.stringify_always_block()
+        initStartBuffers, initEndBuffers = self.stringify_init()
 
-        (
-            initializationStartBuffer,
-            initializationEndBuffer,
-        ) = self.stringify_initialization()
-        body = buffer_indentify(indent + 1, initializationStartBuffer)  # if (_start)
-
-        body += indentify(indent + 2, "always @(posedge _clock) begin\n")
-        body += self.parse_statements(
-            self.root.body, indent=indent + 3, prefix=f"_{self.name}"
-        )
-
-        self.buffer += buffer_indentify(
-            indent + 1, self.stringify_var_declaration(indent)
-        )
-
-        self.buffer += body
-
-        self.buffer += indentify(indent + 2, "end\n\n")
-
-        self.buffer += buffer_indentify(indent + 1, initializationEndBuffer)
-
+        self.buffer = ""
+        self.buffer += buffer_indentify(indent, moduleStartBuffers)
+        self.buffer += buffer_indentify(indent + 1, alwaysStartBuffers)
+        self.buffer += buffer_indentify(indent + 2, initStartBuffers)
+        self.buffer += body_string
+        self.buffer += buffer_indentify(indent + 2, initEndBuffers)
+        self.buffer += buffer_indentify(indent + 1, alwaysEndBuffers)
         self.buffer += buffer_indentify(indent, moduleEndBuffers)
 
         return self.buffer
 
-    def stringify_initialization(self) -> tuple[list[str], list[str]]:
+    def stringify_init(self) -> tuple[list[str], list[str]]:
         """
         if (_start) begin
         end else begin
@@ -197,6 +194,7 @@ class GeneratorParser:
                 # TODO: better conditionals
                 buffer += indentify(indent + 2, f"{state_var} <= {state_var} + 1;\n")
             buffer += indentify(indent + 1, f"end\n")
+        buffer += indentify(indent, f"endcase\n")
         return buffer
 
     def parse_yield(self, node: ast.Yield, indent: int, prefix: str) -> str:

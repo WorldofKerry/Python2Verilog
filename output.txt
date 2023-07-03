@@ -125,18 +125,18 @@ module draw_rectangle(
     output wire [31:0] _draw_rectangle_out1,
     output reg _done
 );
-    reg [31:0] _draw_rectangle_STATE
-    reg [31:0] _draw_rectangle_STATE_0
-    reg [31:0] _draw_rectangle_FOR_ITER_1
-    reg [31:0] _draw_rectangle_INNER_STATE
-    reg [31:0] _draw_rectangle_INNER_STATE_0
-    reg [31:0] _draw_rectangle_INNER_STATE_1
-    reg [31:0] _draw_rectangle_STATE_1
-    reg [31:0] _draw_rectangle_FOR_ITER_2
-    if (_start) begin
-        _done = 0;
-    end else begin
-        always @(posedge _clock) begin
+    always @(posedge _clock) begin
+        if (_start) begin
+            _done = 0;
+            _draw_rectangle_STATE = 0;
+            _draw_rectangle_STATE_0 = 0;
+            _draw_rectangle_FOR_ITER_1 = 0;
+            _draw_rectangle_INNER_STATE = 0;
+            _draw_rectangle_INNER_STATE_0 = 0;
+            _draw_rectangle_INNER_STATE_1 = 1;
+            _draw_rectangle_STATE_1 = 1;
+            _draw_rectangle_FOR_ITER_2 = 0;
+        end else begin
             case (_draw_rectangle_STATE)
                 _draw_rectangle_STATE_0: begin
                     if (_draw_rectangle_FOR_ITER_1 < width) _draw_rectangle_STATE++; // FOR LOOP START
@@ -152,6 +152,7 @@ module draw_rectangle(
                                 _draw_rectangle_out1 = s_y + i
                                 _draw_rectangle_INNER_STATE <= _draw_rectangle_INNER_STATE + 1;
                             end
+                        endcase
                     end // FOR LOOP END
                 end
                 _draw_rectangle_STATE_1: begin
@@ -168,9 +169,10 @@ module draw_rectangle(
                                 _draw_rectangle_out1 = s_y + width + 1
                                 _draw_rectangle_INNER_STATE <= _draw_rectangle_INNER_STATE + 1;
                             end
+                        endcase
                     end // FOR LOOP END
                 end
+            endcase
         end
-
     end
 endmodule
