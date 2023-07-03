@@ -10,7 +10,7 @@ class GeneratorParser:
     Parses python generator functions
     """
 
-    def parse_return(self, node: ast.AST, functionName: str) -> str:
+    def setup_func_return(self, node: ast.AST, functionName: str) -> str:
         """
         Parser for FunctionDef.returns
         """
@@ -29,20 +29,19 @@ class GeneratorParser:
 
     def add_global_var(self, initial_value: str, name: str) -> None:
         self.global_vars[name] = initial_value
+        return name
 
     def getVerilog(self) -> str:
         return self.buffer
 
     def __init__(self, root: ast.FunctionDef):
         self.name = root.name
-        self.yieldVars = self.parse_return(root.returns, root.name)
+        self.yieldVars = self.setup_func_return(root.returns, root.name)
         self.unique_name_counter = 0
         self.global_vars: dict[str, str] = {}
 
         self.buffer = ""
-        body = f"case (_{self.name}_STATE)\n"
-        body += self.parse_statements(root.body, indent=1, prefix=f"_{self.name}")
-        self.add_global_var("0", f"_{self.name}_STATE")
+        body = self.parse_statements(root.body, indent=0, prefix=f"_{self.name}")
         for var in self.global_vars:
             self.buffer += f"int {var} = {self.global_vars[var]};\n"
         self.buffer += body
@@ -66,11 +65,8 @@ class GeneratorParser:
             name = self.add_unique_global_var(start, "_FOR_ITER")
             return f"if ({name} < {end}) {prefix}_STATE++;\n"
 
-        state = f"{prefix}_STATE_{self.getUniqueName()}"
-        buffer = indentify(indent, f"{state}: begin\n")
-        buffer += indentify(indent + 1, parse_iter(node.iter))
-        buffer += self.parse_statements(node.body, indent + 1)
-        buffer += indentify(indent, "end\n")
+        buffer = indentify(indent + 1, parse_iter(node.iter))
+        buffer += self.parse_statements(node.body, indent + 1, f"{prefix}_INNER")
         return buffer
 
     def parse_targets(self, nodes: list[ast.AST], indent: int = 0) -> str:
@@ -88,17 +84,17 @@ class GeneratorParser:
         buffer += "\n"
         return buffer
 
-    def parse_yield(self, node: ast.Yield, indent: int = 0) -> str:
+    def parse_yield(self, node: ast.Yield, indent: int, prefix: str) -> str:
         assert type(node.value) == ast.Tuple
-        buffer = indentify(indent)
+        buffer = ""
         for i, e in enumerate(node.value.elts):
-            buffer += self.yieldVars[i] + " = " + self.parse_expression(e, indent)
-            buffer += "\n"
-            if i < len(node.value.elts) - 1:
-                buffer += indentify(indent)
+            buffer += indentify(
+                indent,
+                self.yieldVars[i] + " = " + self.parse_expression(e, indent) + "\n",
+            )
         return buffer
 
-    def parse_statement(self, stmt: ast.AST, indent: int = 0, prefix: str = "") -> str:
+    def parse_statement(self, stmt: ast.AST, indent: int, prefix: str = "") -> str:
         match type(stmt):
             case ast.Assign:
                 return self.parse_assign(stmt, indent)
@@ -107,17 +103,26 @@ class GeneratorParser:
             case ast.Expr:
                 return self.parse_statement(stmt.value, indent)
             case ast.Yield:
-                return self.parse_yield(stmt, indent)
+                return self.parse_yield(stmt, indent, prefix)
             case _:
                 print("Error: unexpected statement type", type(stmt))
                 return ""
 
     def parse_statements(
-        self, stmts: list[ast.AST], indent: int = 0, prefix: str = ""
+        self, stmts: list[ast.AST], indent: int, prefix: str = ""
     ) -> str:
-        buffer = ""
+        state_var = self.add_global_var("0", f"{prefix}_STATE")
+        buffer = indentify(indent, f"case ({state_var}):\n")
+        state_counter = 0
         for stmt in stmts:
-            buffer += self.parse_statement(stmt, indent, prefix)
+            state = self.add_global_var(
+                str(state_counter), f"{prefix}_STATE_{state_counter}"
+            )
+            state_counter += 1
+
+            buffer += indentify(indent + 1, f"{state}: begin\n")
+            buffer += self.parse_statement(stmt, indent + 2, prefix)
+            buffer += indentify(indent + 1, f"end\n")
         return buffer
 
     def parse_expression(self, expr: ast.AST, indent: int = 0) -> str:
