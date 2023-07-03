@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 def indentify(indent: int = 0, text: str = "") -> str:
     """
     Indents a string
@@ -31,7 +34,7 @@ class Lines:
     A list of str that can be serialized to string with provided indents
     """
 
-    def __init__(self, buffers: list[str] = None) -> None:
+    def __init__(self, buffers: list[str] = None):
         if buffers:
             for buffer in buffers:
                 assert isinstance(buffer, str)
@@ -39,34 +42,54 @@ class Lines:
         else:
             self.buffers = []
 
-    def __add__(self, other: str) -> None:
+    def __add__(self, other: str):
         assert isinstance(other, str)
         self.buffers.append(other)
-        return self
 
-    def __str__(self) -> str:
+    def __str__(self):
         return self.toString()
 
-    def __repr__(self) -> str:
+    def __repr__(self):
         return self.toString()
 
-    def toString(self, indent: int = 0) -> str:
+    def toString(self, indent: int = 0):
         output = ""
         for buffer in self.buffers:
             output += indentify(indent, buffer) + "\n"
         return output
 
-    def __len__(self) -> int:
+    def __len__(self):
         return len(self.buffers)
 
-    def __getitem__(self, key: int) -> str:
+    def __getitem__(self, key: int):
         return self.buffers[key]
 
-    def __setitem__(self, key: int, value: str) -> None:
+    def __setitem__(self, key: int, value: str):
         self.buffers[key] = value
 
-    def __delitem__(self, key: int) -> None:
+    def __delitem__(self, key: int):
         del self.buffers[key]
+
+    @staticmethod
+    def nestify(buffers: list[tuple[Lines][Lines]], indent: int = 0):
+        """
+        pair[0][0]
+            pair[1][0]
+                pair[2][0]
+                pair[2][1]
+            pair[1][0]
+        pair[0][1]
+        """
+        for pair in buffers:
+            assert isinstance(pair[0], Lines)
+            assert isinstance(pair[1], Lines)
+            assert len(pair) == 2
+        lines = Lines()
+        for i in range(len(buffers)):
+            lines += buffers[i][0].toString(indent + i)
+        for i in range(len(buffers), 0, -1):
+            lines += buffers[i - 1][1].toString(indent + i - 1)
+        return lines
 
 
 class NestedLines:
@@ -134,8 +157,8 @@ class NestedLines:
             output += self.buffers[i - 1][1].toString(indent + i - 1)
         return output
 
-    def toLines(self, indent: int = 0) -> Lines: 
-        output = Lines() 
+    def toLines(self, indent: int = 0) -> Lines:
+        output = Lines()
         for i in range(len(self.buffers)):
             output += self.buffers[i][0].toString(indent + i)
         for i in range(len(self.buffers), 0, -1):
