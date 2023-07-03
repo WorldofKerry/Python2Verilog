@@ -1,14 +1,28 @@
+1 2
+3 2
+1 3
+3 3
+1 4
+3 4
+1 5
+3 5
+1 2
+1 5
+2 2
+2 5
+3 2
+3 5
 00000000000000000000
-00111111111111111000
-00100000000000001000
-00100000000000001000
-00100000000000001000
-00100000000000001000
-00100000000000001000
-00100000000000001000
-00100000000000001000
-00100000000000001000
-00111111111111111000
+00111100000000000000
+00100100000000000000
+00111100000000000000
+00000000000000000000
+00000000000000000000
+00000000000000000000
+00000000000000000000
+00000000000000000000
+00000000000000000000
+00000000000000000000
 00000000000000000000
 00000000000000000000
 00000000000000000000
@@ -121,64 +135,75 @@ module draw_rectangle(
     input wire [31:0] s_y,
     input wire [31:0] height,
     input wire [31:0] width,
-    output reg [31:0] _draw_rectangle_out0,
-    output reg [31:0] _draw_rectangle_out1,
+    output reg [31:0] _out0,
+    output reg [31:0] _out1,
     output reg _done
 );
-    reg [31:0] _draw_rectangle_STATE;
-    reg [31:0] _draw_rectangle_STATE_0;
+    reg [31:0] _STATE;
+    reg [31:0] _STATE_0;
     reg [31:0] i0;
-    reg [31:0] _draw_rectangle_INNER_STATE;
-    reg [31:0] _draw_rectangle_INNER_STATE_0;
-    reg [31:0] _draw_rectangle_INNER_STATE_1;
-    reg [31:0] _draw_rectangle_STATE_1;
+    reg [31:0] _INNER_1_STATE;
+    reg [31:0] _INNER_1_STATE_0;
+    reg [31:0] _INNER_1_STATE_1;
+    reg [31:0] _STATE_1;
     reg [31:0] i1;
+    reg [31:0] _INNER_2_STATE;
+    reg [31:0] _INNER_2_STATE_0;
+    reg [31:0] _INNER_2_STATE_1;
     always @(posedge _clock) begin
         if (_start) begin
             _done <= 0;
-            _draw_rectangle_STATE <= 0;
-            _draw_rectangle_STATE_0 <= 0;
+            _STATE <= 0;
+            _STATE_0 <= 0;
             i0 <= 0;
-            _draw_rectangle_INNER_STATE <= 0;
-            _draw_rectangle_INNER_STATE_0 <= 0;
-            _draw_rectangle_INNER_STATE_1 <= 1;
-            _draw_rectangle_STATE_1 <= 1;
+            _INNER_1_STATE <= 0;
+            _INNER_1_STATE_0 <= 0;
+            _INNER_1_STATE_1 <= 1;
+            _STATE_1 <= 1;
             i1 <= 0;
+            _INNER_2_STATE <= 0;
+            _INNER_2_STATE_0 <= 0;
+            _INNER_2_STATE_1 <= 1;
         end else begin
-            case (_draw_rectangle_STATE)
-                _draw_rectangle_STATE_0: begin
-                    if (i0 < width) _draw_rectangle_STATE = _draw_rectangle_STATE + 1; // FOR LOOP START
+            case (_STATE)
+                _STATE_0: begin
+                    if (i0 >= width) _STATE = _STATE + 1; // FOR LOOP START
                     else begin
-                        case (_draw_rectangle_INNER_STATE)
-                            _draw_rectangle_INNER_STATE_0: begin
-                                _draw_rectangle_out0 <= s_x;
-                                _draw_rectangle_out1 <= s_y + i0;
-                                _draw_rectangle_INNER_STATE <= _draw_rectangle_INNER_STATE + 1;
+                        case (_INNER_1_STATE)
+                            _INNER_1_STATE_0: begin
+                                _out0 <= s_x;
+                                _out1 <= s_y + i0;
+                                _INNER_1_STATE <= _INNER_1_STATE + 1;
                             end
-                            _draw_rectangle_INNER_STATE_1: begin
-                                _draw_rectangle_out0 <= s_x + height + 1;
-                                _draw_rectangle_out1 <= s_y + i0;
-                                _draw_rectangle_INNER_STATE <= _draw_rectangle_INNER_STATE + 1;
+                            _INNER_1_STATE_1: begin
+                                _out0 <= s_x + height - 1;
+                                _out1 <= s_y + i0;
+                                _INNER_1_STATE <= _INNER_1_STATE + 1;
+                                _INNER_1_STATE <= 0;
+                                i0 <= i0 + 1;
                             end
                         endcase
                     end // FOR LOOP END
                 end
-                _draw_rectangle_STATE_1: begin
-                    if (i1 < height) _draw_rectangle_STATE = _draw_rectangle_STATE + 1; // FOR LOOP START
+                _STATE_1: begin
+                    if (i1 >= height) _STATE = _STATE + 1; // FOR LOOP START
                     else begin
-                        case (_draw_rectangle_INNER_STATE)
-                            _draw_rectangle_INNER_STATE_0: begin
-                                _draw_rectangle_out0 <= s_x + i1;
-                                _draw_rectangle_out1 <= s_y;
-                                _draw_rectangle_INNER_STATE <= _draw_rectangle_INNER_STATE + 1;
+                        case (_INNER_2_STATE)
+                            _INNER_2_STATE_0: begin
+                                _out0 <= s_x + i1;
+                                _out1 <= s_y;
+                                _INNER_2_STATE <= _INNER_2_STATE + 1;
                             end
-                            _draw_rectangle_INNER_STATE_1: begin
-                                _draw_rectangle_out0 <= s_x + i1;
-                                _draw_rectangle_out1 <= s_y + width + 1;
-                                _draw_rectangle_INNER_STATE <= _draw_rectangle_INNER_STATE + 1;
+                            _INNER_2_STATE_1: begin
+                                _out0 <= s_x + i1;
+                                _out1 <= s_y + width - 1;
+                                _INNER_2_STATE <= _INNER_2_STATE + 1;
+                                _INNER_2_STATE <= 0;
+                                i1 <= i1 + 1;
                             end
                         endcase
                     end // FOR LOOP END
+                    _STATE <= 0;
                     _done = 1;
                 end
             endcase

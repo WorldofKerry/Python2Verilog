@@ -11,11 +11,12 @@ def draw_rectangle(s_x, s_y, height, width) -> tuple[int, int]:
 """
 exec(code)
 rows, cols = (20, 20)
-generator = draw_rectangle(1, 2, 10, 15)
+generator = draw_rectangle(1, 2, 3, 4)
 grid = [[0 for i in range(cols)] for j in range(rows)]
 
 for x, y in generator:
     grid[x][y] = 1
+    print(x, y)
 if grid:
     for row in grid:
         for e in row:

@@ -69,7 +69,7 @@ class GeneratorParser:
         Master function
         """
         body_string = self.parse_statements(
-            self.root.body, indent + 3, f"_{self.name}", outermostStatements=True
+            self.root.body, indent + 3, f"", endStatements="_done = 1;\n"
         )  # TODO: remove 'arbitrary' + 3
         moduleStartBuffers, moduleEndBuffers = self.stringify_module()
         declStartBuffers, _ = self.stringify_declarations()
@@ -134,7 +134,7 @@ class GeneratorParser:
 
     def __init__(self, root: ast.FunctionDef):
         self.name = root.name
-        self.yieldVars = self.generate_return_vars(root.returns, f"_{root.name}")
+        self.yieldVars = self.generate_return_vars(root.returns, f"")
         self.unique_name_counter = 0
         self.global_vars: dict[str, str] = {}
         self.root = root
@@ -150,15 +150,21 @@ class GeneratorParser:
             self.add_global_var(start, node.target.id)
             return [
                 [
-                    f"if ({node.target.id} < {end}) {prefix}_STATE = {prefix}_STATE + 1; // FOR LOOP START\n",
+                    f"if ({node.target.id} >= {end}) {prefix}_STATE = {prefix}_STATE + 1; // FOR LOOP START\n",
                     "else begin\n",
+                    # indentify(1, f"{node.target.id} <= {node.target.id} + 1;\n")
                 ],
                 ["end // FOR LOOP END\n"],
             ]
 
         startBuffers, endBuffers = parse_iter(node.iter, node)
         buffer = buffer_indentify(indent, startBuffers)
-        buffer += self.parse_statements(node.body, indent + 1, f"{prefix}_INNER")
+        buffer += self.parse_statements(
+            node.body,
+            indent + 1,
+            f"{prefix}_INNER_{self.get_unique_name()}",
+            endStatements=f"{node.target.id} <= {node.target.id} + 1;\n",
+        )
         buffer += buffer_indentify(indent, endBuffers)
         return buffer
 
@@ -196,7 +202,7 @@ class GeneratorParser:
         stmts: list[ast.AST],
         indent: int,
         prefix: str,
-        outermostStatements: bool = False,
+        endStatements: str = "",
     ) -> str:
         state_var = self.add_global_var("0", f"{prefix}_STATE")
         buffer = indentify(indent, f"case ({state_var})\n")
@@ -213,11 +219,12 @@ class GeneratorParser:
                 # TODO: better conditionals
                 buffer += indentify(indent + 2, f"{state_var} <= {state_var} + 1;\n")
             buffer += indentify(indent + 1, f"end\n")
+        buffer = buffer.removesuffix(indentify(indent + 1, f"end\n"))
+        buffer += indentify(indent + 2, f"{state_var} <= 0;\n")
 
-        if outermostStatements:
-            buffer = buffer.removesuffix(indentify(indent + 1, f"end\n"))
-            buffer += indentify(indent + 2, f"_done = 1;\n")
-            buffer += indentify(indent + 1, f"end\n")
+        if endStatements != "":
+            buffer += indentify(indent + 2, endStatements)
+        buffer += indentify(indent + 1, f"end\n")
 
         buffer += indentify(indent, f"endcase\n")
         return buffer
@@ -232,6 +239,15 @@ class GeneratorParser:
             )
         return buffer
 
+    def parse_binop(self, node: ast.BinOp): 
+        match type(node.op):
+            case ast.Add:
+                return " + "
+            case ast.Sub:
+                return " - "
+            case _: 
+                print("Error: unexpected binop type", type(node.op))
+
     def parse_expression(self, expr: ast.AST, indent: int = 0) -> str:
         match type(expr):
             case ast.Constant:
@@ -243,7 +259,7 @@ class GeneratorParser:
             case ast.BinOp:
                 return (
                     self.parse_expression(expr.left)
-                    + " + "
+                    + self.parse_binop(expr)
                     + self.parse_expression(expr.right)
                 )
             case _:
