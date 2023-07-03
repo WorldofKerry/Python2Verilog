@@ -134,7 +134,8 @@ module draw_rectangle(
     always @(*) begin
         case (_draw_rectangle_STATE)
             _draw_rectangle_STATE_0: begin
-                if (_draw_rectangle_FOR_ITER_1 < width) _draw_rectangle_STATE++;
+                if (_draw_rectangle_FOR_ITER_1 < width) _draw_rectangle_STATE++; // FOR LOOP START
+                else begin
                     case (_draw_rectangle_INNER_STATE)
                         _draw_rectangle_INNER_STATE_0: begin
                             _draw_rectangle_out0 = s_x
@@ -146,9 +147,11 @@ module draw_rectangle(
                             _draw_rectangle_out1 = s_y + i
                             _draw_rectangle_INNER_STATE <= _draw_rectangle_INNER_STATE + 1;
                         end
+                end // FOR LOOP END
             end
             _draw_rectangle_STATE_1: begin
-                if (_draw_rectangle_FOR_ITER_2 < height) _draw_rectangle_STATE++;
+                if (_draw_rectangle_FOR_ITER_2 < height) _draw_rectangle_STATE++; // FOR LOOP START
+                else begin
                     case (_draw_rectangle_INNER_STATE)
                         _draw_rectangle_INNER_STATE_0: begin
                             _draw_rectangle_out0 = s_x + i
@@ -160,6 +163,7 @@ module draw_rectangle(
                             _draw_rectangle_out1 = s_y + width + 1
                             _draw_rectangle_INNER_STATE <= _draw_rectangle_INNER_STATE + 1;
                         end
+                end // FOR LOOP END
             end
     end
 

@@ -31,8 +31,8 @@ class GeneratorParser:
         self.global_vars[name] = initial_value
         return name
 
-    def generateVerilog(self, indent: int = 0) -> str:
-        moduleStart, moduleEnd = self.generate_module(indent)
+    def generate_verilog(self, indent: int = 0) -> str:
+        moduleStart, moduleEnd = self.create_module_header_footer(indent)
         self.buffer = indentify(indent, moduleStart)
         body = indentify(indent + 1, "always @(*) begin\n")
         body += self.parse_statements(
@@ -46,7 +46,7 @@ class GeneratorParser:
         self.buffer += indentify(indent, moduleEnd)
         return self.buffer
 
-    def generate_module(self, indent: int) -> tuple[str, str]:
+    def create_module_header_footer(self, indent: int) -> tuple[str, str]:
         startBuffer = f"module {self.name}(\n"
         for var in self.root.args.args:
             startBuffer += indentify(indent + 1, f"input wire [31:0] {var.arg},\n")
@@ -72,7 +72,7 @@ class GeneratorParser:
         return start + "; " + iteratorName + " < " + end + "; i++) {" + "\n"
 
     def parse_for(self, node: ast.For, indent: int = 0, prefix: str = "") -> str:
-        def parse_iter(node: ast.AST) -> str:
+        def parse_iter(node: ast.AST) -> tuple[str, str, str]:
             assert type(node) == ast.Call
             assert node.func.id == "range"
             if len(node.args) == 2:
@@ -80,10 +80,13 @@ class GeneratorParser:
             else:
                 start, end = "0", node.args[0].id
             name = self.add_unique_global_var(start, f"{prefix}_FOR_ITER")
-            return f"if ({name} < {end}) {prefix}_STATE++;\n"
+            return [f"if ({name} < {end}) {prefix}_STATE++; // FOR LOOP START\n", "else begin\n", "end // FOR LOOP END\n"]
 
-        buffer = indentify(indent, parse_iter(node.iter))
+        iterStart0, iterStart1, iterEnd = parse_iter(node.iter)
+        buffer = indentify(indent, iterStart0)
+        buffer += indentify(indent, iterStart1)
         buffer += self.parse_statements(node.body, indent + 1, f"{prefix}_INNER")
+        buffer += indentify(indent, iterEnd)
         return buffer
 
     def parse_targets(self, nodes: list[ast.AST], indent: int = 0) -> str:
