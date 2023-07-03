@@ -128,66 +128,154 @@ Module(
                     ctx=Load()),
                 ctx=Load()))],
     type_ignores=[])
-==========s
-if (_start) begin
-    _done <= 0;
-    _STATE <= 0;
-    _STATE_0 <= 0;
-    i0 <= 0;
-    _INNER_1_STATE <= 0;
-    _INNER_1_STATE_0 <= 0;
-    _INNER_1_STATE_1 <= 1;
-    _STATE_1 <= 1;
-    i1 <= 0;
-    _INNER_2_STATE <= 0;
-    _INNER_2_STATE_0 <= 0;
-    _INNER_2_STATE_1 <= 1;
-end else begin
-
-=========e
-            case (_STATE)
-                _STATE_0: begin
-                    if (i0 >= width) _STATE = _STATE + 1; // FOR LOOP START
-                    else begin
-                        case (_INNER_1_STATE)
-                            _INNER_1_STATE_0: begin
+=====b
                                 _out0 <= s_x;
                                 _out1 <= s_y + i0;
+
+=====b
+
+=====b
+                                _out0 <= s_x + height - 1;
+                                _out1 <= s_y + i0;
+
+=====b
+
+=====a
+                    if (i0 >= width) _STATE = _STATE + 1; // FOR LOOP START
+                    else begin
+
+                        case (_INNER_1_STATE)
+                            _INNER_1_STATE_0: begin
+                                                        _out0 <= s_x;
+                                _out1 <= s_y + i0;
+
                                 _INNER_1_STATE <= _INNER_1_STATE + 1;
                             end
                             _INNER_1_STATE_1: begin
-                                _out0 <= s_x + height - 1;
+                                                        _out0 <= s_x + height - 1;
                                 _out1 <= s_y + i0;
+
                                 _INNER_1_STATE <= _INNER_1_STATE + 1;
                                 _INNER_1_STATE <= 0;
-                                i0 <= i0 + 1;
+                                i0 <= i0 + 1'
                             end
                         endcase
+
+
                     end // FOR LOOP END
-                end
-                _STATE_1: begin
-                    if (i1 >= height) _STATE = _STATE + 1; // FOR LOOP START
+
+
+=====a
+
+=====b
+                    if (i0 >= width) _STATE = _STATE + 1; // FOR LOOP START
                     else begin
-                        case (_INNER_2_STATE)
-                            _INNER_2_STATE_0: begin
+
+=====b
+
+=====b
+                        case (_INNER_1_STATE)
+                            _INNER_1_STATE_0: begin
+                                                        _out0 <= s_x;
+                                _out1 <= s_y + i0;
+
+                                _INNER_1_STATE <= _INNER_1_STATE + 1;
+                            end
+                            _INNER_1_STATE_1: begin
+                                                        _out0 <= s_x + height - 1;
+                                _out1 <= s_y + i0;
+
+                                _INNER_1_STATE <= _INNER_1_STATE + 1;
+                                _INNER_1_STATE <= 0;
+                                i0 <= i0 + 1'
+                            end
+                        endcase
+
+=====b
+
+=====b
+
+=====b
+
+=====b
+                    end // FOR LOOP END
+
+=====b
+
+=====b
                                 _out0 <= s_x + i1;
                                 _out1 <= s_y;
+
+=====b
+
+=====b
+                                _out0 <= s_x + i1;
+                                _out1 <= s_y + width - 1;
+
+=====b
+
+=====a
+                    if (i1 >= height) _STATE = _STATE + 1; // FOR LOOP START
+                    else begin
+
+                        case (_INNER_2_STATE)
+                            _INNER_2_STATE_0: begin
+                                                        _out0 <= s_x + i1;
+                                _out1 <= s_y;
+
                                 _INNER_2_STATE <= _INNER_2_STATE + 1;
                             end
                             _INNER_2_STATE_1: begin
-                                _out0 <= s_x + i1;
+                                                        _out0 <= s_x + i1;
                                 _out1 <= s_y + width - 1;
+
                                 _INNER_2_STATE <= _INNER_2_STATE + 1;
                                 _INNER_2_STATE <= 0;
-                                i1 <= i1 + 1;
+                                i1 <= i1 + 1'
                             end
                         endcase
-                    end // FOR LOOP END
-                    _done = 1;
-                end
-            endcase
 
-========f
+
+                    end // FOR LOOP END
+
+
+=====a
+
+=====b
+                    if (i1 >= height) _STATE = _STATE + 1; // FOR LOOP START
+                    else begin
+
+=====b
+
+=====b
+                        case (_INNER_2_STATE)
+                            _INNER_2_STATE_0: begin
+                                                        _out0 <= s_x + i1;
+                                _out1 <= s_y;
+
+                                _INNER_2_STATE <= _INNER_2_STATE + 1;
+                            end
+                            _INNER_2_STATE_1: begin
+                                                        _out0 <= s_x + i1;
+                                _out1 <= s_y + width - 1;
+
+                                _INNER_2_STATE <= _INNER_2_STATE + 1;
+                                _INNER_2_STATE <= 0;
+                                i1 <= i1 + 1'
+                            end
+                        endcase
+
+=====b
+
+=====b
+
+=====b
+
+=====b
+                    end // FOR LOOP END
+
+=====b
+
 module draw_rectangle(
     input wire _clock,
     input wire _start,
@@ -225,48 +313,60 @@ module draw_rectangle(
                 _INNER_2_STATE_0 <= 0;
                 _INNER_2_STATE_1 <= 1;
             end else begin
-                            case (_STATE)
-                _STATE_0: begin
-                    if (i0 >= width) _STATE = _STATE + 1; // FOR LOOP START
+                case (_STATE)
+                    _STATE_0: begin
+                                    if (i0 >= width) _STATE = _STATE + 1; // FOR LOOP START
                     else begin
-                        case (_INNER_1_STATE)
+
+                                        case (_INNER_1_STATE)
                             _INNER_1_STATE_0: begin
-                                _out0 <= s_x;
+                                                        _out0 <= s_x;
                                 _out1 <= s_y + i0;
+
                                 _INNER_1_STATE <= _INNER_1_STATE + 1;
                             end
                             _INNER_1_STATE_1: begin
-                                _out0 <= s_x + height - 1;
+                                                        _out0 <= s_x + height - 1;
                                 _out1 <= s_y + i0;
+
                                 _INNER_1_STATE <= _INNER_1_STATE + 1;
                                 _INNER_1_STATE <= 0;
-                                i0 <= i0 + 1;
+                                i0 <= i0 + 1'
                             end
                         endcase
-                    end // FOR LOOP END
-                end
-                _STATE_1: begin
-                    if (i1 >= height) _STATE = _STATE + 1; // FOR LOOP START
+
+                
+                                    end // FOR LOOP END
+
+                    end
+                    _STATE_1: begin
+                                    if (i1 >= height) _STATE = _STATE + 1; // FOR LOOP START
                     else begin
-                        case (_INNER_2_STATE)
+
+                                        case (_INNER_2_STATE)
                             _INNER_2_STATE_0: begin
-                                _out0 <= s_x + i1;
+                                                        _out0 <= s_x + i1;
                                 _out1 <= s_y;
+
                                 _INNER_2_STATE <= _INNER_2_STATE + 1;
                             end
                             _INNER_2_STATE_1: begin
-                                _out0 <= s_x + i1;
+                                                        _out0 <= s_x + i1;
                                 _out1 <= s_y + width - 1;
+
                                 _INNER_2_STATE <= _INNER_2_STATE + 1;
                                 _INNER_2_STATE <= 0;
-                                i1 <= i1 + 1;
+                                i1 <= i1 + 1'
                             end
                         endcase
-                    end // FOR LOOP END
-                    _done = 1;
-                end
-            endcase
 
+                
+                                    end // FOR LOOP END
+
+                        _done = 1;
+
+                    end
+                endcase
             end
         end
 endmodule

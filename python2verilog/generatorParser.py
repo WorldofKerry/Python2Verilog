@@ -37,55 +37,55 @@ class GeneratorParser:
         self.global_vars[name] = initial_value
         return name
 
-    def stringify_var_declaration(self) -> list[StringBuffer]:
+    def stringify_var_declaration(self) -> list[Lines]:
         """
         reg [31:0] <name>
         Warning: requires self.global_vars to be complete
         """
-        buffers = StringBuffer()
+        buffers = Lines()
         for var in self.global_vars:
             buffers += f"reg [31:0] {var}"
         return buffers
 
-    def stringify_always_block(self) -> tuple[StringBuffer, StringBuffer]:
+    def stringify_always_block(self) -> tuple[Lines, Lines]:
         """
         always @(posedge _clock) begin
         end
         """
-        return [StringBuffer(["always @(posedge _clock) begin"]), StringBuffer(["end"])]
+        return [Lines(["always @(posedge _clock) begin"]), Lines(["end"])]
 
     def generate_verilog(self, indent: int = 0) -> str:
         """
         Generates the verilog (does the most work, calls other functions)
         """
-        body_string = self.parse_statements(
+        bodyBuffers = self.parse_statements(
             self.root.body, indent + 3, f"", endStatements="_done = 1;\n"
         )  # TODO: remove 'arbitrary' + 3
         moduleBuffers = self.stringify_module()
         declBuffers = self.stringify_declarations()
         alwaysBuffers = self.stringify_always_block()
         initBuffers = self.stringify_init()
-        print("==========s")
-        print(initBuffers[0])
-        print("=========e")
-        
-        print(body_string)
-        print("========f")
+        # print("==========s")
+        # print(initBuffers[0])
+        # print("=========e")
 
-        buffers = ListBuffer(
+        # print(bodyBuffers)
+        # print("========f")
+
+        buffers = NestedLines(
             [
                 moduleBuffers,
                 declBuffers,
                 alwaysBuffers,
                 initBuffers,
-                [StringBuffer([body_string]), StringBuffer()],
+                bodyBuffers,
             ]
         )
         self.buffer = buffers.toString(indent)
 
         return self.buffer
 
-    def stringify_init(self) -> tuple[StringBuffer, StringBuffer]:
+    def stringify_init(self) -> tuple[Lines, Lines]:
         """
         if (_start) begin
             <var> = <value>;
@@ -94,8 +94,8 @@ class GeneratorParser:
         ...
         end
         """
-        startBuffers = StringBuffer()
-        endBuffers = StringBuffer()
+        startBuffers = Lines()
+        endBuffers = Lines()
         # print("==========s")
         # print(startBuffers, endBuffers)
         # print("=========e")
@@ -107,20 +107,20 @@ class GeneratorParser:
         endBuffers += "end"
         return [startBuffers, endBuffers]
 
-    def stringify_declarations(self) -> tuple[StringBuffer, StringBuffer]:
+    def stringify_declarations(self) -> tuple[Lines, Lines]:
         """
         reg [31:0] <name>;
         ...
         """
-        return [StringBuffer([f"reg [31:0] {v};" for v in self.global_vars]), StringBuffer()]
+        return [Lines([f"reg [31:0] {v};" for v in self.global_vars]), Lines()]
 
-    def stringify_module(self) -> tuple[StringBuffer, StringBuffer]:
+    def stringify_module(self) -> tuple[Lines, Lines]:
         """
         module <name>(...);
         endmodule
         """
-        startBuffers = StringBuffer()
-        endBuffers = StringBuffer()
+        startBuffers = Lines()
+        endBuffers = Lines()
         startBuffers += f"module {self.name}("
         startBuffers += indentify(1, "input wire _clock,")
         startBuffers += indentify(1, "input wire _start,")
@@ -157,25 +157,30 @@ class GeneratorParser:
                 start, end = "0", iter.args[0].id
             self.add_global_var(start, node.target.id)
             return [
-                [
-                    f"if ({node.target.id} >= {end}) {prefix}_STATE = {prefix}_STATE + 1; // FOR LOOP START\n",
-                    "else begin\n",
-                    # indentify(1, f"{node.target.id} <= {node.target.id} + 1;\n")
-                ],
-                ["end // FOR LOOP END\n"],
+                Lines(
+                    [
+                        f"if ({node.target.id} >= {end}) {prefix}_STATE = {prefix}_STATE + 1; // FOR LOOP START",
+                        "else begin",
+                    ]
+                ),
+                Lines(["end // FOR LOOP END"]),
             ]
-
-        startBuffers, endBuffers = parse_iter(node.iter, node)
-        buffer = buffer_indentify(indent, startBuffers)
-        buffer += self.parse_statements(
+        conditionalBuffer = parse_iter(node.iter, node)
+        statementsBuffer = self.parse_statements(
             node.body,
             indent + 1,
             f"{prefix}_INNER_{self.get_unique_name()}",
-            endStatements=f"{node.target.id} <= {node.target.id} + 1;\n",
+            endStatements=f"{node.target.id} <= {node.target.id} + 1'",
             resetToZero=True,
         )
-        buffer += buffer_indentify(indent, endBuffers)
-        return buffer
+        nestedLines = NestedLines(
+            [
+                conditionalBuffer, 
+                statementsBuffer
+            ]
+        )
+        print("=====a\n" + str(nestedLines.toLines(indent)) + "\n=====a\n")
+        return nestedLines.toLines(indent)
 
     def parse_targets(self, nodes: list[ast.AST], indent: int = 0) -> str:
         """
@@ -198,19 +203,19 @@ class GeneratorParser:
         buffer += "\n"
         return buffer
 
-    def parse_statement(self, stmt: ast.AST, indent: int, prefix: str = "") -> str:
+    def parse_statement(self, stmt: ast.AST, indent: int, prefix: str = "") -> Lines:
         """
         <statement> (e.g. assign, for loop, etc., those that do not return a value)
         """
         match type(stmt):
             case ast.Assign:
-                return self.parse_assign(stmt, indent)
+                return Lines([self.parse_assign(stmt, indent)])
             case ast.For:
                 return self.parse_for(stmt, indent, prefix)
             case ast.Expr:
                 return self.parse_statement(stmt.value, indent)
             case ast.Yield:
-                return self.parse_yield(stmt, indent, prefix)
+                return Lines([self.parse_yield(stmt, indent, prefix)])
             case _:
                 print("Error: unexpected statement type", type(stmt))
                 return ""
@@ -222,7 +227,7 @@ class GeneratorParser:
         prefix: str,
         endStatements: str = "",
         resetToZero: bool = False,
-    ) -> str:
+    ) -> tuple[Lines, Lines]:
         """
         {
             <statement0>
@@ -231,7 +236,8 @@ class GeneratorParser:
         }
         """
         state_var = self.add_global_var("0", f"{prefix}_STATE")
-        buffer = indentify(indent, f"case ({state_var})\n")
+        buffer = Lines()
+        buffer += f"case ({state_var})"
         state_counter = 0
         for stmt in stmts:
             state = self.add_global_var(
@@ -239,23 +245,27 @@ class GeneratorParser:
             )
             state_counter += 1
 
-            buffer += indentify(indent + 1, f"{state}: begin\n")
-            buffer += self.parse_statement(stmt, indent + 2, prefix)
+            # buffer += indentify(indent + 1, f"{state}: begin\n")
+            buffer += IStr(f"{state}: begin") >> 1            
+            for line in self.parse_statement(stmt, indent + 2, prefix): 
+                buffer += line                
+                print("=====b\n" + str(line) + "\n=====b\n")
             if type(stmt) != ast.For:
-                # TODO: better conditionals
-                buffer += indentify(indent + 2, f"{state_var} <= {state_var} + 1;\n")
-            buffer += indentify(indent + 1, f"end\n")
-        buffer = buffer.removesuffix(indentify(indent + 1, f"end\n"))
+                # Non-for-loop state machines always continue to next state after running current state's case statement
+                # TODO: figure out better way to handle this, perhaps add to end statements of caller
+                buffer += IStr(f"{state_var} <= {state_var} + 1;") >> 2
+            buffer += IStr(f"end") >> 1
+        del buffer[-1]  # TODO: check this actually works
 
         if resetToZero:  # TODO: think about what default should be
-            buffer += indentify(indent + 2, f"{state_var} <= 0;\n")
+            buffer += IStr(f"{state_var} <= 0;") >> 2
 
         if endStatements != "":
-            buffer += indentify(indent + 2, endStatements)
-        buffer += indentify(indent + 1, f"end\n")
+            buffer += IStr(endStatements) >> 2
+        buffer += IStr(f"end") >> 1
 
-        buffer += indentify(indent, f"endcase\n")
-        return buffer
+        buffer += IStr(f"endcase")
+        return [buffer, Lines()]  # TODO: cleanup
 
     def parse_yield(self, node: ast.Yield, indent: int, prefix: str) -> str:
         """
