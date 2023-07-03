@@ -171,6 +171,7 @@ module draw_rectangle(
                             end
                         endcase
                     end // FOR LOOP END
+                    _done = 1;
                 end
             endcase
         end

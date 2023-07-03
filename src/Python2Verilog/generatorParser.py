@@ -69,7 +69,7 @@ class GeneratorParser:
         Master function
         """
         body_string = self.parse_statements(
-            self.root.body, indent + 3, f"_{self.name}"
+            self.root.body, indent + 3, f"_{self.name}", outermostStatements=True
         )  # TODO: remove 'arbitrary' + 3
         moduleStartBuffers, moduleEndBuffers = self.stringify_module()
         alwaysStartBuffers, alwaysEndBuffers = self.stringify_always_block()
@@ -89,7 +89,10 @@ class GeneratorParser:
     def stringify_init(self) -> tuple[list[str], list[str]]:
         """
         if (_start) begin
+            <var> = <value>;
+            ...
         end else begin
+        ...
         end
         """
         startBuffers = []
@@ -128,7 +131,7 @@ class GeneratorParser:
         self.root = root
 
     def parse_for(self, node: ast.For, indent: int = 0, prefix: str = "") -> str:
-        def parse_iter(node: ast.AST) -> tuple[str, str, str]:
+        def parse_iter(node: ast.AST) -> tuple[list[str], list[str]]:
             assert type(node) == ast.Call
             assert node.func.id == "range"
             if len(node.args) == 2:
@@ -136,17 +139,16 @@ class GeneratorParser:
             else:
                 start, end = "0", node.args[0].id
             name = self.add_unique_global_var(start, f"{prefix}_FOR_ITER")
-            return [
+            return [[
                 f"if ({name} < {end}) {prefix}_STATE++; // FOR LOOP START\n",
-                "else begin\n",
-                "end // FOR LOOP END\n",
+                "else begin\n"],[
+                "end // FOR LOOP END\n"],
             ]
 
-        iterStart0, iterStart1, iterEnd = parse_iter(node.iter)
-        buffer = indentify(indent, iterStart0)
-        buffer += indentify(indent, iterStart1)
+        startBuffers, endBuffers = parse_iter(node.iter)
+        buffer = buffer_indentify(indent, startBuffers)
         buffer += self.parse_statements(node.body, indent + 1, f"{prefix}_INNER")
-        buffer += indentify(indent, iterEnd)
+        buffer += buffer_indentify(indent, endBuffers)
         return buffer
 
     def parse_targets(self, nodes: list[ast.AST], indent: int = 0) -> str:
@@ -178,7 +180,13 @@ class GeneratorParser:
                 print("Error: unexpected statement type", type(stmt))
                 return ""
 
-    def parse_statements(self, stmts: list[ast.AST], indent: int, prefix: str) -> str:
+    def parse_statements(
+        self,
+        stmts: list[ast.AST],
+        indent: int,
+        prefix: str,
+        outermostStatements: bool = False,
+    ) -> str:
         state_var = self.add_global_var("0", f"{prefix}_STATE")
         buffer = indentify(indent, f"case ({state_var})\n")
         state_counter = 0
@@ -194,6 +202,12 @@ class GeneratorParser:
                 # TODO: better conditionals
                 buffer += indentify(indent + 2, f"{state_var} <= {state_var} + 1;\n")
             buffer += indentify(indent + 1, f"end\n")
+
+        if outermostStatements:
+            buffer = buffer.removesuffix(indentify(indent + 1, f"end\n"))
+            buffer += indentify(indent + 2, f"_done = 1;\n")
+            buffer += indentify(indent + 1, f"end\n")
+
         buffer += indentify(indent, f"endcase\n")
         return buffer
 
