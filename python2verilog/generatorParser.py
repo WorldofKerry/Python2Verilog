@@ -43,27 +43,27 @@ class GeneratorParser:
         """
         Generates the verilog (does the most work, calls other functions)
         """
-        bodyBuffers = self.parse_statements(
-            self.root.body, indent + 3, f"", endStatements="_done = 1;\n"
-        )  # TODO: remove 'arbitrary' + 3
-        moduleBuffers = self.stringify_module()
-        declBuffers = self.stringify_declarations(self.global_vars)
-        alwaysBuffers = self.stringify_always_block()
-        initBuffers = self.stringify_init(self.global_vars)
+        stmntLines = self.parse_statements(
+            self.root.body, prefix="", endStatements=Lines(["_done = 1;"])
+        )
+        bufferLines = self.stringify_module()
+        declarationLines = self.stringify_declarations(self.global_vars)
+        alwaysBlockLines = self.stringify_always_block()
+        initializationLines = self.stringify_initialization(self.global_vars)
 
         return Lines.nestify(
             [
-                moduleBuffers,
-                declBuffers,
-                alwaysBuffers,
-                initBuffers,
-                bodyBuffers,
+                bufferLines,
+                declarationLines,
+                alwaysBlockLines,
+                initializationLines,
+                stmntLines,
             ],
             indent,
         )
 
     @staticmethod
-    def stringify_init(global_vars: dict[str, str]):
+    def stringify_initialization(global_vars: dict[str, str]):
         """
         if (_start) begin
             <var> = <value>;
@@ -118,7 +118,7 @@ class GeneratorParser:
         self.global_vars: dict[str, str] = {}
         self.root = root
 
-    def parse_for(self, node: ast.For, indent: int = 0, prefix: str = ""):
+    def parse_for(self, node: ast.For, prefix: str = ""):
         """
         Creates a conditional while loop from for loop
         """
@@ -149,14 +149,11 @@ class GeneratorParser:
         conditionalBuffer = parse_iter(node.iter, node)
         statementsBuffer = self.parse_statements(
             node.body,
-            indent + 1,
             f"{prefix}_INNER_{self.create_unique_name()}",
-            endStatements=f"{node.target.id} <= {node.target.id} + 1'",
+            endStatements=Lines([f"{node.target.id} <= {node.target.id} + 1'"]),
             resetToZero=True,
         )
-        nestedLines = NestedLines([conditionalBuffer, statementsBuffer])
-        print("=====a\n" + str(nestedLines.toLines(indent)) + "\n=====a\n")
-        return nestedLines.toLines(indent)
+        return Lines.nestify([conditionalBuffer, statementsBuffer])
 
     @staticmethod
     def parse_targets(nodes: list[ast.AST]):
@@ -178,28 +175,27 @@ class GeneratorParser:
         """
         return f"{GeneratorParser.parse_targets(node.targets)} = {GeneratorParser.parse_expression(node.value)};\n"
 
-    def parse_statement(self, stmt: ast.AST, indent: int, prefix: str = ""):
+    def parse_statement(self, stmt: ast.AST, prefix: str = ""):
         """
         <statement> (e.g. assign, for loop, etc., those that do not return a value)
         """
         match type(stmt):
             case ast.Assign:
-                return Lines([self.parse_assign(stmt, indent)])
+                return Lines([self.parse_assign(stmt)])
             case ast.For:
-                return self.parse_for(stmt, indent, prefix)
+                return self.parse_for(stmt, prefix=prefix)
             case ast.Expr:
-                return self.parse_statement(stmt.value, indent)
+                return self.parse_statement(stmt.value, prefix=prefix)
             case ast.Yield:
-                return Lines([self.parse_yield(stmt, indent, prefix)])
+                return self.parse_yield(stmt)
             case _:
                 raise Exception("Error: unexpected statement type", type(stmt))
 
     def parse_statements(
         self,
         stmts: list[ast.AST],
-        indent: int,
         prefix: str,
-        endStatements: str = "",
+        endStatements: Lines = Lines(),
         resetToZero: bool = False,
     ):
         """
@@ -212,19 +208,16 @@ class GeneratorParser:
         """
         state_var = self.add_global_var("0", f"{prefix}_STATE")
         lines = Lines()
-        lines += f"case ({state_var})"
-        state_counter = 0
-        for stmt in stmts:
-            state = self.add_global_var(
-                str(state_counter), f"{prefix}_STATE_{state_counter}"
-            )
-            state_counter += 1
+        lines += f"case ({state_var}) // STATEMENTS START"
 
-            # buffer += indentify(indent + 1, f"{state}: begin\n")
+        for i, stmt in enumerate(stmts):
+            state = self.add_global_var(str(i), f"{prefix}_STATE_{i}")
+
             lines += IStr(f"{state}: begin") >> 1
-            for line in self.parse_statement(stmt, indent + 2, prefix):
+
+            for line in self.parse_statement(stmt, prefix=prefix) >> 2:
                 lines += line
-                print("=====b\n" + str(line) + "\n=====b\n")
+                assert str(line).find("\n") == -1
             if type(stmt) != ast.For:
                 # Non-for-loop state machines always continue to next state after running current state's case statement
                 # TODO: figure out better way to handle this, perhaps add to end statements of caller
@@ -235,11 +228,12 @@ class GeneratorParser:
         if resetToZero:  # TODO: think about what default should be
             lines += IStr(f"{state_var} <= 0;") >> 2
 
-        if endStatements != "":
-            lines += IStr(endStatements) >> 2
+        assert isinstance(endStatements, Lines)
+        for stmt in endStatements:
+            lines += stmt
         lines += IStr(f"end") >> 1
 
-        lines += IStr(f"endcase")
+        lines += IStr(f"endcase // STATEMENTS END")
         return (lines, Lines())  # TODO: cleanup
 
     def parse_yield(self, node: ast.Yield):
@@ -256,7 +250,8 @@ class GeneratorParser:
             lines += f"{self.yieldVars[i]} <= {GeneratorParser.parse_expression(e)};"
         return lines
 
-    def parse_binop(self, node: ast.BinOp):
+    @staticmethod
+    def parse_binop(node: ast.BinOp):
         """
         <left> <op> <right>
         """
@@ -266,7 +261,7 @@ class GeneratorParser:
             case ast.Sub:
                 return " - "
             case _:
-                print("Error: unexpected binop type", type(node.op))
+                raise Exception("Error: unexpected binop type", type(node.op))
 
     @staticmethod
     def parse_expression(expr: ast.AST, indent: int = 0):
@@ -287,8 +282,7 @@ class GeneratorParser:
                     + GeneratorParser.parse_expression(expr.right)
                 )
             case _:
-                print("Error: unexpected expression type", type(expr))
-                return ""
+                raise Exception("Error: unexpected expression type", type(expr))
 
     def parse_subscript(self, node: ast.Subscript, indent: int = 0):
         """

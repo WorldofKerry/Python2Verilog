@@ -38,13 +38,17 @@ class Lines:
         if buffers:
             for buffer in buffers:
                 assert isinstance(buffer, str)
-            self.buffers = buffers
+            self.lines = buffers
         else:
-            self.buffers = []
+            self.lines = []
 
     def __add__(self, other: str):
+        """
+        TODO: depreciate, unintuiative
+        """
         assert isinstance(other, str)
-        self.buffers.append(other)
+        self.lines.append(other)
+        return self
 
     def __str__(self):
         return self.toString()
@@ -54,21 +58,36 @@ class Lines:
 
     def toString(self, indent: int = 0):
         output = ""
-        for buffer in self.buffers:
+        for buffer in self.lines:
             output += indentify(indent, buffer) + "\n"
         return output
 
     def __len__(self):
-        return len(self.buffers)
+        return len(self.lines)
 
     def __getitem__(self, key: int):
-        return self.buffers[key]
+        return self.lines[key]
 
     def __setitem__(self, key: int, value: str):
-        self.buffers[key] = value
+        self.lines[key] = value
 
     def __delitem__(self, key: int):
-        del self.buffers[key]
+        del self.lines[key]
+
+    def __rshift__(self, indent: int):
+        for i in range(len(self.lines)):
+            self.lines[i] = IStr(self.lines[i]) >> indent
+        return self
+
+    def add(self, string: str):
+        assert isinstance(string, str)
+        self.lines.append(string)
+        return self
+
+    def concat(self, other: Lines, indent: int = 0):
+        for line in other.lines:
+            self.lines.append(IStr(line) >> indent)
+        return self
 
     @staticmethod
     def nestify(buffers: list[tuple[Lines][Lines]], indent: int = 0):
@@ -86,9 +105,9 @@ class Lines:
             assert len(pair) == 2
         lines = Lines()
         for i in range(len(buffers)):
-            lines += buffers[i][0].toString(indent + i)
+            lines.concat(buffers[i][0], indent + i)
         for i in range(len(buffers), 0, -1):
-            lines += buffers[i - 1][1].toString(indent + i - 1)
+            lines.concat(buffers[i - 1][1], indent + i - 1)
         return lines
 
 

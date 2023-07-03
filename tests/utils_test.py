@@ -18,8 +18,7 @@ list_buffers = [
 # print(StringBuffer.do_list(0, list_buffers))
 # print(list_buffers)
 
-lb0 = NestedLines(list_buffers)
-print(lb0)
-
-lb0 + (Lines(["a3", "b3"]), Lines(["c3", "d3"]))
-print(lb0)
+lines1 = Lines.nestify(list_buffers)
+for i, v in enumerate(lines1):
+    print(i)
+    print(v)
