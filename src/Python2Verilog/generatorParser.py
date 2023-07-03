@@ -84,16 +84,6 @@ class GeneratorParser:
         buffer += "\n"
         return buffer
 
-    def parse_yield(self, node: ast.Yield, indent: int, prefix: str) -> str:
-        assert type(node.value) == ast.Tuple
-        buffer = ""
-        for i, e in enumerate(node.value.elts):
-            buffer += indentify(
-                indent,
-                self.yieldVars[i] + " = " + self.parse_expression(e, indent) + "\n",
-            )
-        return buffer
-
     def parse_statement(self, stmt: ast.AST, indent: int, prefix: str = "") -> str:
         match type(stmt):
             case ast.Assign:
@@ -111,6 +101,30 @@ class GeneratorParser:
     def parse_statements(
         self, stmts: list[ast.AST], indent: int, prefix: str = ""
     ) -> str:
+        state_var = self.add_global_var("0", f"{prefix}_STATE")
+        buffer = indentify(indent, f"case ({state_var}):\n")
+        state_counter = 0
+        for stmt in stmts:
+            state = self.add_global_var(
+                str(state_counter), f"{prefix}_STATE_{state_counter}"
+            )
+            state_counter += 1
+
+            buffer += indentify(indent + 1, f"{state}: begin\n")
+            buffer += self.parse_statement(stmt, indent + 2, prefix)
+            buffer += indentify(indent + 1, f"end\n")
+        return buffer
+
+    def parse_yield(self, node: ast.Yield, indent: int, prefix: str) -> str:
+        # TODO: reduce code duplication with parse_statements
+        assert type(node.value) == ast.Tuple
+        buffer = ""
+        for i, e in enumerate(node.value.elts):
+            buffer += indentify(
+                indent,
+                self.yieldVars[i] + " = " + self.parse_expression(e, indent) + "\n",
+            )
+        return buffer
         state_var = self.add_global_var("0", f"{prefix}_STATE")
         buffer = indentify(indent, f"case ({state_var}):\n")
         state_counter = 0
