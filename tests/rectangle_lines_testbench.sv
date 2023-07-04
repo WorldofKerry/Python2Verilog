@@ -9,8 +9,8 @@ module draw_rectangle_tb;
   reg [31:0] width;
 
   // Outputs
-  wire [31:0] _draw_rectangle_out0;
-  wire [31:0] _draw_rectangle_out1;
+  wire [31:0] __out0;
+  wire [31:0] __out1;
   wire _done;
 
   // Instantiate the module under test
@@ -21,8 +21,8 @@ module draw_rectangle_tb;
     .s_y(s_y),
     .height(height),
     .width(width),
-    ._out0(_draw_rectangle_out0),
-    ._out1(_draw_rectangle_out1),
+    ._out0(__out0),
+    ._out1(__out1),
     ._done(_done)
   );
 
@@ -51,17 +51,8 @@ module draw_rectangle_tb;
       @(posedge _clock);
       _start = 0; 
       // Display the outputs for every cycle after start
-      $display("Cycle %0d - Output0: %d, Output1: %d, done: %d", $time, _draw_rectangle_out0, _draw_rectangle_out1, _done);
-    end
-    
-    // Stop the drawing process
-    _start = 0;
-
-    // Wait for a few more clock cycles
-    #10;
-
-    // Print the final outputs
-    $display("Final Outputs - Output0: %d, Output1: %d", _draw_rectangle_out0, _draw_rectangle_out1);
+      $display("%0d, %0d, %0d, %0d", $time, __out0, __out1, _done);
+    end 
     
     // Finish simulation
     $finish;

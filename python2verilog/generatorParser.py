@@ -150,7 +150,7 @@ class GeneratorParser:
         statementsBuffer = self.parse_statements(
             node.body,
             f"{prefix}_INNER_{self.create_unique_name()}",
-            endStatements=Lines([f"{node.target.id} <= {node.target.id} + 1'"]),
+            endStatements=Lines([f"{node.target.id} <= {node.target.id} + 1;"]),
             resetToZero=True,
         )
         return Lines.nestify([conditionalBuffer, statementsBuffer])
@@ -230,7 +230,7 @@ class GeneratorParser:
 
         assert isinstance(endStatements, Lines)
         for stmt in endStatements:
-            lines += stmt
+            lines += IStr(stmt) >> 2
         lines += IStr(f"end") >> 1
 
         lines += IStr(f"endcase // STATEMENTS END")
