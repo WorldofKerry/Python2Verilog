@@ -12,3 +12,5 @@ with output(__file__) as f:
     for i, v in enumerate(lines1):
         f.write(f"{i}\n")
         f.write(f"{v}\n")
+
+print("Indent Class: " + p2v.Indent(5) + "Hello World!")

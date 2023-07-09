@@ -183,3 +183,18 @@ class NestedLines:
         for i in range(len(self.buffers), 0, -1):
             output += self.buffers[i - 1][1].toString(indent + i - 1)
         return output
+
+class Indent: 
+    def __init__(self, indent: int = 0):
+        self.indent = indent
+
+    def __add__(self, other: str):
+        assert isinstance(other, str)
+        return indentify(self.indent, other)
+    
+    def __radd__(self, other: str): 
+        assert isinstance(other, str)
+        return other + indentify(self.indent)
+    
+    def __str__(self): 
+        return indentify(self.indent)

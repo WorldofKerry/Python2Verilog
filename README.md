@@ -17,11 +17,12 @@ Based on my experimentation with a [C to Verilog converter](https://github.com/W
 - not require different i names for range
 - localparam variables
 - add `valid` flag to output (for when output is not always valid)
-- Reduce cycles in some areas
+- Reduce cycles in some areas (convert if statements to cases for more consistent endStatements attachment?)
 
 ### Coding Excellence
 
 - Change all `[Lines, Lines]` to `(Lines, Lines)` as tuples have fixed length for function hint
+- `IStr(string) >> x` is still wacky, find alternatives?
 
 ### Test Framework
 
@@ -33,7 +34,9 @@ Based on my experimentation with a [C to Verilog converter](https://github.com/W
 - Only add to set if done is not set
 
 ## Planning
+
 ### Rectangle Filled
+
 ```python
 def draw_rectangle(s_x, s_y, height, width) -> tuple[int, int]:
     for i0 in range(0, width):
