@@ -142,7 +142,7 @@ class GeneratorParser:
                         f"if ({node.target.id} >= {end}) begin // FOR LOOP START",
                         IStr(f"{prefix}_STATE = {prefix}_STATE + 1;") >> 1,
                         IStr(f"{node.target.id} <= 0;") >> 1,
-                        "end else begin",
+                        "end else begin // FOR LOOP BODY",
                     ]
                 ),
                 Lines(["end // FOR LOOP END"]),
@@ -234,7 +234,7 @@ class GeneratorParser:
         for stmt in endStatements:
             state = self.add_global_var(str(i), f"{prefix}_STATE_{i}")
 
-            lines += IStr(f"{state}: begin") >> 1
+            lines += IStr(f"{state}: begin // END STATEMENTS STATE") >> 1
             # print("DEBUG stmt:" + str(stmt))
             lines += IStr(stmt) >> 2
             # print("DEBUG0:" + lines.toString())
@@ -244,7 +244,7 @@ class GeneratorParser:
         del lines[-1]
 
         if resetToZero:  # TODO: think about what default should be
-            lines += IStr(f"{state_var} <= 0;") >> 2
+            lines += IStr(f"{state_var} <= 0; // LOOP FOR LOOP STATEMENTS") >> 2
 
         lines += IStr(f"end") >> 1
 

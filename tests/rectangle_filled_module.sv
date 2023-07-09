@@ -40,34 +40,34 @@ module draw_rectangle(
                         if (i0 >= width) begin // FOR LOOP START
                             _STATE = _STATE + 1;
                             i0 <= 0;
-                        end else begin
+                        end else begin // FOR LOOP BODY
                             case (_INNER_1_STATE) // STATEMENTS START
                                 _INNER_1_STATE_0: begin
                                     if (i1 >= height) begin // FOR LOOP START
                                         _INNER_1_STATE = _INNER_1_STATE + 1;
                                         i1 <= 0;
-                                    end else begin
+                                    end else begin // FOR LOOP BODY
                                         case (_INNER_1_INNER_2_STATE) // STATEMENTS START
                                             _INNER_1_INNER_2_STATE_0: begin
                                                 _out0 <= s_x + i1;
                                                 _out1 <= s_y + i0;
                                                 _INNER_1_INNER_2_STATE <= _INNER_1_INNER_2_STATE + 1;
                                             end
-                                            _INNER_1_INNER_2_STATE_1: begin
+                                            _INNER_1_INNER_2_STATE_1: begin // END STATEMENTS STATE
                                                 i1 <= i1 + 1;
-                                                _INNER_1_INNER_2_STATE <= 0;
+                                                _INNER_1_INNER_2_STATE <= 0; // LOOP FOR LOOP STATEMENTS
                                             end
                                         endcase // STATEMENTS END
                                     end // FOR LOOP END
                                 end
-                                _INNER_1_STATE_1: begin
+                                _INNER_1_STATE_1: begin // END STATEMENTS STATE
                                     i0 <= i0 + 1;
-                                    _INNER_1_STATE <= 0;
+                                    _INNER_1_STATE <= 0; // LOOP FOR LOOP STATEMENTS
                                 end
                             endcase // STATEMENTS END
                         end // FOR LOOP END
                     end
-                    _STATE_1: begin
+                    _STATE_1: begin // END STATEMENTS STATE
                         _done = 1;
                     end
                 endcase // STATEMENTS END
