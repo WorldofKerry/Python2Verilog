@@ -74,9 +74,9 @@ class GeneratorParser:
         """
         startLines, endLines = Lines(), Lines()
         startLines += f"if (_start) begin"
-        startLines += indentify(1, "_done <= 0;")
+        startLines += Indent(1) + "_done <= 0;"
         for v in global_vars:
-            startLines += indentify(1, f"{v} <= {global_vars[v]};")
+            startLines += Indent(1) + f"{v} <= {global_vars[v]};"
         startLines += f"end else begin"
         endLines += "end"
         return (startLines, endLines)
@@ -97,13 +97,13 @@ class GeneratorParser:
         """
         startLines, endLines = Lines(), Lines()
         startLines += f"module {self.name}("
-        startLines += indentify(1, "input wire _clock,")
-        startLines += indentify(1, "input wire _start,")
+        startLines += Indent(1) + "input wire _clock,"
+        startLines += Indent(1) + "input wire _start,"
         for var in self.root.args.args:
-            startLines += indentify(1, f"input wire [31:0] {var.arg},")
+            startLines += Indent(1) + f"input wire [31:0] {var.arg},"
         for var in self.yieldVars:
-            startLines += indentify(1, f"output reg [31:0] {var},")
-        startLines += indentify(1, "output reg _done,\n")
+            startLines += Indent(1) + f"output reg [31:0] {var},"
+        startLines += Indent(1) + "output reg _done,\n"
         startLines[-1] = startLines[-1].removesuffix(",\n") + "\n);"
         endLines += "endmodule"
         return (startLines, endLines)
@@ -140,8 +140,8 @@ class GeneratorParser:
                 Lines(
                     [
                         f"if ({node.target.id} >= {end}) begin // FOR LOOP START",
-                        IStr(f"{prefix}_STATE = {prefix}_STATE + 1;") >> 1,
-                        IStr(f"{node.target.id} <= 0;") >> 1,
+                        Indent(1) + f"{prefix}_STATE = {prefix}_STATE + 1;",
+                        Indent(1) + f"{node.target.id} <= 0;",
                         "end else begin // FOR LOOP BODY",
                     ]
                 ),
@@ -216,7 +216,7 @@ class GeneratorParser:
         for i, stmt in enumerate(stmts):
             state = self.add_global_var(str(i), f"{prefix}_STATE_{i}")
 
-            lines += IStr(f"{state}: begin") >> 1
+            lines += Indent(1) + f"{state}: begin"
 
             for line in self.parse_statement(stmt, prefix=prefix) >> 2:
                 lines += line
@@ -224,8 +224,8 @@ class GeneratorParser:
             if type(stmt) != ast.For:
                 # Non-for-loop state machines always continue to next state after running current state's case statement
                 # TODO: figure out better way to handle this, perhaps add to end statements of caller
-                lines += IStr(f"{state_var} <= {state_var} + 1;") >> 2
-            lines += IStr(f"end") >> 1
+                lines += Indent(2) + f"{state_var} <= {state_var} + 1;"
+            lines += Indent(1) + f"end"
             prevI = i
 
         assert isinstance(endStatements, Lines)
@@ -234,21 +234,19 @@ class GeneratorParser:
         for stmt in endStatements:
             state = self.add_global_var(str(i), f"{prefix}_STATE_{i}")
 
-            lines += IStr(f"{state}: begin // END STATEMENTS STATE") >> 1
-            # print("DEBUG stmt:" + str(stmt))
-            lines += IStr(stmt) >> 2
-            # print("DEBUG0:" + lines.toString())
-            lines += IStr(f"end") >> 1
+            lines += Indent(1) + f"{state}: begin // END STATEMENTS STATE"
+            lines += Indent(2) + stmt
+            lines += Indent(1) + f"end"
             i += 1
 
         del lines[-1]
 
         if resetToZero:  # TODO: think about what default should be
-            lines += IStr(f"{state_var} <= 0; // LOOP FOR LOOP STATEMENTS") >> 2
+            lines += Indent(2) + f"{state_var} <= 0; // LOOP FOR LOOP STATEMENTS"
 
-        lines += IStr(f"end") >> 1
+        lines += Indent(1) + f"end"
 
-        lines += IStr(f"endcase // STATEMENTS END")
+        lines += f"endcase // STATEMENTS END"
         return (lines, Lines())  # TODO: cleanup
 
     def parse_yield(self, node: ast.Yield):

@@ -1,34 +1,6 @@
 from __future__ import annotations
 
 
-def indentify(indent: int = 0, text: str = "") -> str:
-    """
-    Indents a string
-    """
-    return " " * 4 * indent + text
-
-
-def buffer_indentify(indent: int = 0, buffers: list[str] = []) -> str:
-    """
-    Serializes a list of strings with indents
-    Note: depreciated by Lines class
-    TODO: remove uses and delete function
-    """
-    output = ""
-    for buffer in buffers:
-        output += indentify(indent, buffer)
-    return output
-
-
-class IStr(str):
-    """
-    String with with >> operator for indenting
-    """
-
-    def __rshift__(self, other: int) -> str:
-        return indentify(other, self)
-
-
 class Lines:
     """
     A list of str that can be serialized to string with provided indents
@@ -59,7 +31,7 @@ class Lines:
     def toString(self, indent: int = 0):
         output = ""
         for buffer in self.lines:
-            output += indentify(indent, buffer) + "\n"
+            output += Indent(indent) + buffer + "\n"
         return output
 
     def __len__(self):
@@ -76,7 +48,7 @@ class Lines:
 
     def __rshift__(self, indent: int):
         for i in range(len(self.lines)):
-            self.lines[i] = IStr(self.lines[i]) >> indent
+            self.lines[i] = Indent(indent) + self.lines[i]
         return self
 
     def add(self, string: str):
@@ -86,7 +58,7 @@ class Lines:
 
     def concat(self, other: Lines, indent: int = 0):
         for line in other.lines:
-            self.lines.append(IStr(line) >> indent)
+            self.lines.append(Indent(indent) + line)
         return self
 
     @staticmethod
@@ -184,17 +156,29 @@ class NestedLines:
             output += self.buffers[i - 1][1].toString(indent + i - 1)
         return output
 
-class Indent: 
+
+class Indent:
+    """
+    Creates str instances of indentation
+    """
+    indentor = " " * 4
+
+    def indentify(self, indent: int = 0) -> str:
+        """
+        Creates indentation
+        """
+        return self.indentor * indent
+
     def __init__(self, indent: int = 0):
         self.indent = indent
 
     def __add__(self, other: str):
         assert isinstance(other, str)
-        return indentify(self.indent, other)
-    
-    def __radd__(self, other: str): 
+        return self.indentify(self.indent) + other
+
+    def __radd__(self, other: str):
         assert isinstance(other, str)
-        return other + indentify(self.indent)
-    
-    def __str__(self): 
-        return indentify(self.indent)
+        return other + self.indentify(self.indent)
+
+    def __str__(self):
+        return self.indentify(self.indent)

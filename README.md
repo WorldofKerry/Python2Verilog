@@ -5,9 +5,17 @@ A sample can be found in `tests/` under the files with prefix `rectangle_lines_*
 
 Based on my experimentation with a [C to Verilog converter](https://github.com/WorldofKerry/c2hdl)
 
-## Live Docs
+## Tests
 
-`python3 -m pydoc -b`
+`python3 tests/rectangle_filled.py`
+
+`python3 tests/rectangle_lines.py`
+
+## Docs
+
+Live docs: `python3 -m pydoc -b`
+
+Docs `.html`: `python3 -m pydoc -w python2verilog`
 
 ## Backlog Tasks
 
@@ -22,16 +30,14 @@ Based on my experimentation with a [C to Verilog converter](https://github.com/W
 ### Coding Excellence
 
 - Change all `[Lines, Lines]` to `(Lines, Lines)` as tuples have fixed length for function hint
-- `IStr(string) >> x` is still wacky, find alternatives?
+- Add consts for string literals (e.g. "_start")
 
 ### Test Framework
 
-- test verilog somehow? assert against python output
-- auto-generate verilog testbench
-- create python test interface using `for .. in`
-  - various numerical patterns
-- streamline python test framework, output `ast.dump`, python output and verilog output
-- Only add to set if done is not set
+- Write script that generates all files for new test case
+- auto-generate verilog testbench or create a generalized testbench (e.g. for 10 outputs)
+- Stop adding to set once `done` becomes 1
+- consider switching to pytest
 
 ## Planning
 
