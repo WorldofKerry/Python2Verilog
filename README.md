@@ -5,11 +5,21 @@ A sample can be found in `tests/` under the files with prefix `rectangle_lines_*
 
 Based on my experimentation with a [C to Verilog converter](https://github.com/WorldofKerry/c2hdl)
 
-## Tests
+## Working Tests
+
+I recommend [EDA Playground](https://edaplayground.com/) for testing the verilog code.
 
 `python3 tests/rectangle_filled.py`
 
 `python3 tests/rectangle_lines.py`
+
+`python tests/circle_lines.py`
+
+| Algorithm | Python Cycles | Verilog Cycles |
+| --------- | ------------- | -------------- |
+| Rectangle Filled | 12 | 34 |
+| Rectangle Lines | 14 | 24 |
+| Bresenham's Circle | 32 | 34 |
 
 ## Docs
 
