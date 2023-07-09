@@ -87,7 +87,7 @@ class GeneratorParser:
         reg [31:0] <name>;
         ...
         """
-        return (Lines([f"reg [31:0] {v};" for v in global_vars]), Lines())
+        return (Lines([f"reg signed [31:0] {v};" for v in global_vars]), Lines())
 
     def stringify_module(self) -> tuple[Lines, Lines]:
         """
@@ -100,9 +100,9 @@ class GeneratorParser:
         startLines += Indent(1) + "input wire _clock,"
         startLines += Indent(1) + "input wire _start,"
         for var in self.root.args.args:
-            startLines += Indent(1) + f"input wire [31:0] {var.arg},"
+            startLines += Indent(1) + f"input wire signed [31:0] {var.arg},"
         for var in self.yieldVars:
-            startLines += Indent(1) + f"output reg [31:0] {var},"
+            startLines += Indent(1) + f"output reg signed [31:0] {var},"
         startLines += Indent(1) + "output reg _done,\n"
         startLines[-1] = startLines[-1].removesuffix(",\n") + "\n);"
         endLines += "endmodule"
@@ -151,7 +151,7 @@ class GeneratorParser:
         conditionalBuffer = parse_iter(node.iter, node)
         statementsBuffer = self.parse_statements(
             node.body,
-            f"{prefix}_INNER_{self.create_unique_name()}",
+            f"{prefix}_BODY_{self.create_unique_name()}",
             endStatements=Lines([f"{node.target.id} <= {node.target.id} + 1;"]),
             resetToZero=True,
         )
@@ -166,7 +166,6 @@ class GeneratorParser:
         buffer = ""
         assert len(nodes) == 1
         for node in nodes:
-            print("DEBUG:", ast.dump(node))
             assert type(node) == ast.Name
             if node.id not in self.global_vars:
                 self.add_global_var(0, node.id)
@@ -194,8 +193,37 @@ class GeneratorParser:
                 return self.parse_yield(stmt)
             case ast.While:
                 return self.parse_while(stmt, prefix=prefix)
+            case ast.If:
+                return self.parse_if(stmt, prefix=prefix)
             case _:
-                raise Exception("Error: unexpected statement type", type(stmt))
+                raise Exception(
+                    "Error: unexpected statement type", type(stmt), ast.dump(stmt)
+                )
+
+    def parse_if(self, stmt: ast.If, prefix: str = ""):
+        """
+        If statement
+        """
+        assert len(stmt.orelse) >= 1  # Currently only supports if-else
+        if_conditional = (
+            Lines(
+                [
+                    f"if ({self.parse_expression(stmt.test)}) begin // IF STATEMENT START",
+                ]
+            ),
+            Lines([f"end else begin"]),
+        )
+        then_body = self.parse_statements(
+            stmt.body, f"{prefix}_THEN_{self.create_unique_name()}"
+        )
+        if_then = Lines.nestify([if_conditional, then_body])
+
+        if_then_skip_end = (if_then, Lines([f"end // IF STATEMENT END"]))
+
+        else_body = self.parse_statements(
+            stmt.orelse, f"{prefix}_ELSE_{self.create_unique_name()}"
+        )
+        return Lines.nestify([if_then_skip_end, else_body])
 
     def parse_statements(
         self,
@@ -279,8 +307,14 @@ class GeneratorParser:
                 return " + "
             case ast.Sub:
                 return " - "
+            case ast.Mult:
+                return " * "
+            case ast.Div:
+                return " / "
             case _:
-                raise Exception("Error: unexpected binop type", type(node.op))
+                raise Exception(
+                    "Error: unexpected binop type", type(node.op), ast.dump(node.op)
+                )
 
     def parse_expression(self, expr: ast.AST):
         """
@@ -323,8 +357,16 @@ class GeneratorParser:
         match type(node.ops[0]):
             case ast.Lt:
                 operator = "<"
+            case ast.LtE:
+                operator = "<="
+            case ast.Gt:
+                operator = ">"
+            case ast.GtE:
+                operator = ">="
             case _:
-                operator = "UNKNOWN OPERATOR"
+                raise Exception(
+                    "Error: unknown operator", type(node.ops[0]), ast.dump(node.ops[0])
+                )
         return f"{self.parse_expression(node.left)} {operator} {self.parse_expression(node.comparators[0])}"
 
     def parse_while(self, node: ast.While, prefix: str = ""):
@@ -343,7 +385,7 @@ class GeneratorParser:
         )
 
         statements = self.parse_statements(
-            node.body, f"{prefix}_INNER_{self.create_unique_name()}", resetToZero=True
+            node.body, f"{prefix}_BODY_{self.create_unique_name()}", resetToZero=True
         )
 
         return Lines.nestify([conditional, statements])
