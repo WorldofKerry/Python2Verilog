@@ -60,3 +60,4 @@ with input(__file__, "expected", "csv") as exp_f:
             print("ERROR: missing coordinates" + str(exp_coords - act_coords))
         if act_coords - exp_coords:
             print("ERROR: extra coordinates" + str(act_coords - exp_coords))
+        print("PASS")

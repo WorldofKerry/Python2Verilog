@@ -4,6 +4,5 @@ from .utils import *
 __all__ = [
     "GeneratorParser",
     "Lines",
-    "DoubleBufferBuffer",
     "Indent",
 ]

@@ -59,3 +59,4 @@ with input(__file__, "expected", "csv") as exp_f:
 
         assert not (exp_coords - act_coords)
         assert not (act_coords - exp_coords)
+        print("PASS")
