@@ -11,8 +11,8 @@ def draw_rectangle(s_x, s_y, height, width) -> tuple[int, int]:
 
 """
 exec(code)
-rows, cols = (20, 20)
-generator = draw_rectangle(1, 2, 3, 4)
+rows, cols = (50, 50)
+generator = draw_rectangle(23, 17, 5, 7)
 grid = [[0 for i in range(cols)] for j in range(rows)]
 
 with output(__file__, "expected", "csv") as f:

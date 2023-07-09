@@ -33,8 +33,8 @@ def draw_rectangle(s_x, s_y, height, width) -> tuple[int, int]:
         yield (s_x - y, s_y - x)
 """
 exec(code)
-rows, cols = (20, 20)
-generator = draw_rectangle(1, 2, 3, 4)
+rows, cols = (100, 100)
+generator = draw_rectangle(23, 17, 5, None) # x, y, radius
 grid = [[0 for i in range(cols)] for j in range(rows)]
 
 with output(__file__, "expected", "csv") as f:
@@ -72,18 +72,18 @@ with input(__file__, "expected", "csv") as exp_f:
         expected = csv.reader(exp_f)
         actual = csv.reader(act_f)
 
-        exp_coords = set()
-        act_coords = set()
+        actual_coords = set()
+        expected_coords = set()
 
         for row in actual:
             if row[1].strip() != "x" and row[2].strip() != "x":
-                exp_coords.add((row[1].strip(), row[2].strip()))
+                actual_coords.add((row[1].strip(), row[2].strip()))
 
         for row in expected:
-            act_coords.add((row[0].strip(), row[1].strip()))
+            expected_coords.add((row[0].strip(), row[1].strip()))
 
-        if exp_coords - act_coords:
-            print("ERROR: missing coordinates" + str(exp_coords - act_coords))
-        if act_coords - exp_coords:
-            print("ERROR: extra coordinates" + str(act_coords - exp_coords))
+        if actual_coords - expected_coords:
+            print("ERROR: extra coordinates" + str(actual_coords - expected_coords))
+        if expected_coords - actual_coords:
+            print("ERROR: missing coordinates" + str(expected_coords - actual_coords))
         print("PASS")

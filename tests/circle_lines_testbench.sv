@@ -33,10 +33,10 @@ module draw_rectangle_tb;
   initial begin
     // Initialize inputs
     _start = 0;
-    s_x = 1;
-    s_y = 2;
-    height = 3;
-    width = 4;
+    s_x = 23;
+    s_y = 17;
+    height = 13;
+    width = 0;
     _clock = 0; 
 
     // Wait for a few clock cycles
@@ -47,7 +47,7 @@ module draw_rectangle_tb;
     _start = 1;
 
     // Wait for the drawing to complete
-    repeat (40) begin
+    repeat (80) begin
       @(posedge _clock);
       _start = 0; 
       // Display the outputs for every cycle after start

@@ -14,11 +14,11 @@ I recommend [EDA Playground](https://edaplayground.com/) for testing the verilog
 
 `python tests/circle_lines.py`
 
-| Algorithm | Python Cycles | Verilog Cycles |
-| --------- | ------------- | -------------- |
-| Rectangle Filled | 12 | 34 |
-| Rectangle Lines | 14 | 24 |
-| Bresenham's Circle | 32 | 34 |
+| Algorithm          | Python Cycles | Verilog Cycles | Notes                      |
+| ------------------ | ------------- | -------------- | -------------------------- |
+| Rectangle Filled   | 12            | 34             | Robust Testing Passed      |
+| Rectangle Lines    | 14            | 24             | Robust Testing Passed      |
+| Bresenham's Circle | 32            | 34             | Incorrect for Large (x, y) |
 
 ## Docs
 
