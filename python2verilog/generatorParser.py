@@ -157,8 +157,7 @@ class GeneratorParser:
         )
         return Lines.nestify([conditionalBuffer, statementsBuffer])
 
-    @staticmethod
-    def parse_targets(nodes: list[ast.AST]):
+    def parse_targets(self, nodes: list[ast.AST]):
         """
         Warning: only single target on left-hand-side supported
 
@@ -167,15 +166,18 @@ class GeneratorParser:
         buffer = ""
         assert len(nodes) == 1
         for node in nodes:
-            buffer += GeneratorParser.parse_expression(node)
+            print("DEBUG:", ast.dump(node))
+            assert type(node) == ast.Name
+            if node.id not in self.global_vars:
+                self.add_global_var(0, node.id)
+            buffer += self.parse_expression(node)
         return buffer
 
-    @staticmethod
-    def parse_assign(node: ast.Assign):
+    def parse_assign(self, node: ast.Assign):
         """
         <target0, target1, ...> = <value>;
         """
-        return f"{GeneratorParser.parse_targets(node.targets)} = {GeneratorParser.parse_expression(node.value)};\n"
+        return f"{self.parse_targets(node.targets)} <= {self.parse_expression(node.value)};"
 
     def parse_statement(self, stmt: ast.AST, prefix: str = ""):
         """
@@ -190,6 +192,8 @@ class GeneratorParser:
                 return self.parse_statement(stmt.value, prefix=prefix)
             case ast.Yield:
                 return self.parse_yield(stmt)
+            case ast.While:
+                return self.parse_while(stmt, prefix=prefix)
             case _:
                 raise Exception("Error: unexpected statement type", type(stmt))
 
@@ -221,10 +225,12 @@ class GeneratorParser:
             for line in self.parse_statement(stmt, prefix=prefix) >> 2:
                 lines += line
                 assert str(line).find("\n") == -1
-            if type(stmt) != ast.For:
+            if type(stmt) != ast.For and type(stmt) != ast.While:
                 # Non-for-loop state machines always continue to next state after running current state's case statement
                 # TODO: figure out better way to handle this, perhaps add to end statements of caller
-                lines += Indent(2) + f"{state_var} <= {state_var} + 1;"
+                lines += (
+                    Indent(2) + f"{state_var} <= {state_var} + 1; // INCREMENT STATE"
+                )
             lines += Indent(1) + f"end"
             prevI = i
 
@@ -260,7 +266,7 @@ class GeneratorParser:
         assert type(node.value) == ast.Tuple
         lines = Lines()
         for i, e in enumerate(node.value.elts):
-            lines += f"{self.yieldVars[i]} <= {GeneratorParser.parse_expression(e)};"
+            lines += f"{self.yieldVars[i]} <= {self.parse_expression(e)};"
         return lines
 
     @staticmethod
@@ -276,8 +282,7 @@ class GeneratorParser:
             case _:
                 raise Exception("Error: unexpected binop type", type(node.op))
 
-    @staticmethod
-    def parse_expression(expr: ast.AST, indent: int = 0):
+    def parse_expression(self, expr: ast.AST):
         """
         <expression> (e.g. constant, name, subscript, etc., those that return a value)
         """
@@ -287,34 +292,60 @@ class GeneratorParser:
             case ast.Name:
                 return expr.id
             case ast.Subscript:
-                return GeneratorParser.parse_subscript(expr, indent)
+                return self.parse_subscript(expr)
             case ast.BinOp:
                 return (
-                    GeneratorParser.parse_expression(expr.left)
-                    + GeneratorParser.parse_binop(expr)
-                    + GeneratorParser.parse_expression(expr.right)
+                    self.parse_expression(expr.left)
+                    + self.parse_binop(expr)
+                    + self.parse_expression(expr.right)
                 )
+            case ast.Compare:
+                return self.parse_compare(expr)
             case _:
                 raise Exception("Error: unexpected expression type", type(expr))
 
-    def parse_subscript(self, node: ast.Subscript, indent: int = 0):
+    def parse_subscript(self, node: ast.Subscript):
         """
         <value>[<slice>]
         Note: built from right to left, e.g. [z] -> [y][z] -> [x][y][z] -> matrix[x][y][z]
         """
-        return f"{self.parse_expression(node.value, indent)}[{self.parse_expression(node.slice, indent)}]"
+        return (
+            f"{self.parse_expression(node.value)}[{self.parse_expression(node.slice)}]"
+        )
 
-    def parse_for_new(self, node: ast.For, prefix: str = ""):
+    def parse_compare(self, node: ast.Compare):
         """
-        Creates a conditional while loop from for loop
+        <left> <op> <comparators>
         """
+        assert len(node.ops) == 1
+        assert len(node.comparators) == 1
 
-        def parse_iter(iter: ast.AST, node: ast.AST):
-            assert type(iter) == ast.Call
-            assert iter.func.id == "range"
+        match type(node.ops[0]):
+            case ast.Lt:
+                operator = "<"
+            case _:
+                operator = "UNKNOWN OPERATOR"
+        return f"{self.parse_expression(node.left)} {operator} {self.parse_expression(node.comparators[0])}"
 
-            # range(x, y) or range(x)
-            if len(iter.args) == 2:
-                start, end = str(iter.args[0].value), iter.args[1].id
-            else:
-                start, end = "0", iter.args[0].id
+    def parse_while(self, node: ast.While, prefix: str = ""):
+        """
+        Converts while loop to a while-true-if-break loop
+        """
+        print("==========")
+        print(ast.dump(node))
+        conditional = (
+            Lines(
+                [
+                    f"if (!({self.parse_expression(node.test)})) begin // WHILE LOOP START",
+                    Indent(1) + f"{prefix}_STATE = {prefix}_STATE + 1;",
+                    f"end else begin",
+                ]
+            ),
+            Lines([f"end // WHILE LOOP END"]),
+        )
+
+        statements = self.parse_statements(
+            node.body, f"{prefix}_INNER_{self.create_unique_name()}", resetToZero=True
+        )
+
+        return Lines.nestify([conditional, statements])
