@@ -331,8 +331,6 @@ class GeneratorParser:
         """
         Converts while loop to a while-true-if-break loop
         """
-        print("==========")
-        print(ast.dump(node))
         conditional = (
             Lines(
                 [
