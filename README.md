@@ -1,7 +1,6 @@
 # Python To Verilog
 
-Converts a subset of python generator functions into synthesizable verilog.
-A sample can be found in `tests/` under the files with prefix `rectangle_lines_*`, where the code outputs points on a grid that form the lines that make up a rectangle.
+Converts a subset of python generator functions into synthesizable verilog. The main use case is for drawing shapes on a screen, where the user may prototype the algorithm in python and then convert it to verilog for use in an FPGA (with a VGA out to a monitor).
 
 Based on my experimentation with a [C to Verilog converter](https://github.com/WorldofKerry/c2hdl)
 

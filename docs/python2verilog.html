@@ -19,8 +19,7 @@
 <tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
 <td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="python2verilog.generatorParser.html">generatorParser</a><br>
 </td><td width="25%" valign=top><a href="python2verilog.utils.html">utils</a><br>
-</td><td width="25%" valign=top><a href="python2verilog.verilogElements.html">verilogElements</a><br>
-</td><td width="25%" valign=top></td></tr></table></td></tr></table><p>
+</td><td width="25%" valign=top></td><td width="25%" valign=top></td></tr></table></td></tr></table><p>
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
 <tr bgcolor="#ee77aa">
 <td colspan=3 valign=bottom>&nbsp;<br>
@@ -57,9 +56,15 @@ Parses&nbsp;python&nbsp;generator&nbsp;functions<br>&nbsp;</tt></td></tr>
 
 <dl><dt><a name="GeneratorParser-generate_verilog"><strong>generate_verilog</strong></a>(self, indent: 'int' = 0)</dt><dd><tt>Generates&nbsp;the&nbsp;verilog&nbsp;(does&nbsp;the&nbsp;most&nbsp;work,&nbsp;calls&nbsp;other&nbsp;functions)</tt></dd></dl>
 
+<dl><dt><a name="GeneratorParser-parse_assign"><strong>parse_assign</strong></a>(self, node: 'ast.Assign')</dt><dd><tt>&lt;target0,&nbsp;target1,&nbsp;...&gt;&nbsp;=&nbsp;&lt;value&gt;;</tt></dd></dl>
+
+<dl><dt><a name="GeneratorParser-parse_compare"><strong>parse_compare</strong></a>(self, node: 'ast.Compare')</dt><dd><tt>&lt;left&gt;&nbsp;&lt;op&gt;&nbsp;&lt;comparators&gt;</tt></dd></dl>
+
+<dl><dt><a name="GeneratorParser-parse_expression"><strong>parse_expression</strong></a>(self, expr: 'ast.AST')</dt><dd><tt>&lt;expression&gt;&nbsp;(e.g.&nbsp;constant,&nbsp;name,&nbsp;subscript,&nbsp;etc.,&nbsp;those&nbsp;that&nbsp;return&nbsp;a&nbsp;value)</tt></dd></dl>
+
 <dl><dt><a name="GeneratorParser-parse_for"><strong>parse_for</strong></a>(self, node: 'ast.For', prefix: 'str' = '')</dt><dd><tt>Creates&nbsp;a&nbsp;conditional&nbsp;while&nbsp;loop&nbsp;from&nbsp;for&nbsp;loop</tt></dd></dl>
 
-<dl><dt><a name="GeneratorParser-parse_for_new"><strong>parse_for_new</strong></a>(self, node: 'ast.For', prefix: 'str' = '')</dt><dd><tt>Creates&nbsp;a&nbsp;conditional&nbsp;while&nbsp;loop&nbsp;from&nbsp;for&nbsp;loop</tt></dd></dl>
+<dl><dt><a name="GeneratorParser-parse_if"><strong>parse_if</strong></a>(self, stmt: 'ast.If', prefix: 'str' = '')</dt><dd><tt>If&nbsp;statement</tt></dd></dl>
 
 <dl><dt><a name="GeneratorParser-parse_statement"><strong>parse_statement</strong></a>(self, stmt: 'ast.AST', prefix: 'str' = '')</dt><dd><tt>&lt;statement&gt;&nbsp;(e.g.&nbsp;assign,&nbsp;for&nbsp;loop,&nbsp;etc.,&nbsp;those&nbsp;that&nbsp;do&nbsp;not&nbsp;return&nbsp;a&nbsp;value)</tt></dd></dl>
 
@@ -70,8 +75,14 @@ Parses&nbsp;python&nbsp;generator&nbsp;functions<br>&nbsp;</tt></td></tr>
 &nbsp;&nbsp;&nbsp;&nbsp;...<br>
 }</tt></dd></dl>
 
-<dl><dt><a name="GeneratorParser-parse_subscript"><strong>parse_subscript</strong></a>(self, node: 'ast.Subscript', indent: 'int' = 0)</dt><dd><tt>&lt;value&gt;[&lt;slice&gt;]<br>
+<dl><dt><a name="GeneratorParser-parse_subscript"><strong>parse_subscript</strong></a>(self, node: 'ast.Subscript')</dt><dd><tt>&lt;value&gt;[&lt;slice&gt;]<br>
 Note:&nbsp;built&nbsp;from&nbsp;right&nbsp;to&nbsp;left,&nbsp;e.g.&nbsp;[z]&nbsp;-&gt;&nbsp;[y][z]&nbsp;-&gt;&nbsp;[x][y][z]&nbsp;-&gt;&nbsp;matrix[x][y][z]</tt></dd></dl>
+
+<dl><dt><a name="GeneratorParser-parse_targets"><strong>parse_targets</strong></a>(self, nodes: 'list[ast.AST]')</dt><dd><tt>Warning:&nbsp;only&nbsp;single&nbsp;target&nbsp;on&nbsp;left-hand-side&nbsp;supported<br>
+&nbsp;<br>
+&lt;target0,&nbsp;target1,&nbsp;...&gt;&nbsp;=</tt></dd></dl>
+
+<dl><dt><a name="GeneratorParser-parse_while"><strong>parse_while</strong></a>(self, node: 'ast.While', prefix: 'str' = '')</dt><dd><tt>Converts&nbsp;while&nbsp;loop&nbsp;to&nbsp;a&nbsp;while-true-if-break&nbsp;loop</tt></dd></dl>
 
 <dl><dt><a name="GeneratorParser-parse_yield"><strong>parse_yield</strong></a>(self, node: 'ast.Yield')</dt><dd><tt>Warning:&nbsp;may&nbsp;not&nbsp;work&nbsp;for&nbsp;single&nbsp;output<br>
 &nbsp;<br>
@@ -87,15 +98,7 @@ endmodule</tt></dd></dl>
 Static methods defined here:<br>
 <dl><dt><a name="GeneratorParser-generate_return_vars"><strong>generate_return_vars</strong></a>(node: 'ast.AST', prefix: 'str')</dt><dd><tt>Generates&nbsp;the&nbsp;yielded&nbsp;variables&nbsp;of&nbsp;the&nbsp;function</tt></dd></dl>
 
-<dl><dt><a name="GeneratorParser-parse_assign"><strong>parse_assign</strong></a>(node: 'ast.Assign')</dt><dd><tt>&lt;target0,&nbsp;target1,&nbsp;...&gt;&nbsp;=&nbsp;&lt;value&gt;;</tt></dd></dl>
-
 <dl><dt><a name="GeneratorParser-parse_binop"><strong>parse_binop</strong></a>(node: 'ast.BinOp')</dt><dd><tt>&lt;left&gt;&nbsp;&lt;op&gt;&nbsp;&lt;right&gt;</tt></dd></dl>
-
-<dl><dt><a name="GeneratorParser-parse_expression"><strong>parse_expression</strong></a>(expr: 'ast.AST', indent: 'int' = 0)</dt><dd><tt>&lt;expression&gt;&nbsp;(e.g.&nbsp;constant,&nbsp;name,&nbsp;subscript,&nbsp;etc.,&nbsp;those&nbsp;that&nbsp;return&nbsp;a&nbsp;value)</tt></dd></dl>
-
-<dl><dt><a name="GeneratorParser-parse_targets"><strong>parse_targets</strong></a>(nodes: 'list[ast.AST]')</dt><dd><tt>Warning:&nbsp;only&nbsp;single&nbsp;target&nbsp;on&nbsp;left-hand-side&nbsp;supported<br>
-&nbsp;<br>
-&lt;target0,&nbsp;target1,&nbsp;...&gt;&nbsp;=</tt></dd></dl>
 
 <dl><dt><a name="GeneratorParser-stringify_always_block"><strong>stringify_always_block</strong></a>()</dt><dd><tt>always&nbsp;@(posedge&nbsp;_clock)&nbsp;begin<br>
 end</tt></dd></dl>
@@ -212,5 +215,5 @@ Data descriptors defined here:<br>
 <font color="#ffffff" face="helvetica, arial"><big><strong>Data</strong></big></font></td></tr>
     
 <tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
-<td width="100%"><strong>__all__</strong> = ['GeneratorParser', 'Lines', 'DoubleBufferBuffer', 'Indent']</td></tr></table>
+<td width="100%"><strong>__all__</strong> = ['GeneratorParser', 'Lines', 'Indent']</td></tr></table>
 </body></html>
