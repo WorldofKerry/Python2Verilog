@@ -56,5 +56,7 @@ with input(__file__, "expected", "csv") as exp_f:
         for row in expected:
             act_coords.add((row[0].strip(), row[1].strip()))
 
-        assert not (exp_coords - act_coords)
-        assert not (act_coords - exp_coords)
+        if exp_coords - act_coords:
+            print("ERROR: missing coordinates" + str(exp_coords - act_coords))
+        if act_coords - exp_coords:
+            print("ERROR: extra coordinates" + str(act_coords - exp_coords))

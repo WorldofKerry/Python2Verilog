@@ -139,8 +139,10 @@ class GeneratorParser:
             return (
                 Lines(
                     [
-                        f"if ({node.target.id} >= {end}) {prefix}_STATE = {prefix}_STATE + 1; // FOR LOOP START",
-                        "else begin",
+                        f"if ({node.target.id} >= {end}) begin // FOR LOOP START",
+                        IStr(f"{prefix}_STATE = {prefix}_STATE + 1;") >> 1,
+                        IStr(f"{node.target.id} <= 0;") >> 1,
+                        "end else begin",
                     ]
                 ),
                 Lines(["end // FOR LOOP END"]),
@@ -209,6 +211,7 @@ class GeneratorParser:
         state_var = self.add_global_var("0", f"{prefix}_STATE")
         lines = Lines()
         lines += f"case ({state_var}) // STATEMENTS START"
+        prevI = 0
 
         for i, stmt in enumerate(stmts):
             state = self.add_global_var(str(i), f"{prefix}_STATE_{i}")
@@ -223,14 +226,26 @@ class GeneratorParser:
                 # TODO: figure out better way to handle this, perhaps add to end statements of caller
                 lines += IStr(f"{state_var} <= {state_var} + 1;") >> 2
             lines += IStr(f"end") >> 1
-        del lines[-1]  # TODO: check this actually works
+            prevI = i
+
+        assert isinstance(endStatements, Lines)
+        # TODO: cleanup, remove the above enumerate?
+        i = prevI + 1
+        for stmt in endStatements:
+            state = self.add_global_var(str(i), f"{prefix}_STATE_{i}")
+
+            lines += IStr(f"{state}: begin") >> 1
+            # print("DEBUG stmt:" + str(stmt))
+            lines += IStr(stmt) >> 2
+            # print("DEBUG0:" + lines.toString())
+            lines += IStr(f"end") >> 1
+            i += 1
+
+        del lines[-1]
 
         if resetToZero:  # TODO: think about what default should be
             lines += IStr(f"{state_var} <= 0;") >> 2
 
-        assert isinstance(endStatements, Lines)
-        for stmt in endStatements:
-            lines += IStr(stmt) >> 2
         lines += IStr(f"end") >> 1
 
         lines += IStr(f"endcase // STATEMENTS END")
@@ -290,3 +305,18 @@ class GeneratorParser:
         Note: built from right to left, e.g. [z] -> [y][z] -> [x][y][z] -> matrix[x][y][z]
         """
         return f"{self.parse_expression(node.value, indent)}[{self.parse_expression(node.slice, indent)}]"
+
+    def parse_for_new(self, node: ast.For, prefix: str = ""):
+        """
+        Creates a conditional while loop from for loop
+        """
+
+        def parse_iter(iter: ast.AST, node: ast.AST):
+            assert type(iter) == ast.Call
+            assert iter.func.id == "range"
+
+            # range(x, y) or range(x)
+            if len(iter.args) == 2:
+                start, end = str(iter.args[0].value), iter.args[1].id
+            else:
+                start, end = "0", iter.args[0].id
