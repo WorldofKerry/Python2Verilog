@@ -48,6 +48,7 @@ Docs `.html`: `python3 -m pydoc -w python2verilog`
 
 ### Coding Excellence
 
+- Assert generator yield tuple length same as type-hint tuple length
 - Change all `[Lines, Lines]` to `(Lines, Lines)` as tuples have fixed length for function hint
 - Add consts for string literals (e.g. "_start")
 - Add LinePair class instead of relying on tuples for Lines.nestify

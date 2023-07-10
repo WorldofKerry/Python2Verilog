@@ -4,6 +4,7 @@ import os
 import inspect
 import warnings
 import ast
+import csv
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 NAMED_FUNCTION = "generator" # Default function name in generator.py
@@ -61,7 +62,7 @@ def generator(a, b, c, d) -> tuple[int, int, int, int]:
 
 class TestGeneratorParser(unittest.TestCase): 
     def test_circle_lines(self): 
-        TEST_CASE = [13, 17, 5, None] # Args
+        TEST_CASE = [23, 17, 5, 0] # Args
 
         DATA_PATH = f"data/{__name__}/{inspect.currentframe().f_code.co_name}/"
         FULL_PATH = os.path.join(THIS_DIR, DATA_PATH)
@@ -86,8 +87,7 @@ class TestGeneratorParser(unittest.TestCase):
             warnings.warn(ast.dump(tree.body[0]))
 
             with open(os.path.join(FULL_PATH, TESTBENCH_FILENAME), mode="w") as testbench_file: 
-                text = """
-module generator_tb;
+                text = """module generator_tb;
   // Inputs
   reg _clock;
   reg _start;
@@ -141,11 +141,10 @@ module generator_tb;
       @(posedge _clock);
       _start = 0; 
       // Display the outputs for every cycle after start
-      $display(""" # TODO: use NAMED_FUNCTION instead of "generator dut"
+      $display(\"""" # TODO: use NAMED_FUNCTION instead of "generator dut"
                 
-                text += "\""
-                text += """%0d """ * len(tree.body[0].returns.slice.elts)
-                text += "\""
+                text += "%0d, " * (len(tree.body[0].returns.slice.elts) - 1)
+                text += """%0d\""""
                 
                 for i in range(len(tree.body[0].returns.slice.elts)): 
                     text += f", _out{i}"
@@ -166,10 +165,30 @@ endmodule
 
                 try: 
                     with open(os.path.join(FULL_PATH, ACTUAL_FILENAME), mode="x"): 
-                        return
+                        return ""
                 except FileExistsError: 
-                    # Check actual vs expected
-                    pass
-                return ""
+                    with open(os.path.join(FULL_PATH, EXPECTED_FILENAME)) as exp_f:
+                        with open(os.path.join(FULL_PATH, ACTUAL_FILENAME)) as act_f:
+                            expected = csv.reader(exp_f)
+                            actual = csv.reader(act_f)
+
+                            actual_coords = set()
+                            expected_coords = set()
+
+                            for row in actual:
+                                valid = True
+                                for element in row: 
+                                    if element.strip() == "x": 
+                                        valid = False
+                                if valid: 
+                                    actual_coords.add(tuple(row))
+
+                            for row in expected:
+                                expected_coords.add(tuple(row))
+
+                            self.assertEqual(actual_coords - expected_coords, set(), f"Extra coordinates: {str(actual_coords - expected_coords)} {str(actual_coords)} {str(expected_coords)}")
+                            self.assertEqual(expected_coords - actual_coords, set(), f"Missing Coordinates: {str(expected_coords - actual_coords)} {str(actual_coords)} {str(expected_coords)}")
+
+                            return "Running test"
                 
 
