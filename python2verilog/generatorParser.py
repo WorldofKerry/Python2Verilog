@@ -205,29 +205,58 @@ class GeneratorParser:
         If statement
         """
         assert len(stmt.orelse) >= 1  # Currently only supports if-else
-        if_conditional = (
-            Lines(
-                [
-                    f"if ({self.parse_expression(stmt.test)}) begin // IF STATEMENT START",
-                ]
-            ),
-            Lines([f"end else begin"]),
-        )
-        then_body = self.parse_statements(
-            stmt.body, f"{prefix}_THEN_{self.create_unique_name()}", 
-            endStatements=Lines([f"{prefix}_STATE <= {prefix}_STATE + 1; // FROM IF"]),
-            resetToZero=True
-        )
-        if_then = Lines.nestify([if_conditional, then_body])
+        state_var = self.add_global_var("0", f"{prefix}_IF")
+        lines = Lines()
+        lines += f"case ({state_var}) // IF START"
 
-        if_then_skip_end = (if_then, Lines([f"end // IF STATEMENT END"]))
+        state_conditional = self.add_global_var(0, f"{state_var}_CONDITIONAL")
+        state_then = self.add_global_var(1, f"{state_var}_THEN")        
+        state_else = self.add_global_var(2, f"{state_var}_ELSE")
 
-        else_body = self.parse_statements(
-            stmt.orelse, f"{prefix}_ELSE_{self.create_unique_name()}",
-            endStatements=Lines([f"{prefix}_STATE <= {prefix}_STATE + 1; // FROM IF"]),
-            resetToZero=True
+        # If condition
+        wrapper = (
+            Lines([f"{state_conditional}: begin"]),
+            Lines([f"end"])
         )
-        return Lines.nestify([if_then_skip_end, else_body])
+        body = (
+            Lines([f"if ({self.parse_expression(stmt.test)}) {state_var} <= {state_then};"]), 
+            Lines([f"else {state_var} <= {state_else};"])
+        )
+        if_condition = Lines.nestify((wrapper, body))
+
+        # If then
+        wrapper = (
+            Lines([f"{state_then}: begin"]),
+            Lines([f"end"])
+        )
+        body = self.parse_statements(
+            stmt.body, 
+            f"{state_var}_{self.create_unique_name()}", 
+            endStatements=Lines([
+                f"{prefix}_STATE <= {prefix}_STATE + 1; {state_var} <= {state_conditional};",
+                ]),
+            resetToZero=True
+            )
+        if_then = Lines.nestify((wrapper, body))
+
+        # If else
+        wrapper = (
+            Lines([f"{state_else}: begin"]),
+            Lines([f"end"])
+        )
+        body = self.parse_statements(
+            stmt.orelse, 
+            f"{state_var}_{self.create_unique_name()}", 
+            endStatements=Lines([
+                f"{prefix}_STATE <= {prefix}_STATE + 1; {state_var} <= {state_conditional};", 
+                ]),
+            resetToZero=True
+            )
+        if_else = Lines.nestify((wrapper, body))
+
+        lines.concat(if_condition, 1).concat(if_then, 1).concat(if_else, 1)
+        lines += f"endcase // IF END"
+        return lines
 
     def parse_statements(
         self,
@@ -269,6 +298,7 @@ class GeneratorParser:
         assert isinstance(endStatements, Lines)
         # TODO: cleanup, remove the above enumerate?
         i = prevI + 1
+        # TODO: ideally endStatements occur in case, otherwise order may matter
         for stmt in endStatements:
             state = self.add_global_var(str(i), f"{prefix}_STATE_{i}")
 

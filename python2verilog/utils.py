@@ -71,9 +71,10 @@ class Lines:
             pair[1][0]
         pair[0][1]
         """
+        assert type(indent) == int
         for pair in buffers:
-            assert isinstance(pair[0], Lines)
-            assert isinstance(pair[1], Lines)
+            assert isinstance(pair[0], Lines), f"{type(pair[0])} {pair[0]}"
+            assert isinstance(pair[1], Lines), f"{type(pair[1])} {pair[1]}"
             assert len(pair) == 2
         lines = Lines()
         for i in range(len(buffers)):
