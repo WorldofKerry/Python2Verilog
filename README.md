@@ -4,6 +4,12 @@ Converts a subset of python generator functions into synthesizable verilog. The 
 
 Based on my experimentation with a [C to Verilog converter](https://github.com/WorldofKerry/c2hdl)
 
+Supported functions:
+
+- If
+- While
+- For range
+
 ## Working Tests
 
 I recommend [EDA Playground](https://edaplayground.com/) for testing the verilog code.
@@ -18,7 +24,7 @@ I recommend [EDA Playground](https://edaplayground.com/) for testing the verilog
 | ------------------ | ------------- | -------------- | -------------------------- |
 | Rectangle Filled   | 12            | 34             | Robust Testing Passed      |
 | Rectangle Lines    | 14            | 24             | Robust Testing Passed      |
-| Bresenham's Circle | 32            | 34             | Incorrect for Large (x, y) |
+| Bresenham's Circle | 32            | 52             | Working! |
 
 ## Docs
 
@@ -130,6 +136,7 @@ endcase
 ```
 
 ## If Statement Analysis
+
 ```verilog
 // IF START
 case (_STATE_IF) 
