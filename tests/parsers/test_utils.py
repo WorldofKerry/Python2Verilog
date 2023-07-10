@@ -23,6 +23,7 @@ class TestLines(unittest.TestCase):
         self.assertRaises(AssertionError, Lines, ["abc 123\n", "def 456"])
         self.assertRaises(AssertionError, Lines, ["abc 123", "def 456\n"])
 
+    def test_operations(self):
         lines = Lines("abc 123")
         lines += "def 456"
         self.assertEqual("abc 123\ndef 456\n", str(lines))
@@ -41,3 +42,14 @@ class TestLines(unittest.TestCase):
         for i in range(3): 
             sum += i
             self.assertEqual(Indent(sum) + "abc 123\n", str(lines.indent(i)))
+
+class TestIndent(unittest.TestCase): 
+    def test_all(self): 
+        self.assertEqual("", str(Indent()))
+
+        for i in range(3): 
+            self.assertEqual(Indent.indentor * i, str(Indent(i)))
+            self.assertEqual(Indent.indentor * i + "abc 123", Indent(i) + "abc 123")
+            self.assertEqual("abc 123" + Indent.indentor * i, "abc 123" + Indent(i))
+            self.assertRaises(AssertionError, lambda: i + Indent(i))
+            self.assertRaises(AssertionError, lambda: Indent(i) + None)
