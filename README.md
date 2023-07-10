@@ -126,3 +126,28 @@ case (STATE)
   // ...
 endcase
 ```
+
+## If Statement Analysis
+```verilog
+// IF START
+case (_STATE_IF) 
+  0: begin
+    if (condition) _STATE_IF <= 1;
+    else _STATE_IF <= 2;
+  end
+  1: begin
+    // THEN BODY START
+    case ()
+    // ...
+      _STATE_IF <= 0;
+    // THEN BODY END
+  end
+  2: begin
+    // ELSE BODY START
+    // ... 
+     __STATE_IF <= 0;
+    // ELSE BODY END
+  end
+endcase
+// IF END
+```
