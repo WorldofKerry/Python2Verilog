@@ -107,10 +107,15 @@ class TestGeneratorParser(unittest.TestCase):
   initial begin
     // Initialize inputs
     _start = 0;
-    a = 23;
-    b = 17;
-    c = 5;
-    d = 0;
+"""
+                
+    # a = 23;
+    # b = 17;
+    # c = 5;
+    # d = 0;
+                for i, v in enumerate(tree.body[0].args.args): 
+                    text += f"    {v.arg} = {TEST_CASE[i]};\n"
+                text += """
     _clock = 0; 
 
     // Wait for a few clock cycles

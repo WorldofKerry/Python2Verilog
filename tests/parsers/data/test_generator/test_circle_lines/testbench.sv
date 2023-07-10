@@ -38,6 +38,7 @@ module generator_tb;
     b = 17;
     c = 5;
     d = 0;
+
     _clock = 0; 
 
     // Wait for a few clock cycles

@@ -34,10 +34,11 @@ module generator_tb;
   initial begin
     // Initialize inputs
     _start = 0;
-    a = 23;
-    b = 17;
-    c = 5;
-    d = 0;
+    s_x = 23;
+    s_y = 17;
+    height = 5;
+    width = 0;
+
     _clock = 0; 
 
     // Wait for a few clock cycles
