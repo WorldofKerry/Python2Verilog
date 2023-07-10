@@ -175,6 +175,7 @@ endmodule
                             actual_coords = set()
                             expected_coords = set()
 
+                            # TODO: cleanup
                             for row in actual:
                                 valid = True
                                 for element in row: 
