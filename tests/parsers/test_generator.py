@@ -15,31 +15,22 @@ MODULE_FILENAME = "module.sv"
 TESTBENCH_FILENAME = "testbench.sv"
 
 class SetupNewTest(unittest.TestCase): 
-    def is_test_name_invalid(self): 
-        if (self.NEW_TEST_NAME == ""): return True
-        self.assertEqual(type(self.NEW_TEST_NAME), str)
 
-    def setup_dir(self): 
-        if (self.is_test_name_invalid()): return
-
+    def setup_dir(self):  
         os.makedirs(self.FULL_PATH)
         generator_path = os.path.join(self.FULL_PATH, PYTHON_GENERATOR_FILENAME)
         with open(generator_path, mode="x") as generator: 
             generator.write(
-                """
-def generator(a, b, c, d) -> tuple[int, int, int, int]:
+                """def generator(a, b, c, d) -> tuple[int, int, int, int]:
     yield(a, b)
     yield(c, d)
 """
             )
             return f"\nSetup test at:\n{generator_path}"
     
-    def running_python_generating_verilog(self): 
-        if (self.is_test_name_invalid()): return ""
-        return "\nPopulating Verilog"
-    
     def test_setup(self): 
-        self.NEW_TEST_NAME = "circle_lines" # MODIFY THIS
+        self.NEW_TEST_NAME = "rectangle_lines" # MODIFY THIS
+        if (self.NEW_TEST_NAME == ""): return
         self.DATA_PATH = f"data/{__name__}/test_{self.NEW_TEST_NAME}/"
         self.FULL_PATH = os.path.join(THIS_DIR, self.DATA_PATH)
         
@@ -49,22 +40,18 @@ def generator(a, b, c, d) -> tuple[int, int, int, int]:
             logs += self.setup_dir()
             return
         except FileExistsError: 
-            try: 
-                logs += self.running_python_generating_verilog()
-            except FileExistsError:    
-                pass
-            except: 
-                self.fail("Unexpected Error")
+            pass
         except: 
             self.fail("Unexpected Error")
         finally: 
-            warnings.warn(logs + "\n========== Setup End ==========")
+            logs += "\n========== Setup End =========="
+            # warnings.warn(logs)
 
 class TestGeneratorParser(unittest.TestCase): 
-    def test_circle_lines(self): 
+    def run_test(self, name): 
         TEST_CASE = [23, 17, 5, 0] # Args
 
-        DATA_PATH = f"data/{__name__}/{inspect.currentframe().f_code.co_name}/"
+        DATA_PATH = f"data/{__name__}/{name}/"
         FULL_PATH = os.path.join(THIS_DIR, DATA_PATH)
         with open(os.path.join(FULL_PATH, PYTHON_GENERATOR_FILENAME)) as python_file:
             python = python_file.read() 
@@ -72,7 +59,6 @@ class TestGeneratorParser(unittest.TestCase):
             exec(python, None, _locals) # grab's exec's populated scoped variables
 
             tree = ast.parse(python)
-            # warnings.warn(ast.dump(tree))
             generator_inst = _locals[NAMED_FUNCTION](*TEST_CASE)
 
             with open(os.path.join(FULL_PATH, EXPECTED_FILENAME), mode="w") as expected_file: 
@@ -83,8 +69,6 @@ class TestGeneratorParser(unittest.TestCase):
                 func = tree.body[0]
                 genParser = GeneratorParser(func)
                 module_file.write(str(genParser.generate_verilog()))
-
-            warnings.warn(ast.dump(tree.body[0]))
 
             with open(os.path.join(FULL_PATH, TESTBENCH_FILENAME), mode="w") as testbench_file: 
                 text = """module generator_tb;
@@ -167,8 +151,12 @@ endmodule
                     with open(os.path.join(FULL_PATH, ACTUAL_FILENAME), mode="x"): 
                         return ""
                 except FileExistsError: 
-                    with open(os.path.join(FULL_PATH, EXPECTED_FILENAME)) as exp_f:
-                        with open(os.path.join(FULL_PATH, ACTUAL_FILENAME)) as act_f:
+                    with open(os.path.join(FULL_PATH, ACTUAL_FILENAME)) as act_f:
+                        if os.path.getsize(os.path.join(FULL_PATH, ACTUAL_FILENAME)) == 0: 
+                            warnings.warn(f"No actual data for {FULL_PATH}, skipping")
+                            return
+
+                        with open(os.path.join(FULL_PATH, EXPECTED_FILENAME)) as exp_f:
                             expected = csv.reader(exp_f)
                             actual = csv.reader(act_f)
 
@@ -191,5 +179,9 @@ endmodule
                             self.assertEqual(expected_coords - actual_coords, set(), f"Missing Coordinates: {str(expected_coords - actual_coords)} {str(actual_coords)} {str(expected_coords)}")
 
                             return "Running test"
-                
-
+    
+    def test_circle_lines(self): 
+        self.run_test(inspect.currentframe().f_code.co_name)
+    
+    def test_rectangle_lines(self): 
+        self.run_test(inspect.currentframe().f_code.co_name)
