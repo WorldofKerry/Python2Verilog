@@ -17,6 +17,7 @@ def draw_rectangle(s_x, s_y, height, width) -> tuple[int, int]:
     yield (s_x - y, s_y + x)
     yield (s_x - y, s_y - x)
     while (y >= x):
+        # print("Logs", x, y, d)
         x = x + 1
         if (d > 0):
             y = y - 1
@@ -76,8 +77,8 @@ with input(__file__, "expected", "csv") as exp_f:
         expected_coords = set()
 
         for row in actual:
-            if row[1].strip() != "x" and row[2].strip() != "x":
-                actual_coords.add((row[1].strip(), row[2].strip()))
+            if row[0].strip() != "x" and row[1].strip() != "x":
+                actual_coords.add((row[0].strip(), row[1].strip()))
 
         for row in expected:
             expected_coords.add((row[0].strip(), row[1].strip()))

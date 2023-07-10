@@ -35,7 +35,7 @@ module draw_rectangle_tb;
     _start = 0;
     s_x = 23;
     s_y = 17;
-    height = 13;
+    height = 5;
     width = 0;
     _clock = 0; 
 
@@ -47,11 +47,11 @@ module draw_rectangle_tb;
     _start = 1;
 
     // Wait for the drawing to complete
-    repeat (80) begin
+    repeat (100) begin
       @(posedge _clock);
       _start = 0; 
       // Display the outputs for every cycle after start
-      $display("%0d, %0d, %0d, %0d", $time, __out0, __out1, _done);
+      $display("%0d, %0d, %0d", __out0, __out1, _done);
     end 
     
     // Finish simulation

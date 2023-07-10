@@ -31,8 +31,10 @@ module draw_rectangle(
     reg signed [31:0] _BODY_1_THEN_2_STATE;
     reg signed [31:0] _BODY_1_THEN_2_STATE_0;
     reg signed [31:0] _BODY_1_THEN_2_STATE_1;
+    reg signed [31:0] _BODY_1_THEN_2_STATE_2;
     reg signed [31:0] _BODY_1_ELSE_3_STATE;
     reg signed [31:0] _BODY_1_ELSE_3_STATE_0;
+    reg signed [31:0] _BODY_1_ELSE_3_STATE_1;
     reg signed [31:0] _BODY_1_STATE_2;
     reg signed [31:0] _BODY_1_STATE_3;
     reg signed [31:0] _BODY_1_STATE_4;
@@ -67,8 +69,10 @@ module draw_rectangle(
                 _BODY_1_THEN_2_STATE <= 0;
                 _BODY_1_THEN_2_STATE_0 <= 0;
                 _BODY_1_THEN_2_STATE_1 <= 1;
+                _BODY_1_THEN_2_STATE_2 <= 2;
                 _BODY_1_ELSE_3_STATE <= 0;
                 _BODY_1_ELSE_3_STATE_0 <= 0;
+                _BODY_1_ELSE_3_STATE_1 <= 1;
                 _BODY_1_STATE_2 <= 2;
                 _BODY_1_STATE_3 <= 3;
                 _BODY_1_STATE_4 <= 4;
@@ -152,6 +156,10 @@ module draw_rectangle(
                                                 d <= d + 4 * x - y + 10;
                                                 _BODY_1_THEN_2_STATE <= _BODY_1_THEN_2_STATE + 1; // INCREMENT STATE
                                             end
+                                            _BODY_1_THEN_2_STATE_2: begin // END STATEMENTS STATE
+                                                _BODY_1_STATE <= _BODY_1_STATE + 1; // FROM IF
+                                                _BODY_1_THEN_2_STATE <= 0; // LOOP FOR LOOP STATEMENTS
+                                            end
                                         endcase // STATEMENTS END
                                     end else begin
                                         case (_BODY_1_ELSE_3_STATE) // STATEMENTS START
@@ -159,9 +167,12 @@ module draw_rectangle(
                                                 d <= d + 4 * x + 6;
                                                 _BODY_1_ELSE_3_STATE <= _BODY_1_ELSE_3_STATE + 1; // INCREMENT STATE
                                             end
+                                            _BODY_1_ELSE_3_STATE_1: begin // END STATEMENTS STATE
+                                                _BODY_1_STATE <= _BODY_1_STATE + 1; // FROM IF
+                                                _BODY_1_ELSE_3_STATE <= 0; // LOOP FOR LOOP STATEMENTS
+                                            end
                                         endcase // STATEMENTS END
                                     end // IF STATEMENT END
-                                    _BODY_1_STATE <= _BODY_1_STATE + 1; // INCREMENT STATE
                                 end
                                 _BODY_1_STATE_2: begin
                                     _out0 <= s_x + x;

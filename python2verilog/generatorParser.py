@@ -214,14 +214,18 @@ class GeneratorParser:
             Lines([f"end else begin"]),
         )
         then_body = self.parse_statements(
-            stmt.body, f"{prefix}_THEN_{self.create_unique_name()}"
+            stmt.body, f"{prefix}_THEN_{self.create_unique_name()}", 
+            endStatements=Lines([f"{prefix}_STATE <= {prefix}_STATE + 1; // FROM IF"]),
+            resetToZero=True
         )
         if_then = Lines.nestify([if_conditional, then_body])
 
         if_then_skip_end = (if_then, Lines([f"end // IF STATEMENT END"]))
 
         else_body = self.parse_statements(
-            stmt.orelse, f"{prefix}_ELSE_{self.create_unique_name()}"
+            stmt.orelse, f"{prefix}_ELSE_{self.create_unique_name()}",
+            endStatements=Lines([f"{prefix}_STATE <= {prefix}_STATE + 1; // FROM IF"]),
+            resetToZero=True
         )
         return Lines.nestify([if_then_skip_end, else_body])
 
@@ -253,7 +257,7 @@ class GeneratorParser:
             for line in self.parse_statement(stmt, prefix=prefix) >> 2:
                 lines += line
                 assert str(line).find("\n") == -1
-            if type(stmt) != ast.For and type(stmt) != ast.While:
+            if type(stmt) != ast.For and type(stmt) != ast.While and type(stmt) != ast.If:
                 # Non-for-loop state machines always continue to next state after running current state's case statement
                 # TODO: figure out better way to handle this, perhaps add to end statements of caller
                 lines += (
