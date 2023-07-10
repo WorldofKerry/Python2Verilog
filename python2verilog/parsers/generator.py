@@ -103,8 +103,8 @@ class GeneratorParser:
             startLines += Indent(1) + f"input wire signed [31:0] {var.arg},"
         for var in self.yieldVars:
             startLines += Indent(1) + f"output reg signed [31:0] {var},"
-        startLines += Indent(1) + "output reg _done,\n"
-        startLines[-1] = startLines[-1].removesuffix(",\n") + "\n);"
+        startLines += Indent(1) + "output reg _done"
+        startLines += ");"
         endLines += "endmodule"
         return (startLines, endLines)
 
@@ -283,7 +283,7 @@ class GeneratorParser:
 
             lines += Indent(1) + f"{state}: begin"
 
-            for line in self.parse_statement(stmt, prefix=prefix) >> 2:
+            for line in self.parse_statement(stmt, prefix=prefix).indent(2):
                 lines += line
                 assert str(line).find("\n") == -1
             if type(stmt) != ast.For and type(stmt) != ast.While and type(stmt) != ast.If:

@@ -7,8 +7,10 @@ Based on my experimentation with a [C to Verilog converter](https://github.com/W
 Supported functions:
 
 - If
-- While
-- For range
+- While (May be buggy)
+- For range (May be buggy)
+
+**Warning**: Variables must be unique, i.e. variables do not have block scope, e.g. `for i in range(10)` modifies global `i`
 
 ## Working Tests
 
