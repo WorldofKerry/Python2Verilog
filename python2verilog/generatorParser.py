@@ -298,7 +298,7 @@ class GeneratorParser:
         assert isinstance(endStatements, Lines)
         # TODO: cleanup, remove the above enumerate?
         i = prevI + 1
-        # TODO: ideally endStatements occur in case, otherwise order may matter
+        # TODO: endStatements should take in array of Lines, where each element in array is one additional case
         for stmt in endStatements:
             state = self.add_global_var(str(i), f"{prefix}_STATE_{i}")
 
@@ -363,9 +363,11 @@ class GeneratorParser:
                 return self.parse_subscript(expr)
             case ast.BinOp:
                 return (
+                    "(" + 
                     self.parse_expression(expr.left)
                     + self.parse_binop(expr)
                     + self.parse_expression(expr.right)
+                    + ")"
                 )
             case ast.Compare:
                 return self.parse_compare(expr)

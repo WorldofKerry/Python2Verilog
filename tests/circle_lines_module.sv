@@ -101,47 +101,47 @@ module draw_rectangle(
                         _STATE <= _STATE + 1; // INCREMENT STATE
                     end
                     _STATE_2: begin
-                        d <= 3 - 2 * height;
+                        d <= (3 - (2 * height));
                         _STATE <= _STATE + 1; // INCREMENT STATE
                     end
                     _STATE_3: begin
-                        _out0 <= s_x + x;
-                        _out1 <= s_y + y;
+                        _out0 <= (s_x + x);
+                        _out1 <= (s_y + y);
                         _STATE <= _STATE + 1; // INCREMENT STATE
                     end
                     _STATE_4: begin
-                        _out0 <= s_x + x;
-                        _out1 <= s_y - y;
+                        _out0 <= (s_x + x);
+                        _out1 <= (s_y - y);
                         _STATE <= _STATE + 1; // INCREMENT STATE
                     end
                     _STATE_5: begin
-                        _out0 <= s_x - x;
-                        _out1 <= s_y + y;
+                        _out0 <= (s_x - x);
+                        _out1 <= (s_y + y);
                         _STATE <= _STATE + 1; // INCREMENT STATE
                     end
                     _STATE_6: begin
-                        _out0 <= s_x - x;
-                        _out1 <= s_y - y;
+                        _out0 <= (s_x - x);
+                        _out1 <= (s_y - y);
                         _STATE <= _STATE + 1; // INCREMENT STATE
                     end
                     _STATE_7: begin
-                        _out0 <= s_x + y;
-                        _out1 <= s_y + x;
+                        _out0 <= (s_x + y);
+                        _out1 <= (s_y + x);
                         _STATE <= _STATE + 1; // INCREMENT STATE
                     end
                     _STATE_8: begin
-                        _out0 <= s_x + y;
-                        _out1 <= s_y - x;
+                        _out0 <= (s_x + y);
+                        _out1 <= (s_y - x);
                         _STATE <= _STATE + 1; // INCREMENT STATE
                     end
                     _STATE_9: begin
-                        _out0 <= s_x - y;
-                        _out1 <= s_y + x;
+                        _out0 <= (s_x - y);
+                        _out1 <= (s_y + x);
                         _STATE <= _STATE + 1; // INCREMENT STATE
                     end
                     _STATE_10: begin
-                        _out0 <= s_x - y;
-                        _out1 <= s_y - x;
+                        _out0 <= (s_x - y);
+                        _out1 <= (s_y - x);
                         _STATE <= _STATE + 1; // INCREMENT STATE
                     end
                     _STATE_11: begin
@@ -150,7 +150,7 @@ module draw_rectangle(
                         end else begin
                             case (_BODY_1_STATE) // STATEMENTS START
                                 _BODY_1_STATE_0: begin
-                                    x <= x + 1;
+                                    x <= (x + 1);
                                     _BODY_1_STATE <= _BODY_1_STATE + 1; // INCREMENT STATE
                                 end
                                 _BODY_1_STATE_1: begin
@@ -162,11 +162,11 @@ module draw_rectangle(
                                         _BODY_1_IF_THEN: begin
                                             case (_BODY_1_IF_2_STATE) // STATEMENTS START
                                                 _BODY_1_IF_2_STATE_0: begin
-                                                    y <= y - 1;
+                                                    y <= (y - 1);
                                                     _BODY_1_IF_2_STATE <= _BODY_1_IF_2_STATE + 1; // INCREMENT STATE
                                                 end
                                                 _BODY_1_IF_2_STATE_1: begin
-                                                    d <= d + 4 * x - y + 10;
+                                                    d <= ((d + (4 * (x - y))) + 10);
                                                     _BODY_1_IF_2_STATE <= _BODY_1_IF_2_STATE + 1; // INCREMENT STATE
                                                 end
                                                 _BODY_1_IF_2_STATE_2: begin // END STATEMENTS STATE
@@ -178,7 +178,7 @@ module draw_rectangle(
                                         _BODY_1_IF_ELSE: begin
                                             case (_BODY_1_IF_3_STATE) // STATEMENTS START
                                                 _BODY_1_IF_3_STATE_0: begin
-                                                    d <= d + 4 * x + 6;
+                                                    d <= ((d + (4 * x)) + 6);
                                                     _BODY_1_IF_3_STATE <= _BODY_1_IF_3_STATE + 1; // INCREMENT STATE
                                                 end
                                                 _BODY_1_IF_3_STATE_1: begin // END STATEMENTS STATE
@@ -190,43 +190,43 @@ module draw_rectangle(
                                     endcase // IF END
                                 end
                                 _BODY_1_STATE_2: begin
-                                    _out0 <= s_x + x;
-                                    _out1 <= s_y + y;
+                                    _out0 <= (s_x + x);
+                                    _out1 <= (s_y + y);
                                     _BODY_1_STATE <= _BODY_1_STATE + 1; // INCREMENT STATE
                                 end
                                 _BODY_1_STATE_3: begin
-                                    _out0 <= s_x + x;
-                                    _out1 <= s_y - y;
+                                    _out0 <= (s_x + x);
+                                    _out1 <= (s_y - y);
                                     _BODY_1_STATE <= _BODY_1_STATE + 1; // INCREMENT STATE
                                 end
                                 _BODY_1_STATE_4: begin
-                                    _out0 <= s_x - x;
-                                    _out1 <= s_y + y;
+                                    _out0 <= (s_x - x);
+                                    _out1 <= (s_y + y);
                                     _BODY_1_STATE <= _BODY_1_STATE + 1; // INCREMENT STATE
                                 end
                                 _BODY_1_STATE_5: begin
-                                    _out0 <= s_x - x;
-                                    _out1 <= s_y - y;
+                                    _out0 <= (s_x - x);
+                                    _out1 <= (s_y - y);
                                     _BODY_1_STATE <= _BODY_1_STATE + 1; // INCREMENT STATE
                                 end
                                 _BODY_1_STATE_6: begin
-                                    _out0 <= s_x + y;
-                                    _out1 <= s_y + x;
+                                    _out0 <= (s_x + y);
+                                    _out1 <= (s_y + x);
                                     _BODY_1_STATE <= _BODY_1_STATE + 1; // INCREMENT STATE
                                 end
                                 _BODY_1_STATE_7: begin
-                                    _out0 <= s_x + y;
-                                    _out1 <= s_y - x;
+                                    _out0 <= (s_x + y);
+                                    _out1 <= (s_y - x);
                                     _BODY_1_STATE <= _BODY_1_STATE + 1; // INCREMENT STATE
                                 end
                                 _BODY_1_STATE_8: begin
-                                    _out0 <= s_x - y;
-                                    _out1 <= s_y + x;
+                                    _out0 <= (s_x - y);
+                                    _out1 <= (s_y + x);
                                     _BODY_1_STATE <= _BODY_1_STATE + 1; // INCREMENT STATE
                                 end
                                 _BODY_1_STATE_9: begin
-                                    _out0 <= s_x - y;
-                                    _out1 <= s_y - x;
+                                    _out0 <= (s_x - y);
+                                    _out1 <= (s_y - x);
                                     _BODY_1_STATE <= _BODY_1_STATE + 1; // INCREMENT STATE
                                     _BODY_1_STATE <= 0; // LOOP FOR LOOP STATEMENTS
                                 end

@@ -35,11 +35,13 @@ Docs `.html`: `python3 -m pydoc -w python2verilog`
 - localparam variables
 - add `valid` flag to output (for when output is not always valid)
 - Reduce cycles in some areas (convert if statements to cases for more consistent endStatements attachment?)
+- endStatements should take in array of Lines, where each element in array is one additional case
 
 ### Coding Excellence
 
 - Change all `[Lines, Lines]` to `(Lines, Lines)` as tuples have fixed length for function hint
 - Add consts for string literals (e.g. "_start")
+- Add LinePair class instead of relying on tuples for Lines.nestify
 
 ### Test Framework
 
