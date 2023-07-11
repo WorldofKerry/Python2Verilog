@@ -1,4 +1,4 @@
-name: IVerilog
+name: Verilog Simulation
 
 on: [push]
 
@@ -10,7 +10,7 @@ jobs:
     - name: Download Icarus Verilog and Utilities
       run: |
         sudo apt-get install iverilog
-        sudo apt-get install expected
+        sudo apt-get install expect
     - name: Simulate Verilog Tests
       run: |
         iverilog -s generator_tb  tests/parsers/data/generator/circle_lines/module.sv tests/parsers/data/generator/circle_lines/testbench.sv && unbuffer vvp a.out > output.txt
