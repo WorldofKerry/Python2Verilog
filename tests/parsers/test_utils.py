@@ -5,7 +5,7 @@ from python2verilog.parsers import Lines, Indent
 class TestLines(unittest.TestCase):
     def test_constructor(self):
         lines = Lines()
-        self.assertEqual("", lines.toString())
+        self.assertEqual("", lines.to_string())
         self.assertEqual("", str(lines))
 
         lines = Lines("abc 123")

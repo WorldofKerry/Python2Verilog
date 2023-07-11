@@ -33,10 +33,10 @@ class Lines:
         return self.add(other)
 
     def __str__(self):
-        return self.toString()
+        return self.to_string()
 
     def __repr__(self):
-        return self.toString()
+        return self.to_string()
 
     def __len__(self):
         return len(self.lines)
@@ -60,19 +60,28 @@ class Lines:
         self.lines = [Indent(indent_amount) + line for line in self.lines]
         return self
 
-    def toString(self, indent: int = 0):
+    def to_string(self, indent: int = 0):
+        """
+        Converts all lines into a string with lines
+        """
         output = ""
         for buffer in self.lines:
             output += Indent(indent) + buffer + "\n"
         return output
 
     def add(self, other: str):
+        """
+        Adds a new line
+        """
         assert isinstance(other, str)
         self.assert_no_newline(other)
         self.lines.append(other)
         return self
 
     def concat(self, other: Lines, indent: int = 0):
+        """
+        Concats two Lines
+        """
         assert isinstance(other, Lines)
         for line in other.lines:
             self.lines.append(Indent(indent) + line)
@@ -88,7 +97,7 @@ class Lines:
             pair[1][0]
         pair[0][1]
         """
-        assert type(indent) == int
+        assert isinstance(indent, int)
         for pair in buffers:
             assert isinstance(pair[0], Lines), f"{type(pair[0])} {pair[0]}"
             assert isinstance(pair[1], Lines), f"{type(pair[1])} {pair[1]}"
