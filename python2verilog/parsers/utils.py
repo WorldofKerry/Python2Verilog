@@ -103,10 +103,10 @@ class Lines:
             assert isinstance(pair[1], Lines), f"{type(pair[1])} {pair[1]}"
             assert len(pair) == 2
         lines = Lines()
-        for i in range(len(buffers)):
-            lines.concat(buffers[i][0], indent + i)
-        for i in range(len(buffers), 0, -1):
-            lines.concat(buffers[i - 1][1], indent + i - 1)
+        for i, buffer in enumerate(buffers):
+            lines.concat(buffer[0], indent + i)
+        for i, buffer in enumerate(buffers[::-1], len(buffers) - 1):
+            lines.concat(buffer[1], indent + i)
         return lines
 
 
