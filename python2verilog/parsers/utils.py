@@ -11,20 +11,19 @@ class Lines:
         assert str(input).find("\n") == -1, "Lines should not contain \\n"
 
     def __init__(self, input: list[str] | str = None):
-        match input:
-            case None:
-                self.lines = []
-            case str(line):
+        if input is None:
+            self.lines = []
+        elif isinstance(input, str):
+            self.assert_no_newline(input)
+            self.lines = [input]
+        elif isinstance(input, list):
+            for line in input:
+                assert isinstance(line, str), "Input must be a list of strings"
                 self.assert_no_newline(line)
-                self.lines = [line]
-            case list(lines):
-                for line in lines:
-                    assert isinstance(line, str), \
-                        "Input must be a list of strings"
-                    self.assert_no_newline(line)
-                self.lines = lines
-            case _:
-                assert False, "Invalid input type: " + str(type(input))
+            self.lines = input
+        else:
+            assert False, "Invalid input type: " + str(type(input))
+
 
     def __add__(self, other: str):
         return self.add(other)
