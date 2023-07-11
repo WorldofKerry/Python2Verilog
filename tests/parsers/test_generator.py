@@ -65,7 +65,10 @@ class TestGeneratorParser(unittest.TestCase):
   wire _done;
 
   // Instantiate the module under test
-  generator dut (
+  """
+                text += NAMED_FUNCTION
+                
+                text += """ dut (
     ._clock(_clock),
     ._start(_start),
 """
@@ -73,8 +76,6 @@ class TestGeneratorParser(unittest.TestCase):
                     text += f"    .{v.arg}({v.arg}),\n"
                 for i in range(len(tree.body[0].returns.slice.elts)):
                     text += f"    ._out{i}(_out{i}),\n"
-
-                # TODO: auto-populate test case args data
                 text += """
     ._done(_done)
   );
@@ -140,7 +141,7 @@ endmodule
                             os.path.getsize(os.path.join(FULL_PATH, ACTUAL_FILENAME))
                             == 0
                         ):
-                            warnings.warn(f"No actual data for {FULL_PATH}, skipping")
+                            warnings.warn(f"Skipping, due to empty {os.path.join(FULL_PATH, ACTUAL_FILENAME)}")
                             return
 
                         with open(os.path.join(FULL_PATH, EXPECTED_FILENAME)) as exp_f:

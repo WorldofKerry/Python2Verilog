@@ -13,7 +13,7 @@ module generator_tb;
   wire _done;
 
   // Instantiate the module under test
-  generator dut (
+  circle_lines dut (
     ._clock(_clock),
     ._start(_start),
     .s_x(s_x),

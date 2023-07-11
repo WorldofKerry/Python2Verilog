@@ -14,7 +14,7 @@ module generator_tb;
   wire _done;
 
   // Instantiate the module under test
-  generator dut (
+  rectangle_filled dut (
     ._clock(_clock),
     ._start(_start),
     .s_x(s_x),
