@@ -24,7 +24,6 @@ class Lines:
         else:
             assert False, "Invalid input type: " + str(type(input))
 
-
     def __add__(self, other: str):
         return self.add(other)
 

@@ -10,9 +10,9 @@ def circle_lines(s_x, s_y, height) -> tuple[int, int]:
     yield (s_x + y, s_y - x)
     yield (s_x - y, s_y + x)
     yield (s_x - y, s_y - x)
-    while (y >= x):
+    while y >= x:
         x = x + 1
-        if (d > 0):
+        if d > 0:
             y = y - 1
             d = d + 4 * (x - y) + 10
         else:

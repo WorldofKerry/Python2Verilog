@@ -1,7 +1,8 @@
 import unittest
 from python2verilog.parsers import Lines, Indent
 
-class TestLines(unittest.TestCase): 
+
+class TestLines(unittest.TestCase):
     def test_constructor(self):
         lines = Lines()
         self.assertEqual("", lines.toString())
@@ -14,7 +15,7 @@ class TestLines(unittest.TestCase):
         self.assertRaises(AssertionError, Lines, {})
 
         lines = Lines(["abc 123"])
-        self.assertEqual("abc 123\n", str(lines))        
+        self.assertEqual("abc 123\n", str(lines))
         self.assertRaises(AssertionError, Lines, ["abc 123\n"])
         self.assertRaises(AssertionError, Lines, ["\n"])
 
@@ -33,21 +34,22 @@ class TestLines(unittest.TestCase):
         self.assertEqual("abc 123\nghi 789\n", str(lines))
         self.assertRaises(AssertionError, lines.concat, "abc 123")
 
-        for i in range(3): 
+        for i in range(3):
             lines = Lines("abc 123")
             self.assertEqual(Indent(i) + "abc 123\n", str(lines.indent(i)))
-        
+
         lines = Lines("abc 123")
         sum = 0
-        for i in range(3): 
+        for i in range(3):
             sum += i
             self.assertEqual(Indent(sum) + "abc 123\n", str(lines.indent(i)))
 
-class TestIndent(unittest.TestCase): 
-    def test_all(self): 
+
+class TestIndent(unittest.TestCase):
+    def test_all(self):
         self.assertEqual("", str(Indent()))
 
-        for i in range(3): 
+        for i in range(3):
             self.assertEqual(Indent.indentor * i, str(Indent(i)))
             self.assertEqual(Indent.indentor * i + "abc 123", Indent(i) + "abc 123")
             self.assertEqual("abc 123" + Indent.indentor * i, "abc 123" + Indent(i))

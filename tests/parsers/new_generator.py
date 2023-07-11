@@ -41,12 +41,12 @@ def script(args: argparse.Namespace, logger: logging.Logger, shell: callable) ->
         }
         config.write(config_file)
 
-    try: 
+    try:
         with open(
             os.path.join(PATH_TO_NEW_TEST, args.generator), mode="x"
         ) as generator_file:
             generator_file.write(args.template)
-    except FileExistsError: 
+    except FileExistsError:
         logger.warning("Skipping Python file as it already exists")
 
     TEST_FILE_PATH = os.path.join(
@@ -55,7 +55,7 @@ def script(args: argparse.Namespace, logger: logging.Logger, shell: callable) ->
     logger.info(f"Appending to {TEST_FILE_PATH} with pytest function")
     with open(TEST_FILE_PATH, mode="a") as test_file:
         test_file.write(
-            f"\n    def test_{args.test_name}(self, ()):\n        self.run_test(\"{args.test_name}\")\n"
+            f'\n    def test_{args.test_name}(self, ()):\n        self.run_test("{args.test_name}")\n'
         )
 
     logger.warning(
@@ -64,7 +64,9 @@ def script(args: argparse.Namespace, logger: logging.Logger, shell: callable) ->
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawTextHelpFormatter
+    )
 
     # Positional arguments
     parser.add_argument(
@@ -120,10 +122,16 @@ if __name__ == "__main__":
         "--test_file", type=str, help="Filename of pytest", default="test_generator.py"
     )
     parser.add_argument(
-        "--ast-dump", type=str, help="Where `ast.dump(...)` is saved", default="ast_dump.log"
+        "--ast-dump",
+        type=str,
+        help="Where `ast.dump(...)` is saved",
+        default="ast_dump.log",
     )
     parser.add_argument(
-        "--visual", type=str, help="Where 2D plot of first two output params are saved", default="visual.log"
+        "--visual",
+        type=str,
+        help="Where 2D plot of first two output params are saved",
+        default="visual.log",
     )
 
     parser_args = parser.parse_args()

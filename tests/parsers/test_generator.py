@@ -10,9 +10,7 @@ import configparser
 class TestGeneratorParser(unittest.TestCase):
     def run_test(self, name, TEST_CASE, dir="data/generator/"):
         # Get config from path
-        FULL_PATH = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), dir, name
-        )
+        FULL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), dir, name)
 
         config = configparser.ConfigParser()
         config.read(os.path.join(FULL_PATH, "config.ini"))
@@ -21,7 +19,9 @@ class TestGeneratorParser(unittest.TestCase):
         TEST_NAME = config["file_names"]["test_name"]
         ACTUAL_FILENAME = config["file_names"]["actual"]
 
-        with open(os.path.join(FULL_PATH, config[FILE_NAMES]["generator"])) as python_file:
+        with open(
+            os.path.join(FULL_PATH, config[FILE_NAMES]["generator"])
+        ) as python_file:
             python = python_file.read()
             _locals = dict()
             exec(python, None, _locals)  # grab's exec's populated scoped variables
@@ -160,7 +160,9 @@ endmodule
                             )
                             return
 
-                        with open(os.path.join(FULL_PATH, config[FILE_NAMES]["expected"])) as exp_f:
+                        with open(
+                            os.path.join(FULL_PATH, config[FILE_NAMES]["expected"])
+                        ) as exp_f:
                             expected = csv.reader(exp_f)
                             actual = csv.reader(act_f)
 
