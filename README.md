@@ -14,6 +14,11 @@ Supported functions:
 
 **Warning**: Variables must be unique, i.e. variables do not have block scope, e.g. the following modifies global `i`:
 
+```python
+for i in range(10):
+    pass
+```
+
 ## Tested Generations
 
 I recommend [EDA Playground](https://edaplayground.com/) for testing the verilog code.
