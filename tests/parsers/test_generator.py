@@ -1,7 +1,6 @@
 from python2verilog.parsers import GeneratorParser
 import unittest
 import os
-import inspect
 import warnings
 import ast
 import csv
