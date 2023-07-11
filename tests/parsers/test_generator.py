@@ -57,7 +57,7 @@ class TestGeneratorParser(unittest.TestCase):
             with open(
                 os.path.join(FULL_PATH, config[FILE_NAMES]["ast_dump"]), mode="w"
             ) as ast_dump_file:
-                pass
+                ast_dump_file.write(ast.dump(tree, indent="  "))
 
             with open(
                 os.path.join(FULL_PATH, MODULE_FILENAME), mode="w"
