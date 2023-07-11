@@ -25,7 +25,7 @@ I recommend [EDA Playground](https://edaplayground.com/) for testing the verilog
 
 `python3 -m pytest --verbose` to run tests / regenerate files.
 
-`python3 tests/parsers/new_generator.py` to create new test case and fill in Python code.
+`python3 tests/parsers/new_generator.py` to create new test case and prepare template Python file.
 
 Comparisons between Python and Verilog for sample inputs:
 | Algorithm          | Python Yield Count | Verilog Clock ycles | Notes   |
