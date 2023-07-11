@@ -17,6 +17,7 @@ class TestGeneratorParser(unittest.TestCase):
         config = configparser.ConfigParser()
         config.read(os.path.join(PATH_TO_TEST, "config.ini"))
 
+        FILE_NAMES = "file_names" # subsection of config.ini
         FULL_PATH = PATH_TO_TEST
         PYTHON_GENERATOR_FILENAME = config["file_names"]["generator"]
         NAMED_FUNCTION = config["file_names"]["test_name"]
@@ -31,13 +32,17 @@ class TestGeneratorParser(unittest.TestCase):
             exec(python, None, _locals)  # grab's exec's populated scoped variables
 
             tree = ast.parse(python)
-            generator_inst = _locals[NAMED_FUNCTION](*TEST_CASE)
 
             with open(
                 os.path.join(FULL_PATH, EXPECTED_FILENAME), mode="w"
             ) as expected_file:
+                generator_inst = _locals[NAMED_FUNCTION](*TEST_CASE)
                 for tupl in generator_inst:
                     expected_file.write(str(tupl)[1:-1] + "\n")
+            
+            with open(
+                os.path.join(FULL_PATH, config[FILE_NAMES]["visual"]), mode="w") as visual_file: 
+                pass
 
             with open(
                 os.path.join(FULL_PATH, MODULE_FILENAME), mode="w"
