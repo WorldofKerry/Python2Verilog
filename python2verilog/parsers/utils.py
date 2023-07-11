@@ -1,5 +1,5 @@
 from __future__ import annotations
-import warnings
+
 
 class Lines:
     """
@@ -7,8 +7,8 @@ class Lines:
     """
 
     @staticmethod
-    def assert_no_newline(input: any): 
-       assert str(input).find("\n") == -1, "Lines should not contain \\n" 
+    def assert_no_newline(input: any):
+        assert str(input).find("\n") == -1, "Lines should not contain \\n"
 
     def __init__(self, input: list[str] | str = None):
         match input:
@@ -19,7 +19,8 @@ class Lines:
                 self.lines = [line]
             case list(lines):
                 for line in lines:
-                    assert isinstance(line, str), "Input must be a list of strings"
+                    assert isinstance(line, str), \
+                        "Input must be a list of strings"
                     self.assert_no_newline(line)
                 self.lines = lines
             case _:
@@ -48,8 +49,8 @@ class Lines:
 
     def __rshift__(self, indent: int):
         indent(indent)
-    
-    def indent(self, indent: int): 
+
+    def indent(self, indent: int):
         self.lines = [Indent(indent) + line for line in self.lines]
         return self
 
@@ -93,10 +94,12 @@ class Lines:
             lines.concat(buffers[i - 1][1], indent + i - 1)
         return lines
 
+
 class Indent:
     """
     Creates str instances of indentation
     """
+
     indentor = " " * 4
 
     def indentify(self, indent: int = 0) -> str:

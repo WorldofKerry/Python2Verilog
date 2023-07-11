@@ -1,6 +1,6 @@
 from __future__ import annotations
 import ast
-from .utils import *
+from .utils import Lines, Indent
 
 
 class GeneratorParser:
@@ -182,23 +182,22 @@ class GeneratorParser:
         """
         <statement> (e.g. assign, for loop, etc., those that do not return a value)
         """
-        match type(stmt):
-            case ast.Assign:
-                return Lines([self.parse_assign(stmt)])
-            case ast.For:
-                return self.parse_for(stmt, prefix=prefix)
-            case ast.Expr:
-                return self.parse_statement(stmt.value, prefix=prefix)
-            case ast.Yield:
-                return self.parse_yield(stmt)
-            case ast.While:
-                return self.parse_while(stmt, prefix=prefix)
-            case ast.If:
-                return self.parse_if(stmt, prefix=prefix)
-            case _:
-                raise Exception(
-                    "Error: unexpected statement type", type(stmt), ast.dump(stmt)
-                )
+        if isinstance(stmt, ast.Assign):
+            return Lines([self.parse_assign(stmt)])
+        elif isinstance(stmt, ast.For):
+            return self.parse_for(stmt, prefix=prefix)
+        elif isinstance(stmt, ast.Expr):
+            return self.parse_statement(stmt.value, prefix=prefix)
+        elif isinstance(stmt, ast.Yield):
+            return self.parse_yield(stmt)
+        elif isinstance(stmt, ast.While):
+            return self.parse_while(stmt, prefix=prefix)
+        elif isinstance(stmt, ast.If):
+            return self.parse_if(stmt, prefix=prefix)
+        else:
+            raise Exception(
+                "Error: unexpected statement type", type(stmt), ast.dump(stmt)
+            )
 
     def parse_if(self, stmt: ast.If, prefix: str = ""):
         """
@@ -210,48 +209,47 @@ class GeneratorParser:
         lines += f"case ({state_var}) // IF START"
 
         state_conditional = self.add_global_var(0, f"{state_var}_CONDITIONAL")
-        state_then = self.add_global_var(1, f"{state_var}_THEN")        
+        state_then = self.add_global_var(1, f"{state_var}_THEN")
         state_else = self.add_global_var(2, f"{state_var}_ELSE")
 
         # If condition
-        wrapper = (
-            Lines([f"{state_conditional}: begin"]),
-            Lines([f"end"])
-        )
+        wrapper = (Lines([f"{state_conditional}: begin"]), Lines([f"end"]))
         body = (
-            Lines([f"if ({self.parse_expression(stmt.test)}) {state_var} <= {state_then};"]), 
-            Lines([f"else {state_var} <= {state_else};"])
+            Lines(
+                [
+                    f"if ({self.parse_expression(stmt.test)}) {state_var} <= {state_then};"
+                ]
+            ),
+            Lines([f"else {state_var} <= {state_else};"]),
         )
         if_condition = Lines.nestify((wrapper, body))
 
         # If then
-        wrapper = (
-            Lines([f"{state_then}: begin"]),
-            Lines([f"end"])
-        )
+        wrapper = (Lines([f"{state_then}: begin"]), Lines([f"end"]))
         body = self.parse_statements(
-            stmt.body, 
-            f"{state_var}_{self.create_unique_name()}", 
-            endStatements=Lines([
-                f"{prefix}_STATE <= {prefix}_STATE + 1; {state_var} <= {state_conditional};",
-                ]),
-            resetToZero=True
-            )
+            stmt.body,
+            f"{state_var}_{self.create_unique_name()}",
+            endStatements=Lines(
+                [
+                    f"{prefix}_STATE <= {prefix}_STATE + 1; {state_var} <= {state_conditional};",
+                ]
+            ),
+            resetToZero=True,
+        )
         if_then = Lines.nestify((wrapper, body))
 
         # If else
-        wrapper = (
-            Lines([f"{state_else}: begin"]),
-            Lines([f"end"])
-        )
+        wrapper = (Lines([f"{state_else}: begin"]), Lines([f"end"]))
         body = self.parse_statements(
-            stmt.orelse, 
-            f"{state_var}_{self.create_unique_name()}", 
-            endStatements=Lines([
-                f"{prefix}_STATE <= {prefix}_STATE + 1; {state_var} <= {state_conditional};", 
-                ]),
-            resetToZero=True
-            )
+            stmt.orelse,
+            f"{state_var}_{self.create_unique_name()}",
+            endStatements=Lines(
+                [
+                    f"{prefix}_STATE <= {prefix}_STATE + 1; {state_var} <= {state_conditional};",
+                ]
+            ),
+            resetToZero=True,
+        )
         if_else = Lines.nestify((wrapper, body))
 
         lines.concat(if_condition, 1).concat(if_then, 1).concat(if_else, 1)
@@ -286,7 +284,11 @@ class GeneratorParser:
             for line in self.parse_statement(stmt, prefix=prefix).indent(2):
                 lines += line
                 assert str(line).find("\n") == -1
-            if type(stmt) != ast.For and type(stmt) != ast.While and type(stmt) != ast.If:
+            if (
+                type(stmt) != ast.For
+                and type(stmt) != ast.While
+                and type(stmt) != ast.If
+            ):
                 # Non-for-loop state machines always continue to next state after running current state's case statement
                 # TODO: figure out better way to handle this, perhaps add to end statements of caller
                 lines += (
@@ -336,43 +338,41 @@ class GeneratorParser:
         """
         <left> <op> <right>
         """
-        match type(node.op):
-            case ast.Add:
-                return " + "
-            case ast.Sub:
-                return " - "
-            case ast.Mult:
-                return " * "
-            case ast.Div:
-                return " / "
-            case _:
-                raise Exception(
-                    "Error: unexpected binop type", type(node.op), ast.dump(node.op)
-                )
+        if isinstance(node.op, ast.Add):
+            return " + "
+        elif isinstance(node.op, ast.Sub):
+            return " - "
+        elif isinstance(node.op, ast.Mult):
+            return " * "
+        elif isinstance(node.op, ast.Div):
+            return " / "
+        else:
+            raise Exception(
+                "Error: unexpected binop type", type(node.op), ast.dump(node.op)
+            )
 
     def parse_expression(self, expr: ast.AST):
         """
         <expression> (e.g. constant, name, subscript, etc., those that return a value)
         """
-        match type(expr):
-            case ast.Constant:
-                return str(expr.value)
-            case ast.Name:
-                return expr.id
-            case ast.Subscript:
-                return self.parse_subscript(expr)
-            case ast.BinOp:
-                return (
-                    "(" + 
-                    self.parse_expression(expr.left)
-                    + self.parse_binop(expr)
-                    + self.parse_expression(expr.right)
-                    + ")"
-                )
-            case ast.Compare:
-                return self.parse_compare(expr)
-            case _:
-                raise Exception("Error: unexpected expression type", type(expr))
+        if isinstance(expr, ast.Constant):
+            return str(expr.value)
+        elif isinstance(expr, ast.Name):
+            return expr.id
+        elif isinstance(expr, ast.Subscript):
+            return self.parse_subscript(expr)
+        elif isinstance(expr, ast.BinOp):
+            return (
+                "("
+                + self.parse_expression(expr.left)
+                + self.parse_binop(expr)
+                + self.parse_expression(expr.right)
+                + ")"
+            )
+        elif isinstance(expr, ast.Compare):
+            return self.parse_compare(expr)
+        else:
+            raise Exception("Error: unexpected expression type", type(expr))
 
     def parse_subscript(self, node: ast.Subscript):
         """
@@ -390,19 +390,18 @@ class GeneratorParser:
         assert len(node.ops) == 1
         assert len(node.comparators) == 1
 
-        match type(node.ops[0]):
-            case ast.Lt:
-                operator = "<"
-            case ast.LtE:
-                operator = "<="
-            case ast.Gt:
-                operator = ">"
-            case ast.GtE:
-                operator = ">="
-            case _:
-                raise Exception(
-                    "Error: unknown operator", type(node.ops[0]), ast.dump(node.ops[0])
-                )
+        if isinstance(node.ops[0], ast.Lt):
+            operator = "<"
+        elif isinstance(node.ops[0], ast.LtE):
+            operator = "<="
+        elif isinstance(node.ops[0], ast.Gt):
+            operator = ">"
+        elif isinstance(node.ops[0], ast.GtE):
+            operator = ">="
+        else:
+            raise Exception(
+                "Error: unknown operator", type(node.ops[0]), ast.dump(node.ops[0])
+            )
         return f"{self.parse_expression(node.left)} {operator} {self.parse_expression(node.comparators[0])}"
 
     def parse_while(self, node: ast.While, prefix: str = ""):
