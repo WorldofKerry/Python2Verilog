@@ -7,10 +7,9 @@ import ast
 import csv
 import configparser
 
-class TestGeneratorParser(unittest.TestCase):
-    def run_test(self, name, dir="data/generator/"):
-        TEST_CASE = [23, 17, 5, 0]  # Args
 
+class TestGeneratorParser(unittest.TestCase):
+    def run_test(self, name, TEST_CASE, dir="data/generator/"):
         # Get config from path
         PATH_TO_TEST = os.path.join(
             os.path.dirname(os.path.abspath(__file__)), dir, name
@@ -177,7 +176,10 @@ endmodule
                             return "Running test"
 
     def test_rectangle_filled(self):
-        self.run_test("rectangle_filled")
+        self.run_test("rectangle_filled", (23, 17, 5, 7))
 
     def test_circle_lines(self):
-        self.run_test("circle_lines")
+        self.run_test("circle_lines", (23, 17, 5))
+
+    def test_rectangle_lines(self):
+        self.run_test("rectangle_lines", (23, 17, 5, 7))

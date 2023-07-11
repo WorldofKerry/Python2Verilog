@@ -1,4 +1,4 @@
-module generator(
+module rectangle_lines(
     input wire _clock,
     input wire _start,
     input wire signed [31:0] s_x,
