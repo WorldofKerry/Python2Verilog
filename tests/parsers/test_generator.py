@@ -145,54 +145,40 @@ endmodule
 """
 
                 testbench_file.write(text)
+                with open(os.path.join(FULL_PATH, ACTUAL_FILENAME)) as act_f:
+                    with open(
+                        os.path.join(FULL_PATH, config[FILE_NAMES]["expected"])
+                    ) as exp_f:
+                        expected = csv.reader(exp_f)
+                        actual = csv.reader(act_f)
 
-                try:
-                    with open(os.path.join(FULL_PATH, ACTUAL_FILENAME), mode="x"):
-                        return ""
-                except FileExistsError:
-                    with open(os.path.join(FULL_PATH, ACTUAL_FILENAME)) as act_f:
-                        if (
-                            os.path.getsize(os.path.join(FULL_PATH, ACTUAL_FILENAME))
-                            == 0
-                        ):
-                            warnings.warn(
-                                f"Skipping, due to empty {os.path.join(FULL_PATH, ACTUAL_FILENAME)}"
-                            )
-                            return
+                        actual_coords = set()
+                        expected_coords = set()
 
-                        with open(
-                            os.path.join(FULL_PATH, config[FILE_NAMES]["expected"])
-                        ) as exp_f:
-                            expected = csv.reader(exp_f)
-                            actual = csv.reader(act_f)
+                        # TODO: cleanup
+                        for row in actual:
+                            valid = True
+                            for element in row:
+                                if element.strip() == "x":
+                                    valid = False
+                            if valid:
+                                actual_coords.add(tuple(row))
 
-                            actual_coords = set()
-                            expected_coords = set()
+                        for row in expected:
+                            expected_coords.add(tuple(row))
 
-                            # TODO: cleanup
-                            for row in actual:
-                                valid = True
-                                for element in row:
-                                    if element.strip() == "x":
-                                        valid = False
-                                if valid:
-                                    actual_coords.add(tuple(row))
+                        self.assertEqual(
+                            actual_coords - expected_coords,
+                            set(),
+                            f"Extra coordinates: {str(actual_coords - expected_coords)} {str(actual_coords)} {str(expected_coords)}",
+                        )
+                        self.assertEqual(
+                            expected_coords - actual_coords,
+                            set(),
+                            f"Missing Coordinates: {str(expected_coords - actual_coords)} {str(actual_coords)} {str(expected_coords)}",
+                        )
 
-                            for row in expected:
-                                expected_coords.add(tuple(row))
-
-                            self.assertEqual(
-                                actual_coords - expected_coords,
-                                set(),
-                                f"Extra coordinates: {str(actual_coords - expected_coords)} {str(actual_coords)} {str(expected_coords)}",
-                            )
-                            self.assertEqual(
-                                expected_coords - actual_coords,
-                                set(),
-                                f"Missing Coordinates: {str(expected_coords - actual_coords)} {str(actual_coords)} {str(expected_coords)}",
-                            )
-
-                            return "Running test"
+                        return "Running test"
 
     def test_rectangle_filled(self):
         self.run_test("rectangle_filled", (23, 17, 5, 7))
@@ -202,3 +188,6 @@ endmodule
 
     def test_rectangle_lines(self):
         self.run_test("rectangle_lines", (23, 17, 5, 7))
+
+    def test_delete_me(self):
+        self.run_test("delete_me", (1, 2, 3, 4))

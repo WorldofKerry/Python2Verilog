@@ -1,0 +1,1 @@
+iverilog -s generator_tb /home/kerrwang/repos/testing1/tests/parsers/data/generator/delete_me/module.sv /home/kerrwang/repos/testing1/tests/parsers/data/generator/delete_me/testbench.sv && unbuffer vvp a.out > /home/kerrwang/repos/testing1/tests/parsers/data/generator/delete_me/actual.csv && cat /home/kerrwang/repos/testing1/tests/parsers/data/generator/delete_me/actual.csv
