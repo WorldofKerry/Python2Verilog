@@ -44,4 +44,4 @@ jobs:
         bash tests/parsers/iverilog_sim_cmds.sh
     - name: Test with pytest
       run: |
-        python3 -m pytest
+        python3 -m pytest --verbose
