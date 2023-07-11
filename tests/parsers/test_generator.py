@@ -19,7 +19,6 @@ class TestGeneratorParser(unittest.TestCase):
         config = configparser.ConfigParser()
         config.read(os.path.join(PATH_TO_TEST, "config.ini"))
 
-        DATA_PATH = dir
         FULL_PATH = PATH_TO_TEST
         PYTHON_GENERATOR_FILENAME = config["file_names"]["generator"]
         NAMED_FUNCTION = config["file_names"]["test_name"]
@@ -177,5 +176,8 @@ endmodule
 
                             return "Running test"
 
-    def circle_lines(self):
-        self.run_test(inspect.currentframe().f_code.co_name)
+    def test_rectangle_filled(self):
+        self.run_test("rectangle_filled")
+
+    def test_circle_lines(self):
+        self.run_test("circle_lines")

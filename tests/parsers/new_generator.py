@@ -41,7 +41,7 @@ def script(args: argparse.Namespace, logger: logging.Logger, shell: callable) ->
     logger.info(f"Appending to {TEST_FILE_PATH} with pytest function")
     with open(TEST_FILE_PATH, mode="a") as test_file:
         test_file.write(
-            f"\n    def {args.test_name}(self):\n        self.run_test(inspect.currentframe().f_code.co_name)"
+            f"\n    def test_{args.test_name}(self):\n        self.run_test(\"{args.test_name}\")\n"
         )
 
     logger.warn(
@@ -56,7 +56,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "test_name",
         type=str,
-        help="Test directory name, good idea to prefix with test_, e.g. test_circle_lines",
+        help="Test directory name, e.g. circle_lines",
     )
 
     # Optional arguments

@@ -1,4 +1,4 @@
-module test_abc(
+module circle_lines(
     input wire _clock,
     input wire _start,
     input wire signed [31:0] a,
