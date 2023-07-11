@@ -27,6 +27,9 @@ I recommend [EDA Playground](https://edaplayground.com/) for testing the verilog
 
 `python3 tests/parsers/new_generator.py <name>` to create new test case and prepare template Python file.
 
+To test verilog locally, an example command with Icarus Verilog is
+`iverilog '-Wall' design.sv testbench.sv  && unbuffer vvp a.out`
+
 Comparisons between Python and Verilog for sample inputs:
 | Algorithm          | Python Yield Count | Verilog Clock ycles | Notes   |
 | ------------------ | ------------------ | ------------------- | ------- |
