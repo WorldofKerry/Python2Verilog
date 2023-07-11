@@ -21,4 +21,4 @@ jobs:
     - name: Analysing the code with pylint
       run: |
         # pylint $(git ls-files '*.py') # ignore test files for now
-        pylint ./python2verilog/
+        pylint -d W0511 ./python2verilog/ # ignores fixme
