@@ -1,3 +1,5 @@
+"""Utility Classes"""
+
 from __future__ import annotations
 
 
@@ -7,22 +9,25 @@ class Lines:
     """
 
     @staticmethod
-    def assert_no_newline(input: any):
-        assert str(input).find("\n") == -1, "Lines should not contain \\n"
+    def assert_no_newline(stringable: any):
+        """
+        Asserts no newline character in str(stringable)
+        """
+        assert str(stringable).find("\n") == -1, "Lines should not contain \\n"
 
-    def __init__(self, input: list[str] | str = None):
-        if input is None:
+    def __init__(self, data: list[str] | str = None):
+        if data is None:
             self.lines = []
-        elif isinstance(input, str):
-            self.assert_no_newline(input)
-            self.lines = [input]
-        elif isinstance(input, list):
-            for line in input:
+        elif isinstance(data, str):
+            self.assert_no_newline(data)
+            self.lines = [data]
+        elif isinstance(data, list):
+            for line in data:
                 assert isinstance(line, str), "Input must be a list of strings"
                 self.assert_no_newline(line)
-            self.lines = input
+            self.lines = data
         else:
-            assert False, "Invalid input type: " + str(type(input))
+            assert False, "Invalid input type: " + str(type(data))
 
     def __add__(self, other: str):
         return self.add(other)
@@ -48,8 +53,11 @@ class Lines:
     def __rshift__(self, indent: int):
         indent(indent)
 
-    def indent(self, indent: int):
-        self.lines = [Indent(indent) + line for line in self.lines]
+    def indent(self, indent_amount: int):
+        """
+        Indent all lines by amount
+        """
+        self.lines = [Indent(indent_amount) + line for line in self.lines]
         return self
 
     def toString(self, indent: int = 0):
