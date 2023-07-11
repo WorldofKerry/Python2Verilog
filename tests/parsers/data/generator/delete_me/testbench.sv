@@ -10,8 +10,6 @@ module generator_tb;
   // Outputs
   wire signed [31:0] _out0;
   wire signed [31:0] _out1;
-  wire signed [31:0] _out2;
-  wire signed [31:0] _out3;
 
   wire _done;
 
@@ -25,8 +23,6 @@ module generator_tb;
     .d(d),
     ._out0(_out0),
     ._out1(_out1),
-    ._out2(_out2),
-    ._out3(_out3),
 
     ._done(_done)
   );
@@ -57,7 +53,7 @@ module generator_tb;
       @(posedge _clock);
       _start = 0;
       // Display the outputs for every cycle after start
-      $display("%0d, %0d, %0d, %0d", _out0, _out1, _out2, _out3);
+      $display("%0d, %0d", _out0, _out1);
 
     end
 

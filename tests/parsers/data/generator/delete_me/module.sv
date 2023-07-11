@@ -7,8 +7,6 @@ module delete_me(
     input wire signed [31:0] d,
     output reg signed [31:0] _out0,
     output reg signed [31:0] _out1,
-    output reg signed [31:0] _out2,
-    output reg signed [31:0] _out3,
     output reg _done
 );
     reg signed [31:0] _STATE;

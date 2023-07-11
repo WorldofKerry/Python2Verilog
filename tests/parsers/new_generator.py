@@ -103,7 +103,7 @@ if __name__ == "__main__":
         "--template",
         type=str,
         help="Template generator function",
-        default=f"def {parser.parse_args().test_name}(a, b, c, d) -> tuple[int, int, int, int]:\n  yield(a, b)\n  yield(c, d)",
+        default=f"def {parser.parse_args().test_name}(a, b, c, d) -> tuple[int, int]:\n  yield(a, b)\n  yield(c, d)",
     )
     parser.add_argument(
         "-d",
