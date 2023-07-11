@@ -7,15 +7,6 @@ import ast
 import csv
 import configparser
 
-# THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-# NAMED_FUNCTION = "generator"  # Default function name in generator.py
-# PYTHON_GENERATOR_FILENAME = "generator.py"
-# EXPECTED_FILENAME = "expected.csv"
-# ACTUAL_FILENAME = "actual.csv"
-# MODULE_FILENAME = "module.sv"
-# TESTBENCH_FILENAME = "testbench.sv"
-
-
 class TestGeneratorParser(unittest.TestCase):
     def run_test(self, name, dir="data/generator/"):
         TEST_CASE = [23, 17, 5, 0]  # Args
@@ -37,8 +28,6 @@ class TestGeneratorParser(unittest.TestCase):
         MODULE_FILENAME = config["file_names"]["module"]
         TESTBENCH_FILENAME = config["file_names"]["testbench"]
 
-        # DATA_PATH = f"data/{__name__}/{name}/"
-        # FULL_PATH = os.path.join(THIS_DIR, DATA_PATH)
         with open(os.path.join(FULL_PATH, PYTHON_GENERATOR_FILENAME)) as python_file:
             python = python_file.read()
             _locals = dict()
@@ -188,11 +177,5 @@ endmodule
 
                             return "Running test"
 
-    # def test_circle_lines(self):
-    #     self.run_test(inspect.currentframe().f_code.co_name)
-
-    # def test_rectangle_lines(self):
-    #     self.run_test(inspect.currentframe().f_code.co_name)
-
-    def test_abc(self):
+    def circle_lines(self):
         self.run_test(inspect.currentframe().f_code.co_name)

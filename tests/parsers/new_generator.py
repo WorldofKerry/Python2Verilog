@@ -34,9 +34,15 @@ def script(args: argparse.Namespace, logger: logging.Logger, shell: callable) ->
         os.path.join(PATH_TO_NEW_TEST, args.generator), mode="w"
     ) as generator_file:
         generator_file.write(args.template)
-    
-    with open(os.path.join(PATH_TO_NEW_TEST, args.test_file), mode="a") as test_file: 
-        pass
+
+    TEST_FILE_PATH = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), args.test_file
+    )
+    logger.info(f"Appending to {TEST_FILE_PATH} with pytest function")
+    with open(TEST_FILE_PATH, mode="a") as test_file:
+        test_file.write(
+            f"\n    def {args.test_name}(self):\n        self.run_test(inspect.currentframe().f_code.co_name)"
+        )
 
     logger.warn(
         f"Setup complete, replace content of {str(os.path.join(PATH_TO_NEW_TEST, args.generator))} with your python generator function"
