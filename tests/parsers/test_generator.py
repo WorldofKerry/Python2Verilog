@@ -17,7 +17,7 @@ class TestGeneratorParser(unittest.TestCase):
         config = configparser.ConfigParser()
         config.read(os.path.join(PATH_TO_TEST, "config.ini"))
 
-        FILE_NAMES = "file_names" # subsection of config.ini
+        FILE_NAMES = "file_names"  # subsection of config.ini
         FULL_PATH = PATH_TO_TEST
         PYTHON_GENERATOR_FILENAME = config["file_names"]["generator"]
         NAMED_FUNCTION = config["file_names"]["test_name"]
@@ -39,9 +39,24 @@ class TestGeneratorParser(unittest.TestCase):
                 generator_inst = _locals[NAMED_FUNCTION](*TEST_CASE)
                 for tupl in generator_inst:
                     expected_file.write(str(tupl)[1:-1] + "\n")
-            
+
             with open(
-                os.path.join(FULL_PATH, config[FILE_NAMES]["visual"]), mode="w") as visual_file: 
+                os.path.join(FULL_PATH, config[FILE_NAMES]["visual"]), mode="w"
+            ) as visual_file:
+                generator_inst = _locals[NAMED_FUNCTION](*TEST_CASE)
+
+                WIDTH, HEIGHT = 100, 100
+                matrix = [["." for x in range(WIDTH)] for y in range(HEIGHT)]
+                for tupl in generator_inst:
+                    matrix[tupl[0]][tupl[1]] = "@"
+                for row in matrix:
+                    for elem in row:
+                        visual_file.write(elem)
+                    visual_file.write("\n")
+
+            with open(
+                os.path.join(FULL_PATH, config[FILE_NAMES]["ast_dump"]), mode="w"
+            ) as ast_dump_file:
                 pass
 
             with open(
@@ -71,7 +86,7 @@ class TestGeneratorParser(unittest.TestCase):
   // Instantiate the module under test
   """
                 text += NAMED_FUNCTION
-                
+
                 text += """ dut (
     ._clock(_clock),
     ._start(_start),
@@ -145,7 +160,9 @@ endmodule
                             os.path.getsize(os.path.join(FULL_PATH, ACTUAL_FILENAME))
                             == 0
                         ):
-                            warnings.warn(f"Skipping, due to empty {os.path.join(FULL_PATH, ACTUAL_FILENAME)}")
+                            warnings.warn(
+                                f"Skipping, due to empty {os.path.join(FULL_PATH, ACTUAL_FILENAME)}"
+                            )
                             return
 
                         with open(os.path.join(FULL_PATH, EXPECTED_FILENAME)) as exp_f:
