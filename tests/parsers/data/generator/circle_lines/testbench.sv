@@ -36,7 +36,7 @@ module generator_tb;
     s_y = 17;
     height = 5;
 
-    _clock = 0; 
+    _clock = 0;
 
     // Wait for a few clock cycles
     #10;
@@ -48,12 +48,12 @@ module generator_tb;
     // Wait for the drawing to complete
     repeat (100) begin
       @(posedge _clock);
-      _start = 0; 
+      _start = 0;
       // Display the outputs for every cycle after start
       $display("%0d, %0d", _out0, _out1);
 
-    end 
-    
+    end
+
     // Finish simulation
     $finish;
   end

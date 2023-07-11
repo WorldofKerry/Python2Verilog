@@ -110,7 +110,7 @@ class TestGeneratorParser(unittest.TestCase):
                 for i, v in enumerate(tree.body[0].args.args):
                     text += f"    {v.arg} = {TEST_CASE[i]};\n"
                 text += """
-    _clock = 0; 
+    _clock = 0;
 
     // Wait for a few clock cycles
     #10;
@@ -122,7 +122,7 @@ class TestGeneratorParser(unittest.TestCase):
     // Wait for the drawing to complete
     repeat (100) begin
       @(posedge _clock);
-      _start = 0; 
+      _start = 0;
       // Display the outputs for every cycle after start
       $display(\""""  # TODO: use NAMED_FUNCTION instead of "generator dut"
 
@@ -135,8 +135,8 @@ class TestGeneratorParser(unittest.TestCase):
                 text += ");\n"
 
                 text += """
-    end 
-    
+    end
+
     // Finish simulation
     $finish;
   end

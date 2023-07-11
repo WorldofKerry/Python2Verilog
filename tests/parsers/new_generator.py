@@ -2,8 +2,8 @@
 
 """
 Creates a new generator test with specified name and sets up `config.ini`
-Appends the new test to `test_generator.py`. 
-With --overwrite, `config.ini` is overwritten, but the python file is not if it exists. 
+Appends the new test to `test_generator.py`.
+With --overwrite, `config.ini` is overwritten, but the python file is not if it exists.
 """
 
 import argparse
