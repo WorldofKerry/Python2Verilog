@@ -10,23 +10,18 @@ import configparser
 class TestGeneratorParser(unittest.TestCase):
     def run_test(self, name, TEST_CASE, dir="data/generator/"):
         # Get config from path
-        PATH_TO_TEST = os.path.join(
+        FULL_PATH = os.path.join(
             os.path.dirname(os.path.abspath(__file__)), dir, name
         )
 
         config = configparser.ConfigParser()
-        config.read(os.path.join(PATH_TO_TEST, "config.ini"))
+        config.read(os.path.join(FULL_PATH, "config.ini"))
 
         FILE_NAMES = "file_names"  # subsection of config.ini
-        FULL_PATH = PATH_TO_TEST
-        PYTHON_GENERATOR_FILENAME = config["file_names"]["generator"]
-        NAMED_FUNCTION = config["file_names"]["test_name"]
-        EXPECTED_FILENAME = config["file_names"]["expected"]
+        TEST_NAME = config["file_names"]["test_name"]
         ACTUAL_FILENAME = config["file_names"]["actual"]
-        MODULE_FILENAME = config["file_names"]["module"]
-        TESTBENCH_FILENAME = config["file_names"]["testbench"]
 
-        with open(os.path.join(FULL_PATH, PYTHON_GENERATOR_FILENAME)) as python_file:
+        with open(os.path.join(FULL_PATH, config[FILE_NAMES]["generator"])) as python_file:
             python = python_file.read()
             _locals = dict()
             exec(python, None, _locals)  # grab's exec's populated scoped variables
@@ -34,16 +29,16 @@ class TestGeneratorParser(unittest.TestCase):
             tree = ast.parse(python)
 
             with open(
-                os.path.join(FULL_PATH, EXPECTED_FILENAME), mode="w"
+                os.path.join(FULL_PATH, config[FILE_NAMES]["expected"]), mode="w"
             ) as expected_file:
-                generator_inst = _locals[NAMED_FUNCTION](*TEST_CASE)
+                generator_inst = _locals[TEST_NAME](*TEST_CASE)
                 for tupl in generator_inst:
                     expected_file.write(str(tupl)[1:-1] + "\n")
 
             with open(
                 os.path.join(FULL_PATH, config[FILE_NAMES]["visual"]), mode="w"
             ) as visual_file:
-                generator_inst = _locals[NAMED_FUNCTION](*TEST_CASE)
+                generator_inst = _locals[TEST_NAME](*TEST_CASE)
 
                 WIDTH, HEIGHT = 100, 100
                 matrix = [["." for x in range(WIDTH)] for y in range(HEIGHT)]
@@ -60,14 +55,14 @@ class TestGeneratorParser(unittest.TestCase):
                 ast_dump_file.write(ast.dump(tree, indent="  "))
 
             with open(
-                os.path.join(FULL_PATH, MODULE_FILENAME), mode="w"
+                os.path.join(FULL_PATH, config[FILE_NAMES]["module"]), mode="w"
             ) as module_file:
                 func = tree.body[0]
                 genParser = GeneratorParser(func)
                 module_file.write(str(genParser.generate_verilog()))
 
             with open(
-                os.path.join(FULL_PATH, TESTBENCH_FILENAME), mode="w"
+                os.path.join(FULL_PATH, config[FILE_NAMES]["testbench"]), mode="w"
             ) as testbench_file:
                 text = """module generator_tb;
   // Inputs
@@ -85,7 +80,7 @@ class TestGeneratorParser(unittest.TestCase):
 
   // Instantiate the module under test
   """
-                text += NAMED_FUNCTION
+                text += TEST_NAME
 
                 text += """ dut (
     ._clock(_clock),
@@ -165,7 +160,7 @@ endmodule
                             )
                             return
 
-                        with open(os.path.join(FULL_PATH, EXPECTED_FILENAME)) as exp_f:
+                        with open(os.path.join(FULL_PATH, config[FILE_NAMES]["expected"])) as exp_f:
                             expected = csv.reader(exp_f)
                             actual = csv.reader(act_f)
 
