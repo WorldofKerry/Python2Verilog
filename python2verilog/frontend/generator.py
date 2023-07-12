@@ -48,16 +48,19 @@ class GeneratorParser:
         stmt_lines = self.parse_statements(
             self.root.body, prefix="", end_stmts=Lines(["_done = 1;"])
         )
-        buffer_lines = self.stringify_module()
+        module_lines = self.stringify_module()
         decl_lines = self.stringify_declarations(self.global_vars)
         always_blk_lines = self.stringify_always_block()
+        decl_and_always_blk_lines = (
+            decl_lines[0].concat(always_blk_lines[0]),
+            decl_lines[1].concat(always_blk_lines[1]),
+        )  # TODO: there should be a function for this
         init_lines = self.stringify_initialization(self.global_vars)
 
         return Lines.nestify(
             [
-                buffer_lines,
-                decl_lines,
-                always_blk_lines,
+                module_lines,
+                decl_and_always_blk_lines,
                 init_lines,
                 stmt_lines,
             ],
