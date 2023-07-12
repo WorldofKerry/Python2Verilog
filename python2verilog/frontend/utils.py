@@ -105,8 +105,8 @@ class Lines:
         lines = Lines()
         for i, buffer in enumerate(buffers):
             lines.concat(buffer[0], indent + i)
-        for i, buffer in enumerate(buffers[::-1], len(buffers) - 1):
-            lines.concat(buffer[1], indent + i)
+        for i, buffer in enumerate(reversed(buffers)):
+            lines.concat(buffer[1], indent + len(buffers) - i - 1)
         return lines
 
 

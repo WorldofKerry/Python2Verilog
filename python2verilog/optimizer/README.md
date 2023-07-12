@@ -1,13 +1,6 @@
 # Optimizer
 
-## Verilog AST
-In order of priority
-
-- Var Assignment
-- Var Declaration
-- Case Statement
-- Input/Output
-- If Statement
+Responsible for optimizing Verilog AST.
 
 ## Optimization Ideas
 Should take inspiration from LLVM.
