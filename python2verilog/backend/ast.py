@@ -1,5 +1,7 @@
 """Verilog Abstract Syntax Tree Components"""
 
+from enum import Enum
+
 
 class Subsitution:
     """
@@ -38,3 +40,11 @@ class BlockingSubsitution(Subsitution):
     def __init__(self, lvalue: str, rvalue: str):
         super().__init__(lvalue, rvalue)
         self.type = "="
+
+
+# class Declaration:
+#     """
+#     <reg or wire> <modifiers>
+#     """
+
+#     def __init__(self, is_reg: bool = False, is_signed: bool = False):
