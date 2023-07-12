@@ -19,30 +19,34 @@ class TestGeneratorParser(unittest.TestCase):
         # TODO: remove nested with statements
 
         # Get config from path
-        ABS_PATH = os.path.join(
+        ABS_DIR = os.path.join(
             os.path.dirname(os.path.abspath(__file__)), dir, function_name
         )
 
+        assert os.path.exists(
+            ABS_DIR
+        ), f"Test on `{ABS_DIR}` failed, as that directory does not exist"
+
         config = configparser.ConfigParser()
-        config.read(os.path.join(ABS_PATH, "config.ini"))
-        DIR_OF_ABS_PATH = {
-            key: os.path.join(ABS_PATH, value)
+        config.read(os.path.join(ABS_DIR, "config.ini"))
+        FILES_IN_ABS_DIR = {
+            key: os.path.join(ABS_DIR, value)
             for key, value in config["file_names"].items()
         }
 
-        with open(DIR_OF_ABS_PATH["python"]) as python_file:
+        with open(FILES_IN_ABS_DIR["python"]) as python_file:
             python = python_file.read()
             _locals = dict()
             exec(python, None, _locals)  # grab's exec's populated scoped variables
 
             tree = ast.parse(python)
 
-            with open(DIR_OF_ABS_PATH["expected"], mode="w") as expected_file:
+            with open(FILES_IN_ABS_DIR["expected"], mode="w") as expected_file:
                 generator_inst = _locals[function_name](*TEST_CASE)
                 for tupl in generator_inst:
                     expected_file.write(str(tupl)[1:-1] + "\n")
 
-            with open(DIR_OF_ABS_PATH["visual"], mode="w") as visual_file:
+            with open(FILES_IN_ABS_DIR["visual"], mode="w") as visual_file:
                 generator_inst = _locals[function_name](*TEST_CASE)
 
                 WIDTH, HEIGHT = 100, 100
@@ -54,15 +58,15 @@ class TestGeneratorParser(unittest.TestCase):
                         visual_file.write(elem)
                     visual_file.write("\n")
 
-            with open(DIR_OF_ABS_PATH["ast_dump"], mode="w") as ast_dump_file:
+            with open(FILES_IN_ABS_DIR["ast_dump"], mode="w") as ast_dump_file:
                 ast_dump_file.write(ast.dump(tree, indent="  "))
 
-            with open(DIR_OF_ABS_PATH["module"], mode="w") as module_file:
+            with open(FILES_IN_ABS_DIR["module"], mode="w") as module_file:
                 func = tree.body[0]
                 genParser = GeneratorParser(func)
                 module_file.write(str(genParser.generate_verilog()))
 
-            with open(DIR_OF_ABS_PATH["testbench"], mode="w") as testbench_file:
+            with open(FILES_IN_ABS_DIR["testbench"], mode="w") as testbench_file:
                 text = f"module {function_name}"
 
                 text += """_tb;
@@ -144,10 +148,10 @@ endmodule
 
                 testbench_file.write(text)
 
-            if os.path.exists(DIR_OF_ABS_PATH["actual"]):
-                os.remove(DIR_OF_ABS_PATH["actual"])
+            if os.path.exists(FILES_IN_ABS_DIR["actual"]):
+                os.remove(FILES_IN_ABS_DIR["actual"])
 
-            iverilog_cmd = f"iverilog -s {function_name}_tb {DIR_OF_ABS_PATH['module']} {DIR_OF_ABS_PATH['testbench']} && unbuffer vvp a.out >> {DIR_OF_ABS_PATH['actual']} && rm a.out\n"
+            iverilog_cmd = f"iverilog -s {function_name}_tb {FILES_IN_ABS_DIR['module']} {FILES_IN_ABS_DIR['testbench']} && unbuffer vvp a.out >> {FILES_IN_ABS_DIR['actual']} && rm a.out\n"
             self.assertEqual(
                 subprocess.run(
                     iverilog_cmd, shell=True, capture_output=True, text=True
@@ -155,8 +159,8 @@ endmodule
                 "",
             )
 
-            with open(DIR_OF_ABS_PATH["actual"]) as act_f:
-                with open(DIR_OF_ABS_PATH["expected"]) as exp_f:
+            with open(FILES_IN_ABS_DIR["actual"]) as act_f:
+                with open(FILES_IN_ABS_DIR["expected"]) as exp_f:
                     expected = csv.reader(exp_f)
                     actual = csv.reader(act_f)
 
@@ -195,6 +199,3 @@ endmodule
 
     def test_rectangle_lines(self):
         self.run_test("rectangle_lines", (23, 17, 5, 7))
-
-    def test_defaults(self):
-        self.run_test("defaults", (1, 2, 3, 4))

@@ -34,12 +34,7 @@ To setup pre-commit, run `pre-commit install`
 To test verilog locally, an example command with Icarus Verilog is
 `iverilog '-Wall' design.sv testbench.sv  && unbuffer vvp a.out`
 
-Comparisons between Python and Verilog for sample inputs:
-| Algorithm          | Python Yield Count | Verilog Clock ycles | Notes   |
-| ------------------ | ------------------ | ------------------- | ------- |
-| Rectangle Filled   | 35                 | 75                  | Working |
-| Rectangle Lines    | 24                 | 37                  | Working |
-| Bresenham's Circle | 40                 | 51                  | Working |
+[Comparisons between Python and Verilog for sample inputs](tests/frontend/data/generator/stats.md), generated with `python3 tests/frontend/data/generator/update_statistics.py`.
 
 ## Docs
 
