@@ -1,1 +1,4 @@
 **/actual.csv
+**/expected.csv
+**/module.sv
+**/testbench.sv
