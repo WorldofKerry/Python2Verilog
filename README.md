@@ -25,6 +25,8 @@ for i in range(10):
 
 I recommend [EDA Playground](https://edaplayground.com/) for testing the verilog code.
 
+To setup pre-commit, run `pre-commit install`
+
 `python3 -m pytest --verbose` to run tests / regenerate most of the files [here](tests/parsers/data/generator/)
 
 `python3 tests/parsers/new_generator.py <name>` to create new test case and prepare template Python file.
