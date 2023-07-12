@@ -21,6 +21,5 @@ jobs:
     - name: Analysing the code with pylint
       run: |
         # pylint $(git ls-files '*.py') # ignore test files for now
-        pylint ./python2verilog/ -d \ # Ignoring:
-          W0511 \ # fixme
-          R0903 # too-few-public-methods
+        # Ignoring: fixme, too-few-public-methods
+        pylint ./python2verilog/ -d W0511,R0903
