@@ -115,9 +115,10 @@ class TestGeneratorParser(unittest.TestCase):
     // Start the drawing process
     @(posedge _clock);
     _start = 1;
+    @(posedge _clock);
 
     // Wait for the drawing to complete
-    repeat (100) begin
+    while (!_done) begin
       @(posedge _clock);
       _start = 0;
       // Display the outputs for every cycle after start
@@ -146,7 +147,7 @@ endmodule
             if os.path.exists(DIR_OF_ABS_PATH["actual"]):
                 os.remove(DIR_OF_ABS_PATH["actual"])
 
-            iverilog_cmd = f"iverilog -s {function_name}_tb {DIR_OF_ABS_PATH['module']} {DIR_OF_ABS_PATH['testbench']} && unbuffer vvp a.out >> {DIR_OF_ABS_PATH['actual']}\n"
+            iverilog_cmd = f"iverilog -s {function_name}_tb {DIR_OF_ABS_PATH['module']} {DIR_OF_ABS_PATH['testbench']} && unbuffer vvp a.out >> {DIR_OF_ABS_PATH['actual']} && rm a.out\n"
             self.assertEqual(
                 subprocess.run(
                     iverilog_cmd, shell=True, capture_output=True, text=True
