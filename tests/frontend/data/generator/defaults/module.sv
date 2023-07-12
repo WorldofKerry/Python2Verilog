@@ -1,4 +1,4 @@
-module delete_me(
+module defaults(
     input wire _clock,
     input wire _start,
     input wire signed [31:0] a,
@@ -36,6 +36,6 @@ module delete_me(
                         _done = 1;
                     end
                 endcase // STATEMENTS END
-                    end
-                        end
-                                endmodule
+            end
+        end
+endmodule

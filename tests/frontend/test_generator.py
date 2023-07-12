@@ -5,15 +5,23 @@ import warnings
 import ast
 import csv
 import configparser
+import subprocess
 
 
 class TestGeneratorParser(unittest.TestCase):
     def run_test(self, name, TEST_CASE, dir="data/generator/"):
+        # TODO: remove nested with statements
+
         # Get config from path
         FULL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), dir, name)
 
         config = configparser.ConfigParser()
         config.read(os.path.join(FULL_PATH, "config.ini"))
+        ABS_PATHS = {
+            key: os.path.join(FULL_PATH, value)
+            for key, value in config["file_names"].items()
+        }
+        # warnings.warn(str(ABS_PATHS))
 
         FILE_NAMES = "file_names"  # subsection of config.ini
         TEST_NAME = config["file_names"]["test_name"]
@@ -145,40 +153,58 @@ endmodule
 """
 
                 testbench_file.write(text)
-                with open(os.path.join(FULL_PATH, ACTUAL_FILENAME)) as act_f:
-                    with open(
-                        os.path.join(FULL_PATH, config[FILE_NAMES]["expected"])
-                    ) as exp_f:
-                        expected = csv.reader(exp_f)
-                        actual = csv.reader(act_f)
 
-                        actual_coords = set()
-                        expected_coords = set()
+            result = subprocess.run("ls", shell=True, capture_output=True, text=True)
+            # warnings.warn(result.stdout)
+            # warnings.warn(FULL_PATH)
+            iverilog_cmd = f"iverilog -s generator_tb {ABS_PATHS['module']} {ABS_PATHS['testbench']} && unbuffer vvp a.out >> {ABS_PATHS['actual']}\n"
 
-                        # TODO: cleanup
-                        for row in actual:
-                            valid = True
-                            for element in row:
-                                if element.strip() == "x":
-                                    valid = False
-                            if valid:
-                                actual_coords.add(tuple(row))
+            # warnings.warn(iverilog_cmd)
+            if os.path.exists(ABS_PATHS["actual"]):
+                os.remove(ABS_PATHS["actual"])
 
-                        for row in expected:
-                            expected_coords.add(tuple(row))
+            # warnings.warn(
+            self.assertEqual(
+                subprocess.run(
+                    iverilog_cmd, shell=True, capture_output=True, text=True
+                ).stderr,
+                "",
+            )
+            # )
 
-                        self.assertEqual(
-                            actual_coords - expected_coords,
-                            set(),
-                            f"Extra coordinates: {str(actual_coords - expected_coords)} {str(actual_coords)} {str(expected_coords)}",
-                        )
-                        self.assertEqual(
-                            expected_coords - actual_coords,
-                            set(),
-                            f"Missing Coordinates: {str(expected_coords - actual_coords)} {str(actual_coords)} {str(expected_coords)}",
-                        )
+            with open(os.path.join(FULL_PATH, ACTUAL_FILENAME)) as act_f:
+                with open(
+                    os.path.join(FULL_PATH, config[FILE_NAMES]["expected"])
+                ) as exp_f:
+                    expected = csv.reader(exp_f)
+                    actual = csv.reader(act_f)
 
-                        return "Running test"
+                    actual_coords = set()
+                    expected_coords = set()
+
+                    for row in actual:
+                        valid = True
+                        for element in row:
+                            if element.strip() == "x":
+                                valid = False
+                        if valid:
+                            actual_coords.add(tuple(row))
+
+                    for row in expected:
+                        expected_coords.add(tuple(row))
+
+                    self.assertEqual(
+                        actual_coords - expected_coords,
+                        set(),
+                        f"Extra coordinates: {str(actual_coords - expected_coords)} {str(actual_coords)} {str(expected_coords)}",
+                    )
+                    self.assertEqual(
+                        expected_coords - actual_coords,
+                        set(),
+                        f"Missing Coordinates: {str(expected_coords - actual_coords)} {str(actual_coords)} {str(expected_coords)}",
+                    )
+
+                    return "Running test"
 
     def test_rectangle_filled(self):
         self.run_test("rectangle_filled", (23, 17, 5, 7))
@@ -189,5 +215,5 @@ endmodule
     def test_rectangle_lines(self):
         self.run_test("rectangle_lines", (23, 17, 5, 7))
 
-    def test_delete_me(self):
-        self.run_test("delete_me", (1, 2, 3, 4))
+    def test_defaults(self):
+        self.run_test("defaults", (1, 2, 3, 4))

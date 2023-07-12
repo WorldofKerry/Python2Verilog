@@ -58,19 +58,19 @@ module rectangle_filled(
                                                 _BODY_1_BODY_2_STATE <= 0; // LOOP FOR LOOP STATEMENTS
                                             end
                                         endcase // STATEMENTS END
-                                            end // FOR LOOP END
+                                    end // FOR LOOP END
                                 end
                                 _BODY_1_STATE_1: begin // END STATEMENTS STATE
                                     i0 <= i0 + 1;
                                     _BODY_1_STATE <= 0; // LOOP FOR LOOP STATEMENTS
                                 end
                             endcase // STATEMENTS END
-                                end // FOR LOOP END
+                        end // FOR LOOP END
                     end
                     _STATE_1: begin // END STATEMENTS STATE
                         _done = 1;
                     end
                 endcase // STATEMENTS END
-                    end
-                        end
-                                endmodule
+            end
+        end
+endmodule

@@ -14,7 +14,7 @@ module generator_tb;
   wire _done;
 
   // Instantiate the module under test
-  delete_me dut (
+  defaults dut (
     ._clock(_clock),
     ._start(_start),
     .a(a),

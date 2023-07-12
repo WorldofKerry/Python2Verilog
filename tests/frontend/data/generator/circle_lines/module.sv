@@ -157,7 +157,7 @@ module circle_lines(
                                         _BODY_1_IF_CONDITIONAL: begin
                                             if (d >             0) _BODY_1_IF <= _BODY_1_IF_THEN;
                                             else _BODY_1_IF <= _BODY_1_IF_ELSE;
-                                                end
+                                        end
                                         _BODY_1_IF_THEN: begin
                                             case (_BODY_1_IF_2_STATE) // STATEMENTS START
                                                 _BODY_1_IF_2_STATE_0: begin
@@ -173,7 +173,7 @@ module circle_lines(
                                                     _BODY_1_IF_2_STATE <= 0; // LOOP FOR LOOP STATEMENTS
                                                 end
                                             endcase // STATEMENTS END
-                                                end
+                                        end
                                         _BODY_1_IF_ELSE: begin
                                             case (_BODY_1_IF_3_STATE) // STATEMENTS START
                                                 _BODY_1_IF_3_STATE_0: begin
@@ -185,7 +185,7 @@ module circle_lines(
                                                     _BODY_1_IF_3_STATE <= 0; // LOOP FOR LOOP STATEMENTS
                                                 end
                                             endcase // STATEMENTS END
-                                                end
+                                        end
                                     endcase // IF END
                                 end
                                 _BODY_1_STATE_2: begin
@@ -230,12 +230,12 @@ module circle_lines(
                                     _BODY_1_STATE <= 0; // LOOP FOR LOOP STATEMENTS
                                 end
                             endcase // STATEMENTS END
-                                end // WHILE LOOP END
+                        end // WHILE LOOP END
                     end
                     _STATE_12: begin // END STATEMENTS STATE
                         _done = 1;
                     end
                 endcase // STATEMENTS END
-                    end
-                        end
-                                endmodule
+            end
+        end
+endmodule

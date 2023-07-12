@@ -63,7 +63,7 @@ module rectangle_lines(
                                     _BODY_1_STATE <= 0; // LOOP FOR LOOP STATEMENTS
                                 end
                             endcase // STATEMENTS END
-                                end // FOR LOOP END
+                        end // FOR LOOP END
                     end
                     _STATE_1: begin
                         if (i1 >= height) begin // FOR LOOP START
@@ -86,12 +86,12 @@ module rectangle_lines(
                                     _BODY_2_STATE <= 0; // LOOP FOR LOOP STATEMENTS
                                 end
                             endcase // STATEMENTS END
-                                end // FOR LOOP END
+                        end // FOR LOOP END
                     end
                     _STATE_2: begin // END STATEMENTS STATE
                         _done = 1;
                     end
                 endcase // STATEMENTS END
-                    end
-                        end
-                                endmodule
+            end
+        end
+endmodule
