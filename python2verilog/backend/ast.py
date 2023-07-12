@@ -25,5 +25,12 @@ class NonBlockingSubsitution(Subsitution):
         super().__init__(lvalue, rvalue)
         self.type = "<="
 
-    def to_string(self) -> str:
-        return super().to_string()
+
+class BlockingSubsitution(Subsitution):
+    """
+    <lvalue> = <rvalue>
+    """
+
+    def __init__(self, lvalue: str, rvalue: str):
+        super().__init__(lvalue, rvalue)
+        self.type = "="
