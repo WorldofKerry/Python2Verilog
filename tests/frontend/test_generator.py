@@ -21,31 +21,22 @@ class TestGeneratorParser(unittest.TestCase):
             key: os.path.join(FULL_PATH, value)
             for key, value in config["file_names"].items()
         }
-        # warnings.warn(str(ABS_PATHS))
 
-        FILE_NAMES = "file_names"  # subsection of config.ini
         TEST_NAME = config["file_names"]["test_name"]
-        ACTUAL_FILENAME = config["file_names"]["actual"]
 
-        with open(
-            os.path.join(FULL_PATH, config[FILE_NAMES]["generator"])
-        ) as python_file:
+        with open(ABS_PATHS["generator"]) as python_file:
             python = python_file.read()
             _locals = dict()
             exec(python, None, _locals)  # grab's exec's populated scoped variables
 
             tree = ast.parse(python)
 
-            with open(
-                os.path.join(FULL_PATH, config[FILE_NAMES]["expected"]), mode="w"
-            ) as expected_file:
+            with open(ABS_PATHS["expected"], mode="w") as expected_file:
                 generator_inst = _locals[TEST_NAME](*TEST_CASE)
                 for tupl in generator_inst:
                     expected_file.write(str(tupl)[1:-1] + "\n")
 
-            with open(
-                os.path.join(FULL_PATH, config[FILE_NAMES]["visual"]), mode="w"
-            ) as visual_file:
+            with open(ABS_PATHS["visual"], mode="w") as visual_file:
                 generator_inst = _locals[TEST_NAME](*TEST_CASE)
 
                 WIDTH, HEIGHT = 100, 100
@@ -57,21 +48,15 @@ class TestGeneratorParser(unittest.TestCase):
                         visual_file.write(elem)
                     visual_file.write("\n")
 
-            with open(
-                os.path.join(FULL_PATH, config[FILE_NAMES]["ast_dump"]), mode="w"
-            ) as ast_dump_file:
+            with open(ABS_PATHS["ast_dump"], mode="w") as ast_dump_file:
                 ast_dump_file.write(ast.dump(tree, indent="  "))
 
-            with open(
-                os.path.join(FULL_PATH, config[FILE_NAMES]["module"]), mode="w"
-            ) as module_file:
+            with open(ABS_PATHS["module"], mode="w") as module_file:
                 func = tree.body[0]
                 genParser = GeneratorParser(func)
                 module_file.write(str(genParser.generate_verilog()))
 
-            with open(
-                os.path.join(FULL_PATH, config[FILE_NAMES]["testbench"]), mode="w"
-            ) as testbench_file:
+            with open(ABS_PATHS["testbench"], mode="w") as testbench_file:
                 text = """module generator_tb;
   // Inputs
   reg _clock;
@@ -111,10 +96,6 @@ class TestGeneratorParser(unittest.TestCase):
     _start = 0;
 """
 
-                # a = 23;
-                # b = 17;
-                # c = 5;
-                # d = 0;
                 for i, v in enumerate(tree.body[0].args.args):
                     text += f"    {v.arg} = {TEST_CASE[i]};\n"
                 text += """
@@ -154,28 +135,19 @@ endmodule
 
                 testbench_file.write(text)
 
-            result = subprocess.run("ls", shell=True, capture_output=True, text=True)
-            # warnings.warn(result.stdout)
-            # warnings.warn(FULL_PATH)
-            iverilog_cmd = f"iverilog -s generator_tb {ABS_PATHS['module']} {ABS_PATHS['testbench']} && unbuffer vvp a.out >> {ABS_PATHS['actual']}\n"
-
-            # warnings.warn(iverilog_cmd)
             if os.path.exists(ABS_PATHS["actual"]):
                 os.remove(ABS_PATHS["actual"])
 
-            # warnings.warn(
+            iverilog_cmd = f"iverilog -s generator_tb {ABS_PATHS['module']} {ABS_PATHS['testbench']} && unbuffer vvp a.out >> {ABS_PATHS['actual']}\n"
             self.assertEqual(
                 subprocess.run(
                     iverilog_cmd, shell=True, capture_output=True, text=True
                 ).stderr,
                 "",
             )
-            # )
 
-            with open(os.path.join(FULL_PATH, ACTUAL_FILENAME)) as act_f:
-                with open(
-                    os.path.join(FULL_PATH, config[FILE_NAMES]["expected"])
-                ) as exp_f:
+            with open(ABS_PATHS["actual"]) as act_f:
+                with open(ABS_PATHS["expected"]) as exp_f:
                     expected = csv.reader(exp_f)
                     actual = csv.reader(act_f)
 
