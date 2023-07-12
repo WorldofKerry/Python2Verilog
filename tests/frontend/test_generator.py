@@ -1,4 +1,4 @@
-from python2verilog.parsers import GeneratorParser
+from python2verilog.frontend import GeneratorParser
 import unittest
 import os
 import warnings
