@@ -13,6 +13,9 @@ class Subsitution:
         self.type = None
 
     def to_string(self) -> str:
+        """
+        Converts to Verilog
+        """
         assert isinstance(self.type, str)
         return f"{self.lvalue} {self.type} {self.rvalue};"
 
