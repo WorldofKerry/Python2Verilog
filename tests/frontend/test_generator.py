@@ -1,3 +1,9 @@
+"""
+Test Generator
+
+Cleanup files: `git clean -dfX`
+"""
+
 from python2verilog.frontend import GeneratorParser
 import unittest
 import os
@@ -9,35 +15,35 @@ import subprocess
 
 
 class TestGeneratorParser(unittest.TestCase):
-    def run_test(self, name, TEST_CASE, dir="data/generator/"):
+    def run_test(self, function_name, TEST_CASE, dir="data/generator/"):
         # TODO: remove nested with statements
 
         # Get config from path
-        FULL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), dir, name)
+        ABS_PATH = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), dir, function_name
+        )
 
         config = configparser.ConfigParser()
-        config.read(os.path.join(FULL_PATH, "config.ini"))
-        ABS_PATHS = {
-            key: os.path.join(FULL_PATH, value)
+        config.read(os.path.join(ABS_PATH, "config.ini"))
+        DIR_OF_ABS_PATH = {
+            key: os.path.join(ABS_PATH, value)
             for key, value in config["file_names"].items()
         }
 
-        TEST_NAME = config["file_names"]["test_name"]
-
-        with open(ABS_PATHS["generator"]) as python_file:
+        with open(DIR_OF_ABS_PATH["generator"]) as python_file:
             python = python_file.read()
             _locals = dict()
             exec(python, None, _locals)  # grab's exec's populated scoped variables
 
             tree = ast.parse(python)
 
-            with open(ABS_PATHS["expected"], mode="w") as expected_file:
-                generator_inst = _locals[TEST_NAME](*TEST_CASE)
+            with open(DIR_OF_ABS_PATH["expected"], mode="w") as expected_file:
+                generator_inst = _locals[function_name](*TEST_CASE)
                 for tupl in generator_inst:
                     expected_file.write(str(tupl)[1:-1] + "\n")
 
-            with open(ABS_PATHS["visual"], mode="w") as visual_file:
-                generator_inst = _locals[TEST_NAME](*TEST_CASE)
+            with open(DIR_OF_ABS_PATH["visual"], mode="w") as visual_file:
+                generator_inst = _locals[function_name](*TEST_CASE)
 
                 WIDTH, HEIGHT = 100, 100
                 matrix = [["." for x in range(WIDTH)] for y in range(HEIGHT)]
@@ -48,16 +54,18 @@ class TestGeneratorParser(unittest.TestCase):
                         visual_file.write(elem)
                     visual_file.write("\n")
 
-            with open(ABS_PATHS["ast_dump"], mode="w") as ast_dump_file:
+            with open(DIR_OF_ABS_PATH["ast_dump"], mode="w") as ast_dump_file:
                 ast_dump_file.write(ast.dump(tree, indent="  "))
 
-            with open(ABS_PATHS["module"], mode="w") as module_file:
+            with open(DIR_OF_ABS_PATH["module"], mode="w") as module_file:
                 func = tree.body[0]
                 genParser = GeneratorParser(func)
                 module_file.write(str(genParser.generate_verilog()))
 
-            with open(ABS_PATHS["testbench"], mode="w") as testbench_file:
-                text = """module generator_tb;
+            with open(DIR_OF_ABS_PATH["testbench"], mode="w") as testbench_file:
+                text = f"module {function_name}"
+
+                text += """_tb;
   // Inputs
   reg _clock;
   reg _start;
@@ -73,7 +81,7 @@ class TestGeneratorParser(unittest.TestCase):
 
   // Instantiate the module under test
   """
-                text += TEST_NAME
+                text += function_name
 
                 text += """ dut (
     ._clock(_clock),
@@ -135,10 +143,10 @@ endmodule
 
                 testbench_file.write(text)
 
-            if os.path.exists(ABS_PATHS["actual"]):
-                os.remove(ABS_PATHS["actual"])
+            if os.path.exists(DIR_OF_ABS_PATH["actual"]):
+                os.remove(DIR_OF_ABS_PATH["actual"])
 
-            iverilog_cmd = f"iverilog -s generator_tb {ABS_PATHS['module']} {ABS_PATHS['testbench']} && unbuffer vvp a.out >> {ABS_PATHS['actual']}\n"
+            iverilog_cmd = f"iverilog -s {function_name}_tb {DIR_OF_ABS_PATH['module']} {DIR_OF_ABS_PATH['testbench']} && unbuffer vvp a.out >> {DIR_OF_ABS_PATH['actual']}\n"
             self.assertEqual(
                 subprocess.run(
                     iverilog_cmd, shell=True, capture_output=True, text=True
@@ -146,8 +154,8 @@ endmodule
                 "",
             )
 
-            with open(ABS_PATHS["actual"]) as act_f:
-                with open(ABS_PATHS["expected"]) as exp_f:
+            with open(DIR_OF_ABS_PATH["actual"]) as act_f:
+                with open(DIR_OF_ABS_PATH["expected"]) as exp_f:
                     expected = csv.reader(exp_f)
                     actual = csv.reader(act_f)
 
