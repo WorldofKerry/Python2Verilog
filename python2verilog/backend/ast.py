@@ -10,6 +10,7 @@ class Subsitution:
     def __init__(self, lvalue: str, rvalue: str):
         self.lvalue = lvalue
         self.rvalue = rvalue
+        self.type = None
 
     def to_string(self) -> str:
         assert isinstance(self.type, str)
