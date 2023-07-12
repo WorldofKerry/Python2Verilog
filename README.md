@@ -4,9 +4,9 @@ Converts a subset of python generator functions into synthesizable sequential Sy
 
 A use case is for drawing shapes on grids (for VGA output), where the user may prototype the algorithm in python and then convert it to verilog for use in an FPGA.
 
-Based on my experimentation with a [C to Verilog converter](https://github.com/WorldofKerry/c2hdl). 
+Based on my experimentation with a [C to Verilog converter](https://github.com/WorldofKerry/c2hdl).
 
-Architecture is based on [LLVM](https://llvm.org/). 
+Architecture is based on [LLVM](https://llvm.org/).
 
 Supported functions:
 
@@ -29,6 +29,9 @@ I recommend [EDA Playground](https://edaplayground.com/) for testing the verilog
 
 `python3 tests/parsers/new_generator.py <name>` to create new test case and prepare template Python file.
 
+To test verilog locally, an example command with Icarus Verilog is
+`iverilog '-Wall' design.sv testbench.sv  && unbuffer vvp a.out`
+
 Comparisons between Python and Verilog for sample inputs:
 | Algorithm          | Python Yield Count | Verilog Clock ycles | Notes   |
 | ------------------ | ------------------ | ------------------- | ------- |
@@ -48,7 +51,7 @@ Comparisons between Python and Verilog for sample inputs:
 ```python
 def draw_rectangle(s_x, s_y, height, width) -> tuple[int, int]:
     for i0 in range(0, width):
-        for i1 in range(0, height): 
+        for i1 in range(0, height):
             yield (s_x + i1, s_y + i0)
 ```
 
@@ -69,7 +72,7 @@ case (STATE)
                 out1 <= s_y + i0;
                 i1 <= i1 + 1;
 
-                STATE_INNER_INNER <= STATE_INNER_INNER + 1; 
+                STATE_INNER_INNER <= STATE_INNER_INNER + 1;
                 STATE_INNER_INNER <= 0; // flag to either wrap around or remain
               end
           end
@@ -79,7 +82,7 @@ case (STATE)
     end
   end
   STATE_1: begin
-    done <= 1; 
+    done <= 1;
   end
 endcase
 ```
@@ -110,10 +113,10 @@ case (STATE)
         end
         // ...
         10: begin
-          STATE_INNER <= 0; 
+          STATE_INNER <= 0;
         end
       endcase
-    end 
+    end
     // For loop end
   end
   // ...
@@ -124,7 +127,7 @@ endcase
 
 ```verilog
 // IF START
-case (_STATE_IF) 
+case (_STATE_IF)
   0: begin
     if (condition) _STATE_IF <= 1;
     else _STATE_IF <= 2;
@@ -138,7 +141,7 @@ case (_STATE_IF)
   end
   2: begin
     // ELSE BODY START
-    // ... 
+    // ...
      __STATE_IF <= 0;
     // ELSE BODY END
   end

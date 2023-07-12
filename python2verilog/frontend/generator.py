@@ -1,6 +1,8 @@
+"""Parser for Python Generator Functions"""
+
 from __future__ import annotations
 import ast
-from .utils import *
+from .utils import Lines, Indent
 
 
 class GeneratorParser:
@@ -13,8 +15,8 @@ class GeneratorParser:
         """
         Generates the yielded variables of the function
         """
-        assert type(node) == ast.Subscript
-        assert type(node.slice) == ast.Tuple
+        assert isinstance(node, ast.Subscript)
+        assert isinstance(node.slice, ast.Tuple)
         return [f"{prefix}_out{str(i)}" for i in range(len(node.slice.elts))]
 
     def create_unique_name(self):
@@ -43,21 +45,21 @@ class GeneratorParser:
         """
         Generates the verilog (does the most work, calls other functions)
         """
-        stmntLines = self.parse_statements(
-            self.root.body, prefix="", endStatements=Lines(["_done = 1;"])
+        stmt_lines = self.parse_statements(
+            self.root.body, prefix="", end_stmts=Lines(["_done = 1;"])
         )
-        bufferLines = self.stringify_module()
-        declarationLines = self.stringify_declarations(self.global_vars)
-        alwaysBlockLines = self.stringify_always_block()
-        initializationLines = self.stringify_initialization(self.global_vars)
+        buffer_lines = self.stringify_module()
+        decl_lines = self.stringify_declarations(self.global_vars)
+        always_blk_lines = self.stringify_always_block()
+        init_lines = self.stringify_initialization(self.global_vars)
 
         return Lines.nestify(
             [
-                bufferLines,
-                declarationLines,
-                alwaysBlockLines,
-                initializationLines,
-                stmntLines,
+                buffer_lines,
+                decl_lines,
+                always_blk_lines,
+                init_lines,
+                stmt_lines,
             ],
             indent,
         )
@@ -72,14 +74,14 @@ class GeneratorParser:
         ...
         end
         """
-        startLines, endLines = Lines(), Lines()
-        startLines += f"if (_start) begin"
-        startLines += Indent(1) + "_done <= 0;"
-        for v in global_vars:
-            startLines += Indent(1) + f"{v} <= {global_vars[v]};"
-        startLines += f"end else begin"
-        endLines += "end"
-        return (startLines, endLines)
+        start_lines, end_lines = Lines(), Lines()
+        start_lines += "if (_start) begin"
+        start_lines += Indent(1) + "_done <= 0;"
+        for var in global_vars:
+            start_lines += Indent(1) + f"{var} <= {global_vars[var]};"
+        start_lines += "end else begin"
+        end_lines += "end"
+        return (start_lines, end_lines)
 
     @staticmethod
     def stringify_declarations(global_vars: dict[str, str]) -> tuple[Lines, Lines]:
@@ -95,25 +97,25 @@ class GeneratorParser:
 
         endmodule
         """
-        startLines, endLines = Lines(), Lines()
-        startLines += f"module {self.name}("
-        startLines += Indent(1) + "input wire _clock,"
-        startLines += Indent(1) + "input wire _start,"
+        start_lines, end_lines = Lines(), Lines()
+        start_lines += f"module {self.name}("
+        start_lines += Indent(1) + "input wire _clock,"
+        start_lines += Indent(1) + "input wire _start,"
         for var in self.root.args.args:
-            startLines += Indent(1) + f"input wire signed [31:0] {var.arg},"
-        for var in self.yieldVars:
-            startLines += Indent(1) + f"output reg signed [31:0] {var},"
-        startLines += Indent(1) + "output reg _done"
-        startLines += ");"
-        endLines += "endmodule"
-        return (startLines, endLines)
+            start_lines += Indent(1) + f"input wire signed [31:0] {var.arg},"
+        for var in self.yield_vars:
+            start_lines += Indent(1) + f"output reg signed [31:0] {var},"
+        start_lines += Indent(1) + "output reg _done"
+        start_lines += ");"
+        end_lines += "endmodule"
+        return (start_lines, end_lines)
 
     def __init__(self, root: ast.FunctionDef):
         """
         Initializes the parser, does quick setup work
         """
         self.name = root.name
-        self.yieldVars = self.generate_return_vars(root.returns, f"")
+        self.yield_vars = self.generate_return_vars(root.returns, "")
         self.unique_name_counter = 0
         self.global_vars: dict[str, str] = {}
         self.root = root
@@ -123,15 +125,15 @@ class GeneratorParser:
         Creates a conditional while loop from for loop
         """
 
-        def parse_iter(iter: ast.AST, node: ast.AST):
-            assert type(iter) == ast.Call
-            assert iter.func.id == "range"
+        def parse_iter(iterator: ast.AST, node: ast.AST):
+            assert isinstance(iterator, ast.Call)
+            assert iterator.func.id == "range"
 
             # range(x, y) or range(x)
-            if len(iter.args) == 2:
-                start, end = str(iter.args[0].value), iter.args[1].id
+            if len(iterator.args) == 2:
+                start, end = str(iterator.args[0].value), iterator.args[1].id
             else:
-                start, end = "0", iter.args[0].id
+                start, end = "0", iterator.args[0].id
 
             self.add_global_var(
                 start, node.target.id
@@ -148,14 +150,14 @@ class GeneratorParser:
                 Lines(["end // FOR LOOP END"]),
             )
 
-        conditionalBuffer = parse_iter(node.iter, node)
-        statementsBuffer = self.parse_statements(
+        conditional_lines = parse_iter(node.iter, node)
+        stmt_lines = self.parse_statements(
             node.body,
             f"{prefix}_BODY_{self.create_unique_name()}",
-            endStatements=Lines([f"{node.target.id} <= {node.target.id} + 1;"]),
-            resetToZero=True,
+            end_stmts=Lines([f"{node.target.id} <= {node.target.id} + 1;"]),
+            reset_to_zero=True,
         )
-        return Lines.nestify([conditionalBuffer, statementsBuffer])
+        return Lines.nestify([conditional_lines, stmt_lines])
 
     def parse_targets(self, nodes: list[ast.AST]):
         """
@@ -166,7 +168,7 @@ class GeneratorParser:
         buffer = ""
         assert len(nodes) == 1
         for node in nodes:
-            assert type(node) == ast.Name
+            assert isinstance(node, ast.Name)
             if node.id not in self.global_vars:
                 self.add_global_var(0, node.id)
             buffer += self.parse_expression(node)
@@ -182,23 +184,19 @@ class GeneratorParser:
         """
         <statement> (e.g. assign, for loop, etc., those that do not return a value)
         """
-        match type(stmt):
-            case ast.Assign:
-                return Lines([self.parse_assign(stmt)])
-            case ast.For:
-                return self.parse_for(stmt, prefix=prefix)
-            case ast.Expr:
-                return self.parse_statement(stmt.value, prefix=prefix)
-            case ast.Yield:
-                return self.parse_yield(stmt)
-            case ast.While:
-                return self.parse_while(stmt, prefix=prefix)
-            case ast.If:
-                return self.parse_if(stmt, prefix=prefix)
-            case _:
-                raise Exception(
-                    "Error: unexpected statement type", type(stmt), ast.dump(stmt)
-                )
+        if isinstance(stmt, ast.Assign):
+            return Lines([self.parse_assign(stmt)])
+        if isinstance(stmt, ast.For):
+            return self.parse_for(stmt, prefix=prefix)
+        if isinstance(stmt, ast.Expr):
+            return self.parse_statement(stmt.value, prefix=prefix)
+        if isinstance(stmt, ast.Yield):
+            return self.parse_yield(stmt)
+        if isinstance(stmt, ast.While):
+            return self.parse_while(stmt, prefix=prefix)
+        if isinstance(stmt, ast.If):
+            return self.parse_if(stmt, prefix=prefix)
+        raise TypeError("Error: unexpected statement type", type(stmt), ast.dump(stmt))
 
     def parse_if(self, stmt: ast.If, prefix: str = ""):
         """
@@ -210,60 +208,59 @@ class GeneratorParser:
         lines += f"case ({state_var}) // IF START"
 
         state_conditional = self.add_global_var(0, f"{state_var}_CONDITIONAL")
-        state_then = self.add_global_var(1, f"{state_var}_THEN")        
+        state_then = self.add_global_var(1, f"{state_var}_THEN")
         state_else = self.add_global_var(2, f"{state_var}_ELSE")
 
         # If condition
-        wrapper = (
-            Lines([f"{state_conditional}: begin"]),
-            Lines([f"end"])
-        )
+        wrapper = (Lines([f"{state_conditional}: begin"]), Lines(["end"]))
         body = (
-            Lines([f"if ({self.parse_expression(stmt.test)}) {state_var} <= {state_then};"]), 
-            Lines([f"else {state_var} <= {state_else};"])
+            Lines(
+                [
+                    f"if ({self.parse_expression(stmt.test)}) {state_var} <= {state_then};"
+                ]
+            ),
+            Lines([f"else {state_var} <= {state_else};"]),
         )
         if_condition = Lines.nestify((wrapper, body))
 
         # If then
-        wrapper = (
-            Lines([f"{state_then}: begin"]),
-            Lines([f"end"])
-        )
+        wrapper = (Lines([f"{state_then}: begin"]), Lines(["end"]))
         body = self.parse_statements(
-            stmt.body, 
-            f"{state_var}_{self.create_unique_name()}", 
-            endStatements=Lines([
-                f"{prefix}_STATE <= {prefix}_STATE + 1; {state_var} <= {state_conditional};",
-                ]),
-            resetToZero=True
-            )
+            stmt.body,
+            f"{state_var}_{self.create_unique_name()}",
+            end_stmts=Lines(
+                [
+                    f"{prefix}_STATE <= {prefix}_STATE + 1; {state_var} <= {state_conditional};",
+                ]
+            ),
+            reset_to_zero=True,
+        )
         if_then = Lines.nestify((wrapper, body))
 
         # If else
-        wrapper = (
-            Lines([f"{state_else}: begin"]),
-            Lines([f"end"])
-        )
+        wrapper = (Lines([f"{state_else}: begin"]), Lines(["end"]))
         body = self.parse_statements(
-            stmt.orelse, 
-            f"{state_var}_{self.create_unique_name()}", 
-            endStatements=Lines([
-                f"{prefix}_STATE <= {prefix}_STATE + 1; {state_var} <= {state_conditional};", 
-                ]),
-            resetToZero=True
-            )
+            stmt.orelse,
+            f"{state_var}_{self.create_unique_name()}",
+            end_stmts=Lines(
+                [
+                    f"{prefix}_STATE <= {prefix}_STATE + 1; {state_var} <= {state_conditional};",
+                ]
+            ),
+            reset_to_zero=True,
+        )
         if_else = Lines.nestify((wrapper, body))
 
         lines.concat(if_condition, 1).concat(if_then, 1).concat(if_else, 1)
-        lines += f"endcase // IF END"
+        lines += "endcase // IF END"
         return lines
 
     def parse_statements(
         self,
         stmts: list[ast.AST],
         prefix: str,
-        endStatements: Lines = Lines(),
-        resetToZero: bool = False,
+        end_stmts: Lines = Lines(),
+        reset_to_zero: bool = False,
     ):
         """
         Warning: mutates global_vars
@@ -276,7 +273,7 @@ class GeneratorParser:
         state_var = self.add_global_var("0", f"{prefix}_STATE")
         lines = Lines()
         lines += f"case ({state_var}) // STATEMENTS START"
-        prevI = 0
+        previous_i = 0
 
         for i, stmt in enumerate(stmts):
             state = self.add_global_var(str(i), f"{prefix}_STATE_{i}")
@@ -286,36 +283,43 @@ class GeneratorParser:
             for line in self.parse_statement(stmt, prefix=prefix).indent(2):
                 lines += line
                 assert str(line).find("\n") == -1
-            if type(stmt) != ast.For and type(stmt) != ast.While and type(stmt) != ast.If:
-                # Non-for-loop state machines always continue to next state after running current state's case statement
-                # TODO: figure out better way to handle this, perhaps add to end statements of caller
+            if (
+                not isinstance(stmt, ast.For)
+                and not isinstance(stmt, ast.While)
+                and not isinstance(stmt, ast.If)
+            ):
+                # Non-for-loop state machines always continue to next state
+                # after running current state's case statement.
+                # TODO: figure out better way to handle this,
+                # perhaps add to end statements of caller
                 lines += (
                     Indent(2) + f"{state_var} <= {state_var} + 1; // INCREMENT STATE"
                 )
-            lines += Indent(1) + f"end"
-            prevI = i
+            lines += Indent(1) + "end"
+            previous_i = i
 
-        assert isinstance(endStatements, Lines)
+        assert isinstance(end_stmts, Lines)
         # TODO: cleanup, remove the above enumerate?
-        i = prevI + 1
-        # TODO: endStatements should take in array of Lines, where each element in array is one additional case
-        for stmt in endStatements:
+        i = previous_i + 1
+        # TODO: endStatements should take in array of Lines,
+        # where each element in array is one additional case
+        for stmt in end_stmts:
             state = self.add_global_var(str(i), f"{prefix}_STATE_{i}")
 
             lines += Indent(1) + f"{state}: begin // END STATEMENTS STATE"
             lines += Indent(2) + stmt
-            lines += Indent(1) + f"end"
+            lines += Indent(1) + "end"
             i += 1
 
         del lines[-1]
 
-        if resetToZero:  # TODO: think about what default should be
+        if reset_to_zero:  # TODO: think about what default should be
             lines += Indent(2) + f"{state_var} <= 0; // LOOP FOR LOOP STATEMENTS"
 
-        lines += Indent(1) + f"end"
+        lines += Indent(1) + "end"
 
-        lines += f"endcase // STATEMENTS END"
-        return (lines, Lines())  # TODO: cleanup
+        lines += "endcase // STATEMENTS END"
+        return (lines, Lines())
 
     def parse_yield(self, node: ast.Yield):
         """
@@ -325,10 +329,10 @@ class GeneratorParser:
 
         yield <value>;
         """
-        assert type(node.value) == ast.Tuple
+        assert isinstance(node.value, ast.Tuple)
         lines = Lines()
-        for i, e in enumerate(node.value.elts):
-            lines += f"{self.yieldVars[i]} <= {self.parse_expression(e)};"
+        for idx, elem in enumerate(node.value.elts):
+            lines += f"{self.yield_vars[idx]} <= {self.parse_expression(elem)};"
         return lines
 
     @staticmethod
@@ -336,43 +340,39 @@ class GeneratorParser:
         """
         <left> <op> <right>
         """
-        match type(node.op):
-            case ast.Add:
-                return " + "
-            case ast.Sub:
-                return " - "
-            case ast.Mult:
-                return " * "
-            case ast.Div:
-                return " / "
-            case _:
-                raise Exception(
-                    "Error: unexpected binop type", type(node.op), ast.dump(node.op)
-                )
+        if isinstance(node.op, ast.Add):
+            return " + "
+        if isinstance(node.op, ast.Sub):
+            return " - "
+        if isinstance(node.op, ast.Mult):
+            return " * "
+        if isinstance(node.op, ast.Div):
+            return " / "
+        raise TypeError(
+            "Error: unexpected binop type", type(node.op), ast.dump(node.op)
+        )
 
     def parse_expression(self, expr: ast.AST):
         """
         <expression> (e.g. constant, name, subscript, etc., those that return a value)
         """
-        match type(expr):
-            case ast.Constant:
-                return str(expr.value)
-            case ast.Name:
-                return expr.id
-            case ast.Subscript:
-                return self.parse_subscript(expr)
-            case ast.BinOp:
-                return (
-                    "(" + 
-                    self.parse_expression(expr.left)
-                    + self.parse_binop(expr)
-                    + self.parse_expression(expr.right)
-                    + ")"
-                )
-            case ast.Compare:
-                return self.parse_compare(expr)
-            case _:
-                raise Exception("Error: unexpected expression type", type(expr))
+        if isinstance(expr, ast.Constant):
+            return str(expr.value)
+        if isinstance(expr, ast.Name):
+            return expr.id
+        if isinstance(expr, ast.Subscript):
+            return self.parse_subscript(expr)
+        if isinstance(expr, ast.BinOp):
+            return (
+                "("
+                + self.parse_expression(expr.left)
+                + self.parse_binop(expr)
+                + self.parse_expression(expr.right)
+                + ")"
+            )
+        if isinstance(expr, ast.Compare):
+            return self.parse_compare(expr)
+        raise TypeError("Error: unexpected expression type", type(expr))
 
     def parse_subscript(self, node: ast.Subscript):
         """
@@ -390,20 +390,20 @@ class GeneratorParser:
         assert len(node.ops) == 1
         assert len(node.comparators) == 1
 
-        match type(node.ops[0]):
-            case ast.Lt:
-                operator = "<"
-            case ast.LtE:
-                operator = "<="
-            case ast.Gt:
-                operator = ">"
-            case ast.GtE:
-                operator = ">="
-            case _:
-                raise Exception(
-                    "Error: unknown operator", type(node.ops[0]), ast.dump(node.ops[0])
-                )
-        return f"{self.parse_expression(node.left)} {operator} {self.parse_expression(node.comparators[0])}"
+        if isinstance(node.ops[0], ast.Lt):
+            operator = "<"
+        elif isinstance(node.ops[0], ast.LtE):
+            operator = "<="
+        elif isinstance(node.ops[0], ast.Gt):
+            operator = ">"
+        elif isinstance(node.ops[0], ast.GtE):
+            operator = ">="
+        else:
+            raise TypeError(
+                "Error: unknown operator", type(node.ops[0]), ast.dump(node.ops[0])
+            )
+        return f"{self.parse_expression(node.left)} {operator} \
+            {self.parse_expression(node.comparators[0])}"
 
     def parse_while(self, node: ast.While, prefix: str = ""):
         """
@@ -414,14 +414,14 @@ class GeneratorParser:
                 [
                     f"if (!({self.parse_expression(node.test)})) begin // WHILE LOOP START",
                     Indent(1) + f"{prefix}_STATE = {prefix}_STATE + 1;",
-                    f"end else begin",
+                    "end else begin",
                 ]
             ),
-            Lines([f"end // WHILE LOOP END"]),
+            Lines(["end // WHILE LOOP END"]),
         )
 
         statements = self.parse_statements(
-            node.body, f"{prefix}_BODY_{self.create_unique_name()}", resetToZero=True
+            node.body, f"{prefix}_BODY_{self.create_unique_name()}", reset_to_zero=True
         )
 
         return Lines.nestify([conditional, statements])

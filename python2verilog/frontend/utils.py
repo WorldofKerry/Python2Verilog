@@ -1,5 +1,7 @@
+"""Utility Classes"""
+
 from __future__ import annotations
-import warnings
+
 
 class Lines:
     """
@@ -7,32 +9,34 @@ class Lines:
     """
 
     @staticmethod
-    def assert_no_newline(input: any): 
-       assert str(input).find("\n") == -1, "Lines should not contain \\n" 
+    def assert_no_newline(stringable: any):
+        """
+        Asserts no newline character in str(stringable)
+        """
+        assert str(stringable).find("\n") == -1, "Lines should not contain \\n"
 
-    def __init__(self, input: list[str] | str = None):
-        match input:
-            case None:
-                self.lines = []
-            case str(line):
+    def __init__(self, data: list[str] | str = None):
+        if data is None:
+            self.lines = []
+        elif isinstance(data, str):
+            self.assert_no_newline(data)
+            self.lines = [data]
+        elif isinstance(data, list):
+            for line in data:
+                assert isinstance(line, str), "Input must be a list of strings"
                 self.assert_no_newline(line)
-                self.lines = [line]
-            case list(lines):
-                for line in lines:
-                    assert isinstance(line, str), "Input must be a list of strings"
-                    self.assert_no_newline(line)
-                self.lines = lines
-            case _:
-                assert False, "Invalid input type: " + str(type(input))
+            self.lines = data
+        else:
+            assert False, "Invalid input type: " + str(type(data))
 
     def __add__(self, other: str):
         return self.add(other)
 
     def __str__(self):
-        return self.toString()
+        return self.to_string()
 
     def __repr__(self):
-        return self.toString()
+        return self.to_string()
 
     def __len__(self):
         return len(self.lines)
@@ -48,24 +52,36 @@ class Lines:
 
     def __rshift__(self, indent: int):
         indent(indent)
-    
-    def indent(self, indent: int): 
-        self.lines = [Indent(indent) + line for line in self.lines]
+
+    def indent(self, indent_amount: int):
+        """
+        Indent all lines by amount
+        """
+        self.lines = [Indent(indent_amount) + line for line in self.lines]
         return self
 
-    def toString(self, indent: int = 0):
+    def to_string(self, indent: int = 0):
+        """
+        Converts all lines into a string with lines
+        """
         output = ""
         for buffer in self.lines:
             output += Indent(indent) + buffer + "\n"
         return output
 
     def add(self, other: str):
+        """
+        Adds a new line
+        """
         assert isinstance(other, str)
         self.assert_no_newline(other)
         self.lines.append(other)
         return self
 
     def concat(self, other: Lines, indent: int = 0):
+        """
+        Concats two Lines
+        """
         assert isinstance(other, Lines)
         for line in other.lines:
             self.lines.append(Indent(indent) + line)
@@ -81,22 +97,24 @@ class Lines:
             pair[1][0]
         pair[0][1]
         """
-        assert type(indent) == int
+        assert isinstance(indent, int)
         for pair in buffers:
             assert isinstance(pair[0], Lines), f"{type(pair[0])} {pair[0]}"
             assert isinstance(pair[1], Lines), f"{type(pair[1])} {pair[1]}"
             assert len(pair) == 2
         lines = Lines()
-        for i in range(len(buffers)):
-            lines.concat(buffers[i][0], indent + i)
-        for i in range(len(buffers), 0, -1):
-            lines.concat(buffers[i - 1][1], indent + i - 1)
+        for i, buffer in enumerate(buffers):
+            lines.concat(buffer[0], indent + i)
+        for i, buffer in enumerate(buffers[::-1], len(buffers) - 1):
+            lines.concat(buffer[1], indent + i)
         return lines
+
 
 class Indent:
     """
     Creates str instances of indentation
     """
+
     indentor = " " * 4
 
     def indentify(self, indent: int = 0) -> str:

@@ -2,10 +2,10 @@ module generator_tb;
   // Inputs
   reg _clock;
   reg _start;
-  reg signed [31:0] s_x;
-  reg signed [31:0] s_y;
-  reg signed [31:0] height;
-  reg signed [31:0] width;
+  reg signed [31:0] a;
+  reg signed [31:0] b;
+  reg signed [31:0] c;
+  reg signed [31:0] d;
 
   // Outputs
   wire signed [31:0] _out0;
@@ -14,13 +14,13 @@ module generator_tb;
   wire _done;
 
   // Instantiate the module under test
-  rectangle_filled dut (
+  delete_me dut (
     ._clock(_clock),
     ._start(_start),
-    .s_x(s_x),
-    .s_y(s_y),
-    .height(height),
-    .width(width),
+    .a(a),
+    .b(b),
+    .c(c),
+    .d(d),
     ._out0(_out0),
     ._out1(_out1),
 
@@ -34,10 +34,10 @@ module generator_tb;
   initial begin
     // Initialize inputs
     _start = 0;
-    s_x = 23;
-    s_y = 17;
-    height = 5;
-    width = 7;
+    a = 1;
+    b = 2;
+    c = 3;
+    d = 4;
 
     _clock = 0;
 
