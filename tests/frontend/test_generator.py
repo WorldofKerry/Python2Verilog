@@ -30,7 +30,7 @@ class TestGeneratorParser(unittest.TestCase):
             for key, value in config["file_names"].items()
         }
 
-        with open(DIR_OF_ABS_PATH["generator"]) as python_file:
+        with open(DIR_OF_ABS_PATH["python"]) as python_file:
             python = python_file.read()
             _locals = dict()
             exec(python, None, _locals)  # grab's exec's populated scoped variables
