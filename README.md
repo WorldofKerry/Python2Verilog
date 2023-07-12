@@ -4,7 +4,9 @@ Converts a subset of python generator functions into synthesizable sequential Sy
 
 A use case is for drawing shapes on grids (for VGA output), where the user may prototype the algorithm in python and then convert it to verilog for use in an FPGA.
 
-Based on my experimentation with a [C to Verilog converter](https://github.com/WorldofKerry/c2hdl)
+Based on my experimentation with a [C to Verilog converter](https://github.com/WorldofKerry/c2hdl). 
+
+Architecture is based on [LLVM](https://llvm.org/). 
 
 Supported functions:
 
