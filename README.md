@@ -18,8 +18,42 @@ Supports Python [Generator functions](https://wiki.python.org/moin/Generators) a
 for i in range(10):
     pass
 ```
+## Sample Usage
+```python
+func = """
+def circle_lines(s_x, s_y, height) -> tuple[int, int]:
+    x = 0
+    y = height
+    d = 3 - 2 * height
+    yield (s_x + x, s_y + y)
+    yield (s_x + x, s_y - y)
+    yield (s_x - x, s_y + y)
+    yield (s_x - x, s_y - y)
+    yield (s_x + y, s_y + x)
+    yield (s_x + y, s_y - x)
+    yield (s_x - y, s_y + x)
+    yield (s_x - y, s_y - x)
+    while y >= x:
+        x = x + 1
+        if d > 0:
+            y = y - 1
+            d = d + 4 * (x - y) + 10
+        else:
+            d = d + 4 * x + 6
+        yield (s_x + x, s_y + y)
+        yield (s_x + x, s_y - y)
+        yield (s_x - x, s_y + y)
+        yield (s_x - x, s_y - y)
+        yield (s_x + y, s_y + x)
+        yield (s_x + y, s_y - x)
+        yield (s_x - y, s_y + x)
+        yield (s_x - y, s_y - x)
+"""
+generatorParser = GeneratorParser(ast.parse(func).body[0])
+print(generatorParser.generate_verilog())
+```
 
-## Doing Your Own Conversion
+## Automatically Test The Generated Verilog
 `python3 tests/parsers/new_generator.py <name>` to create new test case and prepare template Python file.
 
 `python3 -m pytest --verbose` to run tests / generate the module, testbench, visualizations, dumps, and expected/actual outputs.
