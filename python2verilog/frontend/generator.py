@@ -101,6 +101,12 @@ class GeneratorParser:
         endmodule
         """
         start_lines, end_lines = Lines(), Lines()
+        assert self.name not in {
+            "default",
+            "module",
+            "output",
+            "function",
+        }  # Verilog Reserved Keywords
         start_lines += f"module {self.name}("
         start_lines += Indent(1) + "input wire _clock,"
         start_lines += Indent(1) + "input wire _start,"

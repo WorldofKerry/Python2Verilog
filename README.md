@@ -38,6 +38,11 @@ Architecture is based on [LLVM](https://llvm.org/).
 
 To setup pre-commit, run `pre-commit install`.
 
+### Epics
+
+- Create a Verilog AST representation (lots of samples online) to better optimize (mostly end statements)
+- Add `valid` signal and then generate testbenches that test multiple cases
+
 ## Docs
 
 - Generate `.html` docs: `bash docs/generate.sh`
