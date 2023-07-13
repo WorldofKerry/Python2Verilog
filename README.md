@@ -1,4 +1,4 @@
-# Python To Verilog
+# Python 2 Verilog
 
 Converts a subset of python generator functions into synthesizable sequential SystemVerilog.
 
