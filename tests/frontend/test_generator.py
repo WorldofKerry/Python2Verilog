@@ -199,3 +199,6 @@ endmodule
 
     def test_rectangle_lines(self):
         self.run_test("rectangle_lines", (23, 17, 5, 7))
+
+    def test_rectangle_filled_while(self):
+        self.run_test("rectangle_filled_while", (23, 17, 5, 7))
