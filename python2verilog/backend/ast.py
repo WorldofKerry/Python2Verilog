@@ -3,6 +3,14 @@
 from ..frontend.utils import Lines
 
 
+def assert_list_elements(the_list: list, elem_type):
+    if the_list:
+        for elem in the_list:
+            assert isinstance(elem, elem_type)
+        return the_list
+    return []
+
+
 class Expression:
     """
     Verilog expression, e.g.
@@ -186,4 +194,31 @@ class Case(Statement):
         for item in self.case_items:
             lines.concat(item.to_lines(), indent=1)
         lines += "endcase"
+        return lines
+
+
+class IfElse(Statement):
+    """
+    Verilog if else
+    """
+
+    def __init__(
+        self,
+        condition: Expression,
+        then_body: list[Statement],
+        else_body: list[Statement],
+    ):
+        self.condition = condition
+        self.then_body = assert_list_elements(then_body, Statement)
+        self.else_body = assert_list_elements(else_body, Statement)
+
+    def to_lines(self):
+        lines = Lines()
+        lines += f"if ({self.condition.to_string()}) begin"
+        for stmt in self.then_body:
+            lines.concat(stmt.to_lines(), indent=1)
+        lines += "end else begin"
+        for stmt in self.else_body:
+            lines.concat(stmt.to_lines(), indent=1)
+        lines += "end"
         return lines
