@@ -4,15 +4,13 @@ Converts a subset of python generator functions into synthesizable sequential Sy
 
 A use case is for drawing shapes on grids (for VGA output), where the user may prototype the algorithm in python and then convert it to verilog for use in an FPGA.
 
-Based on my experimentation with a [C to Verilog converter](https://github.com/WorldofKerry/c2hdl).
+A testbench is also generated and asserted against the Python outputs.
 
-Architecture is based on [LLVM](https://llvm.org/).
-
-Supported functions:
+Supports Python [Generator functions](https://wiki.python.org/moin/Generators) as well as the following block types:
 
 - `if`
-- `while` (less robust)
-- `for ... in range(...)` with 1 or 2 args in `range` (less robust)
+- `while`
+- `for ... in range(...)` with 1 or 2 args in `range` (quite inefficient)
 
 **Warning**: Variables must be unique, i.e. variables do not have block scope, e.g. the following modifies global `i`:
 
@@ -21,24 +19,26 @@ for i in range(10):
     pass
 ```
 
-## Tested Generations
-
-I recommend [EDA Playground](https://edaplayground.com/) for testing the verilog code.
-
-To setup pre-commit, run `pre-commit install`
-
-`python3 -m pytest --verbose` to run tests / regenerate most of the files [here](tests/parsers/data/generator/)
-
+## Doing Your Own Conversion
 `python3 tests/parsers/new_generator.py <name>` to create new test case and prepare template Python file.
 
-To test verilog locally, an example command with Icarus Verilog is
-`iverilog '-Wall' design.sv testbench.sv  && unbuffer vvp a.out`
+`python3 -m pytest --verbose` to run tests / generate the module, testbench, visualizations, dumps, and expected/actual outputs.
 
-[Comparisons between Python and Verilog for sample inputs](tests/frontend/data/generator/stats.md), generated with `python3 tests/frontend/data/generator/update_statistics.py`.
+## Tested Generations
+Python vs Verilog on sample inputs can be found [here](tests/frontend/data/generator/stats.md), this can be regenerated with `python3 tests/frontend/data/generator/update_statistics.py` after running tests.
+
+I recommend [EDA Playground](https://edaplayground.com/) or [Icarus Verilog](https://github.com/steveicarus/iverilog) for testing the verilog code. Refer to the [github action](.github/workflows/python-package.yml) to see how to setup testing with Icarus Verilog.
+
+## For Developers
+Based on my experimentation with a [C to Verilog converter](https://github.com/WorldofKerry/c2hdl).
+
+Architecture is based on [LLVM](https://llvm.org/).
+
+To setup pre-commit, run `pre-commit install`.
 
 ## Docs
 
-- Generate `.html` docs: `docs/generate.sh`
+- Generate `.html` docs: `bash docs/generate.sh`
 - Live docs: `python3 -m pydoc -b`
 
 ## Random Planning, Design, and Notes

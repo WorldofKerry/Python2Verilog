@@ -1,15 +1,15 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
-<html><head><title>Python: module python2verilog.parsers.generator</title>
+<html><head><title>Python: module python2verilog.frontend.generator</title>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 </head><body bgcolor="#f0f0f8">
 
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
 <tr bgcolor="#7799ee">
 <td valign=bottom>&nbsp;<br>
-<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong><a href="python2verilog.html"><font color="#ffffff">python2verilog</font></a>.<a href="python2verilog.parsers.html"><font color="#ffffff">parsers</font></a>.generator</strong></big></big></font></td
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong><a href="python2verilog.html"><font color="#ffffff">python2verilog</font></a>.<a href="python2verilog.frontend.html"><font color="#ffffff">frontend</font></a>.generator</strong></big></big></font></td
 ><td align=right valign=bottom
-><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:c%3A%5Cusers%5Ckerry%5Crepos%5Cp2v%5Cpython2verilog%5Cparsers%5Cgenerator.py">c:\users\kerry\repos\p2v\python2verilog\parsers\generator.py</a></font></td></tr></table>
-    <p></p>
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/kerrwang/repos/testing1/python2verilog/frontend/generator.py">/home/kerrwang/repos/testing1/python2verilog/frontend/generator.py</a></font></td></tr></table>
+    <p><tt>Parser&nbsp;for&nbsp;Python&nbsp;Generator&nbsp;Functions</tt></p>
 <p>
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
 <tr bgcolor="#aa55cc">
@@ -18,8 +18,7 @@
 
 <tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
 <td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="ast.html">ast</a><br>
-</td><td width="25%" valign=top><a href="warnings.html">warnings</a><br>
-</td><td width="25%" valign=top></td><td width="25%" valign=top></td></tr></table></td></tr></table><p>
+</td><td width="25%" valign=top></td><td width="25%" valign=top></td><td width="25%" valign=top></td></tr></table></td></tr></table><p>
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
 <tr bgcolor="#ee77aa">
 <td colspan=3 valign=bottom>&nbsp;<br>
@@ -30,7 +29,7 @@
 <dt><font face="helvetica, arial"><a href="builtins.html#object">builtins.object</a>
 </font></dt><dd>
 <dl>
-<dt><font face="helvetica, arial"><a href="python2verilog.parsers.generator.html#GeneratorParser">GeneratorParser</a>
+<dt><font face="helvetica, arial"><a href="python2verilog.frontend.generator.html#GeneratorParser">GeneratorParser</a>
 </font></dt></dl>
 </dd>
 </dl>
@@ -66,7 +65,7 @@ Parses&nbsp;python&nbsp;generator&nbsp;functions<br>&nbsp;</tt></td></tr>
 
 <dl><dt><a name="GeneratorParser-parse_statement"><strong>parse_statement</strong></a>(self, stmt: 'ast.AST', prefix: 'str' = '')</dt><dd><tt>&lt;statement&gt;&nbsp;(e.g.&nbsp;assign,&nbsp;for&nbsp;loop,&nbsp;etc.,&nbsp;those&nbsp;that&nbsp;do&nbsp;not&nbsp;return&nbsp;a&nbsp;value)</tt></dd></dl>
 
-<dl><dt><a name="GeneratorParser-parse_statements"><strong>parse_statements</strong></a>(self, stmts: 'list[ast.AST]', prefix: 'str', endStatements: 'Lines' = , resetToZero: 'bool' = False)</dt><dd><tt>Warning:&nbsp;mutates&nbsp;global_vars<br>
+<dl><dt><a name="GeneratorParser-parse_statements"><strong>parse_statements</strong></a>(self, stmts: 'list[ast.AST]', prefix: 'str', end_stmts: 'Lines' = , reset_to_zero: 'bool' = False)</dt><dd><tt>Warning:&nbsp;mutates&nbsp;global_vars<br>
 {<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&lt;statement0&gt;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&lt;statement1&gt;<br>
