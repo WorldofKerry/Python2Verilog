@@ -42,7 +42,7 @@ class GeneratorParser:
         return (Lines(["always @(posedge _clock) begin"]), Lines(["end"]))
 
     def __str__(self):
-        return self.generate_verilog()
+        return self.generate_verilog().to_string()
 
     def generate_verilog(self, indent: int = 0):
         """
