@@ -20,4 +20,4 @@ def circle_lines(s_x, s_y, height) -> tuple[int, int]:
 
         with open("module.log", mode="w") as module_file:
             module_file.write(generatorParser.generate_verilog().to_string())
-        warnings.warn((generatorParser.generate_verilog()))
+        # warnings.warn((generatorParser.generate_verilog()))

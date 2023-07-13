@@ -150,6 +150,9 @@ class CaseItem:
         lines += "end"
         return lines
 
+    def to_string(self):
+        return self.to_lines().to_string()
+
 
 class Case(Statement):
     """

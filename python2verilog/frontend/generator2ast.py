@@ -4,6 +4,7 @@ from __future__ import annotations
 import ast as pyast
 from .utils import Lines, Indent
 from ..backend import ast as vast
+import warnings
 
 
 class Generator2Ast:
@@ -190,18 +191,17 @@ class Generator2Ast:
         if node.id not in self.global_vars:
             self.add_global_var(0, node.id)
         buffer += self.parse_expression(node).to_string()
-        return buffer
+        return buffer + "DEBUG PARSE _TARGETS"
 
     def parse_assign(self, node: pyast.Assign):
         """
         <target0, target1, ...> = <value>;
         """
-        return [
-            vast.NonBlockingSubsitution(
-                self.parse_targets(node.targets),
-                self.parse_expression(node.value).to_string(),
-            )
-        ]
+        assign = vast.NonBlockingSubsitution(
+            self.parse_targets(node.targets),
+            self.parse_expression(node.value).to_string(),
+        )
+        return [assign]
 
     def parse_statement(self, stmt: pyast.AST, prefix: str = ""):
         """
@@ -301,12 +301,15 @@ class Generator2Ast:
 
         index = 0
         for stmt in stmts:
+            a_output = self.parse_statement(stmt, prefix=prefix)
+            assert isinstance(a_output, list)
             cases.append(
                 vast.CaseItem(
                     vast.Expression(str(index)),
-                    self.parse_statement(stmt, prefix=prefix).append(
+                    self.parse_statement(stmt, prefix=prefix)
+                    + [
                         vast.NonBlockingSubsitution(state_var, f"{state_var} + 1")
-                    ),  # Conditional on For, While, If removed
+                    ],  # Conditional on For, While, If removed
                 )
             )  # TODO: cases can have multiple statements
             index += 1
@@ -323,6 +326,8 @@ class Generator2Ast:
                 )
             )
             index += 1
+        # for casee in cases:
+        #     warnings.warn(casee.to_string())
         return vast.Case(vast.Expression(state_var), cases)
 
         state_var = self.add_global_var("0", f"{prefix}_STATE")
@@ -392,7 +397,7 @@ class Generator2Ast:
         return [
             vast.NonBlockingSubsitution(
                 self.yield_vars[idx], self.parse_expression(elem).to_string()
-            ).to_string()
+            )
             for idx, elem in enumerate(node.value.elts)
         ]
 
