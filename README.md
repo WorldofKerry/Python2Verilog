@@ -25,7 +25,9 @@ for i in range(10):
 `python3 -m pytest --verbose` to run tests / generate the module, testbench, visualizations, dumps, and expected/actual outputs.
 
 ## Tested Generations
-Python vs Verilog on sample inputs can be found [here](tests/frontend/data/generator/stats.md), this can be regenerated with `python3 tests/frontend/data/generator/update_statistics.py` after running tests.
+The outputs of the Python script tests can be found [here](https://nightly.link/WorldofKerry/Python2Verilog/workflows/python-package/main/data-generator.zip)
+
+Python vs Verilog stats on sample inputs (not up-to-date) can be found [here](tests/frontend/data/generator/stats.md).
 
 I recommend [EDA Playground](https://edaplayground.com/) or [Icarus Verilog](https://github.com/steveicarus/iverilog) for testing the verilog code. Refer to the [github action](.github/workflows/python-package.yml) to see how to setup testing with Icarus Verilog.
 
