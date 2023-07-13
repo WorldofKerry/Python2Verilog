@@ -196,10 +196,12 @@ class Generator2Ast:
         """
         <target0, target1, ...> = <value>;
         """
-        return vast.NonBlockingSubsitution(
-            self.parse_targets(node.targets),
-            self.parse_expression(node.value).to_string(),
-        )
+        return [
+            vast.NonBlockingSubsitution(
+                self.parse_targets(node.targets),
+                self.parse_expression(node.value).to_string(),
+            )
+        ]
 
     def parse_statement(self, stmt: pyast.AST, prefix: str = ""):
         """
@@ -302,12 +304,9 @@ class Generator2Ast:
             cases.append(
                 vast.CaseItem(
                     vast.Expression(str(index)),
-                    [
-                        self.parse_statement(stmt, prefix=prefix),
-                        vast.NonBlockingSubsitution(
-                            state_var, f"{state_var} + 1"
-                        ),  # Conditional on For, While, If removed
-                    ],
+                    self.parse_statement(stmt, prefix=prefix).append(
+                        vast.NonBlockingSubsitution(state_var, f"{state_var} + 1")
+                    ),  # Conditional on For, While, If removed
                 )
             )  # TODO: cases can have multiple statements
             index += 1
@@ -390,16 +389,12 @@ class Generator2Ast:
         # for idx, elem in enumerate(node.value.elts):
         #     lines += f"{self.yield_vars[idx]} <= {self.parse_expression(elem)};"
         # return lines
-        return vast.Statement(
-            "".join(
-                [
-                    vast.NonBlockingSubsitution(
-                        self.yield_vars[idx], self.parse_expression(elem).to_string()
-                    ).to_string()
-                    for idx, elem in enumerate(node.value.elts)
-                ]
-            )
-        )
+        return [
+            vast.NonBlockingSubsitution(
+                self.yield_vars[idx], self.parse_expression(elem).to_string()
+            ).to_string()
+            for idx, elem in enumerate(node.value.elts)
+        ]
 
     @staticmethod
     def parse_binop(node: pyast.BinOp):
