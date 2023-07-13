@@ -23,5 +23,5 @@ jobs:
         # Ignoring: fixme, too-few-public-methods
         run: >
           pylint ./python2verilog/ -d
-            W0511,
-            R0903
+          W0511,
+          R0903
