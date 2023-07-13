@@ -2,12 +2,25 @@ from python2verilog.backend.ast import (
     NonBlockingSubsitution,
     BlockingSubsitution,
     Declaration,
+    Case,
+    CaseItem,
+    Expression,
 )
+
+
 import unittest
 import warnings
 
 
 class TestAST(unittest.TestCase):
+    def assert_lines(self, first: str, second: str):
+        """
+        Asserts that each stripped line in first matches each stripped line in second
+        """
+        self.assertTrue(isinstance(first, str) and isinstance(second, str))
+        for a_line, b_line in zip(first.splitlines(), second.splitlines()):
+            self.assertEqual(a_line.strip(), b_line.strip())
+
     # def test_comments(self):
     #     nb = NonBlockingSubsitution("a", "b", comment="ayo")
     #     self.assertEqual(nb.to_string(), "a <= b; // ayo")
@@ -25,3 +38,12 @@ class TestAST(unittest.TestCase):
 
         decl = Declaration("name", size=64, is_reg=True, is_signed=True)
         self.assertEqual(decl.to_string(), "reg signed [63:0] name;\n")
+
+    def test_case(self):
+        item0 = CaseItem(Expression("0"), [BlockingSubsitution("a", "0")])
+        item1 = CaseItem(Expression("1"), [BlockingSubsitution("b", "1")])
+        case = Case(Expression("cur_state"), [item0, item1])
+        self.assert_lines(
+            case.to_string(),
+            "case (cur_state) \n 0: begin \n a = 0; \n end \n 1: begin \n b = 1; \n end \n endcase",
+        )

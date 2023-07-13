@@ -13,7 +13,7 @@ class Expression:
     def __init__(self, string: str):
         self.string = string
 
-    def to_lines(self):
+    def to_string(self):
         return self.string
 
 
@@ -23,7 +23,7 @@ class Statement:
     """
 
     def __init__(self, comment: str = None):
-        self.comment = comment
+        self.comment = comment  # TODO: actually use this
 
     def to_string(self):
         return self.to_lines().to_string()
@@ -113,28 +113,50 @@ class CaseItem:
     end
     """
 
+    def __init__(self, condition: Expression, statements: list[Statement]):
+        self.condition = condition  # Can these by expressions are only literals?
+        if statements:
+            for stmt in statements:
+                assert isinstance(stmt, Statement)
+            self.statements = statements
+        else:
+            self.statements = []
+
+    def to_lines(self):
+        lines = Lines()
+        lines += f"{self.condition.to_string()}: begin"
+        for stmt in self.statements:
+            lines.concat(stmt.to_lines(), indent=1)
+        lines += "end"
+        return lines
+
 
 class Case(Statement):
     """
     Verilog case statement with various cases
     case (<condition>)
+        <items[0]>
         ...
+        <items[n]>
     endcase
     """
 
-    def __init__(self, condition: Expression, items: list[CaseItem], *args, **kwargs):
+    def __init__(
+        self, condition: Expression, case_items: list[CaseItem], *args, **kwargs
+    ):
         self.condition = condition
-        if items:
-            for item in item:
+        if case_items:
+            for item in case_items:
                 assert isinstance(item, CaseItem)
-            self.items = items
+            self.case_items = case_items
         else:
-            items = []
+            case_items = []
         super().__init__(*args, **kwargs)
 
     def to_lines(self):
         lines = Lines()
-        lines += f"case ({self.condition.to_lines()})"
-        for item in self.items:
-            lines.concat(item, indent=1)
+        lines += f"case ({self.condition.to_string()})"
+        for item in self.case_items:
+            lines.concat(item.to_lines(), indent=1)
+        lines += "endcase"
         return lines
