@@ -1,6 +1,6 @@
 """Verilog Abstract Syntax Tree Components"""
 
-from ..frontend.utils import Indent, Lines
+from ..frontend.utils import Lines
 
 
 class Expression:
@@ -14,6 +14,9 @@ class Expression:
         self.string = string
 
     def to_string(self):
+        """
+        To Verilog
+        """
         return self.string
 
 
@@ -25,7 +28,16 @@ class Statement:
     def __init__(self, comment: str = None):
         self.comment = comment  # TODO: actually use this
 
+    def to_lines(self):
+        """
+        To Verilog
+        """
+        raise NotImplementedError("base class has no to_lines")
+
     def to_string(self):
+        """
+        To Verilog
+        """
         return self.to_lines().to_string()
 
 
@@ -38,6 +50,7 @@ class Subsitution(Statement):
     def __init__(self, lvalue: str, rvalue: str, *args, **kwargs):
         self.lvalue = lvalue
         self.rvalue = rvalue
+        self.type = None
         super().__init__(*args, **kwargs)
 
     def to_lines(self):
@@ -54,8 +67,8 @@ class NonBlockingSubsitution(Subsitution):
     """
 
     def __init__(self, lvalue: str, rvalue: str, *args, **kwargs):
-        self.type = "<="
         super().__init__(lvalue, rvalue, *args, **kwargs)
+        self.type = "<="
 
 
 class BlockingSubsitution(Subsitution):
@@ -64,8 +77,8 @@ class BlockingSubsitution(Subsitution):
     """
 
     def __init__(self, lvalue: str, rvalue: str, *args, **kwargs):
-        self.type = "="
         super().__init__(lvalue, rvalue, *args, *kwargs)
+        self.type = "="
 
 
 class Declaration(Statement):
@@ -76,10 +89,10 @@ class Declaration(Statement):
     def __init__(
         self,
         name: str,
+        *args,
         size: int = 32,
         is_reg: bool = False,
         is_signed: bool = False,
-        *args,
         **kwargs,
     ):
         self.size = size
@@ -90,7 +103,7 @@ class Declaration(Statement):
 
     def to_lines(self):
         """
-        To Verilog
+        To Verilog lines
         """
         string = ""
         if self.is_reg:
@@ -123,6 +136,9 @@ class CaseItem:
             self.statements = []
 
     def to_lines(self):
+        """
+        To Verilog lines
+        """
         lines = Lines()
         lines += f"{self.condition.to_string()}: begin"
         for stmt in self.statements:
@@ -154,6 +170,9 @@ class Case(Statement):
         super().__init__(*args, **kwargs)
 
     def to_lines(self):
+        """
+        To Verilog Lines
+        """
         lines = Lines()
         lines += f"case ({self.condition.to_string()})"
         for item in self.case_items:
