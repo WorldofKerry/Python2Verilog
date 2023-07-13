@@ -11,7 +11,10 @@ def circle_lines(s_x, s_y, height) -> tuple[int, int]:
     a = 123
     yield(a, height)
     s_y = a
-    yield(s_x, s_y)
+    if s_x < a:
+        yield(s_x, s_y)
+    else:
+        yield(123, 456)
         """
         tree = ast.parse(func)
         with open("ast.log", mode="w") as ast_file:

@@ -227,6 +227,55 @@ class Generator2Ast:
         """
         If statement
         """
+        assert isinstance(stmt, pyast.If)
+        state_var = self.add_global_var("0", f"{prefix}_IF")
+        conditional_item = vast.CaseItem(
+            vast.Expression("0"),
+            [
+                vast.Statement(f"if ({self.parse_expression(stmt.test).to_string()})"),
+                vast.NonBlockingSubsitution(state_var, "1"),
+                vast.Statement(
+                    f"else " + vast.NonBlockingSubsitution(state_var, "2").to_string()
+                ),
+            ],
+        )
+        then_item = vast.CaseItem(
+            vast.Expression("1"),
+            [
+                self.parse_statements(
+                    stmt.body,
+                    f"{state_var}{self.create_unique_name()}",
+                    end_stmts=Lines(
+                        [
+                            f"{prefix}_STATE <= {prefix}_STATE + 1; {state_var} <= 0;",
+                        ]
+                    ),
+                    reset_to_zero=True,
+                )
+            ],
+        )
+        else_item = vast.CaseItem(
+            vast.Expression("2"),
+            [
+                self.parse_statements(
+                    stmt.orelse,
+                    f"{state_var}_{self.create_unique_name()}",
+                    end_stmts=Lines(
+                        [
+                            f"{prefix}_STATE <= {prefix}_STATE + 1; {state_var} <= 0;",
+                        ]
+                    ),
+                    reset_to_zero=True,
+                )
+            ],
+        )
+        return [
+            vast.Case(
+                vast.Expression(f"{prefix}_STATE"),
+                [conditional_item, then_item, else_item],
+            )
+        ]
+
         raise NotImplementedError("if")
         assert len(stmt.orelse) >= 1  # Currently only supports if-else
         state_var = self.add_global_var("0", f"{prefix}_IF")
@@ -422,9 +471,11 @@ class Generator2Ast:
         """
         <expression> (e.g. constant, name, subscript, etc., those that return a value)
         """
+        warnings.warn(type(expr))
         if isinstance(expr, pyast.Constant):
             return vast.Expression(str(expr.value))
         if isinstance(expr, pyast.Name):
+            warnings.warn(expr.id)
             return vast.Expression(expr.id)
         if isinstance(expr, pyast.Subscript):
             return self.parse_subscript(expr)
@@ -445,8 +496,7 @@ class Generator2Ast:
         <value>[<slice>]
         Note: built from right to left, e.g. [z] -> [y][z] -> [x][y][z] -> matrix[x][y][z]
         """
-        raise NotImplementedError()
-        return (
+        return vast.Expression(
             f"{self.parse_expression(node.value)}[{self.parse_expression(node.slice)}]"
         )
 
@@ -470,14 +520,27 @@ class Generator2Ast:
                 "Error: unknown operator", type(node.ops[0]), pyast.dump(node.ops[0])
             )
         return vast.Expression(
-            f"{self.parse_expression(node.left)} {operator} \
-            {self.parse_expression(node.comparators[0])}"
+            f"{self.parse_expression(node.left).to_string()} {operator} {self.parse_expression(node.comparators[0]).to_string()}"
         )
 
     def parse_while(self, node: pyast.While, prefix: str = ""):
         """
         Converts while loop to a while-true-if-break loop
         """
+        # condition_item = vast.CaseItem(
+        #     0,
+        #     Lines(
+        #         [
+        #             f"if (!({self.parse_expression(node.test)})) begin // WHILE LOOP START",
+        #             Indent(1) + f"{prefix}_STATE = {prefix}_STATE + 1;",
+        #             "end else begin",
+        #         ]
+        #     ).to_string,
+        # )
+        # body_item = vast.CaseItem(
+        #     1
+        # )
+
         raise NotImplementedError("while")
         conditional = (
             Lines(
