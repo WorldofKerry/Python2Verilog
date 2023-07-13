@@ -23,16 +23,17 @@ class Expression:
 class Statement:
     """
     Represents a statement in verilog (i.e. a line or a block)
+    If used directly, it is treated as a string literal
     """
 
-    def __init__(self, comment: str = None):
-        self.comment = comment  # TODO: actually use this
+    def __init__(self, literal: str = None):
+        self.literal = literal
 
     def to_lines(self):
         """
         To Verilog
         """
-        raise NotImplementedError("base class has no to_lines")
+        return Lines(self.literal)
 
     def to_string(self):
         """
@@ -48,6 +49,8 @@ class Subsitution(Statement):
     """
 
     def __init__(self, lvalue: str, rvalue: str, *args, **kwargs):
+        assert isinstance(rvalue, str)  # TODO: should eventually take an expression
+        assert isinstance(lvalue, str)
         self.lvalue = lvalue
         self.rvalue = rvalue
         self.type = None
@@ -127,10 +130,11 @@ class CaseItem:
     """
 
     def __init__(self, condition: Expression, statements: list[Statement]):
+        assert isinstance(condition, Expression)
         self.condition = condition  # Can these by expressions are only literals?
         if statements:
             for stmt in statements:
-                assert isinstance(stmt, Statement)
+                assert isinstance(stmt, Statement), f"unexpected {type(stmt)}"
             self.statements = statements
         else:
             self.statements = []
@@ -150,7 +154,7 @@ class CaseItem:
 class Case(Statement):
     """
     Verilog case statement with various cases
-    case (<condition>)
+    case (<expression>)
         <items[0]>
         ...
         <items[n]>
@@ -158,9 +162,10 @@ class Case(Statement):
     """
 
     def __init__(
-        self, condition: Expression, case_items: list[CaseItem], *args, **kwargs
+        self, expression: Expression, case_items: list[CaseItem], *args, **kwargs
     ):
-        self.condition = condition
+        assert isinstance(expression, Expression)
+        self.condition = expression
         if case_items:
             for item in case_items:
                 assert isinstance(item, CaseItem)
