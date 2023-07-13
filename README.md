@@ -19,7 +19,12 @@ for i in range(10):
     pass
 ```
 ## Sample Usage
+`pip install python2verilog==0.0.1`
+
 ```python
+from python2verilog.frontend.generator import GeneratorParser
+import ast
+
 func = """
 def circle_lines(s_x, s_y, height) -> tuple[int, int]:
     x = 0

@@ -41,6 +41,9 @@ class GeneratorParser:
         """
         return (Lines(["always @(posedge _clock) begin"]), Lines(["end"]))
 
+    def __str__(self):
+        return self.generate_verilog().to_string()
+
     def generate_verilog(self, indent: int = 0):
         """
         Generates the verilog (does the most work, calls other functions)
@@ -123,6 +126,7 @@ class GeneratorParser:
         """
         Initializes the parser, does quick setup work
         """
+        assert isinstance(root, ast.FunctionDef)
         self.name = root.name
         self.yield_vars = self.generate_return_vars(root.returns, "")
         self.unique_name_counter = 0
