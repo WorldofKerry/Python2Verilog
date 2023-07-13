@@ -1,9 +1,13 @@
 """Verilog Abstract Syntax Tree Components"""
 
 from ..frontend.utils import Lines
+import warnings
 
 
 def assert_list_elements(the_list: list, elem_type):
+    """
+    Asserts that all elems in the list are of elem_type, then returns the list
+    """
     if the_list:
         for elem in the_list:
             assert isinstance(elem, elem_type)
@@ -49,6 +53,10 @@ class Statement:
         """
         return self.to_lines().to_string()
 
+    # def append_end_statements(self, statements: list):
+    #     warnings.warn("append_end_statements on base class")
+    #     self.literal += str(statements)
+
 
 class Subsitution(Statement):
     """
@@ -62,6 +70,7 @@ class Subsitution(Statement):
         self.lvalue = lvalue
         self.rvalue = rvalue
         self.type = None
+        self.appended = None
         super().__init__(*args, **kwargs)
 
     def to_lines(self):
@@ -69,7 +78,16 @@ class Subsitution(Statement):
         Converts to Verilog
         """
         assert isinstance(self.type, str), "Subclasses need to set self.type"
-        return Lines(f"{self.lvalue} {self.type} {self.rvalue};")
+        itself = f"{self.lvalue} {self.type} {self.rvalue};"
+        lines = Lines(itself)
+        if self.appended:
+            for stmt in self.appended:
+                lines.concat(stmt.to_lines())
+        return lines
+
+    def append_end_statements(self, statements: list[Statement]):
+        self.appended = assert_list_elements(statements, Statement)
+        return self
 
 
 class NonBlockingSubsitution(Subsitution):
@@ -161,6 +179,17 @@ class CaseItem:
     def to_string(self):
         return self.to_lines().to_string()
 
+    def append_end_statements(self, statements: list[Statement]):
+        """
+        Append statements to case item
+        """
+        # self.statements = self.statements + assert_list_elements(statements, Statement)
+        self.statements[-1].append_end_statements(
+            assert_list_elements(statements, Statement)
+        )
+        # warnings.warn(statements[0].to_string())
+        return self
+
 
 class Case(Statement):
     """
@@ -196,6 +225,15 @@ class Case(Statement):
         lines += "endcase"
         return lines
 
+    def append_end_statements(self, statements: list[Statement]):
+        """
+        Adds statements to the last case item
+        """
+        self.case_items[-1].append_end_statements(
+            assert_list_elements(statements, Statement)
+        )
+        return self
+
 
 class IfElse(Statement):
     """
@@ -222,3 +260,32 @@ class IfElse(Statement):
             lines.concat(stmt.to_lines(), indent=1)
         lines += "end"
         return lines
+
+    def append_end_statements(self, statements: list[Statement]):
+        """
+        Appends statements to both branches
+        """
+        statements = assert_list_elements(statements, Statement)
+        # warnings.warn("appending " + statements[0].to_string())
+        # if len(statements) > 1:
+        #     warnings.warn(statements[1].to_string())
+        self.then_body[-1].append_end_statements(statements)
+        self.else_body[-1].append_end_statements(statements)
+        return self
+
+
+class While(IfElse):
+    """
+    Abstract While wrapper
+    """
+
+    def append_end_statements(self, statements: list[Statement]):
+        """
+        Appends statements to both end branch
+        """
+        statements = assert_list_elements(statements, Statement)
+        # warnings.warn("appending " + statements[0].to_string())
+        # if len(statements) > 1:
+        #     warnings.warn(statements[1].to_string())
+        self.then_body[-1].append_end_statements(statements)
+        return self

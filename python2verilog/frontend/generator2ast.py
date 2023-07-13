@@ -191,7 +191,7 @@ class Generator2Ast:
         if node.id not in self.global_vars:
             self.add_global_var(0, node.id)
         buffer += self.parse_expression(node).to_string()
-        return buffer + "DEBUG PARSE _TARGETS"
+        return buffer
 
     def parse_assign(self, node: pyast.Assign):
         """
@@ -247,7 +247,7 @@ class Generator2Ast:
                     f"{state_var}{self.create_unique_name()}",
                     end_stmts=Lines(
                         [
-                            f"{prefix}_STATE <= {prefix}_STATE + 1; {state_var} <= 0;",
+                            f"{prefix}_STATE <= {prefix}_STATE + 1; {state_var} <= 0 thensheesh;",
                         ]
                     ),
                     reset_to_zero=True,
@@ -259,10 +259,10 @@ class Generator2Ast:
             [
                 self.parse_statements(
                     stmt.orelse,
-                    f"{state_var}_{self.create_unique_name()}",
+                    f"{state_var}{self.create_unique_name()}",
                     end_stmts=Lines(
                         [
-                            f"{prefix}_STATE <= {prefix}_STATE + 1; {state_var} <= 0;",
+                            f"{prefix}_STATE <= {prefix}_STATE + 1; {state_var} <= 0 elsesheesh;",
                         ]
                     ),
                     reset_to_zero=True,
@@ -271,7 +271,7 @@ class Generator2Ast:
         )
         return [
             vast.Case(
-                vast.Expression(f"{prefix}_STATE"),
+                vast.Expression(f"{state_var}"),
                 [conditional_item, then_item, else_item],
             )
         ]
@@ -334,7 +334,7 @@ class Generator2Ast:
         self,
         stmts: list[pyast.AST],
         prefix: str,
-        end_stmts: Lines = Lines(),
+        end_stmts: Lines = None,
         reset_to_zero: bool = False,
     ):
         """
@@ -345,6 +345,8 @@ class Generator2Ast:
             ...
         }
         """
+        if not end_stmts:
+            end_stmts = Lines()
         state_var = self.add_global_var("0", f"{prefix}_STATE")
         cases = []
 
@@ -352,31 +354,29 @@ class Generator2Ast:
         for stmt in stmts:
             a_output = self.parse_statement(stmt, prefix=prefix)
             assert isinstance(a_output, list)
+            body = self.parse_statement(stmt, prefix=prefix)
+            body[-1].append_end_statements(
+                [vast.NonBlockingSubsitution(state_var, f"{state_var} + 1")]
+            )
             cases.append(
-                vast.CaseItem(
-                    vast.Expression(str(index)),
-                    self.parse_statement(stmt, prefix=prefix)
-                    + [
-                        vast.NonBlockingSubsitution(state_var, f"{state_var} + 1")
-                    ],  # Conditional on For, While, If removed
-                )
+                vast.CaseItem(vast.Expression(str(index)), body)
             )  # TODO: cases can have multiple statements
             index += 1
-        for stmt in end_stmts:
-            cases.append(
-                vast.CaseItem(vast.Expression(str(index)), [vast.Statement(stmt)])
-            )
-            index += 1
+        # for stmt in end_stmts:
+        #     cases.append(
+        #         vast.CaseItem(vast.Expression(str(index)), [vast.Statement(stmt)])
+        #     )
+        #     index += 1
+        # warnings.warn(end_stmts.to_string())
+        end_stmts = [vast.Statement(stmt) for stmt in end_stmts]
         if reset_to_zero:
-            cases.append(
-                vast.CaseItem(
-                    vast.Expression(str(index)),
-                    [vast.NonBlockingSubsitution(state_var, "0")],
-                )
-            )
-            index += 1
-        # for casee in cases:
-        #     warnings.warn(casee.to_string())
+            end_stmts.append(vast.NonBlockingSubsitution(state_var, "0"))
+
+        the_case = vast.Case(vast.Expression(state_var), cases)
+        if "thensheesh" in end_stmts[0].to_string():
+            warnings.warn("yes " + the_case.to_string())
+        the_case.append_end_statements(end_stmts)
+
         return vast.Case(vast.Expression(state_var), cases)
 
         state_var = self.add_global_var("0", f"{prefix}_STATE")
@@ -471,11 +471,9 @@ class Generator2Ast:
         """
         <expression> (e.g. constant, name, subscript, etc., those that return a value)
         """
-        warnings.warn(type(expr))
         if isinstance(expr, pyast.Constant):
             return vast.Expression(str(expr.value))
         if isinstance(expr, pyast.Name):
-            warnings.warn(expr.id)
             return vast.Expression(expr.id)
         if isinstance(expr, pyast.Subscript):
             return self.parse_subscript(expr)
@@ -527,19 +525,19 @@ class Generator2Ast:
         """
         Converts while loop to a while-true-if-break loop
         """
-        # condition_item = vast.CaseItem(
-        #     0,
-        #     Lines(
-        #         [
-        #             f"if (!({self.parse_expression(node.test)})) begin // WHILE LOOP START",
-        #             Indent(1) + f"{prefix}_STATE = {prefix}_STATE + 1;",
-        #             "end else begin",
-        #         ]
-        #     ).to_string,
-        # )
-        # body_item = vast.CaseItem(
-        #     1
-        # )
+        return [
+            vast.While(
+                vast.Expression(f"!({self.parse_expression(node.test).to_string()})"),
+                [vast.NonBlockingSubsitution(f"{prefix}_STATE", f"{prefix}_STATE + 1")],
+                [
+                    self.parse_statements(
+                        node.body,
+                        f"{prefix}_BODY{self.create_unique_name()}",
+                        reset_to_zero=True,
+                    )
+                ],
+            )
+        ]
 
         raise NotImplementedError("while")
         conditional = (
