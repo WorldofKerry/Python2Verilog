@@ -8,6 +8,10 @@ import warnings
 
 
 class TestAST(unittest.TestCase):
+    def test_comments(self):
+        nb = NonBlockingSubsitution("a", "b", comment="ayo")
+        self.assertEqual(nb.to_string(), "a <= b; // ayo")
+
     def test_subsitution(self):
         nb = NonBlockingSubsitution("a", "b")
         self.assertEqual(nb.to_string(), "a <= b;")
