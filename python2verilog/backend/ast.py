@@ -1,7 +1,23 @@
 """Verilog Abstract Syntax Tree Components"""
 
+from ..frontend.utils import Indent, Lines
 
-class VerilogStmt:
+
+class Expression:
+    """
+    Verilog expression, e.g.
+    a + b
+    Currently just a string
+    """
+
+    def __init__(self, string: str):
+        self.string = string
+
+    def to_lines(self):
+        return self.string
+
+
+class Statement:
     """
     Represents a statement in verilog (i.e. a line or a block)
     """
@@ -9,16 +25,11 @@ class VerilogStmt:
     def __init__(self, comment: str = None):
         self.comment = comment
 
-    def to_string(self) -> str:
-        """
-        Gets string representation of Verilog statement
-        """
-        if self.comment:
-            return " // " + self.comment
-        return ""
+    def to_string(self):
+        return self.to_lines().to_string()
 
 
-class Subsitution(VerilogStmt):
+class Subsitution(Statement):
     """
     Interface for
     <lvalue> <blocking or nonblocking> <rvalue>
@@ -29,12 +40,12 @@ class Subsitution(VerilogStmt):
         self.rvalue = rvalue
         super().__init__(*args, **kwargs)
 
-    def to_string(self) -> str:
+    def to_lines(self):
         """
         Converts to Verilog
         """
         assert isinstance(self.type, str), "Subclasses need to set self.type"
-        return f"{self.lvalue} {self.type} {self.rvalue};" + super().to_string()
+        return Lines(f"{self.lvalue} {self.type} {self.rvalue};")
 
 
 class NonBlockingSubsitution(Subsitution):
@@ -57,7 +68,7 @@ class BlockingSubsitution(Subsitution):
         super().__init__(lvalue, rvalue, *args, *kwargs)
 
 
-class Declaration(VerilogStmt):
+class Declaration(Statement):
     """
     <reg or wire> <modifiers> <[size-1:0]> <name>;
     """
@@ -77,7 +88,7 @@ class Declaration(VerilogStmt):
         self.name = name
         super().__init__(*args, **kwargs)
 
-    def to_string(self) -> str:
+    def to_lines(self):
         """
         To Verilog
         """
@@ -91,4 +102,39 @@ class Declaration(VerilogStmt):
         string += f" [{self.size-1}:0]"
         string += f" {self.name}"
         string += ";"
-        return string
+        return Lines(string)
+
+
+class CaseItem:
+    """
+    Verilog case item, i.e.
+    <condition>: begin
+        <statements>
+    end
+    """
+
+
+class Case(Statement):
+    """
+    Verilog case statement with various cases
+    case (<condition>)
+        ...
+    endcase
+    """
+
+    def __init__(self, condition: Expression, items: list[CaseItem], *args, **kwargs):
+        self.condition = condition
+        if items:
+            for item in item:
+                assert isinstance(item, CaseItem)
+            self.items = items
+        else:
+            items = []
+        super().__init__(*args, **kwargs)
+
+    def to_lines(self):
+        lines = Lines()
+        lines += f"case ({self.condition.to_lines()})"
+        for item in self.items:
+            lines.concat(item, indent=1)
+        return lines
