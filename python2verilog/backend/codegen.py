@@ -1,9 +1,10 @@
 """Verilog Abstract Syntax Tree Components"""
 
-from ..frontend.utils import Lines
+from ..frontend.utils import Lines, Indent
 from .utils import assert_list_elements
 from .. import backend as irast
 import warnings
+import ast
 
 
 class Verilog:
@@ -11,11 +12,13 @@ class Verilog:
     Code Generation for Verilog
     """
 
-    def __init__(self, root: irast.Case):
-        # warnings.warn(self.build_tree(root).to_string())
+    def __init__(self, _):
         pass
 
     def build_tree(self, node: irast.Statement):
+        """
+        Builds the Verilog AST
+        """
         if not node:
             return Statement("")
         if isinstance(node, irast.Case):
@@ -31,6 +34,58 @@ class Verilog:
         if isinstance(node, irast.Expression):
             return Expression(node.to_string())
         return Statement(node.to_string().replace("\n", " "))
+
+    def from_ir(self, root: irast.Statement):
+        """
+        Builds tree from IR
+        """
+        self.root = self.build_tree(root)
+
+    def get_module(self):
+        """
+        Get Verilog module
+        """
+        lines = Lines()
+        return self.root.to_string()
+
+    def setup_from_python(self, func: ast.FunctionDef):
+        """
+        Setups up module, always block, declarations, etc from Python AST
+        """
+        assert isinstance(func, ast.FunctionDef)
+        self.python = func
+
+
+class Module:
+    """
+    module name(...); endmodule
+    """
+
+    def __init__(self, name: str, inputs: list[str], outputs: list[str]):
+        self.name = name  # TODO: assert invalid names
+
+        input_lines = Lines()
+        for input in inputs:
+            assert isinstance(input, str)
+            input_lines += f"input wire {input}"
+        self.input = input_lines
+
+        output_lines = Lines()
+        for output in outputs:
+            output_lines += f"output reg {output}"
+            assert isinstance(output, str)
+        self.output = output_lines
+
+    def to_lines(self):
+        lines = Lines()
+        lines += f"module {self.name}("
+        for line in self.input:
+            lines += Indent(1) + line + ","
+        for line in self.output:
+            lines += Indent(1) + line + ","
+        lines[-1] = lines[-1][0:-1]  # removes last comma
+        lines += ");"
+        return (lines, Lines("endmodule"))
 
 
 class Expression:

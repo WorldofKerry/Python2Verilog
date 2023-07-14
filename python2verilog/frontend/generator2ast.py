@@ -12,7 +12,7 @@ class Generator2Ast:
     """
 
     @staticmethod
-    def generate_return_vars(node: pyast.AST, prefix: str):
+    def generate_output_vars(node: pyast.AST, prefix: str):
         """
         Generates the yielded variables of the function
         """
@@ -124,7 +124,7 @@ class Generator2Ast:
         start_lines += Indent(1) + "input wire _start,"
         for var in self.root.args.args:
             start_lines += Indent(1) + f"input wire signed [31:0] {var.arg},"
-        for var in self.yield_vars:
+        for var in self.output_vars:
             start_lines += Indent(1) + f"output reg signed [31:0] {var},"
         start_lines += Indent(1) + "output reg _done,"
         start_lines += Indent(1) + "output reg _valid"
@@ -138,7 +138,7 @@ class Generator2Ast:
         """
         assert isinstance(root, pyast.FunctionDef)
         self.name = root.name
-        self.yield_vars = self.generate_return_vars(root.returns, "")
+        self.output_vars = self.generate_output_vars(root.returns, "")
         self.unique_name_counter = 0
         self.global_vars: dict[str, str] = {}
         self.root = root
@@ -340,13 +340,9 @@ class Generator2Ast:
         yield <value>;
         """
         assert isinstance(node.value, pyast.Tuple)
-        # lines = Lines()
-        # for idx, elem in enumerate(node.value.elts):
-        #     lines += f"{self.yield_vars[idx]} <= {self.parse_expression(elem)};"
-        # return lines
         return [
             vast.NonBlockingSubsitution(
-                self.yield_vars[idx], self.parse_expression(elem).to_string()
+                self.output_vars[idx], self.parse_expression(elem).to_string()
             )
             for idx, elem in enumerate(node.value.elts)
         ] + [vast.NonBlockingSubsitution("_valid", "1")]

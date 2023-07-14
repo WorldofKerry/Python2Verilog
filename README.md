@@ -96,24 +96,33 @@ import ast
 
 func = ast.parse(code).body[0]
 
-ir = p2v.from_python_get_ir(func) # returns the root node for the body
+ir = p2v.from_python_get_ir(func.body) # returns an ir node for the root of the body
 
 # Optimization passes
-ir = p2v.replace_single_item_cases(ir)
-ir = p2v.remove_nesting(ir)
-ir = p2v.replace_single_item_cases(ir)
+ir = p2v.optimizations.replace_single_item_cases(ir)
+ir = p2v.optimizations.remove_nesting(ir)
+ir = p2v.optimizations.combine_statements(ir)
+for i in dir(p2v.optimizations): # Do one pass of every optimization
+  item = getattr(pv2.optimizations, i)
+    if callable(item):
+      ir = item(ir)
 
 verilog = p2v.Verilog()
-verilog.from_python_setup(func) # Module I/O is dependent on Python
-verilog.from_ir(ir) # fills the body
-verilog.config(has_valid=False, has_start=False)
+verilog.from_python_do_setup(func) # module I/O is dependent on Python
+verilog.from_ir_fill_body(ir) # fills the body
+
+# whether has valid or done signal,
+# whether initialization is always happening or only on start,
+# verilog sim name
+verilog.config(has_valid=True, has_done=True, lazy_start=True, verilog_sim="iverilog")
 
 with open(f"{verilog.get_module_name()}.sv", mode="w") as module:
   module.write(verilog.get_module())
 with open(f"{verilog.get_module_name()}_tb.sv", mode="w") as tb:
   tb.write(verilog.get_testbench())
 
-print(verilog.get_iverilog_run_cmd())
+print(verilog.get_verilog_run_cmd())
+assert verilog.test_outputs() # checks if verilog and python output same
 ```
 
 ### Rectangle Filled
