@@ -1,4 +1,9 @@
-from python2verilog.backend.codegen import Verilog, Module, Always
+from python2verilog.backend.codegen import (
+    Verilog,
+    Module,
+    Always,
+    create_module_from_python,
+)
 from python2verilog.frontend import Generator2Ast
 import unittest
 import warnings
@@ -12,6 +17,14 @@ def assert_lines(test_case: unittest.TestCase, first: str, second: str):
     test_case.assertTrue(isinstance(first, str) and isinstance(second, str))
     for a_line, b_line in zip(first.splitlines(), second.splitlines()):
         test_case.assertEqual(a_line.strip(), b_line.strip())
+
+
+class TestHelpers(unittest.TestCase):
+    def test_verilog_helpers(self):
+        code = "def func(a, b, c, d) -> tuple[int, int]:\n  yield(a, b)\n  yield(c, d)"
+        tree = ast.parse(code)
+        module = create_module_from_python(tree.body[0])
+        # warnings.warn(module.to_lines()[0].to_string())
 
 
 class TestVerilog(unittest.TestCase):

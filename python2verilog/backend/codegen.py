@@ -7,6 +7,18 @@ import warnings
 import ast
 
 
+def create_module_from_python(func: ast.FunctionDef):
+    inputs = []
+    for var in func.args.args:
+        inputs.append(var.arg)
+    outputs = []
+    assert isinstance(func.returns, ast.Subscript)
+    assert isinstance(func.returns.slice, ast.Tuple)
+    for i in range(len((func.returns.slice.elts))):
+        outputs.append(f"_out{str(i)}")
+    return Module(func.name, inputs, outputs)
+
+
 class Verilog:
     """
     Code Generation for Verilog
@@ -35,11 +47,12 @@ class Verilog:
             return Expression(node.to_string())
         return Statement(node.to_string().replace("\n", " "))
 
-    def from_ir(self, root: irast.Statement):
+    def from_ir(self, root: irast.Statement, global_vars: dict[str, str]):
         """
         Builds tree from IR
         """
         self.root = self.build_tree(root)
+        self.global_vars = global_vars
 
     def get_module(self):
         """
@@ -53,6 +66,8 @@ class Verilog:
         Setups up module, always block, declarations, etc from Python AST
         """
         assert isinstance(func, ast.FunctionDef)
+        self.module = create_module_from_python(func)
+        self.always = Always("_clock", "_valid")
         self.python = func
 
 
