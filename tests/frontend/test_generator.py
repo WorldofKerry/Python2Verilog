@@ -44,7 +44,9 @@ class TestGeneratorParser(unittest.TestCase):
             with open(FILES_IN_ABS_DIR["expected"], mode="w") as expected_file:
                 generator_inst = _locals[function_name](*TEST_CASE)
                 for tupl in generator_inst:
-                    expected_file.write(str(tupl)[1:-1] + "\n")
+                    expected_file.write(
+                        " " + str(tupl)[1:-1] + "\n"
+                    )  # Verilog row elements have a space prefix
 
             with open(FILES_IN_ABS_DIR["visual"], mode="w") as visual_file:
                 generator_inst = _locals[function_name](*TEST_CASE)
@@ -82,6 +84,7 @@ class TestGeneratorParser(unittest.TestCase):
 
                 text += """
   wire _done;
+  wire _valid;
 
   // Instantiate the module under test
   """
@@ -96,7 +99,8 @@ class TestGeneratorParser(unittest.TestCase):
                 for i in range(len(tree.body[0].returns.slice.elts)):
                     text += f"    ._out{i}(_out{i}),\n"
                 text += """
-    ._done(_done)
+    ._done(_done),
+    ._valid(_valid)
   );
 
   // Clock generation
@@ -126,10 +130,10 @@ class TestGeneratorParser(unittest.TestCase):
       @(posedge _clock);
       _start = 0;
       // Display the outputs for every cycle after start
-      $display(\""""  # TODO: use NAMED_FUNCTION instead of "generator dut"
+      $display(\"%0d, """  # TODO: use NAMED_FUNCTION instead of "generator dut"
 
                 text += "%0d, " * (len(tree.body[0].returns.slice.elts) - 1)
-                text += """%0d\""""
+                text += """%0d\", _valid"""
 
                 for i in range(len(tree.body[0].returns.slice.elts)):
                     text += f", _out{i}"
@@ -152,11 +156,11 @@ endmodule
                 os.remove(FILES_IN_ABS_DIR["actual"])
 
             iverilog_cmd = f"iverilog -s {function_name}_tb {FILES_IN_ABS_DIR['module']} {FILES_IN_ABS_DIR['testbench']} && unbuffer vvp a.out >> {FILES_IN_ABS_DIR['actual']} && rm a.out\n"
-            warnings.warn(
-                subprocess.run(
-                    iverilog_cmd, shell=True, capture_output=True, text=True
-                ).stderr
-            )
+            output = subprocess.run(
+                iverilog_cmd, shell=True, capture_output=True, text=True
+            ).stderr
+            if output != "":
+                warnings.warn(output)
 
             with open(FILES_IN_ABS_DIR["actual"]) as act_f:
                 with open(FILES_IN_ABS_DIR["expected"]) as exp_f:
@@ -167,12 +171,8 @@ endmodule
                     expected_coords = set()
 
                     for row in actual:
-                        valid = True
-                        for element in row:
-                            if element.strip() == "x":
-                                valid = False
-                        if valid:
-                            actual_coords.add(tuple(row))
+                        if row[0].strip() == "1":  # First bit is valid bit
+                            actual_coords.add(tuple(row[1:]))
 
                     for row in expected:
                         expected_coords.add(tuple(row))

@@ -41,7 +41,10 @@ class Generator2Ast:
         always @(posedge _clock) begin
         end
         """
-        return (Lines(["always @(posedge _clock) begin"]), Lines(["end"]))
+        return (
+            Lines(["always @(posedge _clock) begin", Indent(1) + "_valid <= 0;"]),
+            Lines(["end"]),
+        )
 
     def __str__(self):
         return self.generate_verilog().to_string()
@@ -122,7 +125,8 @@ class Generator2Ast:
             start_lines += Indent(1) + f"input wire signed [31:0] {var.arg},"
         for var in self.yield_vars:
             start_lines += Indent(1) + f"output reg signed [31:0] {var},"
-        start_lines += Indent(1) + "output reg _done"
+        start_lines += Indent(1) + "output reg _done,"
+        start_lines += Indent(1) + "output reg _valid"
         start_lines += ");"
         end_lines += "endmodule"
         return (start_lines, end_lines)
@@ -340,7 +344,7 @@ class Generator2Ast:
                 self.yield_vars[idx], self.parse_expression(elem).to_string()
             )
             for idx, elem in enumerate(node.value.elts)
-        ]
+        ] + [vast.NonBlockingSubsitution("_valid", "1")]
 
     @staticmethod
     def parse_binop(node: pyast.BinOp):
