@@ -4,7 +4,6 @@ from __future__ import annotations
 import ast as pyast
 from .utils import Lines, Indent
 from ..backend import ast as vast
-import warnings
 
 
 class Generator2Ast:
@@ -239,8 +238,9 @@ class Generator2Ast:
                 vast.Statement(f"if ({self.parse_expression(stmt.test).to_string()})"),
                 vast.NonBlockingSubsitution(state_var, "1"),
                 vast.Statement(
-                    f"else " + vast.NonBlockingSubsitution(state_var, "2").to_string()
-                ),
+                    "else "
+                    + vast.NonBlockingSubsitution(state_var, "2").to_string().strip()
+                ),  # TODO: cleanup
             ],
         )
         then_item = vast.CaseItem(
@@ -414,7 +414,8 @@ class Generator2Ast:
                 "Error: unknown operator", type(node.ops[0]), pyast.dump(node.ops[0])
             )
         return vast.Expression(
-            f"{self.parse_expression(node.left).to_string()} {operator} {self.parse_expression(node.comparators[0]).to_string()}"
+            f"{self.parse_expression(node.left).to_string()} {operator}"
+            f" {self.parse_expression(node.comparators[0]).to_string()}"
         )
 
     def parse_while(self, stmt: pyast.While, prefix: str = ""):

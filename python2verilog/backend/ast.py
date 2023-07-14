@@ -1,7 +1,6 @@
 """Verilog Abstract Syntax Tree Components"""
 
 from ..frontend.utils import Lines
-import warnings
 
 
 def assert_list_elements(the_list: list, elem_type):
@@ -86,6 +85,9 @@ class Subsitution(Statement):
         return lines
 
     def append_end_statements(self, statements: list[Statement]):
+        """
+        Appends to last block of code
+        """
         self.appended = self.appended + assert_list_elements(statements, Statement)
         return self
 
@@ -177,6 +179,9 @@ class CaseItem:
         return lines
 
     def to_string(self):
+        """
+        To Verilog
+        """
         return self.to_lines().to_string()
 
     def append_end_statements(self, statements: list[Statement]):
@@ -246,7 +251,10 @@ class IfElse(Statement):
         condition: Expression,
         then_body: list[Statement],
         else_body: list[Statement],
+        *args,
+        **kwargs,
     ):
+        super().__init__(*args, **kwargs)
         self.condition = condition
         self.then_body = assert_list_elements(then_body, Statement)
         self.else_body = assert_list_elements(else_body, Statement)

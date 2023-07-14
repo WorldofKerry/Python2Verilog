@@ -10,19 +10,19 @@ class TestLines(unittest.TestCase):
 
         lines = Lines("abc 123")
         self.assertEqual("abc 123\n", str(lines))
-        # self.assertRaises(AssertionError, Lines, "abc 123\n")
-        # self.assertRaises(AssertionError, Lines, "\n")
-        # self.assertRaises(AssertionError, Lines, {})
+        self.assertRaises(AssertionError, Lines, "abc 123\n")
+        self.assertRaises(AssertionError, Lines, "\n")
+        self.assertRaises(AssertionError, Lines, {})
 
         lines = Lines(["abc 123"])
         self.assertEqual("abc 123\n", str(lines))
-        # self.assertRaises(AssertionError, Lines, ["abc 123\n"])
-        # self.assertRaises(AssertionError, Lines, ["\n"])
+        self.assertRaises(AssertionError, Lines, ["abc 123\n"])
+        self.assertRaises(AssertionError, Lines, ["\n"])
 
         lines = Lines(["abc 123", "def 456"])
         self.assertEqual("abc 123\ndef 456\n", str(lines))
-        # self.assertRaises(AssertionError, Lines, ["abc 123\n", "def 456"])
-        # self.assertRaises(AssertionError, Lines, ["abc 123", "def 456\n"])
+        self.assertRaises(AssertionError, Lines, ["abc 123\n", "def 456"])
+        self.assertRaises(AssertionError, Lines, ["abc 123", "def 456\n"])
 
     def test_operations(self):
         lines = Lines("abc 123")

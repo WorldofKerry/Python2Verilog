@@ -13,9 +13,7 @@ class Lines:
         """
         Asserts no newline character in str(stringable)
         """
-        # TODO: re-add check
-        pass
-        # assert str(stringable).find("\n") == -1, "Lines should not contain \\n"
+        assert str(stringable).find("\n") == -1, "Lines should not contain \\n"
 
     def __init__(self, data: list[str] | str = None):
         if data is None:
