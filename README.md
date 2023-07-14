@@ -79,115 +79,76 @@ To setup pre-commit, run `pre-commit install`.
 
 ### Epics
 
+- Support fixed-length arrays (potentially using Verilog for loops for parallelism)
 - Create a Verilog AST representation (lots of samples online) to better optimize (mostly end statements)
-- Add `valid` signal and then generate testbenches that test multiple cases
 
 ## Docs
 
 - Generate `.html` docs: `bash docs/generate.sh`
 - Live docs: `python3 -m pydoc -b`
 
-## Random Planning, Design, and Notes
+## Optimizer
+### Thought Experiment
 
-### Rectangle Filled
-
-```python
-def draw_rectangle(s_x, s_y, height, width) -> tuple[int, int]:
-    for i0 in range(0, width):
-        for i1 in range(0, height):
-            yield (s_x + i1, s_y + i0)
-```
-
-```verilog
-case (STATE)
-  0: begin
-    if (i0 < width) begin
-      STATE <= STATE_1;
-    end else begin
-      case (STATE_INNER)
-        0: begin
-          if (i1 < height) begin
-            STATE_INNER <= STATE_INNER + 1;
-          end else begin
-            case (STATE_INNER_INNER)
-              0: begin
-                out0 <= s_x + i1;
-                out1 <= s_y + i0;
-                i1 <= i1 + 1;
-
-                STATE_INNER_INNER <= STATE_INNER_INNER + 1;
-                STATE_INNER_INNER <= 0; // flag to either wrap around or remain
-              end
-          end
-          STATE_INNER <= 0;
-        end
-      endcase
-    end
-  end
-  STATE_1: begin
-    done <= 1;
-  end
-endcase
-```
-
-## Converting a While Loop
+Lets look at two Python functions and how they **could** be transpiled to Verilog.
 
 ```python
-i = 0
-while <condition>:
-    <statement 1>
-    <statement 2>
-    ...
+def doubler(i, x, n):
+    while (i < n)
+        x = 2 * x
+        i += 1
+    yield(x)
 ```
 
 ```verilog
-case (STATE)
+...
+case (STATE): 
   0: begin
-    // For loop start
-    if (condition) begin
-      STATE <= STATE + 1;
+    if (i < n) begin
+      x <= 2 * x;
+      i <= i + 1;
     end else begin
-      case (STATE_INNER)
-        0: begin
-          // statement 1
-        end
-        1: begin
-          // statement 2
-        end
-        // ...
-        10: begin
-          STATE_INNER <= 0;
-        end
-      endcase
+      _out <= x;
+      _valid <= 1;
     end
-    // For loop end
   end
-  // ...
-endcase
+...
 ```
 
-## If Statement Analysis
+The Python yields `O(1)` times, but the Verilog takes `O(n-i)` clock cycles.  
+
+Lets look at another example.
+
+```python
+def matrix_iter(i, j, w, h): 
+    while (i < w):
+        while (j < h):
+            yield (i, j)
+            j += 1
+        i += 1
+        j = 0
+```
 
 ```verilog
-// IF START
-case (_STATE_IF)
-  0: begin
-    if (condition) _STATE_IF <= 1;
-    else _STATE_IF <= 2;
-  end
-  1: begin
-    // THEN BODY START
-    case ()
-    // ...
-      _STATE_IF <= 0;
-    // THEN BODY END
-  end
-  2: begin
-    // ELSE BODY START
-    // ...
-     __STATE_IF <= 0;
-    // ELSE BODY END
-  end
-endcase
-// IF END
+...
+case (STATE): 
+  0: 
+    if (i < w) begin
+      STATE <= 1;
+    end else begin
+      if (j < h) begin
+        _out <= {i, j};
+        _valid <= 1;
+        j <= j + 1;
+      end else begin
+        _out <= {i + 1, 0};
+        _valid <= 1;
+        i <= i + 1;
+        j <= 1;
+      end
+    end
 ```
+
+Here the Python yields `O(hw - hi)` times, and the Verilog is able to match in number of clock cycles.
+
+How does the optimizer distinguish between these two cases? Is the sole difference that one has yields in a loop and the other does not?
