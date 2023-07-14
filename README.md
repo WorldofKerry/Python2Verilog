@@ -89,6 +89,33 @@ To setup pre-commit, run `pre-commit install`.
 
 ## Random Planning, Design, and Notes
 
+### Potential API
+```python
+import python2verilog as p2v
+import ast
+
+func = ast.parse(code).body[0]
+
+ir = p2v.from_python_get_ir(func) # returns the root node for the body
+
+# Optimization passes
+ir = p2v.replace_single_item_cases(ir)
+ir = p2v.remove_nesting(ir)
+ir = p2v.replace_single_item_cases(ir)
+
+verilog = p2v.Verilog()
+verilog.from_python_setup(func) # Module I/O is dependent on Python
+verilog.from_ir(ir) # fills the body
+verilog.config(has_valid=False, has_start=False)
+
+with open(f"{verilog.get_module_name()}.sv", mode="w") as module:
+  module.write(verilog.get_module())
+with open(f"{verilog.get_module_name()}_tb.sv", mode="w") as tb:
+  tb.write(verilog.get_testbench())
+
+print(verilog.get_iverilog_run_cmd())
+```
+
 ### Rectangle Filled
 
 ```python
