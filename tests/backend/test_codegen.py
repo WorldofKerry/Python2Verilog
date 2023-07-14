@@ -44,4 +44,4 @@ def circle_lines(s_x, s_y, height) -> tuple[int, int]:
         # warnings.warn(output.to_lines())
         ver = Verilog(output)
         ver_result = ver.build_tree(output)
-        # warnings.warn(ver_result.to_string())
+        warnings.warn(ver_result.to_string())
