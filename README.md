@@ -88,6 +88,7 @@ To setup pre-commit, run `pre-commit install`.
 - Live docs: `python3 -m pydoc -b`
 
 ## Optimizer
+
 ### Thought Experiment
 
 Lets look at two Python functions and how they **could** be transpiled to Verilog.
@@ -110,12 +111,13 @@ case (STATE):
     end else begin
       _out <= x;
       _valid <= 1;
+      STATE <= 1;
     end
   end
 ...
 ```
 
-The Python yields `O(1)` times, but the Verilog takes `O(n-i)` clock cycles.  
+The Python yields `O(1)` times, but the Verilog takes `O(n-i)` clock cycles. Is there a better way to optimize this without losing generality?
 
 Lets look at another example.
 
