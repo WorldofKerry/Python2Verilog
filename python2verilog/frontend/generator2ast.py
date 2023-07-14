@@ -276,60 +276,6 @@ class Generator2Ast:
             )
         ]
 
-        raise NotImplementedError("if")
-        assert len(stmt.orelse) >= 1  # Currently only supports if-else
-        state_var = self.add_global_var("0", f"{prefix}_IF")
-        lines = Lines()
-        lines += f"case ({state_var}) // IF START"
-
-        state_conditional = self.add_global_var(0, f"{state_var}_CONDITIONAL")
-        state_then = self.add_global_var(1, f"{state_var}_THEN")
-        state_else = self.add_global_var(2, f"{state_var}_ELSE")
-
-        # If condition
-        wrapper = (Lines([f"{state_conditional}: begin"]), Lines(["end"]))
-        body = (
-            Lines(
-                [
-                    f"if ({self.parse_expression(stmt.test)}) {state_var} <= {state_then};"
-                ]
-            ),
-            Lines([f"else {state_var} <= {state_else};"]),
-        )
-        if_condition = Lines.nestify((wrapper, body))
-
-        # If then
-        wrapper = (Lines([f"{state_then}: begin"]), Lines(["end"]))
-        body = self.parse_statements(
-            stmt.body,
-            f"{state_var}_{self.create_unique_name()}",
-            end_stmts=Lines(
-                [
-                    f"{prefix}_STATE <= {prefix}_STATE + 1; {state_var} <= {state_conditional};",
-                ]
-            ),
-            reset_to_zero=True,
-        )
-        if_then = Lines.nestify((wrapper, body))
-
-        # If else
-        wrapper = (Lines([f"{state_else}: begin"]), Lines(["end"]))
-        body = self.parse_statements(
-            stmt.orelse,
-            f"{state_var}_{self.create_unique_name()}",
-            end_stmts=Lines(
-                [
-                    f"{prefix}_STATE <= {prefix}_STATE + 1; {state_var} <= {state_conditional};",
-                ]
-            ),
-            reset_to_zero=True,
-        )
-        if_else = Lines.nestify((wrapper, body))
-
-        lines.concat(if_condition, 1).concat(if_then, 1).concat(if_else, 1)
-        lines += "endcase // IF END"
-        return lines
-
     def parse_statements(
         self,
         stmts: list[pyast.AST],
@@ -367,73 +313,14 @@ class Generator2Ast:
                 vast.CaseItem(vast.Expression(str(index)), body)
             )  # TODO: cases can have multiple statements
             index += 1
-        # for stmt in end_stmts:
-        #     cases.append(
-        #         vast.CaseItem(vast.Expression(str(index)), [vast.Statement(stmt)])
-        #     )
-        #     index += 1
-        # warnings.warn(end_stmts.to_string())
         end_stmts = [vast.Statement(stmt) for stmt in end_stmts]
         if reset_to_zero:
             end_stmts.append(vast.NonBlockingSubsitution(state_var, "0"))
 
         the_case = vast.Case(vast.Expression(state_var), cases)
-        # if "thensheesh" in end_stmts[0].to_string():
-        #     warnings.warn("yes " + the_case.to_string())
         the_case.append_end_statements(end_stmts)
 
         return vast.Case(vast.Expression(state_var), cases)
-
-        state_var = self.add_global_var("0", f"{prefix}_STATE")
-        lines = Lines()
-        lines += f"case ({state_var}) // STATEMENTS START"
-        previous_i = 0
-
-        for i, stmt in enumerate(stmts):
-            state = self.add_global_var(str(i), f"{prefix}_STATE_{i}")
-
-            lines += Indent(1) + f"{state}: begin"
-
-            for line in self.parse_statement(stmt, prefix=prefix).indent(2):
-                lines += line
-                assert str(line).find("\n") == -1
-            if (
-                not isinstance(stmt, pyast.For)
-                and not isinstance(stmt, pyast.While)
-                and not isinstance(stmt, pyast.If)
-            ):
-                # Non-for-loop state machines always continue to next state
-                # after running current state's case statement.
-                # TODO: figure out better way to handle this,
-                # perhaps add to end statements of caller
-                lines += (
-                    Indent(2) + f"{state_var} <= {state_var} + 1; // INCREMENT STATE"
-                )
-            lines += Indent(1) + "end"
-            previous_i = i
-
-        assert isinstance(end_stmts, Lines)
-        # TODO: cleanup, remove the above enumerate?
-        i = previous_i + 1
-        # TODO: endStatements should take in array of Lines,
-        # where each element in array is one additional case
-        for stmt in end_stmts:
-            state = self.add_global_var(str(i), f"{prefix}_STATE_{i}")
-
-            lines += Indent(1) + f"{state}: begin // END STATEMENTS STATE"
-            lines += Indent(2) + stmt
-            lines += Indent(1) + "end"
-            i += 1
-
-        del lines[-1]
-
-        if reset_to_zero:  # TODO: think about what default should be
-            lines += Indent(2) + f"{state_var} <= 0; // LOOP FOR LOOP STATEMENTS"
-
-        lines += Indent(1) + "end"
-
-        lines += "endcase // STATEMENTS END"
-        return (lines, Lines())
 
     def parse_yield(self, node: pyast.Yield):
         """
@@ -535,14 +422,6 @@ class Generator2Ast:
         conditional_item = vast.CaseItem(
             vast.Expression("0"),
             [
-                # vast.Statement(f"if ({self.parse_expression(stmt.test).to_string()})"),
-                # vast.NonBlockingSubsitution(state_var, "1"),
-                # vast.Statement(
-                #     f"else "
-                #     + vast.NonBlockingSubsitution(
-                #         f"{prefix}_STATE", f"{prefix}_STATE + 1"
-                #     ).to_string()
-                # ),
                 vast.IfElse(
                     vast.Expression(
                         f"!({self.parse_expression(stmt.test).to_string()})"
