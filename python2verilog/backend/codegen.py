@@ -59,15 +59,49 @@ class Verilog:
         """
         Get Verilog module
         """
+
+        @staticmethod
+        def get_init_lines(global_vars: dict[str, str]):
+            """
+            if (_start) begin
+                <var> = <value>;
+                ...
+            end else begin
+            ...
+            end
+            """
+            start_lines, end_lines = Lines(), Lines()
+            start_lines += "if (_start) begin"
+            start_lines += Indent(1) + "_done <= 0;"
+            for var in global_vars:
+                start_lines += Indent(1) + f"{var} <= {global_vars[var]};"
+            start_lines += "end else begin"
+            end_lines += "end"
+            return (start_lines, end_lines)
+
         module_lines = self.module.to_lines()
 
-        always_lines = self.always.to_lines()
+        always_blk_lines = self.always.to_lines()
+        decl_lines = (
+            Lines([f"reg signed [31:0] {v};" for v in self.global_vars]),
+            Lines(),
+        )
+        init_lines = get_init_lines(self.global_vars)
+        stmt_lines = (self.root.to_lines(), Lines())
 
-        lines = Lines()
+        decl_and_always_blk_lines = (
+            decl_lines[0].concat(always_blk_lines[0]),
+            decl_lines[1].concat(always_blk_lines[1]),
+        )
 
-        lines.concat(self.root.to_lines())
-
-        return lines.nestify((module_lines, (lines, Lines())))
+        return Lines.nestify(
+            [
+                module_lines,
+                decl_and_always_blk_lines,
+                init_lines,
+                stmt_lines,
+            ]
+        )
 
     def setup_from_python(self, func: ast.FunctionDef):
         """
