@@ -8,7 +8,7 @@ from .. import backend as vast
 
 class Generator2Ast:
     """
-    Parses python generator functions
+    Parses python generator functions to Verilog AST
     """
 
     @staticmethod

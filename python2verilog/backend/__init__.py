@@ -4,6 +4,7 @@
 from .statements import (
     NonBlockingSubsitution,
     BlockingSubsitution,
+    Subsitution,
     Declaration,
     Case,
     CaseItem,
