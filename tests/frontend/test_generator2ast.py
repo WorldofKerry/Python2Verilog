@@ -8,24 +8,18 @@ class TestGenerator2Ast(unittest.TestCase):
     def test_all(self):
         func = """
 def circle_lines(s_x, s_y, height) -> tuple[int, int]:
-    a = 123
-    yield(a, height)
-    s_y = a
-    if s_x < a:
-        yield(s_x, s_y)
-    else:
-        yield(123, 456)
-    while a < 150:
+    if a < 150:
         a = a + 1
-    yield(a, 23)
+    else:
+        a = a + 2
         """
-        # tree = ast.parse(func)
-        # with open("ast.log", mode="w") as ast_file:
-        #     ast_file.write(ast.dump(tree, indent="  "))
-        # generatorParser = Generator2Ast(tree.body[0])
+        tree = ast.parse(func)
+        with open("ast.log", mode="w") as ast_file:
+            ast_file.write(ast.dump(tree, indent="  "))
+        generatorParser = Generator2Ast(tree.body[0])
 
-        # with open("module.log", mode="w") as module_file:
-        #     module_file.write(generatorParser.generate_verilog().to_string())
+        with open("module.log", mode="w") as module_file:
+            module_file.write(generatorParser.generate_verilog().to_string())
 
     def test_circle_lines(self):
         func = """

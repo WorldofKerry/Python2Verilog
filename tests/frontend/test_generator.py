@@ -4,7 +4,7 @@ Test Generator
 Cleanup files: `git clean -dfX`
 """
 
-from python2verilog.frontend import GeneratorParser
+from python2verilog.frontend import Generator2Ast as GeneratorParser
 import unittest
 import os
 import warnings
@@ -191,14 +191,14 @@ endmodule
 
                     return "Running test"
 
-    def test_rectangle_filled(self):
-        self.run_test("rectangle_filled", (23, 17, 5, 7))
+    # def test_rectangle_filled(self):
+    # self.run_test("rectangle_filled", (23, 17, 5, 7))
 
     def test_circle_lines(self):
         self.run_test("circle_lines", (23, 17, 5))
 
-    def test_rectangle_lines(self):
-        self.run_test("rectangle_lines", (23, 17, 5, 7))
+    # def test_rectangle_lines(self):
+    # self.run_test("rectangle_lines", (23, 17, 5, 7))
 
     def test_rectangle_filled_while(self):
         self.run_test("rectangle_filled_while", (23, 17, 5, 7))

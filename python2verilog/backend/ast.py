@@ -70,7 +70,7 @@ class Subsitution(Statement):
         self.lvalue = lvalue
         self.rvalue = rvalue
         self.type = None
-        self.appended = None
+        self.appended = []
         super().__init__(*args, **kwargs)
 
     def to_lines(self):
@@ -86,7 +86,7 @@ class Subsitution(Statement):
         return lines
 
     def append_end_statements(self, statements: list[Statement]):
-        self.appended = assert_list_elements(statements, Statement)
+        self.appended = self.appended + assert_list_elements(statements, Statement)
         return self
 
 
@@ -184,6 +184,7 @@ class CaseItem:
         Append statements to case item
         """
         # self.statements = self.statements + assert_list_elements(statements, Statement)
+        # warnings.warn(statements[0].to_string() + " " + str(type(self.statements[-1])))
         self.statements[-1].append_end_statements(
             assert_list_elements(statements, Statement)
         )

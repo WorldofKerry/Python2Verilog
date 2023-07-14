@@ -247,7 +247,7 @@ class Generator2Ast:
                     f"{state_var}{self.create_unique_name()}",
                     end_stmts=Lines(
                         [
-                            f"{prefix}_STATE <= {prefix}_STATE + 1; {state_var} <= 0 thensheesh;",
+                            f"{prefix}_STATE <= {prefix}_STATE + 1; {state_var} <= 0;",
                         ]
                     ),
                     reset_to_zero=True,
@@ -262,7 +262,7 @@ class Generator2Ast:
                     f"{state_var}{self.create_unique_name()}",
                     end_stmts=Lines(
                         [
-                            f"{prefix}_STATE <= {prefix}_STATE + 1; {state_var} <= 0 elsesheesh;",
+                            f"{prefix}_STATE <= {prefix}_STATE + 1; {state_var} <= 0;",
                         ]
                     ),
                     reset_to_zero=True,
@@ -373,8 +373,8 @@ class Generator2Ast:
             end_stmts.append(vast.NonBlockingSubsitution(state_var, "0"))
 
         the_case = vast.Case(vast.Expression(state_var), cases)
-        if "thensheesh" in end_stmts[0].to_string():
-            warnings.warn("yes " + the_case.to_string())
+        # if "thensheesh" in end_stmts[0].to_string():
+        #     warnings.warn("yes " + the_case.to_string())
         the_case.append_end_statements(end_stmts)
 
         return vast.Case(vast.Expression(state_var), cases)
