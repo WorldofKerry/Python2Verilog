@@ -526,38 +526,54 @@ class Generator2Ast:
             f"{self.parse_expression(node.left).to_string()} {operator} {self.parse_expression(node.comparators[0]).to_string()}"
         )
 
-    def parse_while(self, node: pyast.While, prefix: str = ""):
+    def parse_while(self, stmt: pyast.While, prefix: str = ""):
         """
         Converts while loop to a while-true-if-break loop
         """
+        assert isinstance(stmt, pyast.While)
+        state_var = self.add_global_var("0", f"{prefix}_WHILE")
+        conditional_item = vast.CaseItem(
+            vast.Expression("0"),
+            [
+                # vast.Statement(f"if ({self.parse_expression(stmt.test).to_string()})"),
+                # vast.NonBlockingSubsitution(state_var, "1"),
+                # vast.Statement(
+                #     f"else "
+                #     + vast.NonBlockingSubsitution(
+                #         f"{prefix}_STATE", f"{prefix}_STATE + 1"
+                #     ).to_string()
+                # ),
+                vast.IfElse(
+                    vast.Expression(
+                        f"!({self.parse_expression(stmt.test).to_string()})"
+                    ),
+                    [
+                        vast.NonBlockingSubsitution(
+                            f"{prefix}_STATE", f"{prefix}_STATE + 1"
+                        )
+                    ],
+                    [vast.NonBlockingSubsitution(state_var, "1")],
+                )
+            ],
+        )
+        then_item = vast.CaseItem(
+            vast.Expression("1"),
+            [
+                self.parse_statements(
+                    stmt.body,
+                    f"{state_var}{self.create_unique_name()}",
+                    end_stmts=Lines(
+                        [
+                            f"{state_var} <= 0;",
+                        ]
+                    ),
+                    reset_to_zero=True,
+                )
+            ],
+        )
         return [
             vast.While(
-                vast.Expression(f"!({self.parse_expression(node.test).to_string()})"),
-                [],
-                [
-                    self.parse_statements(
-                        node.body,
-                        f"{prefix}_BODY{self.create_unique_name()}",
-                        reset_to_zero=True,
-                    )
-                ],
+                vast.Expression(f"{state_var}"),
+                [conditional_item, then_item],
             )
         ]
-
-        raise NotImplementedError("while")
-        conditional = (
-            Lines(
-                [
-                    f"if (!({self.parse_expression(node.test)})) begin // WHILE LOOP START",
-                    Indent(1) + f"{prefix}_STATE = {prefix}_STATE + 1;",
-                    "end else begin",
-                ]
-            ),
-            Lines(["end // WHILE LOOP END"]),
-        )
-
-        statements = self.parse_statements(
-            node.body, f"{prefix}_BODY_{self.create_unique_name()}", reset_to_zero=True
-        )
-
-        return Lines.nestify([conditional, statements])

@@ -212,7 +212,7 @@ class Case(Statement):
                 assert isinstance(item, CaseItem)
             self.case_items = case_items
         else:
-            case_items = []
+            self.case_items = []
         super().__init__(*args, **kwargs)
 
     def to_lines(self):
@@ -275,21 +275,28 @@ class IfElse(Statement):
         return self
 
 
-class While(IfElse):
+class While(Case):
     """
     Abstract While wrapper
     """
 
     def append_end_statements(self, statements: list[Statement]):
         """
-        Appends statements to both end branch
+        TODO:
         """
         statements = assert_list_elements(statements, Statement)
-        # warnings.warn("appending " + statements[0].to_string())
-        # if len(statements) > 1:
-        #     warnings.warn(statements[1].to_string())
-        if self.then_body:
-            self.then_body[-1].append_end_statements(statements)
-        else:
-            self.then_body = statements
+        # warnings.warn(
+        #     str(
+        #         type(
+        #             self.case_items[0]
+        #             .statements[0]
+        #             .then_body[-1]
+        #             .append_to_end(statements)
+        #         )
+        #     )
+        # )
+        self.case_items[0].statements[0].then_body = (
+            self.case_items[0].statements[0].then_body + statements
+        )
+
         return self
