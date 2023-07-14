@@ -1,34 +1,8 @@
 """Verilog Abstract Syntax Tree Components"""
 
 from ..frontend.utils import Lines
-
-
-def assert_list_elements(the_list: list, elem_type):
-    """
-    Asserts that all elems in the list are of elem_type, then returns the list
-    """
-    if the_list:
-        for elem in the_list:
-            assert isinstance(elem, elem_type)
-        return the_list
-    return []
-
-
-class Expression:
-    """
-    Verilog expression, e.g.
-    a + b
-    Currently just a string
-    """
-
-    def __init__(self, string: str):
-        self.string = string
-
-    def to_string(self):
-        """
-        To Verilog
-        """
-        return self.string
+from .utils import assert_list_elements
+from .expressions import Expression
 
 
 class Statement:

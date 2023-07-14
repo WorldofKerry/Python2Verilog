@@ -3,7 +3,7 @@
 from __future__ import annotations
 import ast as pyast
 from .utils import Lines, Indent
-from ..backend import ast as vast
+from .. import backend as vast
 
 
 class Generator2Ast:
