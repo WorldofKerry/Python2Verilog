@@ -3,6 +3,8 @@
 from ..frontend.utils import Lines
 from .utils import assert_list_elements
 from .expressions import Expression
+import warnings
+import inspect
 
 
 class Statement:
@@ -29,6 +31,18 @@ class Statement:
     # def append_end_statements(self, statements: list):
     #     warnings.warn("append_end_statements on base class")
     #     self.literal += str(statements)
+
+
+def is_valid_append_end_statements(stmt: Statement, statements: list[Statement]):
+    """
+    Checks if stmt encapsulates other Statements or not
+    If it does, it handles the append, otherwise returns false
+    # TODO: there should be a subclass/interface for ones that do encapsulate
+    """
+    if isinstance(stmt, Case) or isinstance(stmt, IfElse):
+        stmt.append_end_statements(assert_list_elements(statements, Statement))
+        return True
+    return False
 
 
 class Subsitution(Statement):
@@ -62,6 +76,11 @@ class Subsitution(Statement):
         """
         Appends to last block of code
         """
+        raise Exception()
+        warnings.warn(
+            "want to remove "
+            + str(inspect.getouterframes(inspect.currentframe(), 2)[1][3])
+        )
         self.appended = self.appended + assert_list_elements(statements, Statement)
         return self
 
@@ -162,12 +181,10 @@ class CaseItem:
         """
         Append statements to case item
         """
-        # self.statements = self.statements + assert_list_elements(statements, Statement)
-        # warnings.warn(statements[0].to_string() + " " + str(type(self.statements[-1])))
-        self.statements[-1].append_end_statements(
-            assert_list_elements(statements, Statement)
-        )
-        # warnings.warn(statements[0].to_string())
+        if not is_valid_append_end_statements(self.statements[-1], statements):
+            self.statements = self.statements + assert_list_elements(
+                statements, Statement
+            )
         return self
 
 
@@ -252,8 +269,10 @@ class IfElse(Statement):
         # warnings.warn("appending " + statements[0].to_string())
         # if len(statements) > 1:
         #     warnings.warn(statements[1].to_string())
-        self.then_body[-1].append_end_statements(statements)
-        self.else_body[-1].append_end_statements(statements)
+        if not is_valid_append_end_statements(self.then_body[-1], statements):
+            self.then_body = self.then_body + statements
+        if not is_valid_append_end_statements(self.else_body[-1], statements):
+            self.else_body = self.else_body + statements
         return self
 
 

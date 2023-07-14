@@ -305,17 +305,16 @@ class Generator2Ast:
             a_output = self.parse_statement(stmt, prefix=prefix)
             assert isinstance(a_output, list)
             body = self.parse_statement(stmt, prefix=prefix)
+            case_item = vast.CaseItem(vast.Expression(str(index)), body)
             if (
                 not isinstance(stmt, pyast.For)
                 and not isinstance(stmt, pyast.While)
                 and not isinstance(stmt, pyast.If)
-            ):  # TODO: remove conditional if possible
-                body[-1].append_end_statements(
+            ):
+                case_item.append_end_statements(
                     [vast.NonBlockingSubsitution(state_var, f"{state_var} + 1")]
                 )
-            cases.append(
-                vast.CaseItem(vast.Expression(str(index)), body)
-            )  # TODO: cases can have multiple statements
+            cases.append(case_item)  # TODO: cases can have multiple statements
             index += 1
         end_stmts = [vast.Statement(stmt) for stmt in end_stmts]
         if reset_to_zero:
