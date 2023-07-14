@@ -24,7 +24,7 @@ class Verilog:
     Code Generation for Verilog
     """
 
-    def __init__(self, _):
+    def __init__(self):
         pass
 
     def build_tree(self, node: irast.Statement):
@@ -53,13 +53,21 @@ class Verilog:
         """
         self.root = self.build_tree(root)
         self.global_vars = global_vars
+        return self
 
     def get_module(self):
         """
         Get Verilog module
         """
+        module_lines = self.module.to_lines()
+
+        always_lines = self.always.to_lines()
+
         lines = Lines()
-        return self.root.to_string()
+
+        lines.concat(self.root.to_lines())
+
+        return lines.nestify((module_lines, (lines, Lines())))
 
     def setup_from_python(self, func: ast.FunctionDef):
         """
@@ -69,6 +77,7 @@ class Verilog:
         self.module = create_module_from_python(func)
         self.always = Always("_clock", "_valid")
         self.python = func
+        return self
 
 
 class Module:
