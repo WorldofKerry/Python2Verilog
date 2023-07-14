@@ -54,7 +54,9 @@ class Generator2Ast:
         """
         stmt_lines = (
             self.parse_statements(
-                self.root.body, prefix="", end_stmts=Lines(["_done = 1;"])
+                self.root.body,
+                prefix="",
+                end_stmts=[vast.NonBlockingSubsitution("_done", "1")],
             ).to_lines(),
             Lines(),
         )
@@ -249,11 +251,12 @@ class Generator2Ast:
                 self.parse_statements(
                     stmt.body,
                     f"{state_var}{self.create_unique_name()}",
-                    end_stmts=Lines(
-                        [
-                            f"{prefix}_STATE <= {prefix}_STATE + 1; {state_var} <= 0;",
-                        ]
-                    ),
+                    end_stmts=[
+                        vast.NonBlockingSubsitution(
+                            f"{prefix}_STATE", f"{prefix}_STATE + 1"
+                        ),
+                        vast.NonBlockingSubsitution(state_var, "0"),
+                    ],
                     reset_to_zero=True,
                 )
             ],
@@ -264,11 +267,12 @@ class Generator2Ast:
                 self.parse_statements(
                     stmt.orelse,
                     f"{state_var}{self.create_unique_name()}",
-                    end_stmts=Lines(
-                        [
-                            f"{prefix}_STATE <= {prefix}_STATE + 1; {state_var} <= 0;",
-                        ]
-                    ),
+                    end_stmts=[
+                        vast.NonBlockingSubsitution(
+                            f"{prefix}_STATE", f"{prefix}_STATE + 1"
+                        ),
+                        vast.NonBlockingSubsitution(state_var, "0"),
+                    ],
                     reset_to_zero=True,
                 )
             ],
@@ -284,7 +288,7 @@ class Generator2Ast:
         self,
         stmts: list[pyast.AST],
         prefix: str,
-        end_stmts: Lines = None,
+        end_stmts: list[vast.Statement] = None,
         reset_to_zero: bool = False,
     ):
         """
@@ -316,7 +320,9 @@ class Generator2Ast:
                 )
             cases.append(case_item)  # TODO: cases can have multiple statements
             index += 1
-        end_stmts = [vast.Statement(stmt) for stmt in end_stmts]
+        # end_stmts = [vast.Statement(stmt) for stmt in end_stmts]
+        for stmt in end_stmts:
+            assert isinstance(stmt, vast.Statement)
         if reset_to_zero:
             end_stmts.append(vast.NonBlockingSubsitution(state_var, "0"))
 
@@ -445,11 +451,7 @@ class Generator2Ast:
                 self.parse_statements(
                     stmt.body,
                     f"{state_var}{self.create_unique_name()}",
-                    end_stmts=Lines(
-                        [
-                            f"{state_var} <= 0;",
-                        ]
-                    ),
+                    end_stmts=[vast.NonBlockingSubsitution(f"{state_var}", "0")],
                     reset_to_zero=True,
                 )
             ],
