@@ -286,25 +286,22 @@ class IfElse(Statement):
 class While(Case):
     """
     Abstract While wrapper
+    Case (WHILE)
+        0: if (!<conditional>)
+                <continue>
+            else
+                <loop body / go state 1>
+        1: <loop body>
     """
 
     def append_end_statements(self, statements: list[Statement]):
         """
-        TODO:
+        While statements have a special case structure, where their first case always contains an if statement
         """
         statements = assert_list_elements(statements, Statement)
-        # warnings.warn(
-        #     str(
-        #         type(
-        #             self.case_items[0]
-        #             .statements[0]
-        #             .then_body[-1]
-        #             .append_to_end(statements)
-        #         )
-        #     )
-        # )
+        assert isinstance(self.case_items[0], CaseItem)
+        assert isinstance(self.case_items[0].statements[0], IfElse)
         self.case_items[0].statements[0].then_body = (
             self.case_items[0].statements[0].then_body + statements
         )
-
         return self
