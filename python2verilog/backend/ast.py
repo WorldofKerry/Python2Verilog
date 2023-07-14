@@ -288,5 +288,8 @@ class While(IfElse):
         # warnings.warn("appending " + statements[0].to_string())
         # if len(statements) > 1:
         #     warnings.warn(statements[1].to_string())
-        self.then_body[-1].append_end_statements(statements)
+        if self.then_body:
+            self.then_body[-1].append_end_statements(statements)
+        else:
+            self.then_body = statements
         return self

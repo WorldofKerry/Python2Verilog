@@ -8,10 +8,12 @@ class TestGenerator2Ast(unittest.TestCase):
     def test_all(self):
         func = """
 def circle_lines(s_x, s_y, height) -> tuple[int, int]:
-    if a < 150:
+    # if a < 150:
+    #     a = a + 1
+    # else:
+    #     a = a + 2
+    while a < 10:
         a = a + 1
-    else:
-        a = a + 2
         """
         tree = ast.parse(func)
         with open("ast.log", mode="w") as ast_file:

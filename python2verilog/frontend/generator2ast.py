@@ -528,7 +528,7 @@ class Generator2Ast:
         return [
             vast.While(
                 vast.Expression(f"!({self.parse_expression(node.test).to_string()})"),
-                [vast.NonBlockingSubsitution(f"{prefix}_STATE", f"{prefix}_STATE + 1")],
+                [],
                 [
                     self.parse_statements(
                         node.body,
