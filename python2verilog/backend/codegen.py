@@ -88,6 +88,30 @@ class Module:
         return (lines, Lines("endmodule"))
 
 
+class Always:
+    """
+    always @(posedge <clock>) begin
+        <valid> = 0;
+    end
+    """
+
+    def __init__(self, clock: str, valid: str | None = None):
+        assert isinstance(clock, str)
+        if valid is not None:
+            valid = NonBlockingSubsitution(valid, "0")
+        self.clock = clock
+        self.valid = valid
+
+    def to_lines(self):
+        lines = Lines(f"always @(posedge {self.clock}) begin")
+        if self.valid is not None:
+            lines.concat(self.valid.to_lines())
+        return (
+            lines,
+            Lines(["end"]),
+        )
+
+
 class Expression:
     """
     Verilog expression, e.g.

@@ -1,4 +1,4 @@
-from python2verilog.backend.codegen import Verilog, Module
+from python2verilog.backend.codegen import Verilog, Module, Always
 from python2verilog.frontend import Generator2Ast
 import unittest
 import warnings
@@ -24,6 +24,16 @@ class TestVerilog(unittest.TestCase):
             "module cool_name( \n input wire _start, \n input wire _clock,\n input wire in0,\n output reg _done, \noutput reg out0 \n );",
         )
         assert_lines(self, lines[1].to_string(), "endmodule")
+
+    def test_always(self):
+        always = Always("_clock", "_valid")
+        lines = always.to_lines()
+        assert_lines(
+            self,
+            lines[0].to_string(),
+            "always @(posedge _clock) begin \n _valid <= 0; \n",
+        )
+        assert_lines(self, lines[1].to_string(), "end")
 
     def test_constructor(self):
         code = """
