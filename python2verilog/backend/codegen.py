@@ -166,9 +166,9 @@ class Always:
     end
     """
 
-    def __init__(self, clock: str, valid: str | None = None):
+    def __init__(self, clock: str, valid: str = ""):
         assert isinstance(clock, str)
-        if valid is not None:
+        if valid != "":
             valid = NonBlockingSubsitution(valid, "0")
         self.clock = clock
         self.valid = valid
@@ -178,7 +178,7 @@ class Always:
         To Verilog
         """
         lines = Lines(f"always @(posedge {self.clock}) begin")
-        if self.valid is not None:
+        if self.valid != "":
             lines.concat(self.valid.to_lines())
         return (
             lines,
