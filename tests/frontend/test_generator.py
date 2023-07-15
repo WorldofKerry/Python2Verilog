@@ -104,7 +104,9 @@ class TestGeneratorParser(unittest.TestCase):
                         " " + str(tupl)[1:-1] + "\n"
                     )  # Verilog row elements have a space prefix
 
-            make_visual(_locals[function_name](*TEST_CASE), FILES_IN_ABS_DIR["visual"])
+            make_visual(
+                _locals[function_name](*TEST_CASE), FILES_IN_ABS_DIR["expected_visual"]
+            )
 
             with open(FILES_IN_ABS_DIR["ast_dump"], mode="w") as ast_dump_file:
                 ast_dump_file.write(ast.dump(tree, indent="  "))

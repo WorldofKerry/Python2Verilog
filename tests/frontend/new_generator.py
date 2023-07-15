@@ -8,8 +8,7 @@ With --overwrite, `config.ini` is overwritten, but the python file is not if it 
 For regenerating configuration files:
 python3 tests/frontend/new_generator.py -o defaults -vv
 python3 tests/frontend/new_generator.py -o circle_lines -vv
-python3 tests/frontend/new_generator.py -o rectangle_lines -vv
-python3 tests/frontend/new_generator.py -o rectangle_filled -vv
+python3 tests/frontend/new_generator.py -o rectangle_filled_while -vv
 
 """
 
