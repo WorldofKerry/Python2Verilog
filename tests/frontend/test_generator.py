@@ -14,6 +14,53 @@ import configparser
 import subprocess
 
 
+def make_visual(generator_inst, dir: str):
+    """
+    Any iterable of tuples where the tuples are of length > 0 will work.
+    Visualizes the first 3 elements of each tuple as (x, y, colour)
+    """
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    # Generate the data using the generator function
+    data_triple = []
+
+    for yields in generator_inst:
+        if len(yields) >= 3:
+            data_triple.append(yields[:3])
+        elif len(yields) >= 2:
+            data_triple.append((*yields[:2], 1))
+        else:
+            data_triple.append((yields[0], 1, 2))
+
+    data_triple = np.array(data_triple)
+
+    height = max(data_triple[:, 0])
+    width = max(data_triple[:, 1])
+    # warnings.warn(f"{height}, {width}, {data_triple}")
+    grid = np.zeros((int(height) + 1, int(width) + 1))
+    for x, y, c in data_triple:
+        grid[x, y] = c
+
+    # Create the pixel-like plot
+    plt.imshow(grid)
+
+    # Set labels and title
+    plt.xlabel("X")
+    plt.ylabel("Y")
+    plt.title("Pixel-like Plot")
+
+    # Add color bar
+    cbar = plt.colorbar()
+    cbar.set_label("Z")
+
+    plt.gca().invert_yaxis()
+
+    # Show the plot
+    # plt.show()
+    plt.savefig(dir)
+
+
 class TestGeneratorParser(unittest.TestCase):
     def run_test(self, function_name, TEST_CASE, dir="data/generator/"):
         # TODO: remove nested with statements
@@ -43,22 +90,21 @@ class TestGeneratorParser(unittest.TestCase):
 
             with open(FILES_IN_ABS_DIR["expected"], mode="w") as expected_file:
                 generator_inst = _locals[function_name](*TEST_CASE)
+                size = None
                 for tupl in generator_inst:
+                    if size is None:
+                        size = len(tupl)
+                    else:
+                        assert (
+                            len(tupl) == size
+                        ), f"All generator yields must be same length tuple, but got {tupl} of length {len(tupl)} when previous yields had length {size}"
+                    for e in tupl:
+                        assert isinstance(e, int)
                     expected_file.write(
                         " " + str(tupl)[1:-1] + "\n"
                     )  # Verilog row elements have a space prefix
 
-            with open(FILES_IN_ABS_DIR["visual"], mode="w") as visual_file:
-                generator_inst = _locals[function_name](*TEST_CASE)
-
-                WIDTH, HEIGHT = 100, 100
-                matrix = [["." for x in range(WIDTH)] for y in range(HEIGHT)]
-                for tupl in generator_inst:
-                    matrix[tupl[0]][tupl[1]] = "@"
-                for row in matrix:
-                    for elem in row:
-                        visual_file.write(elem)
-                    visual_file.write("\n")
+            make_visual(_locals[function_name](*TEST_CASE), FILES_IN_ABS_DIR["visual"])
 
             with open(FILES_IN_ABS_DIR["ast_dump"], mode="w") as ast_dump_file:
                 ast_dump_file.write(ast.dump(tree, indent="  "))

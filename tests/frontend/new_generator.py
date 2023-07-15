@@ -41,7 +41,8 @@ def script(args: argparse.Namespace, logger: logging.Logger, shell: callable) ->
             "actual": args.actual,
             "module": args.module,
             "testbench": args.testbench,
-            "visual": args.visual,
+            "expected_visual": args.expected_visual,
+            "actual_visual": args.actual_visual,
             "ast_dump": args.ast_dump,
         }
         config.write(config_file)
@@ -137,10 +138,15 @@ if __name__ == "__main__":
         default="ast_dump.log",
     )
     parser.add_argument(
-        "--visual",
+        "--expected-visual",
         type=str,
-        help="Where 2D plot of first two output params are saved",
-        default="visual.log",
+        help="Expected visual output filename",
+        default="expected_visual.png",
+    )
+    parser.add_argument(
+        "--actual-visual",
+        type=str,
+        default="actual_visual.png",
     )
 
     parser_args = parser.parse_args()

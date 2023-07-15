@@ -17,9 +17,10 @@ repos:
         entry: pylint
         language: system
         types: [python]
+        files: python2verilog/
         args:
             [
             "-rn", # Only display messages
             "-sn", # Don't display the score
-            "--rcfile=.pylintrc"
+            "--rcfile=.pylintrc",
             ]

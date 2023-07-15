@@ -1,89 +1,33 @@
-# class TestSuper:
-#     def __init_subclass__(cls, *args) -> None:
-#         print("args", args)
+import matplotlib.pyplot as plt
+import math
 
 
-# class TestChild(TestSuper):
-#     pass
-#     # def __init__(self, var):
-#     #     self.var = var
+def generator_function():
+    # Your generator function logic here
+    for i in range(50):
+        x = i
+        y = math.random()
+        color = math.random()
+    yield x, y, color
 
 
-# child = TestChild()
+# Collect the generated values
+data = list(generator_function())
 
+# Extract x, y, and color values
+x_values = [item[0] for item in data]
+y_values = [item[1] for item in data]
+color_values = [item[2] for item in data]
 
-# class A:
-#     def __init__(self, x):
-#         print("__init__ is called in A")
-#         self.x = x
+# Normalize color values
+min_color = min(color_values)
+max_color = max(color_values)
+normalized_colors = [
+    (color - min_color) / (max_color - min_color) for color in color_values
+]
 
+# Create the scatter plot
+plt.scatter(x_values, y_values, c=normalized_colors, cmap="viridis")
 
-# class B:
-#     def __init__(self, *args, **kwargs):
-#         print("__init__ is called in B")
-#         super().__init__(*args, **kwargs)
-
-
-# class AB(B, A):
-#     def __init__(self, *args, **kwargs):
-#         print("__init__ is called in AB")
-#         super().__init__(*args, **kwargs)
-
-
-# ab = AB(123)
-
-from python2verilog.frontend.generator import GeneratorParser
-import ast
-
-func = """
-def circle_lines(s_x, s_y, height) -> tuple[int, int]:
-    x = 0
-    y = height
-    d = 3 - 2 * height
-    yield (s_x + x, s_y + y)
-    yield (s_x + x, s_y - y)
-    yield (s_x - x, s_y + y)
-    yield (s_x - x, s_y - y)
-    yield (s_x + y, s_y + x)
-    yield (s_x + y, s_y - x)
-    yield (s_x - y, s_y + x)
-    yield (s_x - y, s_y - x)
-    while y >= x:
-        x = x + 1
-        if d > 0:
-            y = y - 1
-            d = d + 4 * (x - y) + 10
-        else:
-            d = d + 4 * x + 6
-        yield (s_x + x, s_y + y)
-        yield (s_x + x, s_y - y)
-        yield (s_x - x, s_y + y)
-        yield (s_x - x, s_y - y)
-        yield (s_x + y, s_y + x)
-        yield (s_x + y, s_y - x)
-        yield (s_x - y, s_y + x)
-        yield (s_x - y, s_y - x)
-"""
-generatorParser = GeneratorParser(ast.parse(func).body[0])
-print(generatorParser.generate_verilog())
-
-
-class A:
-    def __init__(self, x):
-        print("__init__ is called in A")
-        self.x = x
-
-
-class B:
-    def __init__(self, *args, **kwargs):
-        print("__init__ is called in B")
-        super().__init__(*args, **kwargs)
-
-
-class AB(B, A):
-    def __init__(self, *args, **kwargs):
-        print("__init__ is called in AB")
-        super().__init__(*args, **kwargs)
-
-
-ab = AB(123)
+# Show the plot
+plt.show()
