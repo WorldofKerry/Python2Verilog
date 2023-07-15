@@ -200,8 +200,7 @@ endmodule
 
                 testbench_file.write(text)
 
-            with open(FILES_IN_ABS_DIR["actual"], mode="w+") as actual_file:
-                pass
+            open(FILES_IN_ABS_DIR["actual"], mode="w+")
 
             iverilog_cmd = f"iverilog -s {function_name}_tb {FILES_IN_ABS_DIR['module']} {FILES_IN_ABS_DIR['testbench']} -o iverilog.log && unbuffer vvp iverilog.log >> {FILES_IN_ABS_DIR['actual']} && rm iverilog.log\n"
             output = subprocess.run(
