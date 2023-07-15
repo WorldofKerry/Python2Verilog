@@ -1,10 +1,11 @@
 """Verilog Abstract Syntax Tree Components"""
 
+import warnings
+import inspect
+
 from ..frontend.utils import Lines
 from .utils import assert_list_elements
 from .expressions import Expression
-import warnings
-import inspect
 
 
 class Statement:
@@ -39,7 +40,7 @@ def is_valid_append_end_statements(stmt: Statement, statements: list[Statement])
     If it does, it handles the append, otherwise returns false
     # TODO: there should be a subclass/interface for ones that do encapsulate
     """
-    if isinstance(stmt, Case) or isinstance(stmt, IfElse):
+    if isinstance(stmt, (Case, IfElse)):
         stmt.append_end_statements(assert_list_elements(statements, Statement))
         return True
     return False
@@ -76,7 +77,7 @@ class Subsitution(Statement):
         """
         Appends to last block of code
         """
-        raise Exception()
+        raise DeprecationWarning()
         warnings.warn(
             "want to remove "
             + str(inspect.getouterframes(inspect.currentframe(), 2)[1][3])
@@ -289,7 +290,8 @@ class While(Case):
 
     def append_end_statements(self, statements: list[Statement]):
         """
-        While statements have a special case structure, where their first case always contains an if statement
+        While statements have a special case structure,
+        where their first case always contains an if statement
         """
         statements = assert_list_elements(statements, Statement)
         assert isinstance(self.case_items[0], CaseItem)

@@ -1,3 +1,9 @@
+"""
+Intermediate Representation Expressions
+Based on Verilog Syntax
+"""
+
+
 class Expression:
     """
     Verilog expression, e.g.

@@ -1,3 +1,8 @@
+"""
+Assertion Utilities
+"""
+
+
 def assert_list_elements(the_list: list, elem_type):
     """
     Asserts that all elems in the list are of elem_type, then returns the list

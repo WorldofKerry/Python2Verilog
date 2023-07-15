@@ -1,13 +1,18 @@
 """Verilog Abstract Syntax Tree Components"""
 
-from ..frontend.utils import Lines, Indent
-from .utils import assert_list_elements
-from .. import backend as irast
 import warnings
 import ast
 
+from ..frontend.utils import Lines, Indent
+from .utils import assert_list_elements
+from .. import backend as irast
+
 
 def create_module_from_python(func: ast.FunctionDef):
+    """
+    Creates a module wrapper from python AST,
+    e.g. the I/O (from Python), clock, valid and done signals
+    """
     inputs = []
     for var in func.args.args:
         inputs.append(var.arg)
@@ -25,7 +30,12 @@ class Verilog:
     """
 
     def __init__(self):
-        pass
+        # TODO: throw errors if user tries to generate verilog beforeconfig
+        self.root = None
+        self.global_vars = None
+        self.module = None
+        self.always = None
+        self.python = None
 
     def build_tree(self, node: irast.Statement):
         """
@@ -123,9 +133,9 @@ class Module:
         self.name = name  # TODO: assert invalid names
 
         input_lines = Lines()
-        for input in inputs:
-            assert isinstance(input, str)
-            input_lines += f"input wire {input}"
+        for inputt in inputs:
+            assert isinstance(inputt, str)
+            input_lines += f"input wire {inputt}"
         self.input = input_lines
 
         output_lines = Lines()
@@ -135,6 +145,9 @@ class Module:
         self.output = output_lines
 
     def to_lines(self):
+        """
+        To Verilog
+        """
         lines = Lines()
         lines += f"module {self.name}("
         for line in self.input:
@@ -161,6 +174,9 @@ class Always:
         self.valid = valid
 
     def to_lines(self):
+        """
+        To Verilog
+        """
         lines = Lines(f"always @(posedge {self.clock}) begin")
         if self.valid is not None:
             lines.concat(self.valid.to_lines())
@@ -452,7 +468,8 @@ class While(Case):
 
     def append_end_statements(self, statements: list[Statement]):
         """
-        While statements have a special case structure, where their first case always contains an if statement
+        While statements have a special case structure,
+        where their first case always contains an if statement
         """
         statements = assert_list_elements(statements, Statement)
         assert isinstance(self.case_items[0], CaseItem)
