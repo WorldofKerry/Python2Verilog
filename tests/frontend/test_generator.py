@@ -155,12 +155,12 @@ endmodule
             if os.path.exists(FILES_IN_ABS_DIR["actual"]):
                 os.remove(FILES_IN_ABS_DIR["actual"])
 
-            iverilog_cmd = f"iverilog -s {function_name}_tb {FILES_IN_ABS_DIR['module']} {FILES_IN_ABS_DIR['testbench']} && unbuffer vvp a.out >> {FILES_IN_ABS_DIR['actual']} && rm a.out\n"
+            iverilog_cmd = f"iverilog -s {function_name}_tb {FILES_IN_ABS_DIR['module']} {FILES_IN_ABS_DIR['testbench']} -o iverilog.log && unbuffer vvp iverilog.log >> {FILES_IN_ABS_DIR['actual']} && rm iverilog.log\n"
             output = subprocess.run(
                 iverilog_cmd, shell=True, capture_output=True, text=True
             ).stderr
             if output != "":
-                warnings.warn(output)
+                warnings.warn("ERROR with running verilog simulation: " + output)
 
             with open(FILES_IN_ABS_DIR["actual"]) as act_f:
                 with open(FILES_IN_ABS_DIR["expected"]) as exp_f:

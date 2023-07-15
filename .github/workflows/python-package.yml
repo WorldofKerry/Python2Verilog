@@ -37,8 +37,7 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Download Icarus Verilog and Utilities
       run: |
-        sudo apt-get install iverilog
-        sudo apt-get install expect
+        sudo apt-get install iverilog expect
     - name: Test with pytest
       run: |
         python3 -m pytest --verbose
