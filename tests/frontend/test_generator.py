@@ -207,7 +207,9 @@ endmodule
                 iverilog_cmd, shell=True, capture_output=True, text=True
             )
             if output != "":
-                warnings.warn("ERROR with running verilog simulation: " + output.stderr)
+                warnings.warn(
+                    f"ERROR with running verilog simulation on {function_name}, with stderr: {output.stderr}"
+                )
 
             with open(FILES_IN_ABS_DIR["actual"]) as act_f:
                 with open(FILES_IN_ABS_DIR["expected"]) as exp_f:
