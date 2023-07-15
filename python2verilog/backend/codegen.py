@@ -70,7 +70,6 @@ class Verilog:
         Get Verilog module
         """
 
-        @staticmethod
         def get_init_lines(global_vars: dict[str, str]):
             """
             if (_start) begin
