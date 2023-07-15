@@ -203,9 +203,10 @@ endmodule
             iverilog_cmd = f"iverilog -s {function_name}_tb {FILES_IN_ABS_DIR['module']} {FILES_IN_ABS_DIR['testbench']} -o iverilog.log && unbuffer vvp iverilog.log >> {FILES_IN_ABS_DIR['actual']} && rm iverilog.log\n"
             output = subprocess.run(
                 iverilog_cmd, shell=True, capture_output=True, text=True
-            ).stderr
+            )
+            self.assertEqual(output.stderr, "")
             if output != "":
-                warnings.warn("ERROR with running verilog simulation: " + output)
+                warnings.warn("ERROR with running verilog simulation: " + output.stderr)
 
             with open(FILES_IN_ABS_DIR["actual"]) as act_f:
                 with open(FILES_IN_ABS_DIR["expected"]) as exp_f:
