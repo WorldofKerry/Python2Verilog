@@ -18,7 +18,9 @@ Supports Python [Generator functions](https://wiki.python.org/moin/Generators) a
 for i in range(10):
     pass
 ```
+
 ## Sample Usage
+
 `pip install python2verilog==0.0.1`
 
 ```python
@@ -58,19 +60,33 @@ generatorParser = GeneratorParser(ast.parse(func).body[0])
 print(generatorParser.generate_verilog())
 ```
 
-## Automatically Test The Generated Verilog
-`python3 tests/parsers/new_generator.py <name>` to create new test case and prepare template Python file.
+## Testing
 
-`python3 -m pytest --verbose` to run tests / generate the module, testbench, visualizations, dumps, and expected/actual outputs.
+### Requirements
+
+Warning: may be outdated, refer to [github workflow](.github/workflows/python-package.yml) for most update-to-date information for Ubuntu.
+
+Verilog simulation: `sudo apt-get install iverilog expected` (uses the `unbuffer` app in `expected`). The online simulator [EDA Playground](https://edaplayground.com/) can be used as a subsitute, given that you paste the output into the "actual file" specified in the `config.ini` of the test.
+
+Python: `python3 -m pip install -r tests/requirements.txt`
+
+### Creating New Test
+
+To create a new test case and set up configs, run `python3 tests/frontend/new_generator.py <name>`.
+
+### Running Tests
+
+To run tests, use `python3 -m pytest --verbose` to generate the module, testbench, visualizations, dumps, and expected/actual outputs.
+Those files will be stored in `tests/frontend/data/generator/<name>/`.
 
 ## Tested Generations
-The outputs of the Python script tests can be found [here](https://nightly.link/WorldofKerry/Python2Verilog/workflows/python-package/main/data-generator.zip)
 
-Python vs Verilog stats on sample inputs (not up-to-date) can be found [here](tests/frontend/data/generator/stats.md).
+The outputs of the Python script tests can be found [as a github workflow artifact](https://nightly.link/WorldofKerry/Python2Verilog/workflows/python-package/main/data-generator.zip)
 
-I recommend [EDA Playground](https://edaplayground.com/) or [Icarus Verilog](https://github.com/steveicarus/iverilog) for testing the verilog code. Refer to the [github action](.github/workflows/python-package.yml) to see how to setup testing with Icarus Verilog.
+Python vs Verilog stats on sample inputs (not up-to-date) can be found [here](tests/frontend/data/generator/stats.md), more up-to-date ones can be found in the artifact.
 
 ## For Developers
+
 Based on my experimentation with a [C to Verilog converter](https://github.com/WorldofKerry/c2hdl).
 
 Architecture is based on [LLVM](https://llvm.org/).
@@ -79,8 +95,7 @@ To setup pre-commit, run `pre-commit install`.
 
 ### Epics
 
-- Create a Verilog AST representation (lots of samples online) to better optimize (mostly end statements)
-- Add `valid` signal and then generate testbenches that test multiple cases
+- Support arrays
 
 ## Docs
 
@@ -90,6 +105,7 @@ To setup pre-commit, run `pre-commit install`.
 ## Random Planning, Design, and Notes
 
 ### Potential API
+
 ```python
 import python2verilog as p2v
 import ast
