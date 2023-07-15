@@ -22,4 +22,4 @@ jobs:
         run: |
           # pylint $(git ls-files '*.py') # ignore test files for now
           # Ignoring: fixme, too-few-public-methods, duplicate-code, unreachable
-          pylint ./python2verilog/ -d W0511,R0903,R0801,W0101
+          pylint python2verilog/ --rcfile=pylint.toml
