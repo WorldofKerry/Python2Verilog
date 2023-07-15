@@ -200,9 +200,6 @@ endmodule
 
                 testbench_file.write(text)
 
-            if os.path.exists(FILES_IN_ABS_DIR["actual"]):
-                os.remove(FILES_IN_ABS_DIR["actual"])
-
             iverilog_cmd = f"iverilog -s {function_name}_tb {FILES_IN_ABS_DIR['module']} {FILES_IN_ABS_DIR['testbench']} -o iverilog.log && unbuffer vvp iverilog.log >> {FILES_IN_ABS_DIR['actual']} && rm iverilog.log\n"
             output = subprocess.run(
                 iverilog_cmd, shell=True, capture_output=True, text=True
