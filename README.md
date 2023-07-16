@@ -10,7 +10,6 @@ Supports Python [Generator functions](https://wiki.python.org/moin/Generators) a
 
 - `if`
 - `while`
-- `for ... in range(...)` with 1 or 2 args in `range` (quite inefficient)
 
 **Warning**: Variables must be unique, i.e. variables do not have block scope, e.g. the following modifies global `i`:
 
