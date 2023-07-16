@@ -16,10 +16,14 @@ Supports Python [Generator functions](https://wiki.python.org/moin/Generators) a
 ## Sample Usage
 `pip install python2verilog`
 
-### Basic usage
-`python3 -m python2verilog.convert generator.py`
+### Basic Usage
+Create a python file containing a generator function with output type hints, named `<name>.py`. 
 
-`python3 -m python2verilog.convert generator.py -c "(1, 2, 3, 4)"`
+A sample can be found [here](https://github.com/WorldofKerry/Python2Verilog/blob/main/tests/integration/data/integration/circle_lines/python.py)
+
+`python3 -m python2verilog.convert <name>.py`
+
+`python3 -m python2verilog.convert <name>.py -c "(10, 15, 7)"` (where the `-c` is the test case)
 
 ## Testing
 
