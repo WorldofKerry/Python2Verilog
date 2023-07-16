@@ -24,9 +24,8 @@ for i in range(10):
 
 ### Basic usage
 `python3 -m python2verilog.convert generator.py`
-`python3 -m python2verilog.convert generator.py -c "(1, 2, 3, 4)"`
 
-### More Complex Usage
+`python3 -m python2verilog.convert generator.py -c "(1, 2, 3, 4)"`
 
 ## Testing
 
