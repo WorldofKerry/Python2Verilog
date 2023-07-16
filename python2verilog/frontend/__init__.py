@@ -2,4 +2,4 @@
 
 # flake8: noqa
 from .generator import GeneratorParser
-from .generator2ast import Generator2Ast
+from .generator2ir import Generator2Ast

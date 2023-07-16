@@ -43,17 +43,19 @@ def script(args: argparse.Namespace, logger: logging.Logger, shell: callable) ->
             "expected_visual": args.expected_visual,
             "actual_visual": args.actual_visual,
             "ast_dump": args.ast_dump,
+            "filtered_actual": args.filtered_actual,
         }
         config.write(config_file)
 
     PYTHON_FILE_PATH = os.path.join(PATH_TO_NEW_TEST, args.python)
-    try:
-        with open(PYTHON_FILE_PATH, mode="x") as python_file:
-            python_file.write(args.template)
-    except FileExistsError:
-        logger.warning(
-            f"Skipping python file generation, as {PYTHON_FILE_PATH} already exists"
-        )
+    if not args.overwrite:
+        try:
+            with open(PYTHON_FILE_PATH, mode="x") as python_file:
+                python_file.write(args.template)
+        except FileExistsError:
+            logger.warning(
+                f"Skipping python file generation, as {PYTHON_FILE_PATH} already exists"
+            )
 
     TEST_FILE_PATH = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), args.test_file
@@ -149,6 +151,11 @@ if __name__ == "__main__":
         "--actual-visual",
         type=str,
         default="actual_visual.png",
+    )
+    parser.add_argument(
+        "--filtered-actual",
+        type=str,
+        default="filtered_actual.csv",
     )
 
     parser_args = parser.parse_args()

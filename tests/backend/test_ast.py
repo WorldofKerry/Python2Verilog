@@ -1,11 +1,11 @@
-from python2verilog.backend.statements import (
+from python2verilog.ir.statements import (
     NonBlockingSubsitution,
     BlockingSubsitution,
     Declaration,
     Case,
     CaseItem,
 )
-from python2verilog.backend.expressions import Expression
+from python2verilog.ir.expressions import Expression
 
 
 import unittest

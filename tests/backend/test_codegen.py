@@ -1,4 +1,4 @@
-from python2verilog.backend.codegen import (
+from python2verilog.backend.verilog import (
     Verilog,
     Module,
     Always,

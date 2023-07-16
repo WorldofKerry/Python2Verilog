@@ -1,8 +1,8 @@
-"""Parser for Python Generator Functions"""
+"""(Depreicated) Parses Python Generator Function to Verilog Module"""
 
 from __future__ import annotations
 import ast
-from .utils import Lines, Indent
+from ..utils.string import Lines, Indent
 
 
 class GeneratorParser:

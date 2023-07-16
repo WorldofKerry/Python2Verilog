@@ -6,7 +6,7 @@ import argparse
 import os
 import ast
 from .frontend import Generator2Ast
-from .backend.codegen import Verilog
+from .backend.verilog import Verilog
 
 parser = argparse.ArgumentParser(
     description=__doc__, formatter_class=argparse.RawTextHelpFormatter

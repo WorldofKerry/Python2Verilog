@@ -6,14 +6,13 @@ import configparser
 import subprocess
 import csv
 
-from python2verilog.backend.codegen import Verilog
+from python2verilog.backend.verilog import Verilog
 from python2verilog.frontend import Generator2Ast
 from python2verilog.utils.visualization import make_visual
 
 
 class TestMain(unittest.TestCase):
     def run_test(self, function_name, test_case, dir="data/integration/"):
-
         ABS_DIR = os.path.join(
             os.path.dirname(os.path.abspath(__file__)), dir, function_name
         )
@@ -83,6 +82,18 @@ class TestMain(unittest.TestCase):
                     f"ERROR with running verilog simulation on {function_name}, with: {output.stderr} {output.stdout}"
                 )
 
+            with open(FILES_IN_ABS_DIR["actual"], mode="r") as act_f:
+                with open(FILES_IN_ABS_DIR["filtered_actual"], mode="w") as filtered_f:
+                    raw = csv.reader(act_f)
+                    filtered = []
+                    for row in raw:
+                        if row[0].strip() == "1":
+                            tupl = tuple([int(e) for e in row[1:]])
+                            filtered.append(tupl)
+                            filtered_f.write(" " + str(tupl)[1:-1] + "\n")
+
+                    make_visual(filtered, FILES_IN_ABS_DIR["actual_visual"])
+
             with open(FILES_IN_ABS_DIR["actual"]) as act_f:
                 with open(FILES_IN_ABS_DIR["expected"]) as exp_f:
                     expected = csv.reader(exp_f)
@@ -101,15 +112,21 @@ class TestMain(unittest.TestCase):
                     self.assertEqual(
                         actual_coords - expected_coords,
                         set(),
-                        f"Extra coordinates: {str(actual_coords - expected_coords)} {str(actual_coords)} {str(expected_coords)}",
+                        f"str(actual_coords - expected_coords) <-- extra coordinates, all: {str(actual_coords)} {str(expected_coords)}",
                     )
                     self.assertEqual(
                         expected_coords - actual_coords,
                         set(),
-                        f"Missing Coordinates: {str(expected_coords - actual_coords)} {str(actual_coords)} {str(expected_coords)}",
+                        f"str(expected_coords - actual_coor <-- missing coordinates, all: {str(actual_coords)} {str(expected_coords)}",
                     )
 
                     return "Running test"
 
     def test_defaults(self):
         self.run_test("defaults", (1, 2, 3, 4))
+
+    def test_circle_lines(self):
+        self.run_test("circle_lines", (21, 37, 13))
+
+    def test_happy_face(self):
+        self.run_test("happy_face", (50, 50, 40))
