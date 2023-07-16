@@ -206,9 +206,9 @@ endmodule
             output = subprocess.run(
                 iverilog_cmd, shell=True, capture_output=True, text=True
             )
-            if output != "":
+            if output.stderr != "" or output.stdout != "":
                 warnings.warn(
-                    f"ERROR with running verilog simulation on {function_name}, with stderr: {output.stderr}"
+                    f"ERROR with running verilog simulation on {function_name}, with: {output.stderr}; {output.stdout}"
                 )
 
             with open(FILES_IN_ABS_DIR["actual"]) as act_f:

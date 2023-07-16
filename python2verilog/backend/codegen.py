@@ -21,6 +21,7 @@ def create_module_from_python(func: ast.FunctionDef):
     assert isinstance(func.returns.slice, ast.Tuple)
     for i in range(len((func.returns.slice.elts))):
         outputs.append(f"_out{str(i)}")
+    # TODO: make these extras optional
     return Module(func.name, inputs, outputs)
 
 
@@ -35,7 +36,7 @@ class Verilog:
         self.global_vars = None
         self.module = None
         self.always = None
-        self.python = None
+        self.python_func = None
 
     def build_tree(self, node: irast.Statement):
         """
@@ -61,6 +62,7 @@ class Verilog:
         """
         Builds tree from IR
         """
+        root.append_end_statements([irast.NonBlockingSubsitution("_done", "1")])
         self.root = self.build_tree(root)
         self.global_vars = global_vars
         return self
@@ -89,7 +91,6 @@ class Verilog:
             return (start_lines, end_lines)
 
         module_lines = self.module.to_lines()
-
         always_blk_lines = self.always.to_lines()
         decl_lines = (
             Lines([f"reg signed [31:0] {v};" for v in self.global_vars]),
@@ -119,8 +120,98 @@ class Verilog:
         assert isinstance(func, ast.FunctionDef)
         self.module = create_module_from_python(func)
         self.always = Always("_clock", "_valid")
-        self.python = func
+        self.python_func = func
         return self
+
+    def get_testbench(self, test_case: tuple):
+        """
+        Creates a test bench for a test case
+        TODO: convert output to lines
+        """
+        func = self.python_func
+        func_name = func.name
+
+        text = f"module {func_name}"
+
+        text += """_tb;
+    // Inputs
+    reg _clock;
+    reg _start;
+    """  # TODO: use the NAMED_FUNCTION constant instead of generator
+        for idx, val in enumerate(func.args.args):
+            text += f"  reg signed [31:0] {val.arg};\n"
+        text += "\n  // Outputs\n"
+        for idx in range(len(func.returns.slice.elts)):
+            text += f"  wire signed [31:0] _out{idx};\n"
+
+        text += """
+    wire _done;
+    wire _valid;
+
+    // Instantiate the module under test
+    """
+        text += func_name
+
+        text += """ dut (
+    ._clock(_clock),
+    ._start(_start),
+    """
+        for idx, val in enumerate(func.args.args):
+            text += f"    .{val.arg}({val.arg}),\n"
+        for idx in range(len(func.returns.slice.elts)):
+            text += f"    ._out{idx}(_out{idx}),\n"
+        text += """
+    ._done(_done),
+    ._valid(_valid)
+    );
+
+    // Clock generation
+    always #5 _clock = !_clock;
+
+    // Stimulus
+    initial begin
+    // Initialize inputs
+    _start = 0;
+    """
+
+        for idx, val in enumerate(func.args.args):
+            text += f"    {val.arg} = {test_case[idx]};\n"
+        text += """
+    _clock = 0;
+
+    // Wait for a few clock cycles
+    #10;
+
+    // Start the drawing process
+    @(posedge _clock);
+    _start = 1;
+    @(posedge _clock);
+
+    // Wait for the drawing to complete
+    while (!_done) begin
+    @(posedge _clock);
+    _start = 0;
+    // Display the outputs for every cycle after start
+    $display(\"%0d, """  # TODO: use NAMED_FUNCTION instead of "generator dut"
+
+        text += "%0d, " * (len(func.returns.slice.elts) - 1)
+        text += """%0d\", _valid"""
+
+        for idx in range(len(func.returns.slice.elts)):
+            text += f", _out{idx}"
+
+        text += ");\n"
+
+        text += """
+    end
+
+    // Finish simulation
+    $finish;
+    end
+
+    endmodule
+    """
+        return text
 
 
 class Module:
@@ -134,13 +225,17 @@ class Module:
         input_lines = Lines()
         for inputt in inputs:
             assert isinstance(inputt, str)
-            input_lines += f"input wire {inputt}"
+            input_lines += f"input wire [31:0] {inputt}"
+        input_lines += "input wire _start"
+        input_lines += "input wire _clock"
         self.input = input_lines
 
         output_lines = Lines()
         for output in outputs:
-            output_lines += f"output reg {output}"
             assert isinstance(output, str)
+            output_lines += f"output reg [31:0] {output}"
+        output_lines += "output reg _done"
+        output_lines += "output reg _valid"
         self.output = output_lines
 
     def to_lines(self):

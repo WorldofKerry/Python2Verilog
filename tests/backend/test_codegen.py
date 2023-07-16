@@ -29,12 +29,12 @@ class TestHelpers(unittest.TestCase):
 
 class TestVerilog(unittest.TestCase):
     def test_module(self):
-        module = Module("cool_name", ["_start", "_clock", "in0"], ["_done", "out0"])
+        module = Module("cool_name", ["in0"], ["out0"])
         lines = module.to_lines()
         assert_lines(
             self,
             lines[0].to_string(),
-            "module cool_name( \n input wire _start, \n input wire _clock,\n input wire in0,\n output reg _done, \noutput reg out0 \n );",
+            "module cool_name( \n input wire [31:0] in0,\n input wire _start, \n input wire _clock, \n output reg [31:0] out0, \n output reg _done, \n output reg _valid  \n );",
         )
         assert_lines(self, lines[1].to_string(), "endmodule")
 
@@ -80,11 +80,12 @@ def circle_lines(s_x, s_y, height) -> tuple[int, int]:
         yield (s_x - y, s_y - x)
 """
         tree = ast.parse(code)
-        # warnings.warn(ast.dump(tree.body[0]))
-        ir_generator = Generator2Ast(tree.body[0])
-        output = ir_generator.parse_statements(tree.body[0].body, "")
+        function = tree.body[0]
+        ir_generator = Generator2Ast(function)
+        output = ir_generator.parse_statements(function.body, "")
         # warnings.warn(output.to_lines())
         verilog = Verilog()
         verilog.from_ir(output, ir_generator.global_vars)
-        verilog.setup_from_python(tree.body[0])
+        verilog.setup_from_python(function)
         # warnings.warn(verilog.get_module())
+        # warnings.warn(verilog.get_testbench((17, 23, 15)))
