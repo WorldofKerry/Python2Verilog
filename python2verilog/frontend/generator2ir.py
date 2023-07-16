@@ -427,6 +427,12 @@ class Generator2Ast:
             )
         if isinstance(expr, pyast.Compare):
             return self.parse_compare(expr)
+        if isinstance(expr, pyast.BoolOp):
+            if isinstance(expr.op, pyast.And):
+                return vast.Expression(
+                    f"({self.parse_expression(expr.values[0]).to_string()}) \
+                    && ({self.parse_expression(expr.values[1]).to_string()})"
+                )
         raise TypeError(
             "Error: unexpected expression type", type(expr), pyast.dump(expr)
         )

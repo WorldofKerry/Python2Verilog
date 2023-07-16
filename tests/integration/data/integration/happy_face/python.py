@@ -1,79 +1,61 @@
-def happy_face(radius) -> tuple[int, int]:
+def happy_face(s_x, s_y, height) -> tuple[int, int]:
+    # Generate points for the outer circle
     x = 0
-    y = radius
-    decision = 3 - 2 * radius
-
-    # Mid-point circle algorithm for the face
-    while x <= y:
-        yield x, y
-        yield -x, y
-        yield x, -y
-        yield -x, -y
-        yield y, x
-        yield -y, x
-        yield y, -x
-        yield -y, -x
-
-        if decision < 0:
-            decision += 4 * x + 6
+    y = height
+    d = 3 - 2 * height
+    yield (s_x + x, s_y + y)
+    yield (s_x + x, s_y - y)
+    yield (s_x - x, s_y + y)
+    yield (s_x - x, s_y - y)
+    yield (s_x + y, s_y + x)
+    yield (s_x + y, s_y - x)
+    yield (s_x - y, s_y + x)
+    yield (s_x - y, s_y - x)
+    while y >= x:
+        x = x + 1
+        if d > 0:
+            y = y - 1
+            d = d + 4 * (x - y) + 10
         else:
-            decision += 4 * (x - y) + 10
-            y -= 1
-        x += 1
+            d = d + 4 * x + 6
+        # yield (x, y, d)
+        yield (s_x + x, s_y + y)
+        yield (s_x + x, s_y - y)
+        yield (s_x - x, s_y + y)
+        yield (s_x - x, s_y - y)
+        yield (s_x + y, s_y + x)
+        yield (s_x + y, s_y - x)
+        yield (s_x - y, s_y + x)
+        yield (s_x - y, s_y - x)
 
-    # Filled-circle algorithm for the eyes
-    eye_radius = radius // 5
-    eye_x_offset = radius // 3
-    eye_y_offset = radius // 3
+    # Generate points for the eyes
+    rectangle_width = height // 3
+    rectangle_height = height // 3
 
-    i = -1
-    while i <= 1:
-        eye_x = i * eye_x_offset
-        eye_y = eye_y_offset
-        decision = 3 - 2 * eye_radius
+    # Left eye
+    x = s_x + 10
+    y = s_y + 5
 
-        x = 0
-        y = eye_radius
+    # Rectangle
+    i = 0
+    j = 0
+    while i < rectangle_width:
+        while j < rectangle_height:
+            yield (x + i, y + j)
+            j += 1
+        j = 0
+        i += 1
 
-        while x <= y:
-            yield eye_x + x, eye_y + y
-            yield eye_x - x, eye_y + y
-            yield eye_x + x, eye_y - y
-            yield eye_x - x, eye_y - y
-            yield eye_x + y, eye_y + x
-            yield eye_x - y, eye_y + x
-            yield eye_x + y, eye_y - x
-            yield eye_x - y, eye_y - x
+    # Right eye
+    x = s_x - 10
+    y = s_y + 5
 
-            if decision < 0:
-                decision += 4 * x + 6
-            else:
-                decision += 4 * (x - y) + 10
-                y -= 1
-            x += 1
-
-        i += 2
-
-    # Arc algorithm for the smile
-    smile_radius = radius // 2
-    smile_x_offset = 0
-    # yield smile_radius, 991 # for debugging
-    smile_y_offset = -smile_radius // 2
-    # yield smile_y_offset, 994
-
-    x = 0
-    y = smile_radius
-    decision = 3 - 2 * smile_radius
-
-    while x <= y:
-        # yield x, 992
-        # yield y, 993
-        yield smile_x_offset + x, smile_y_offset + y
-        yield smile_x_offset - x, smile_y_offset + y
-
-        if decision < 0:
-            decision += 4 * x + 6
-        else:
-            decision += 4 * (x - y) + 10
-            y -= 1
-        x += 1
+    # Rectangle
+    i = 0
+    j = 0
+    while i < rectangle_width:
+        while j < rectangle_height:
+            yield (x + i, y + j)
+            j += 1
+        j = 0
+        i += 1

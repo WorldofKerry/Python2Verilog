@@ -1,3 +1,6 @@
+[BASIC]
+good-names=i, j, k, a, b, c, d, e, f
+
 [FORMAT]
 # variable-rgx="[a-z_][a-z0-9_]{0,30}$"
 
