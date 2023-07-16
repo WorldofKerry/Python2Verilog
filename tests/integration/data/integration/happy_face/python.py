@@ -57,13 +57,17 @@ def happy_face(radius) -> tuple[int, int]:
     # Arc algorithm for the smile
     smile_radius = radius // 2
     smile_x_offset = 0
+    # yield smile_radius, 991 # for debugging
     smile_y_offset = -smile_radius // 2
+    # yield smile_y_offset, 994
 
     x = 0
     y = smile_radius
     decision = 3 - 2 * smile_radius
 
     while x <= y:
+        # yield x, 992
+        # yield y, 993
         yield smile_x_offset + x, smile_y_offset + y
         yield smile_x_offset - x, smile_y_offset + y
 

@@ -129,4 +129,4 @@ class TestMain(unittest.TestCase):
         self.run_test("circle_lines", (21, 37, 13))
 
     def test_happy_face(self):
-        self.run_test("happy_face", (10,))
+        self.run_test("happy_face", (50,))

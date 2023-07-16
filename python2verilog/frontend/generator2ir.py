@@ -144,7 +144,7 @@ class Generator2Ast:
         self.global_vars: dict[str, str] = {}
         self.root = root
 
-    def parse_for(self, node: pyast.For, prefix: str = ""):
+    def parse_for(self, node: pyast.For, prefix: str):
         """
         Creates a conditional while loop from for loop
         """
@@ -209,7 +209,7 @@ class Generator2Ast:
         )
         return [assign]
 
-    def parse_statement(self, stmt: pyast.AST, prefix: str = ""):
+    def parse_statement(self, stmt: pyast.AST, prefix: str):
         """
         <statement> (e.g. assign, for loop, etc., those that do not return a value)
         """
@@ -241,7 +241,7 @@ class Generator2Ast:
             "Error: unexpected statement type", type(stmt), pyast.dump(stmt)
         )
 
-    def parse_if(self, stmt: pyast.If, prefix: str = ""):
+    def parse_if(self, stmt: pyast.If, prefix: str):
         """
         If statement
         """
@@ -263,11 +263,9 @@ class Generator2Ast:
             [
                 self.parse_statements(
                     stmt.body,
-                    f"{state_var}{self.create_unique_name()}",
+                    f"{state_var}",
                     end_stmts=[
-                        vast.NonBlockingSubsitution(
-                            f"{prefix}_STATE", f"{prefix}_STATE + 1"
-                        ),
+                        vast.NonBlockingSubsitution(f"{prefix}", f"{prefix} + 1"),
                         vast.NonBlockingSubsitution(state_var, "0"),
                     ],
                     reset_to_zero=True,
@@ -279,11 +277,9 @@ class Generator2Ast:
             [
                 self.parse_statements(
                     stmt.orelse,
-                    f"{state_var}{self.create_unique_name()}",
+                    f"{state_var}",
                     end_stmts=[
-                        vast.NonBlockingSubsitution(
-                            f"{prefix}_STATE", f"{prefix}_STATE + 1"
-                        ),
+                        vast.NonBlockingSubsitution(f"{prefix}", f"{prefix} + 1"),
                         vast.NonBlockingSubsitution(state_var, "0"),
                     ],
                     reset_to_zero=True,
@@ -314,14 +310,14 @@ class Generator2Ast:
         """
         if not end_stmts:
             end_stmts = Lines()
-        state_var = self.add_global_var("0", f"{prefix}_STATE")
+        state_var = self.add_global_var(
+            "0", f"{prefix}_STATE{self.create_unique_name()}"
+        )
         cases = []
 
         index = 0
         for stmt in stmts:
-            a_output = self.parse_statement(stmt, prefix=prefix)
-            assert isinstance(a_output, list)
-            body = self.parse_statement(stmt, prefix=prefix)
+            body = self.parse_statement(stmt, prefix=state_var)
             case_item = vast.CaseItem(vast.Expression(str(index)), body)
             if (
                 not isinstance(stmt, pyast.For)
@@ -372,7 +368,7 @@ class Generator2Ast:
         if isinstance(node.op, pyast.Mult):
             return " * "
         if isinstance(node.op, pyast.Div):
-            warnings.warn("Warning: division treated as floor division")
+            warnings.warn("Warning: division treated as integer division")
             return " / "
         if isinstance(node.op, pyast.FloorDiv):
             return " / "
@@ -391,6 +387,29 @@ class Generator2Ast:
         if isinstance(expr, pyast.Subscript):
             return self.parse_subscript(expr)
         if isinstance(expr, pyast.BinOp):
+            # Special case for floor division with  2 on right-hand-side
+            # Due to Verilog handling negative division "rounding"
+            # differently than Python floor division
+            # e.g. Verilog: -5 / 2 == -2, Python: -5 // 2 == -3
+            if (
+                isinstance(expr.op, pyast.FloorDiv)
+                and isinstance(expr.right, pyast.Constant)
+                and expr.right.value > 0
+                and expr.right.value % 2 == 0
+            ):
+                # return vast.Expression(
+                #     f"({self.parse_expression(expr.left).to_string()}
+                # >> {int(expr.right.value / 2)})"
+                # )
+                a_var = self.parse_expression(expr.left).to_string()
+                b_var = expr.right.value
+                # return vast.Expression(
+                #     f"({a} > 0) ? ({a} >> {int(b / 2)}) : -(-({a}) >> {int(b / 2)})"
+                # )
+                return vast.Expression(
+                    f"({a_var} > 0) ? ({a_var} / {b_var}) : ({a_var} / {b_var} - 1)"
+                )
+
             return vast.Expression(
                 "("
                 + self.parse_expression(expr.left).to_string()
@@ -445,12 +464,15 @@ class Generator2Ast:
             f" {self.parse_expression(node.comparators[0]).to_string()}"
         )
 
-    def parse_while(self, stmt: pyast.While, prefix: str = ""):
+    def parse_while(self, stmt: pyast.While, prefix: str):
         """
         Converts while loop to a while-true-if-break loop
         """
         assert isinstance(stmt, pyast.While)
-        state_var = self.add_global_var("0", f"{prefix}_WHILE")
+        assert prefix != ""
+        state_var = self.add_global_var(
+            "0", f"{prefix}_WHILE{self.create_unique_name()}"
+        )
         conditional_item = vast.CaseItem(
             vast.Expression("0"),
             [
@@ -458,11 +480,7 @@ class Generator2Ast:
                     vast.Expression(
                         f"!({self.parse_expression(stmt.test).to_string()})"
                     ),
-                    [
-                        vast.NonBlockingSubsitution(
-                            f"{prefix}_STATE", f"{prefix}_STATE + 1"
-                        )
-                    ],
+                    [vast.NonBlockingSubsitution(f"{prefix}", f"{prefix} + 1")],
                     [vast.NonBlockingSubsitution(state_var, "1")],
                 )
             ],
@@ -472,7 +490,7 @@ class Generator2Ast:
             [
                 self.parse_statements(
                     stmt.body,
-                    f"{state_var}{self.create_unique_name()}",
+                    f"{state_var}",
                     end_stmts=[vast.NonBlockingSubsitution(f"{state_var}", "0")],
                     reset_to_zero=True,
                 )
