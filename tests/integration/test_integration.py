@@ -6,7 +6,7 @@ import configparser
 import subprocess
 import csv
 
-from python2verilog.backend.codegen import Verilog
+from python2verilog.backend.verilog import Verilog
 from python2verilog.frontend import Generator2Ast
 from python2verilog.utils.visualization import make_visual
 

@@ -1,9 +1,9 @@
-"""Parser for Python Generator Functions"""
+"""Parses Python Generator Functions to Intermediate Representation"""
 
 from __future__ import annotations
 import ast as pyast
-from .utils import Lines, Indent
-from .. import backend as vast
+from ..utils.string import Lines, Indent
+from .. import ir as vast
 
 
 class Generator2Ast:

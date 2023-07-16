@@ -3,8 +3,8 @@
 import warnings
 import inspect
 
-from ..frontend.utils import Lines
-from .utils import assert_list_elements
+from ..utils.string import Lines
+from ..utils.assertions import assert_list_elements
 from .expressions import Expression
 
 

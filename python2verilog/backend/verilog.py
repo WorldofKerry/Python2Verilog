@@ -3,9 +3,9 @@
 import warnings
 import ast
 
-from ..frontend.utils import Lines, Indent
-from .utils import assert_list_elements
-from .. import backend as irast
+from ..utils.string import Lines, Indent
+from ..utils.assertions import assert_list_elements
+from .. import ir as irast
 
 
 def create_module_from_python(func: ast.FunctionDef):
