@@ -1,4 +1,4 @@
-**/actual.csv
-**/expected.csv
-**/module.sv
-**/testbench.sv
+**/*.csv
+**/*.sv
+**/*.png
+**/*.jpg

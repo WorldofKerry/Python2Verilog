@@ -18,59 +18,43 @@ Supports Python [Generator functions](https://wiki.python.org/moin/Generators) a
 for i in range(10):
     pass
 ```
+
 ## Sample Usage
-`pip install python2verilog==0.0.1`
+`pip install python2verilog`
 
-```python
-from python2verilog.frontend.generator import GeneratorParser
-import ast
+### Basic usage
+`python3 -m python2verilog.convert generator.py`
+`python3 -m python2verilog.convert generator.py -c "(1, 2, 3, 4)"`
 
-func = """
-def circle_lines(s_x, s_y, height) -> tuple[int, int]:
-    x = 0
-    y = height
-    d = 3 - 2 * height
-    yield (s_x + x, s_y + y)
-    yield (s_x + x, s_y - y)
-    yield (s_x - x, s_y + y)
-    yield (s_x - x, s_y - y)
-    yield (s_x + y, s_y + x)
-    yield (s_x + y, s_y - x)
-    yield (s_x - y, s_y + x)
-    yield (s_x - y, s_y - x)
-    while y >= x:
-        x = x + 1
-        if d > 0:
-            y = y - 1
-            d = d + 4 * (x - y) + 10
-        else:
-            d = d + 4 * x + 6
-        yield (s_x + x, s_y + y)
-        yield (s_x + x, s_y - y)
-        yield (s_x - x, s_y + y)
-        yield (s_x - x, s_y - y)
-        yield (s_x + y, s_y + x)
-        yield (s_x + y, s_y - x)
-        yield (s_x - y, s_y + x)
-        yield (s_x - y, s_y - x)
-"""
-generatorParser = GeneratorParser(ast.parse(func).body[0])
-print(generatorParser.generate_verilog())
-```
+### More Complex Usage
 
-## Automatically Test The Generated Verilog
-`python3 tests/parsers/new_generator.py <name>` to create new test case and prepare template Python file.
+## Testing
 
-`python3 -m pytest --verbose` to run tests / generate the module, testbench, visualizations, dumps, and expected/actual outputs.
+### Requirements
+
+Warning: may be outdated, refer to [github workflow](.github/workflows/python-package.yml) for most update-to-date information for Ubuntu.
+
+Verilog simulation: `sudo apt-get install iverilog expected` (uses the `unbuffer` app in `expected`). The online simulator [EDA Playground](https://edaplayground.com/) can be used as a subsitute, given that you paste the output into the "actual file" specified in the `config.ini` of the test.
+
+Python: `python3 -m pip install -r tests/requirements.txt`
+
+### Creating New Test
+
+To create a new test case and set up configs, run `python3 tests/frontend/new_generator.py <name>`.
+
+### Running Tests
+
+To run tests, use `python3 -m pytest --verbose` to generate the module, testbench, visualizations, dumps, and expected/actual outputs.
+Those files will be stored in `tests/frontend/data/generator/<name>/`.
 
 ## Tested Generations
-The outputs of the Python script tests can be found [here](https://nightly.link/WorldofKerry/Python2Verilog/workflows/python-package/main/data-generator.zip)
 
-Python vs Verilog stats on sample inputs (not up-to-date) can be found [here](tests/frontend/data/generator/stats.md).
+The outputs of the Python script tests can be found [as a github workflow artifact](https://nightly.link/WorldofKerry/Python2Verilog/workflows/python-package/main/data-generator.zip)
 
-I recommend [EDA Playground](https://edaplayground.com/) or [Icarus Verilog](https://github.com/steveicarus/iverilog) for testing the verilog code. Refer to the [github action](.github/workflows/python-package.yml) to see how to setup testing with Icarus Verilog.
+Python vs Verilog stats on sample inputs (not up-to-date) can be found [here](tests/frontend/data/generator/stats.md), more up-to-date ones can be found in the artifact.
 
 ## For Developers
+
 Based on my experimentation with a [C to Verilog converter](https://github.com/WorldofKerry/c2hdl).
 
 Architecture is based on [LLVM](https://llvm.org/).
@@ -79,8 +63,7 @@ To setup pre-commit, run `pre-commit install`.
 
 ### Epics
 
-- Create a Verilog AST representation (lots of samples online) to better optimize (mostly end statements)
-- Add `valid` signal and then generate testbenches that test multiple cases
+- Support arrays
 
 ## Docs
 
@@ -88,6 +71,43 @@ To setup pre-commit, run `pre-commit install`.
 - Live docs: `python3 -m pydoc -b`
 
 ## Random Planning, Design, and Notes
+
+### Potential API
+
+```python
+import python2verilog as p2v
+import ast
+
+func = ast.parse(code).body[0]
+
+ir = p2v.from_python_get_ir(func.body) # returns an ir node for the root of the body
+
+# Optimization passes
+ir = p2v.optimizations.replace_single_item_cases(ir)
+ir = p2v.optimizations.remove_nesting(ir)
+ir = p2v.optimizations.combine_statements(ir)
+for i in dir(p2v.optimizations): # Do one pass of every optimization
+  item = getattr(pv2.optimizations, i)
+    if callable(item):
+      ir = item(ir)
+
+verilog = p2v.Verilog()
+verilog.from_python_do_setup(func) # module I/O is dependent on Python
+verilog.from_ir_fill_body(ir) # fills the body
+
+# whether has valid or done signal,
+# whether initialization is always happening or only on start,
+# verilog sim name
+verilog.config(has_valid=True, has_done=True, lazy_start=True, verilog_sim="iverilog")
+
+with open(f"{verilog.get_module_name()}.sv", mode="w") as module:
+  module.write(verilog.get_module())
+with open(f"{verilog.get_module_name()}_tb.sv", mode="w") as tb:
+  tb.write(verilog.get_testbench())
+
+print(verilog.get_verilog_run_cmd())
+assert verilog.test_outputs() # checks if verilog and python output same
+```
 
 ### Rectangle Filled
 

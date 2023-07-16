@@ -104,7 +104,7 @@ if __name__ == "__main__":
         "--directory",
         type=str,
         help="Directory to make test in",
-        default="data/generator/",
+        default="data/integration/",
     )
     parser.add_argument(
         "--python",
@@ -128,7 +128,10 @@ if __name__ == "__main__":
         "--config", type=str, help="Config filename", default="config.ini"
     )
     parser.add_argument(
-        "--test_file", type=str, help="Filename of pytest", default="test_generator.py"
+        "--test_file",
+        type=str,
+        help="Filename of pytest",
+        default="test_integration.py",
     )
     parser.add_argument(
         "--ast-dump",

@@ -415,8 +415,10 @@ class GeneratorParser:
             raise TypeError(
                 "Error: unknown operator", type(node.ops[0]), ast.dump(node.ops[0])
             )
-        return f"{self.parse_expression(node.left)} {operator} \
-            {self.parse_expression(node.comparators[0])}"
+        return (
+            f"{self.parse_expression(node.left)} {operator}"
+            f" {self.parse_expression(node.comparators[0])}"
+        )
 
     def parse_while(self, node: ast.While, prefix: str = ""):
         """

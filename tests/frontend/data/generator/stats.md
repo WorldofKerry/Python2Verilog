@@ -1,6 +1,6 @@
-| Test Case        |   Verilog Clock Cycles |   Python Yield Iterations |
-|:-----------------|-----------------------:|--------------------------:|
-| rectangle_filled |                     86 |                        35 |
-| defaults         |                      4 |                         2 |
-| circle_lines     |                     52 |                        40 |
-| rectangle_lines  |                     40 |                        24 |
+| Test Case              |   Verilog Clock Cycles |   Python Yield Iterations |
+|:-----------------------|-----------------------:|--------------------------:|
+| rectangle_filled       |                     86 |                        35 |
+| rectangle_filled_while |                    136 |                        35 |
+| circle_lines           |                     64 |                        40 |
+| rectangle_lines        |                     40 |                        24 |

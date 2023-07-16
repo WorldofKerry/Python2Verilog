@@ -2,4 +2,4 @@
 
 # flake8: noqa
 from .generator import GeneratorParser
-from .utils import Lines, Indent
+from .generator2ast import Generator2Ast

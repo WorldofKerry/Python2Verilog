@@ -27,7 +27,8 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        python -m pip install flake8 pytest pandas tabulate
+        python -m pip install flake8
+        python -m pip install -r tests/requirements.txt
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Lint with flake8
       run: |
@@ -37,12 +38,11 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Download Icarus Verilog and Utilities
       run: |
-        sudo apt-get install iverilog
-        sudo apt-get install expect
+        sudo apt-get install iverilog expect
     - name: Test with pytest
       run: |
         python3 -m pytest --verbose
-    - name: Update stats
+    - name: Update stats and upload artifacts
       run: |
         python3 tests/frontend/data/generator/update_statistics.py
     - uses: actions/upload-artifact@v3
