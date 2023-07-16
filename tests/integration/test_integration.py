@@ -13,7 +13,6 @@ from python2verilog.utils.visualization import make_visual
 
 class TestMain(unittest.TestCase):
     def run_test(self, function_name, test_case, dir="data/integration/"):
-
         ABS_DIR = os.path.join(
             os.path.dirname(os.path.abspath(__file__)), dir, function_name
         )
@@ -84,6 +83,15 @@ class TestMain(unittest.TestCase):
                 )
 
             with open(FILES_IN_ABS_DIR["actual"]) as act_f:
+                # filter for lines where _valid == 1
+                raw = csv.reader(act_f)
+                filtered = []
+                for row in raw:
+                    if row[0].strip() == "1":
+                        filtered.append(tuple([int(e) for e in row[1:]]))
+                make_visual(filtered, FILES_IN_ABS_DIR["actual_visual"])
+
+            with open(FILES_IN_ABS_DIR["actual"]) as act_f:
                 with open(FILES_IN_ABS_DIR["expected"]) as exp_f:
                     expected = csv.reader(exp_f)
                     actual = csv.reader(act_f)
@@ -113,3 +121,9 @@ class TestMain(unittest.TestCase):
 
     def test_defaults(self):
         self.run_test("defaults", (1, 2, 3, 4))
+
+    def test_circle_lines(self):
+        self.run_test("circle_lines", (21, 37, 13))
+
+    def test_happy_face(self):
+        self.run_test("happy_face", (5,))

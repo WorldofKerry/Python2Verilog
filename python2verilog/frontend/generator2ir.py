@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 import ast as pyast
+import warnings
 from ..utils.string import Lines, Indent
 from .. import ir as vast
 
@@ -224,6 +225,18 @@ class Generator2Ast:
             return self.parse_while(stmt, prefix=prefix)
         if isinstance(stmt, pyast.If):
             return self.parse_if(stmt, prefix=prefix)
+        if isinstance(stmt, pyast.AugAssign):
+            assert isinstance(
+                stmt.target, pyast.Name
+            ), "Error: only supports single target"
+            return [
+                vast.NonBlockingSubsitution(
+                    self.parse_expression(stmt.target).to_string(),
+                    self.parse_expression(
+                        pyast.BinOp(stmt.target, stmt.op, stmt.value)
+                    ).to_string(),
+                )
+            ]
         raise TypeError(
             "Error: unexpected statement type", type(stmt), pyast.dump(stmt)
         )
@@ -359,6 +372,9 @@ class Generator2Ast:
         if isinstance(node.op, pyast.Mult):
             return " * "
         if isinstance(node.op, pyast.Div):
+            warnings.warn("Warning: division treated as floor division")
+            return " / "
+        if isinstance(node.op, pyast.FloorDiv):
             return " / "
         raise TypeError(
             "Error: unexpected binop type", type(node.op), pyast.dump(node.op)
@@ -382,9 +398,19 @@ class Generator2Ast:
                 + self.parse_expression(expr.right).to_string()
                 + ")"
             )
+        if isinstance(expr, pyast.UnaryOp):
+            if isinstance(expr.op, pyast.USub):
+                return vast.Expression(
+                    f"-({self.parse_expression(expr.operand).to_string()})"
+                )
+            raise TypeError(
+                "Error: unexpected unaryop type", type(expr.op), pyast.dump(expr.op)
+            )
         if isinstance(expr, pyast.Compare):
             return self.parse_compare(expr)
-        raise TypeError("Error: unexpected expression type", type(expr))
+        raise TypeError(
+            "Error: unexpected expression type", type(expr), pyast.dump(expr)
+        )
 
     def parse_subscript(self, node: pyast.Subscript):
         """
