@@ -47,3 +47,6 @@ def make_visual(generator_inst, directory: str):
     # Show the plot
     # plt.show()
     plt.savefig(directory)
+
+    plt.clf()
+    plt.cla()

@@ -4,7 +4,6 @@ Test Generator
 Cleanup files: `git clean -dfX`
 """
 
-from python2verilog.frontend import Generator2Ast as GeneratorParser
 import unittest
 import os
 import warnings
@@ -13,52 +12,8 @@ import csv
 import configparser
 import subprocess
 
-
-def make_visual(generator_inst, dir: str):
-    """
-    Any iterable of tuples where the tuples are of length > 0 will work.
-    Visualizes the first 3 elements of each tuple as (x, y, colour)
-    """
-    import numpy as np
-    import matplotlib.pyplot as plt
-
-    # Generate the data using the generator function
-    data_triple = []
-
-    for yields in generator_inst:
-        if len(yields) >= 3:
-            data_triple.append(yields[:3])
-        elif len(yields) >= 2:
-            data_triple.append((*yields[:2], 1))
-        else:
-            data_triple.append((yields[0], 1, 2))
-
-    data_triple = np.array(data_triple)
-
-    height = max(data_triple[:, 0])
-    width = max(data_triple[:, 1])
-    # warnings.warn(f"{height}, {width}, {data_triple}")
-    grid = np.zeros((int(height) + 1, int(width) + 1))
-    for x, y, c in data_triple:
-        grid[x, y] = c
-
-    # Create the pixel-like plot
-    plt.imshow(grid)
-
-    # Set labels and title
-    plt.xlabel("X")
-    plt.ylabel("Y")
-    plt.title("Pixel-like Plot")
-
-    # Add color bar
-    cbar = plt.colorbar()
-    cbar.set_label("Z")
-
-    plt.gca().invert_yaxis()
-
-    # Show the plot
-    # plt.show()
-    plt.savefig(dir)
+from python2verilog.frontend import Generator2Ast as GeneratorParser
+from python2verilog.utils.visualization import make_visual
 
 
 class TestGeneratorParser(unittest.TestCase):
