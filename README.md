@@ -10,14 +10,8 @@ Supports Python [Generator functions](https://wiki.python.org/moin/Generators) a
 
 - `if`
 - `while`
-- `for ... in range(...)` with 1 or 2 args in `range` (quite inefficient)
 
-**Warning**: Variables must be unique, i.e. variables do not have block scope, e.g. the following modifies global `i`:
-
-```python
-for i in range(10):
-    pass
-```
+**Warning**: Variables do not have block scope. 
 
 ## Sample Usage
 `pip install python2verilog`
@@ -39,18 +33,18 @@ Python: `python3 -m pip install -r tests/requirements.txt`
 
 ### Creating New Test
 
-To create a new test case and set up configs, run `python3 tests/frontend/new_generator.py <name>`.
+To create a new test case and set up configs, run `python3 tests/integration/new_test_case.py <test-name>`.
 
 ### Running Tests
 
 To run tests, use `python3 -m pytest --verbose` to generate the module, testbench, visualizations, dumps, and expected/actual outputs.
-Those files will be stored in `tests/frontend/data/generator/<name>/`.
+Those files will be stored in `tests/integration/data/integration/<test-name>/`.
 
 ## Tested Generations
 
-The outputs of the Python script tests can be found [as a github workflow artifact](https://nightly.link/WorldofKerry/Python2Verilog/workflows/python-package/main/data-generator.zip)
+Outputs of tests in repo can be found as a [github workflow artifact](https://nightly.link/WorldofKerry/Python2Verilog/workflows/python-package/main/data-generator.zip)
 
-Python vs Verilog stats on sample inputs (not up-to-date) can be found [here](tests/frontend/data/generator/stats.md), more up-to-date ones can be found in the artifact.
+<!-- Python vs Verilog stats on sample inputs (not up-to-date) can be found [here](tests/frontend/data/generator/stats.md), more up-to-date ones can be found in the artifact. -->
 
 ## For Developers
 
