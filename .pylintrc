@@ -2,4 +2,4 @@
 # variable-rgx="[a-z_][a-z0-9_]{0,30}$"
 
 [MESSAGES CONTROL]
-disable = fixme, too-few-public-methods, duplicate-code, unreachable, unused-import, exec-used
+disable = fixme, too-few-public-methods, duplicate-code, unreachable, unused-import, exec-used, import-error
