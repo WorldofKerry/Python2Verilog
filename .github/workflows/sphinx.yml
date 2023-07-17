@@ -1,4 +1,7 @@
-name: "Sphinx"
+# Mimics readthedocs Sphinx commands
+# Locally run command at bottom of this file
+
+name: Sphinx Docs
 
 on:
   push:
@@ -13,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11"]
+        python-version: ["3.11"]
 
     steps:
     - uses: actions/checkout@v3
@@ -26,6 +29,6 @@ jobs:
         python -m pip install --upgrade pip
         python -m pip install flake8
         python -m pip install sphinx
-    - name: Sphinx Build
+    - name: Build Sphinx
       run: |
         cd docs/ && python -m sphinx -T -E -b html -d _build/doctrees -D language=en . _build/html
