@@ -3,6 +3,7 @@ from python2verilog.backend.verilog import (
     Module,
     PosedgeSyncAlways,
     Instantiation,
+    Expression,
 )
 from python2verilog.frontend import Generator2Ast
 import unittest
@@ -38,7 +39,7 @@ class TestVerilog(unittest.TestCase):
         )
 
     def test_always(self):
-        always = PosedgeSyncAlways("_clock", valid="_valid")
+        always = PosedgeSyncAlways(Expression("_clock"), valid="_valid")
         lines = always.to_lines()
         assert_lines(
             self,

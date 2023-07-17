@@ -15,14 +15,25 @@ class Expression:
     Currently just a string
     """
 
-    def __init__(self, string: str):
-        self.string = string
+    def __init__(self, expr: str):
+        self.expr = expr
 
     def to_string(self):
         """
         To Verilog
         """
-        return self.string
+        return self.expr
+
+
+class AtPosedge(Expression):
+    """
+    @(posedge <condition>)
+    """
+
+    def __init__(self, condition: Expression):
+        assert isinstance(condition, Expression)
+        self.condition = condition
+        super().__init__(f"@(posedge {condition.to_string()})")
 
 
 class Statement:
@@ -31,14 +42,15 @@ class Statement:
     If used directly, it is treated as a string literal
     """
 
-    def __init__(self, literal: str = None):
+    def __init__(self, literal: str = None, comment: str = ""):
         self.literal = literal
+        self.comment = comment
 
     def to_lines(self):
         """
         To Verilog
         """
-        return Lines(self.literal)
+        return Lines(self.literal + self.get_inline_comment())
 
     def to_string(self):
         """
@@ -46,9 +58,35 @@ class Statement:
         """
         return self.to_lines().to_string()
 
-    # def append_end_statements(self, statements: list):
-    #     warnings.warn("append_end_statements on base class")
-    #     self.literal += str(statements)
+    def get_inline_comment(self):
+        """
+        // <comment>
+        """
+        return f" // {self.comment}"
+
+    def get_blocked_comment(self):
+        """
+        // <comment>
+        ...
+        // <comment>
+        Separated by newlines
+        """
+        actual_lines = self.comment.split("\n")
+        lines = Lines()
+        for line in actual_lines:
+            lines += f"// {line}"
+        return lines
+
+
+class AtPosedgeStatement(Statement):
+    """
+    @(posedge <condition>);
+    """
+
+    def __init__(self, condition: Expression, *args, **kwargs):
+        assert isinstance(condition, Expression)
+        self.literal = f"{AtPosedge(condition)};"
+        super().__init__(*args, **kwargs)
 
 
 class Verilog:
@@ -126,13 +164,6 @@ class Verilog:
             then_body,
             [self.root],
         )
-        # start_lines, end_lines = Lines(), Lines()
-        # start_lines += "if (_start) begin"
-        # start_lines += Indent(1) + "_done <= 0;"
-        # for var in global_vars:
-        #     start_lines += Indent(1) + f"{var} <= {global_vars[var]};"
-        # start_lines += "end else begin"
-        # end_lines += "end"
         return block
 
     def get_module(self):
@@ -150,7 +181,7 @@ class Verilog:
         assert self.global_vars is not None, "run from_ir first to setup global_vars"
         assert isinstance(func, ast.FunctionDef)
         self.always = PosedgeSyncAlways(
-            "_clock", valid="_valid", body=[self.get_init(self.global_vars)]
+            Expression("_clock"), valid="_valid", body=[self.get_init(self.global_vars)]
         )
         self.module = self.create_module_from_python(func)
         self.python_func = func
@@ -246,15 +277,54 @@ class Verilog:
     """
         return text
 
+    def get_testbench_improved(self, test_cases: list[tuple[str]]):
+        """
+        Creates testbench with multiple test cases using the _done signal
+        """
+        setups = []
+        setups.append(Declaration("_clock", size=1, is_reg=True))
+        setups.append(Declaration("_start", size=1, is_reg=True))
+
+        func = self.python_func
+
+        setups += [
+            Declaration(val.arg, is_signed=True, is_reg=True) for val in func.args.args
+        ]
+        setups += [
+            Declaration(f"_out{idx}", is_signed=True)
+            for idx in range(len(func.returns.slice.elts))
+        ]
+
+        setups.append(Declaration("_done", size=1))
+        setups.append(Declaration("_valid", size=1))
+
+        ports = {
+            decl.name: decl.name for decl in setups
+        }  # Caution: expects setups to only contain declarations
+        setups.append(Instantiation(func.name, "DUT", ports))
+
+        setups.append(Statement(literal="always #5 _clock = !clock"))
+
+        loop = []
+        loop.append(BlockingSubsitution("_clock", "0"))
+        loop.append(BlockingSubsitution("_start", "0"))
+        loop.append(Statement(literal="#10", comment="Stablize"))
+
+        # for test_case in test_cases:
+        #     loop.append(BlockingSubsitution("_start", "1"))
+        #     loop.append(AtPosedgeStatement(Expression("_clock")))
+        #     test_case = test_case
+        loop = test_cases
+
 
 class Instantiation:
     """
     Instantiationo f Verilog module.
-    <given-name> <module-name> (...);
+    <module-name> <given-name> (...);
     """
 
     def __init__(
-        self, given_name: str, module_name: str, port_connections: dict[str, str]
+        self, module_name: str, given_name: str, port_connections: dict[str, str]
     ):
         """
         port_connections[port_name] = signal_name, i.e. `.port_name(signal_name)`
@@ -273,7 +343,7 @@ class Instantiation:
         To Verilog
         """
         lines = Lines()
-        lines += f"{self.given_name} {self.module_name} ("
+        lines += f"{self.module_name} {self.given_name} ("
         for key, val in self.port_connections.items():
             lines += Indent(1) + f".{key}({val}),"
         lines[-1] = lines[-1][:-1]  # Remove last comma
@@ -343,6 +413,18 @@ class Initial(Statement):
     end
     """
 
+    def __init__(self, *args, body: list[Statement] = None, **kwargs):
+        if body:
+            assert_list_elements(body, Statement)
+        self.body = body
+        super().__init__(*args, **kwargs)
+
+    def to_lines(self):
+        lines = Lines("initial begin")
+        for stmt in self.body:
+            lines.concat(stmt.to_lines())
+        lines += "end"
+
 
 class Always(Statement):
     """
@@ -353,13 +435,13 @@ class Always(Statement):
 
     def __init__(
         self,
-        trigger: str,
+        trigger: Expression,
         *args,
         body: list[Statement] = None,
         valid: str = "",
         **kwargs,
     ):
-        assert isinstance(trigger, str)
+        assert isinstance(trigger, Expression)
         self.trigger = trigger
         if valid != "":
             valid = NonBlockingSubsitution(valid, "0")
@@ -376,7 +458,7 @@ class Always(Statement):
         """
         To Verilog
         """
-        lines = Lines(f"always {self.trigger} begin")
+        lines = Lines(f"always {self.trigger.to_string()} begin")
         if self.valid != "":
             lines.concat(self.valid.to_lines(), 1)
         for stmt in self.body:
@@ -392,10 +474,10 @@ class PosedgeSyncAlways(Always):
     end
     """
 
-    def __init__(self, clock: str, *args, **kwargs):
-        assert isinstance(clock, str)
+    def __init__(self, clock: Expression, *args, **kwargs):
+        assert isinstance(clock, Expression)
         self.clock = clock
-        super().__init__(f"@(posedge {self.clock})", *args, **kwargs)
+        super().__init__(AtPosedge(clock), *args, **kwargs)
 
 
 class Subsitution(Statement):
@@ -486,7 +568,8 @@ class Declaration(Statement):
             string += "wire"
         if self.is_signed:
             string += " signed"
-        string += f" [{self.size-1}:0]"
+        if self.size > 1:
+            string += f" [{self.size-1}:0]"
         string += f" {self.name}"
         string += ";"
         return Lines(string)
@@ -626,9 +709,9 @@ class IfElse(Statement):
         return self
 
 
-class While(Case):
+class WhileCase(Case):
     """
-    Abstract While wrapper
+    Abstract While wrapper that is synthesizable
     Case (WHILE)
         0: if (!<conditional>)
                 <continue>
@@ -649,3 +732,29 @@ class While(Case):
             self.case_items[0].statements[0].then_body + statements
         )
         return self
+
+
+class While(Statement):
+    """
+    Unsynthesizable While
+    while (<condition>) begin
+        ...
+    end
+    """
+
+    def __init__(
+        self, *args, condition: Expression, body: list[Statement] = None, **kwargs
+    ):
+        assert isinstance(condition, Expression)
+        self.condition = condition
+        if body:
+            assert_list_elements(body, Statement)
+        self.body = body
+        super().__init__(*args, **kwargs)
+
+    def to_lines(self):
+        lines = Lines(f"while ({self.condition.to_string()}) begin")
+        for stmt in self.body:
+            lines.concat(stmt.to_lines())
+        lines += "end"
+        return lines
