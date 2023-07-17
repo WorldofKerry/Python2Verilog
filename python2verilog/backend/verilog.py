@@ -36,13 +36,24 @@ class AtPosedge(Expression):
         super().__init__(f"@(posedge {condition.to_string()})")
 
 
+class AtNegedge(Expression):
+    """
+    @(negedge <condition>)
+    """
+
+    def __init__(self, condition: Expression):
+        assert isinstance(condition, Expression)
+        self.condition = condition
+        super().__init__(f"@(negedge {condition.to_string()})")
+
+
 class Statement:
     """
     Represents a statement in verilog (i.e. a line or a block)
     If used directly, it is treated as a string literal
     """
 
-    def __init__(self, literal: str = None, comment: str = ""):
+    def __init__(self, literal: str = "", comment: str = ""):
         self.literal = literal
         self.comment = comment
 
@@ -50,7 +61,11 @@ class Statement:
         """
         To Verilog
         """
-        return Lines(self.literal + self.get_inline_comment())
+        if self.literal:
+            return Lines(
+                self.literal + self.get_inline_comment()[1:]
+            )  # Removes leading space
+        return Lines(self.get_inline_comment()[1:])
 
     def to_string(self):
         """
@@ -88,6 +103,16 @@ class AtPosedgeStatement(Statement):
     def __init__(self, condition: Expression, *args, **kwargs):
         assert isinstance(condition, Expression)
         super().__init__(f"{AtPosedge(condition).to_string()};", *args, **kwargs)
+
+
+class AtNegedgeStatement(Statement):
+    """
+    @(negedge <condition>);
+    """
+
+    def __init__(self, condition: Expression, *args, **kwargs):
+        assert isinstance(condition, Expression)
+        super().__init__(f"{AtNegedge(condition).to_string()};", *args, **kwargs)
 
 
 class Verilog:
@@ -319,23 +344,27 @@ class Verilog:
         initial_body = []
         initial_body.append(BlockingSubsitution("_clock", "0"))
         initial_body.append(BlockingSubsitution("_start", "0"))
-        initial_body.append(AtPosedgeStatement(Expression("_clock")))
+        initial_body.append(AtNegedgeStatement(Expression("_clock")))
+        initial_body.append(Statement())
 
-        for test_case in test_cases:
+        for i, test_case in enumerate(test_cases):
             # setup for new test case
+            initial_body.append(Statement(comment=f"Test case {i}"))
             for i, var in enumerate(func.args.args):
                 initial_body.append(BlockingSubsitution(var.arg, str(test_case[i])))
             initial_body.append(BlockingSubsitution("_start", "1"))
 
-            initial_body.append(AtPosedgeStatement(Expression("_clock")))
+            initial_body.append(AtNegedgeStatement(Expression("_clock")))
 
             # wait for done signal
             while_body = []
-            while_body.append(AtPosedgeStatement(Expression("_clock")))
             while_body.append(BlockingSubsitution("_start", "0"))
             while_body.append(make_display_stmt(func))
+            while_body.append(AtNegedgeStatement(Expression("_clock")))
 
             initial_body.append(While(condition=Expression("!_done"), body=while_body))
+            initial_body.append(make_display_stmt(func))
+            initial_body.append(Statement())
 
         initial_body.append(Statement(literal="$finish;"))
 
