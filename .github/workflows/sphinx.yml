@@ -1,4 +1,7 @@
-name: "Sphinx"
+# Mimics readthedocs Sphinx commands
+# Locally run command at bottom of this file
+
+name: Sphinx Docs
 
 on:
   push:
