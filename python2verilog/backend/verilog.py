@@ -214,6 +214,40 @@ class Verilog:
         return text
 
 
+class Instantiation:
+    """
+    Instantiationo f Verilog module.
+    <given-name> <module-name> (...);
+    """
+
+    def __init__(
+        self, given_name: str, module_name: str, port_connections: dict[str, str]
+    ):
+        """
+        port_connections[port_name] = signal_name, i.e. `.port_name(signal_name)`
+        """
+        assert isinstance(given_name, str)
+        assert isinstance(module_name, str)
+        for key, val in port_connections.items():
+            assert isinstance(key, str)
+            assert isinstance(val, str)
+        self.given_name = given_name
+        self.module_name = module_name
+        self.port_connections = port_connections
+
+    def to_lines(self):
+        """
+        To Verilog
+        """
+        lines = Lines()
+        lines += f"{self.given_name} {self.module_name} ("
+        for key, val in self.port_connections.items():
+            lines += Indent(1) + f".{key}({val}),"
+        lines[-1] = lines[-1][:-1]  # Remove last comma
+        lines += Indent(1) + ");"
+        return lines
+
+
 class Module:
     """
     module name(...); endmodule

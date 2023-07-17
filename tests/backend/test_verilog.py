@@ -3,6 +3,7 @@ from python2verilog.backend.verilog import (
     Module,
     Always,
     create_module_from_python,
+    Instantiation,
 )
 from python2verilog.frontend import Generator2Ast
 import unittest
@@ -89,3 +90,8 @@ def circle_lines(s_x, s_y, height) -> tuple[int, int]:
         verilog.setup_from_python(function)
         # warnings.warn(verilog.get_module())
         # warnings.warn(verilog.get_testbench((17, 23, 15)))
+
+    def test_instantiation(self):
+        ports = {"_clock": "CLK", "_valid": "_valid"}
+        inst = Instantiation("module0", "my_module", ports)
+        # warnings.warn(inst.to_lines())

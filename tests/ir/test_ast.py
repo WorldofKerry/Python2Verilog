@@ -12,7 +12,7 @@ import unittest
 import warnings
 
 
-class TestAST(unittest.TestCase):
+class TestIntermediateRepresentation(unittest.TestCase):
     def assert_lines(self, first: str, second: str):
         """
         Asserts that each stripped line in first matches each stripped line in second
