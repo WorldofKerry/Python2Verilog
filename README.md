@@ -1,3 +1,4 @@
+[![Documentation Status](https://readthedocs.org/projects/python2verilog/badge/?version=latest)](https://python2verilog.readthedocs.io/en/latest/?badge=latest)
 # Python 2 Verilog
 
 Converts a subset of python generator functions into synthesizable sequential SystemVerilog.
