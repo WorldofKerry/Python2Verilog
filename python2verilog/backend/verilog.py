@@ -62,7 +62,9 @@ class Statement:
         """
         // <comment>
         """
-        return f" // {self.comment}"
+        if self.comment != "":
+            return f" // {self.comment}"
+        return ""
 
     def get_blocked_comment(self):
         """
@@ -85,8 +87,7 @@ class AtPosedgeStatement(Statement):
 
     def __init__(self, condition: Expression, *args, **kwargs):
         assert isinstance(condition, Expression)
-        self.literal = f"{AtPosedge(condition)};"
-        super().__init__(*args, **kwargs)
+        super().__init__(f"{AtPosedge(condition).to_string()};", *args, **kwargs)
 
 
 class Verilog:
@@ -281,6 +282,16 @@ class Verilog:
         """
         Creates testbench with multiple test cases using the _done signal
         """
+
+        def make_display_stmt(func: ast.FunctionDef):
+            string = '$display("%0d, '
+            string += "%0d, " * (len(func.returns.slice.elts) - 1)
+            string += '%0d", _valid'
+            for i in range(len(func.returns.slice.elts)):
+                string += f", _out{i}"
+            string += ");"
+            return Statement(literal=string)
+
         setups = []
         setups.append(Declaration("_clock", size=1, is_reg=True))
         setups.append(Declaration("_start", size=1, is_reg=True))
@@ -303,28 +314,58 @@ class Verilog:
         }  # Caution: expects setups to only contain declarations
         setups.append(Instantiation(func.name, "DUT", ports))
 
-        setups.append(Statement(literal="always #5 _clock = !clock"))
+        setups.append(Statement(literal="always #5 _clock = !_clock;"))
 
-        loop = []
-        loop.append(BlockingSubsitution("_clock", "0"))
-        loop.append(BlockingSubsitution("_start", "0"))
-        loop.append(Statement(literal="#10", comment="Stablize"))
+        initial_body = []
+        initial_body.append(BlockingSubsitution("_clock", "0"))
+        initial_body.append(BlockingSubsitution("_start", "0"))
+        initial_body.append(AtPosedgeStatement(Expression("_clock")))
+        initial_body.append(AtPosedgeStatement(Expression("_clock")))
 
-        # for test_case in test_cases:
-        #     loop.append(BlockingSubsitution("_start", "1"))
-        #     loop.append(AtPosedgeStatement(Expression("_clock")))
-        #     test_case = test_case
-        loop = test_cases
+        for test_case in test_cases:
+            # setup for new test case
+            for i, var in enumerate(func.args.args):
+                initial_body.append(BlockingSubsitution(var.arg, str(test_case[i])))
+            initial_body.append(BlockingSubsitution("_start", "1"))
+
+            initial_body.append(AtPosedgeStatement(Expression("_clock")))
+            initial_body.append(AtPosedgeStatement(Expression("_clock")))
+
+            # wait for done signal
+            while_body = []
+            while_body.append(AtPosedgeStatement(Expression("_clock")))
+            while_body.append(BlockingSubsitution("_start", "0"))
+            while_body.append(make_display_stmt(func))
+
+            initial_body.append(While(condition=Expression("!_done"), body=while_body))
+
+        initial_body.append(Statement(literal="$finish;"))
+
+        initial_loop = Initial(body=initial_body)
+
+        module = Module(
+            f"{func.name}_tb",
+            [],
+            [],
+            body=setups + [initial_loop],
+            add_default_ports=False,
+        )
+        return module
 
 
-class Instantiation:
+class Instantiation(Statement):
     """
     Instantiationo f Verilog module.
     <module-name> <given-name> (...);
     """
 
     def __init__(
-        self, module_name: str, given_name: str, port_connections: dict[str, str]
+        self,
+        module_name: str,
+        given_name: str,
+        port_connections: dict[str, str],
+        *args,
+        **kwargs,
     ):
         """
         port_connections[port_name] = signal_name, i.e. `.port_name(signal_name)`
@@ -337,6 +378,7 @@ class Instantiation:
         self.given_name = given_name
         self.module_name = module_name
         self.port_connections = port_connections
+        super().__init__(*args, **kwargs)
 
     def to_lines(self):
         """
@@ -362,6 +404,7 @@ class Module:
         inputs: list[str],
         outputs: list[str],
         body: list[Statement] = None,
+        add_default_ports=True,
     ):
         self.name = name  # TODO: assert invalid names
 
@@ -369,21 +412,23 @@ class Module:
         for inputt in inputs:
             assert isinstance(inputt, str)
             input_lines += f"input wire [31:0] {inputt}"
-        input_lines += "input wire _start"
-        input_lines += "input wire _clock"
+        if add_default_ports:
+            input_lines += "input wire _start"
+            input_lines += "input wire _clock"
         self.input = input_lines
 
         output_lines = Lines()
         for output in outputs:
             assert isinstance(output, str)
             output_lines += f"output reg [31:0] {output}"
-        output_lines += "output reg _done"
-        output_lines += "output reg _valid"
+        if add_default_ports:
+            output_lines += "output reg _done"
+            output_lines += "output reg _valid"
         self.output = output_lines
 
         if body:
             for stmt in body:
-                assert isinstance(stmt, Statement)
+                assert isinstance(stmt, Statement), f"got {type(stmt)} instead"
             self.body = body
         else:
             self.body = []
@@ -393,14 +438,17 @@ class Module:
         To Verilog
         """
         lines = Lines()
-        lines += f"module {self.name}("
+        lines += f"module {self.name} ("
         for line in self.input:
             lines += Indent(1) + line + ","
         for line in self.output:
             lines += Indent(1) + line + ","
-        lines[-1] = lines[-1][0:-1]  # removes last comma
+        if len(lines) > 1:  # This means there are ports
+            lines[-1] = lines[-1][0:-1]  # removes last comma
         lines += ");"
         for stmt in self.body:
+            if stmt.to_lines() is None:
+                warnings.warn(type(stmt))
             lines.concat(stmt.to_lines(), 1)
         lines += "endmodule"
         return lines
@@ -422,8 +470,9 @@ class Initial(Statement):
     def to_lines(self):
         lines = Lines("initial begin")
         for stmt in self.body:
-            lines.concat(stmt.to_lines())
+            lines.concat(stmt.to_lines(), 1)
         lines += "end"
+        return lines
 
 
 class Always(Statement):
@@ -755,6 +804,6 @@ class While(Statement):
     def to_lines(self):
         lines = Lines(f"while ({self.condition.to_string()}) begin")
         for stmt in self.body:
-            lines.concat(stmt.to_lines())
+            lines.concat(stmt.to_lines(), 1)
         lines += "end"
         return lines

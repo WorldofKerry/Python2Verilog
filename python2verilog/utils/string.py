@@ -82,7 +82,7 @@ class Lines:
         """
         Concats two Lines
         """
-        assert isinstance(other, Lines)
+        assert isinstance(other, Lines), f"got {type(other)} instead"
         for line in other.lines:
             self.lines.append(Indent(indent) + line)
         return self

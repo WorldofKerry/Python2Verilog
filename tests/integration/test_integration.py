@@ -12,7 +12,7 @@ from python2verilog.utils.visualization import make_visual
 
 
 class TestMain(unittest.TestCase):
-    def run_test(self, function_name, test_case, dir="data/integration/"):
+    def run_test(self, function_name, test_cases, dir="data/integration/"):
         ABS_DIR = os.path.join(
             os.path.dirname(os.path.abspath(__file__)), dir, function_name
         )
@@ -36,23 +36,25 @@ class TestMain(unittest.TestCase):
             tree = ast.parse(python)
 
             with open(FILES_IN_ABS_DIR["expected"], mode="w") as expected_file:
-                generator_inst = _locals[function_name](*test_case)
-                size = None
-                for tupl in generator_inst:
-                    if size is None:
-                        size = len(tupl)
-                    else:
-                        assert (
-                            len(tupl) == size
-                        ), f"All generator yields must be same length tuple, but got {tupl} of length {len(tupl)} when previous yields had length {size}"
-                    for e in tupl:
-                        assert isinstance(e, int)
-                    expected_file.write(
-                        " " + str(tupl)[1:-1] + "\n"
-                    )  # Verilog row elements have a space prefix
+                for test_case in test_cases:
+                    generator_inst = _locals[function_name](*test_case)
+                    size = None
+                    for tupl in generator_inst:
+                        if size is None:
+                            size = len(tupl)
+                        else:
+                            assert (
+                                len(tupl) == size
+                            ), f"All generator yields must be same length tuple, but got {tupl} of length {len(tupl)} when previous yields had length {size}"
+                        for e in tupl:
+                            assert isinstance(e, int)
+                        expected_file.write(
+                            " " + str(tupl)[1:-1] + "\n"
+                        )  # Verilog row elements have a space prefix
 
             make_visual(
-                _locals[function_name](*test_case), FILES_IN_ABS_DIR["expected_visual"]
+                _locals[function_name](*test_cases[0]),
+                FILES_IN_ABS_DIR["expected_visual"],
             )
 
             with open(FILES_IN_ABS_DIR["ast_dump"], mode="w") as ast_dump_file:
@@ -69,7 +71,9 @@ class TestMain(unittest.TestCase):
                 module_file.write(verilog.get_module().to_string())
 
             with open(FILES_IN_ABS_DIR["testbench"], mode="w") as testbench_file:
-                testbench_file.write(verilog.get_testbench(test_case))
+                testbench_file.write(
+                    verilog.get_testbench_improved(test_cases).to_lines().to_string()
+                )
 
             open(FILES_IN_ABS_DIR["actual"], mode="w+")
 
@@ -123,10 +127,10 @@ class TestMain(unittest.TestCase):
                     return "Running test"
 
     def test_defaults(self):
-        self.run_test("defaults", (1, 2, 3, 4))
+        self.run_test("defaults", [(1, 2, 3, 4), (13, 45, 11, 17)])
 
     def test_circle_lines(self):
-        self.run_test("circle_lines", (21, 37, 13))
+        self.run_test("circle_lines", [(21, 37, 13), (8, 3, 4)])
 
     def test_happy_face(self):
-        self.run_test("happy_face", (50, 50, 40))
+        self.run_test("happy_face", [(50, 50, 40), (32, 44, 13)])
