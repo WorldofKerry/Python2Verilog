@@ -1,3 +1,4 @@
+![Python Package](https://github.com/worldofkerry/python2verilog/actions/workflows/python-package.yml/badge.svg)
 [![Documentation Status](https://readthedocs.org/projects/python2verilog/badge/?version=latest)](https://python2verilog.readthedocs.io/en/latest/?badge=latest)
 ![PyPI](https://img.shields.io/pypi/v/python2verilog?label=pypi%20package)
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/python2verilog)
