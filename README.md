@@ -75,6 +75,20 @@ To setup pre-commit, run `pre-commit install`.
 
 ## Random Planning, Design, and Notes
 
+## What needs to be duplicated in testbenches?
+declare I/O and other signals
+declare DUT
+start clock
+
+loop for each test case
+- start signal
+- while wait for done signal
+  - clock
+  - set start zero
+  - display output
+endloop
+
+
 ### Potential API
 
 ```python
