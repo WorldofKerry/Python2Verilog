@@ -1,7 +1,7 @@
 from python2verilog.backend.verilog import (
     Verilog,
     Module,
-    Always,
+    PosedgeSyncAlways,
     create_module_from_python,
     Instantiation,
 )
@@ -40,7 +40,7 @@ class TestVerilog(unittest.TestCase):
         assert_lines(self, lines[1].to_string(), "endmodule")
 
     def test_always(self):
-        always = Always("_clock", "_valid")
+        always = PosedgeSyncAlways("_clock", "_valid")
         lines = always.to_lines()
         assert_lines(
             self,

@@ -119,7 +119,7 @@ class Verilog:
         """
         assert isinstance(func, ast.FunctionDef)
         self.module = create_module_from_python(func)
-        self.always = Always("_clock", "_valid")
+        self.always = PosedgeSyncAlways("_clock", "_valid")
         self.python_func = func
         return self
 
@@ -289,6 +289,33 @@ class Module:
 
 class Always:
     """
+    always () begin
+        ...
+    end
+    """
+
+    def __init__(self, trigger: str, valid: str = ""):
+        assert isinstance(trigger, str)
+        self.trigger = trigger
+        if valid != "":
+            valid = NonBlockingSubsitution(valid, "0")
+        self.valid = valid
+
+    def to_lines(self):
+        """
+        To Verilog
+        """
+        lines = Lines(f"always {self.trigger} begin")
+        if self.valid != "":
+            lines.concat(self.valid.to_lines(), 1)
+        return (
+            lines,
+            Lines(["end"]),
+        )
+
+
+class PosedgeSyncAlways(Always):
+    """
     always @(posedge <clock>) begin
         <valid> = 0;
     end
@@ -296,22 +323,8 @@ class Always:
 
     def __init__(self, clock: str, valid: str = ""):
         assert isinstance(clock, str)
-        if valid != "":
-            valid = NonBlockingSubsitution(valid, "0")
         self.clock = clock
-        self.valid = valid
-
-    def to_lines(self):
-        """
-        To Verilog
-        """
-        lines = Lines(f"always @(posedge {self.clock}) begin")
-        if self.valid != "":
-            lines.concat(self.valid.to_lines())
-        return (
-            lines,
-            Lines(["end"]),
-        )
+        super().__init__(f"@(posedge {self.clock})")
 
 
 class Expression:
