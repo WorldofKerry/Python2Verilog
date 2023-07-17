@@ -11,13 +11,13 @@ Supports Python [Generator functions](https://wiki.python.org/moin/Generators) a
 - `if`
 - `while`
 
-**Warning**: Variables do not have block scope. 
+**Warning**: Variables do not have block scope.
 
 ## Sample Usage
 `pip install python2verilog`
 
 ### Basic Usage
-Create a python file containing a generator function with output type hints, named `<name>.py`. 
+Create a python file containing a generator function with output type hints, named `<name>.py`.
 
 A sample can be found [here](https://github.com/WorldofKerry/Python2Verilog/blob/main/tests/integration/data/integration/circle_lines/python.py)
 
@@ -64,8 +64,9 @@ To setup pre-commit, run `pre-commit install`.
 
 ## Docs
 
-- Generate `.html` docs: `bash docs/generate.sh`
-- Live docs: `python3 -m pydoc -b`
+- cd to `docs/`
+- `sphinx-apidoc -o . ../python2verilog/`
+- `make html`
 
 ## Random Planning, Design, and Notes
 
