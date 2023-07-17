@@ -1,0 +1,29 @@
+python2verilog.ir package
+=========================
+
+Submodules
+----------
+
+python2verilog.ir.expressions module
+------------------------------------
+
+.. automodule:: python2verilog.ir.expressions
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+python2verilog.ir.statements module
+-----------------------------------
+
+.. automodule:: python2verilog.ir.statements
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: python2verilog.ir
+   :members:
+   :undoc-members:
+   :show-inheritance:
