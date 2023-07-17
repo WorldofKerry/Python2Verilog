@@ -8,27 +8,69 @@ from ..utils.assertions import assert_list_elements
 from .. import ir as irast
 
 
-def create_module_from_python(func: ast.FunctionDef):
+class Expression:
     """
-    Creates a module wrapper from python AST,
-    e.g. the I/O (from Python), clock, valid and done signals
+    Verilog expression, e.g.
+    a + b
+    Currently just a string
     """
-    inputs = []
-    for var in func.args.args:
-        inputs.append(var.arg)
-    outputs = []
-    assert isinstance(func.returns, ast.Subscript)
-    assert isinstance(func.returns.slice, ast.Tuple)
-    for i in range(len((func.returns.slice.elts))):
-        outputs.append(f"_out{str(i)}")
-    # TODO: make these extras optional
-    return Module(func.name, inputs, outputs)
+
+    def __init__(self, string: str):
+        self.string = string
+
+    def to_string(self):
+        """
+        To Verilog
+        """
+        return self.string
+
+
+class Statement:
+    """
+    Represents a statement in verilog (i.e. a line or a block)
+    If used directly, it is treated as a string literal
+    """
+
+    def __init__(self, literal: str = None):
+        self.literal = literal
+
+    def to_lines(self):
+        """
+        To Verilog
+        """
+        return Lines(self.literal)
+
+    def to_string(self):
+        """
+        To Verilog
+        """
+        return self.to_lines().to_string()
+
+    # def append_end_statements(self, statements: list):
+    #     warnings.warn("append_end_statements on base class")
+    #     self.literal += str(statements)
 
 
 class Verilog:
     """
     Code Generation for Verilog
     """
+
+    def create_module_from_python(self, func: ast.FunctionDef):
+        """
+        Creates a module wrapper from python AST,
+        e.g. the I/O (from Python), clock, valid and done signals
+        """
+        inputs = []
+        for var in func.args.args:
+            inputs.append(var.arg)
+        outputs = []
+        assert isinstance(func.returns, ast.Subscript)
+        assert isinstance(func.returns.slice, ast.Tuple)
+        for i in range(len((func.returns.slice.elts))):
+            outputs.append(f"_out{str(i)}")
+        # TODO: make these extras optional
+        return Module(func.name, inputs, outputs, body=[self.always])
 
     def __init__(self):
         # TODO: throw errors if user tries to generate verilog beforeconfig
@@ -67,59 +109,50 @@ class Verilog:
         self.global_vars = global_vars
         return self
 
+    def get_init(self, global_vars: dict[str, str]):
+        """
+        if (_start) begin
+            <var> = <value>;
+            ...
+        end else begin
+        ...
+        end
+        """
+        then_body = [NonBlockingSubsitution("_done", "0")] + [
+            NonBlockingSubsitution(key, str(val)) for key, val in global_vars.items()
+        ]
+        block = IfElse(
+            Expression("_start"),
+            then_body,
+            [self.root],
+        )
+        # start_lines, end_lines = Lines(), Lines()
+        # start_lines += "if (_start) begin"
+        # start_lines += Indent(1) + "_done <= 0;"
+        # for var in global_vars:
+        #     start_lines += Indent(1) + f"{var} <= {global_vars[var]};"
+        # start_lines += "end else begin"
+        # end_lines += "end"
+        return block
+
     def get_module(self):
         """
         Get Verilog module
         """
-
-        def get_init_lines(global_vars: dict[str, str]):
-            """
-            if (_start) begin
-                <var> = <value>;
-                ...
-            end else begin
-            ...
-            end
-            """
-            start_lines, end_lines = Lines(), Lines()
-            start_lines += "if (_start) begin"
-            start_lines += Indent(1) + "_done <= 0;"
-            for var in global_vars:
-                start_lines += Indent(1) + f"{var} <= {global_vars[var]};"
-            start_lines += "end else begin"
-            end_lines += "end"
-            return (start_lines, end_lines)
-
-        module_lines = self.module.to_lines()
-        always_blk_lines = self.always.to_lines()
-        decl_lines = (
-            Lines([f"reg signed [31:0] {v};" for v in self.global_vars]),
-            Lines(),
-        )
-        init_lines = get_init_lines(self.global_vars)
-        stmt_lines = (self.root.to_lines(), Lines())
-
-        decl_and_always_blk_lines = (
-            decl_lines[0].concat(always_blk_lines[0]),
-            decl_lines[1].concat(always_blk_lines[1]),
-        )
-
-        return Lines.nestify(
-            [
-                module_lines,
-                decl_and_always_blk_lines,
-                init_lines,
-                stmt_lines,
-            ]
-        )
+        decls = [Declaration(v, is_reg=True, is_signed=True) for v in self.global_vars]
+        self.module.body = decls + self.module.body
+        return self.module.to_lines()
 
     def setup_from_python(self, func: ast.FunctionDef):
         """
         Setups up module, always block, declarations, etc from Python AST
         """
+        assert self.global_vars is not None, "run from_ir first to setup global_vars"
         assert isinstance(func, ast.FunctionDef)
-        self.module = create_module_from_python(func)
-        self.always = PosedgeSyncAlways("_clock", "_valid")
+        self.always = PosedgeSyncAlways(
+            "_clock", valid="_valid", body=[self.get_init(self.global_vars)]
+        )
+        self.module = self.create_module_from_python(func)
         self.python_func = func
         return self
 
@@ -253,7 +286,13 @@ class Module:
     module name(...); endmodule
     """
 
-    def __init__(self, name: str, inputs: list[str], outputs: list[str]):
+    def __init__(
+        self,
+        name: str,
+        inputs: list[str],
+        outputs: list[str],
+        body: list[Statement] = None,
+    ):
         self.name = name  # TODO: assert invalid names
 
         input_lines = Lines()
@@ -272,6 +311,13 @@ class Module:
         output_lines += "output reg _valid"
         self.output = output_lines
 
+        if body:
+            for stmt in body:
+                assert isinstance(stmt, Statement)
+            self.body = body
+        else:
+            self.body = []
+
     def to_lines(self):
         """
         To Verilog
@@ -284,22 +330,47 @@ class Module:
             lines += Indent(1) + line + ","
         lines[-1] = lines[-1][0:-1]  # removes last comma
         lines += ");"
-        return (lines, Lines("endmodule"))
+        for stmt in self.body:
+            lines.concat(stmt.to_lines(), 1)
+        lines += "endmodule"
+        return lines
 
 
-class Always:
+class Initial(Statement):
+    """
+    initial begin
+        ...
+    end
+    """
+
+
+class Always(Statement):
     """
     always () begin
         ...
     end
     """
 
-    def __init__(self, trigger: str, valid: str = ""):
+    def __init__(
+        self,
+        trigger: str,
+        *args,
+        body: list[Statement] = None,
+        valid: str = "",
+        **kwargs,
+    ):
         assert isinstance(trigger, str)
         self.trigger = trigger
         if valid != "":
             valid = NonBlockingSubsitution(valid, "0")
         self.valid = valid
+        if body:
+            for stmt in body:
+                assert isinstance(stmt, Statement)
+            self.body = body
+        else:
+            self.body = []
+        super().__init__(*args, **kwargs)
 
     def to_lines(self):
         """
@@ -308,10 +379,10 @@ class Always:
         lines = Lines(f"always {self.trigger} begin")
         if self.valid != "":
             lines.concat(self.valid.to_lines(), 1)
-        return (
-            lines,
-            Lines(["end"]),
-        )
+        for stmt in self.body:
+            lines.concat(stmt.to_lines(), 1)
+        lines += "end"
+        return lines
 
 
 class PosedgeSyncAlways(Always):
@@ -321,53 +392,10 @@ class PosedgeSyncAlways(Always):
     end
     """
 
-    def __init__(self, clock: str, valid: str = ""):
+    def __init__(self, clock: str, *args, **kwargs):
         assert isinstance(clock, str)
         self.clock = clock
-        super().__init__(f"@(posedge {self.clock})")
-
-
-class Expression:
-    """
-    Verilog expression, e.g.
-    a + b
-    Currently just a string
-    """
-
-    def __init__(self, string: str):
-        self.string = string
-
-    def to_string(self):
-        """
-        To Verilog
-        """
-        return self.string
-
-
-class Statement:
-    """
-    Represents a statement in verilog (i.e. a line or a block)
-    If used directly, it is treated as a string literal
-    """
-
-    def __init__(self, literal: str = None):
-        self.literal = literal
-
-    def to_lines(self):
-        """
-        To Verilog
-        """
-        return Lines(self.literal)
-
-    def to_string(self):
-        """
-        To Verilog
-        """
-        return self.to_lines().to_string()
-
-    # def append_end_statements(self, statements: list):
-    #     warnings.warn("append_end_statements on base class")
-    #     self.literal += str(statements)
+        super().__init__(f"@(posedge {self.clock})", *args, **kwargs)
 
 
 class Subsitution(Statement):
@@ -377,7 +405,9 @@ class Subsitution(Statement):
     """
 
     def __init__(self, lvalue: str, rvalue: str, *args, **kwargs):
-        assert isinstance(rvalue, str)  # TODO: should eventually take an expression
+        assert isinstance(
+            rvalue, str
+        ), f"got {type(rvalue)} instead"  # TODO: should eventually take an expression
         assert isinstance(lvalue, str)
         self.lvalue = lvalue
         self.rvalue = rvalue

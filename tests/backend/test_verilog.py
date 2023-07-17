@@ -2,7 +2,6 @@ from python2verilog.backend.verilog import (
     Verilog,
     Module,
     PosedgeSyncAlways,
-    create_module_from_python,
     Instantiation,
 )
 from python2verilog.frontend import Generator2Ast
@@ -24,7 +23,7 @@ class TestHelpers(unittest.TestCase):
     def test_verilog_helpers(self):
         code = "def func(a, b, c, d) -> tuple[int, int]:\n  yield(a, b)\n  yield(c, d)"
         tree = ast.parse(code)
-        module = create_module_from_python(tree.body[0])
+        # module = Verilog.create_module_from_python(tree.body[0])
         # warnings.warn(module.to_lines()[0].to_string())
 
 
@@ -34,20 +33,18 @@ class TestVerilog(unittest.TestCase):
         lines = module.to_lines()
         assert_lines(
             self,
-            lines[0].to_string(),
-            "module cool_name( \n input wire [31:0] in0,\n input wire _start, \n input wire _clock, \n output reg [31:0] out0, \n output reg _done, \n output reg _valid  \n );",
+            lines.to_string(),
+            "module cool_name( \n input wire [31:0] in0,\n input wire _start, \n input wire _clock, \n output reg [31:0] out0, \n output reg _done, \n output reg _valid  \n ); \n endmodule",
         )
-        assert_lines(self, lines[1].to_string(), "endmodule")
 
     def test_always(self):
-        always = PosedgeSyncAlways("_clock", "_valid")
+        always = PosedgeSyncAlways("_clock", valid="_valid")
         lines = always.to_lines()
         assert_lines(
             self,
-            lines[0].to_string(),
-            "always @(posedge _clock) begin \n _valid <= 0; \n",
+            lines.to_string(),
+            "always @(posedge _clock) begin \n _valid <= 0; \n end",
         )
-        assert_lines(self, lines[1].to_string(), "end")
 
     def test_constructor(self):
         code = """
