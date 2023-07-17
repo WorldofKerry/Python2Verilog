@@ -42,10 +42,11 @@ jobs:
     - name: Test with pytest
       run: |
         python3 -m pytest --verbose
-    - name: Update stats and upload artifacts
+    - name: Update Stats
       run: |
-        python3 tests/frontend/data/generator/update_statistics.py
+        python3 tests/update_statistics.py tests/integration/data/integration/ && \
+        python3 tests/update_statistics.py tests/frontend/data/generator/
     - uses: actions/upload-artifact@v3
       with:
         name: data-generator
-        path: tests/frontend/data/generator/
+        path: tests/

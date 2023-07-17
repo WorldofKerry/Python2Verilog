@@ -3,6 +3,7 @@ import csv
 import configparser
 import csv
 import pandas as pd
+import argparse
 
 
 def count_lines_in_csv(directory: str, file: str) -> int:
@@ -37,22 +38,28 @@ def get_expected_and_actual_lines(directory: str) -> dict:
     }
 
 
-# Get the directory where the script is located
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-STATS_CSV = os.path.join(SCRIPT_DIR, "stats.csv")
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawTextHelpFormatter
+    )
+    parser.add_argument("directory", type=str, help="Directory to collect stats on")
+    args = parser.parse_args()
 
-# Iterate over the subdirectories in the script directory
-tests = []
-for root, dirs, files in os.walk(SCRIPT_DIR):
-    for directory in dirs:
-        directory_path = os.path.join(root, directory)
-        tests.append(get_expected_and_actual_lines(directory_path))
+    SCRIPT_DIR = os.path.abspath(args.directory)
+    STATS_CSV = os.path.join(SCRIPT_DIR, "stats.csv")
 
-with open(STATS_CSV, mode="w") as stats_csv:
-    writer = csv.DictWriter(stats_csv, fieldnames=tests[0].keys())
-    writer.writeheader()
-    writer.writerows(tests)
+    # Iterate over the subdirectories in the script directory
+    tests = []
+    for root, dirs, files in os.walk(SCRIPT_DIR):
+        for directory in dirs:
+            directory_path = os.path.join(root, directory)
+            tests.append(get_expected_and_actual_lines(directory_path))
 
-df = pd.read_csv(STATS_CSV)
-with open(os.path.join(SCRIPT_DIR, "stats.md"), mode="w") as stats_md:
-    df.to_markdown(buf=stats_md, index=False)
+    with open(STATS_CSV, mode="w") as stats_csv:
+        writer = csv.DictWriter(stats_csv, fieldnames=tests[0].keys())
+        writer.writeheader()
+        writer.writerows(tests)
+
+    df = pd.read_csv(STATS_CSV)
+    with open(os.path.join(SCRIPT_DIR, "stats.md"), mode="w") as stats_md:
+        df.to_markdown(buf=stats_md, index=False)
