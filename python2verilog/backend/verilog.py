@@ -320,7 +320,6 @@ class Verilog:
         initial_body.append(BlockingSubsitution("_clock", "0"))
         initial_body.append(BlockingSubsitution("_start", "0"))
         initial_body.append(AtPosedgeStatement(Expression("_clock")))
-        initial_body.append(AtPosedgeStatement(Expression("_clock")))
 
         for test_case in test_cases:
             # setup for new test case
@@ -328,7 +327,6 @@ class Verilog:
                 initial_body.append(BlockingSubsitution(var.arg, str(test_case[i])))
             initial_body.append(BlockingSubsitution("_start", "1"))
 
-            initial_body.append(AtPosedgeStatement(Expression("_clock")))
             initial_body.append(AtPosedgeStatement(Expression("_clock")))
 
             # wait for done signal
@@ -510,6 +508,7 @@ class Always(Statement):
         lines = Lines(f"always {self.trigger.to_string()} begin")
         if self.valid != "":
             lines.concat(self.valid.to_lines(), 1)
+        lines.concat(NonBlockingSubsitution("_done", "0").to_lines(), 1)
         for stmt in self.body:
             lines.concat(stmt.to_lines(), 1)
         lines += "end"
