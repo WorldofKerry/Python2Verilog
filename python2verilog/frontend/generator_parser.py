@@ -5,7 +5,7 @@ import copy
 import warnings
 import ast as pyast
 
-from .. import ir as vast
+from .. import ir as irast
 from ..utils.string import Lines, Indent
 
 
@@ -44,7 +44,7 @@ class GeneratorParser:
             self.__parse_statements(
                 self._python_func.body,
                 prefix="",
-                end_stmts=[vast.NonBlockingSubsitution("_done", "1")],
+                end_stmts=[irast.NonBlockingSubsitution("_done", "1")],
             ).to_lines(),
             Lines(),
         )
@@ -71,7 +71,7 @@ class GeneratorParser:
         self,
         stmts: list[pyast.AST],
         prefix: str,
-        end_stmts: list[vast.Statement] = None,
+        end_stmts: list[irast.Statement] = None,
         reset_to_zero: bool = False,
     ):
         """
@@ -83,7 +83,7 @@ class GeneratorParser:
         self,
         stmts: list[pyast.AST],
         prefix: str,
-        end_stmts: list[vast.Statement] = None,
+        end_stmts: list[irast.Statement] = None,
         reset_to_zero: bool = False,
     ):
         """
@@ -105,27 +105,27 @@ class GeneratorParser:
         index = 0
         for stmt in stmts:
             body = self.__parse_statement(stmt, prefix=state_var)
-            case_item = vast.CaseItem(vast.Expression(str(index)), body)
+            case_item = irast.CaseItem(irast.Expression(str(index)), body)
             if (
                 not isinstance(stmt, pyast.For)
                 and not isinstance(stmt, pyast.While)
                 and not isinstance(stmt, pyast.If)
             ):
                 case_item.append_end_statements(
-                    [vast.NonBlockingSubsitution(state_var, f"{state_var} + 1")]
+                    [irast.NonBlockingSubsitution(state_var, f"{state_var} + 1")]
                 )
             cases.append(case_item)  # TODO: cases can have multiple statements
             index += 1
         # end_stmts = [vast.Statement(stmt) for stmt in end_stmts]
         for stmt in end_stmts:
-            assert isinstance(stmt, vast.Statement)
+            assert isinstance(stmt, irast.Statement)
         if reset_to_zero:
-            end_stmts.append(vast.NonBlockingSubsitution(state_var, "0"))
+            end_stmts.append(irast.NonBlockingSubsitution(state_var, "0"))
 
-        the_case = vast.Case(vast.Expression(state_var), cases)
+        the_case = irast.Case(irast.Expression(state_var), cases)
         the_case.append_end_statements(end_stmts)
 
-        return vast.Case(vast.Expression(state_var), cases)
+        return irast.Case(irast.Expression(state_var), cases)
 
     @staticmethod
     def __generate_output_vars(node: pyast.AST, prefix: str):
@@ -155,6 +155,17 @@ class GeneratorParser:
         Gets a copy of the global vars
         """
         return copy.deepcopy(self._global_vars)
+
+    def get_context(self):
+        """
+        Gets the context of the Python function
+        """
+        return irast.Context(
+            name=self._name,
+            global_vars=copy.deepcopy(self._global_vars),
+            input_vars=[var.arg for var in self._python_func.args.args],
+            output_vars=self._output_vars,
+        )
 
     @staticmethod
     def __stringify_always_block():
@@ -245,7 +256,7 @@ class GeneratorParser:
         """
         <target0, target1, ...> = <value>;
         """
-        assign = vast.NonBlockingSubsitution(
+        assign = irast.NonBlockingSubsitution(
             self.__parse_targets(node.targets),
             self.__parse_expression(node.value).to_string(),
         )
@@ -272,7 +283,7 @@ class GeneratorParser:
                 stmt.target, pyast.Name
             ), "Error: only supports single target"
             return [
-                vast.NonBlockingSubsitution(
+                irast.NonBlockingSubsitution(
                     self.__parse_expression(stmt.target).to_string(),
                     self.__parse_expression(
                         pyast.BinOp(stmt.target, stmt.op, stmt.value)
@@ -291,47 +302,47 @@ class GeneratorParser:
         state_var = self.__add_global_var(
             "0", f"{prefix}_IF{self.__create_unique_name()}"
         )
-        conditional_item = vast.CaseItem(
-            vast.Expression("0"),
+        conditional_item = irast.CaseItem(
+            irast.Expression("0"),
             [
-                vast.IfElse(
-                    vast.Expression(self.__parse_expression(stmt.test).to_string()),
-                    [vast.NonBlockingSubsitution(state_var, "1")],
-                    [vast.NonBlockingSubsitution(state_var, "2")],
+                irast.IfElse(
+                    irast.Expression(self.__parse_expression(stmt.test).to_string()),
+                    [irast.NonBlockingSubsitution(state_var, "1")],
+                    [irast.NonBlockingSubsitution(state_var, "2")],
                 )
             ],
         )
-        then_item = vast.CaseItem(
-            vast.Expression("1"),
+        then_item = irast.CaseItem(
+            irast.Expression("1"),
             [
                 self.__parse_statements(
                     stmt.body,
                     f"{state_var}",
                     end_stmts=[
-                        vast.NonBlockingSubsitution(f"{prefix}", f"{prefix} + 1"),
-                        vast.NonBlockingSubsitution(state_var, "0"),
+                        irast.NonBlockingSubsitution(f"{prefix}", f"{prefix} + 1"),
+                        irast.NonBlockingSubsitution(state_var, "0"),
                     ],
                     reset_to_zero=True,
                 )
             ],
         )
-        else_item = vast.CaseItem(
-            vast.Expression("2"),
+        else_item = irast.CaseItem(
+            irast.Expression("2"),
             [
                 self.__parse_statements(
                     stmt.orelse,
                     f"{state_var}",
                     end_stmts=[
-                        vast.NonBlockingSubsitution(f"{prefix}", f"{prefix} + 1"),
-                        vast.NonBlockingSubsitution(state_var, "0"),
+                        irast.NonBlockingSubsitution(f"{prefix}", f"{prefix} + 1"),
+                        irast.NonBlockingSubsitution(state_var, "0"),
                     ],
                     reset_to_zero=True,
                 )
             ],
         )
         return [
-            vast.Case(
-                vast.Expression(f"{state_var}"),
+            irast.Case(
+                irast.Expression(f"{state_var}"),
                 [conditional_item, then_item, else_item],
             )
         ]
@@ -346,11 +357,11 @@ class GeneratorParser:
         """
         assert isinstance(node.value, pyast.Tuple)
         return [
-            vast.NonBlockingSubsitution(
+            irast.NonBlockingSubsitution(
                 self._output_vars[idx], self.__parse_expression(elem).to_string()
             )
             for idx, elem in enumerate(node.value.elts)
-        ] + [vast.NonBlockingSubsitution("_valid", "1")]
+        ] + [irast.NonBlockingSubsitution("_valid", "1")]
 
     @staticmethod
     def __parse_binop(node: pyast.BinOp):
@@ -377,9 +388,9 @@ class GeneratorParser:
         <expression> (e.g. constant, name, subscript, etc., those that return a value)
         """
         if isinstance(expr, pyast.Constant):
-            return vast.Expression(str(expr.value))
+            return irast.Expression(str(expr.value))
         if isinstance(expr, pyast.Name):
-            return vast.Expression(expr.id)
+            return irast.Expression(expr.id)
         if isinstance(expr, pyast.Subscript):
             return self.__parse_subscript(expr)
         if isinstance(expr, pyast.BinOp):
@@ -402,11 +413,11 @@ class GeneratorParser:
                 # return vast.Expression(
                 #     f"({a} > 0) ? ({a} >> {int(b / 2)}) : -(-({a}) >> {int(b / 2)})"
                 # )
-                return vast.Expression(
+                return irast.Expression(
                     f"({a_var} > 0) ? ({a_var} / {b_var}) : ({a_var} / {b_var} - 1)"
                 )
 
-            return vast.Expression(
+            return irast.Expression(
                 "("
                 + self.__parse_expression(expr.left).to_string()
                 + self.__parse_binop(expr)
@@ -415,7 +426,7 @@ class GeneratorParser:
             )
         if isinstance(expr, pyast.UnaryOp):
             if isinstance(expr.op, pyast.USub):
-                return vast.Expression(
+                return irast.Expression(
                     f"-({self.__parse_expression(expr.operand).to_string()})"
                 )
             raise TypeError(
@@ -425,7 +436,7 @@ class GeneratorParser:
             return self.__parse_compare(expr)
         if isinstance(expr, pyast.BoolOp):
             if isinstance(expr.op, pyast.And):
-                return vast.Expression(
+                return irast.Expression(
                     f"({self.__parse_expression(expr.values[0]).to_string()}) \
                     && ({self.__parse_expression(expr.values[1]).to_string()})"
                 )
@@ -438,7 +449,7 @@ class GeneratorParser:
         <value>[<slice>]
         Note: built from right to left, e.g. [z] -> [y][z] -> [x][y][z] -> matrix[x][y][z]
         """
-        return vast.Expression(
+        return irast.Expression(
             f"{self.__parse_expression(node.value)}[{self.__parse_expression(node.slice)}]"
         )
 
@@ -461,7 +472,7 @@ class GeneratorParser:
             raise TypeError(
                 "Error: unknown operator", type(node.ops[0]), pyast.dump(node.ops[0])
             )
-        return vast.Expression(
+        return irast.Expression(
             f"{self.__parse_expression(node.left).to_string()} {operator}"
             f" {self.__parse_expression(node.comparators[0]).to_string()}"
         )
@@ -475,32 +486,32 @@ class GeneratorParser:
         state_var = self.__add_global_var(
             "0", f"{prefix}_WHILE{self.__create_unique_name()}"
         )
-        conditional_item = vast.CaseItem(
-            vast.Expression("0"),
+        conditional_item = irast.CaseItem(
+            irast.Expression("0"),
             [
-                vast.IfElse(
-                    vast.Expression(
+                irast.IfElse(
+                    irast.Expression(
                         f"!({self.__parse_expression(stmt.test).to_string()})"
                     ),
-                    [vast.NonBlockingSubsitution(f"{prefix}", f"{prefix} + 1")],
-                    [vast.NonBlockingSubsitution(state_var, "1")],
+                    [irast.NonBlockingSubsitution(f"{prefix}", f"{prefix} + 1")],
+                    [irast.NonBlockingSubsitution(state_var, "1")],
                 )
             ],
         )
-        then_item = vast.CaseItem(
-            vast.Expression("1"),
+        then_item = irast.CaseItem(
+            irast.Expression("1"),
             [
                 self.__parse_statements(
                     stmt.body,
                     f"{state_var}",
-                    end_stmts=[vast.NonBlockingSubsitution(f"{state_var}", "0")],
+                    end_stmts=[irast.NonBlockingSubsitution(f"{state_var}", "0")],
                     reset_to_zero=True,
                 )
             ],
         )
         return [
-            vast.While(
-                vast.Expression(f"{state_var}"),
+            irast.While(
+                irast.Expression(f"{state_var}"),
                 [conditional_item, then_item],
             )
         ]
