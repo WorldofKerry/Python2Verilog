@@ -41,5 +41,5 @@ jobs:
         python3 tests/update_statistics.py tests/frontend/data/generator/
     - uses: actions/upload-artifact@v3
       with:
-        name: data-generator
+        name: tests-data
         path: tests/
