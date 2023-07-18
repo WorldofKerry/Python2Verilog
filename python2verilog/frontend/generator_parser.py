@@ -14,6 +14,118 @@ class GeneratorParser:
     Parses python generator functions to Verilog AST
     """
 
+    def __init__(self, python_func: pyast.FunctionDef):
+        """
+        Initializes the parser, does quick setup work
+        """
+        assert isinstance(python_func, pyast.FunctionDef)
+        self._name = python_func.name
+        self._output_vars = self.__generate_output_vars(python_func.returns, "")
+        self._unique_name_counter = 0
+        self._global_vars: dict[str, str] = {}
+        self._python_func = python_func
+        self._root = self.__parse_statements(python_func.body, "")
+
+    def __str__(self):
+        return self.generate_verilog().to_string()
+
+    def get_root(self):
+        """
+        Gets the root of the IR tree
+        """
+        return copy.deepcopy(self._root)
+
+    def generate_verilog(self, indent: int = 0):
+        """
+        Generates the verilog (does the most work, calls other functions)
+        """
+        stmt_lines = (
+            self.__parse_statements(
+                self._python_func.body,
+                prefix="",
+                end_stmts=[vast.NonBlockingSubsitution("_done", "1")],
+            ).to_lines(),
+            Lines(),
+        )
+        module_lines = self.__stringify_module()
+        decl_lines = self.__stringify_declarations(self._global_vars)
+        always_blk_lines = self.__stringify_always_block()
+        decl_and_always_blk_lines = (
+            decl_lines[0].concat(always_blk_lines[0]),
+            decl_lines[1].concat(always_blk_lines[1]),
+        )  # TODO: there should be a function for this
+        init_lines = self.__stringify_initialization(self._global_vars)
+
+        return Lines.nestify(
+            [
+                module_lines,
+                decl_and_always_blk_lines,
+                init_lines,
+                stmt_lines,
+            ],
+            indent,
+        )
+
+    def parse_statements(
+        self,
+        stmts: list[pyast.AST],
+        prefix: str,
+        end_stmts: list[vast.Statement] = None,
+        reset_to_zero: bool = False,
+    ):
+        """
+        Parses a list of python statements
+        """
+        return self.__parse_statements(stmts, prefix, end_stmts, reset_to_zero)
+
+    def __parse_statements(
+        self,
+        stmts: list[pyast.AST],
+        prefix: str,
+        end_stmts: list[vast.Statement] = None,
+        reset_to_zero: bool = False,
+    ):
+        """
+        Warning: mutates global_vars
+
+        {
+            <statement0>
+            <statement1>
+            ...
+        }
+        """
+        if not end_stmts:
+            end_stmts = Lines()
+        state_var = self.__add_global_var(
+            "0", f"{prefix}_STATE{self.__create_unique_name()}"
+        )
+        cases = []
+
+        index = 0
+        for stmt in stmts:
+            body = self.__parse_statement(stmt, prefix=state_var)
+            case_item = vast.CaseItem(vast.Expression(str(index)), body)
+            if (
+                not isinstance(stmt, pyast.For)
+                and not isinstance(stmt, pyast.While)
+                and not isinstance(stmt, pyast.If)
+            ):
+                case_item.append_end_statements(
+                    [vast.NonBlockingSubsitution(state_var, f"{state_var} + 1")]
+                )
+            cases.append(case_item)  # TODO: cases can have multiple statements
+            index += 1
+        # end_stmts = [vast.Statement(stmt) for stmt in end_stmts]
+        for stmt in end_stmts:
+            assert isinstance(stmt, vast.Statement)
+        if reset_to_zero:
+            end_stmts.append(vast.NonBlockingSubsitution(state_var, "0"))
+
+        the_case = vast.Case(vast.Expression(state_var), cases)
+        the_case.append_end_statements(end_stmts)
+
+        return vast.Case(vast.Expression(state_var), cases)
+
     @staticmethod
     def __generate_output_vars(node: pyast.AST, prefix: str):
         """
@@ -27,8 +139,8 @@ class GeneratorParser:
         """
         Generates an id that is unique among all unique global variables
         """
-        self.unique_name_counter += 1
-        return f"{self.unique_name_counter}"
+        self._unique_name_counter += 1
+        return f"{self._unique_name_counter}"
 
     def __add_global_var(self, initial_value: str, name: str):
         """
@@ -52,40 +164,6 @@ class GeneratorParser:
         return (
             Lines(["always @(posedge _clock) begin", Indent(1) + "_valid <= 0;"]),
             Lines(["end"]),
-        )
-
-    def __str__(self):
-        return self.generate_verilog().to_string()
-
-    def generate_verilog(self, indent: int = 0):
-        """
-        Generates the verilog (does the most work, calls other functions)
-        """
-        stmt_lines = (
-            self.parse_statements(
-                self.root.body,
-                prefix="",
-                end_stmts=[vast.NonBlockingSubsitution("_done", "1")],
-            ).to_lines(),
-            Lines(),
-        )
-        module_lines = self.__stringify_module()
-        decl_lines = self.__stringify_declarations(self._global_vars)
-        always_blk_lines = self.__stringify_always_block()
-        decl_and_always_blk_lines = (
-            decl_lines[0].concat(always_blk_lines[0]),
-            decl_lines[1].concat(always_blk_lines[1]),
-        )  # TODO: there should be a function for this
-        init_lines = self.__stringify_initialization(self._global_vars)
-
-        return Lines.nestify(
-            [
-                module_lines,
-                decl_and_always_blk_lines,
-                init_lines,
-                stmt_lines,
-            ],
-            indent,
         )
 
     @staticmethod
@@ -122,35 +200,24 @@ class GeneratorParser:
         endmodule
         """
         start_lines, end_lines = Lines(), Lines()
-        assert self.name not in {
+        assert self._name not in {
             "default",
             "module",
             "output",
             "function",
         }  # Verilog Reserved Keywords
-        start_lines += f"module {self.name}("
+        start_lines += f"module {self._name}("
         start_lines += Indent(1) + "input wire _clock,"
         start_lines += Indent(1) + "input wire _start,"
-        for var in self.root.args.args:
+        for var in self._python_func.args.args:
             start_lines += Indent(1) + f"input wire signed [31:0] {var.arg},"
-        for var in self.output_vars:
+        for var in self._output_vars:
             start_lines += Indent(1) + f"output reg signed [31:0] {var},"
         start_lines += Indent(1) + "output reg _done,"
         start_lines += Indent(1) + "output reg _valid"
         start_lines += ");"
         end_lines += "endmodule"
         return (start_lines, end_lines)
-
-    def __init__(self, root: pyast.FunctionDef):
-        """
-        Initializes the parser, does quick setup work
-        """
-        assert isinstance(root, pyast.FunctionDef)
-        self.name = root.name
-        self.output_vars = self.__generate_output_vars(root.returns, "")
-        self.unique_name_counter = 0
-        self._global_vars: dict[str, str] = {}
-        self.root = root
 
     def __parse_for(self, node: pyast.For, prefix: str):
         """
@@ -237,7 +304,7 @@ class GeneratorParser:
         then_item = vast.CaseItem(
             vast.Expression("1"),
             [
-                self.parse_statements(
+                self.__parse_statements(
                     stmt.body,
                     f"{state_var}",
                     end_stmts=[
@@ -251,7 +318,7 @@ class GeneratorParser:
         else_item = vast.CaseItem(
             vast.Expression("2"),
             [
-                self.parse_statements(
+                self.__parse_statements(
                     stmt.orelse,
                     f"{state_var}",
                     end_stmts=[
@@ -269,54 +336,6 @@ class GeneratorParser:
             )
         ]
 
-    def parse_statements(
-        self,
-        stmts: list[pyast.AST],
-        prefix: str,
-        end_stmts: list[vast.Statement] = None,
-        reset_to_zero: bool = False,
-    ):
-        """
-        Warning: mutates global_vars
-
-        {
-            <statement0>
-            <statement1>
-            ...
-        }
-        """
-        if not end_stmts:
-            end_stmts = Lines()
-        state_var = self.__add_global_var(
-            "0", f"{prefix}_STATE{self.__create_unique_name()}"
-        )
-        cases = []
-
-        index = 0
-        for stmt in stmts:
-            body = self.__parse_statement(stmt, prefix=state_var)
-            case_item = vast.CaseItem(vast.Expression(str(index)), body)
-            if (
-                not isinstance(stmt, pyast.For)
-                and not isinstance(stmt, pyast.While)
-                and not isinstance(stmt, pyast.If)
-            ):
-                case_item.append_end_statements(
-                    [vast.NonBlockingSubsitution(state_var, f"{state_var} + 1")]
-                )
-            cases.append(case_item)  # TODO: cases can have multiple statements
-            index += 1
-        # end_stmts = [vast.Statement(stmt) for stmt in end_stmts]
-        for stmt in end_stmts:
-            assert isinstance(stmt, vast.Statement)
-        if reset_to_zero:
-            end_stmts.append(vast.NonBlockingSubsitution(state_var, "0"))
-
-        the_case = vast.Case(vast.Expression(state_var), cases)
-        the_case.append_end_statements(end_stmts)
-
-        return vast.Case(vast.Expression(state_var), cases)
-
     def __parse_yield(self, node: pyast.Yield):
         """
         Warning: may not work for single output
@@ -328,7 +347,7 @@ class GeneratorParser:
         assert isinstance(node.value, pyast.Tuple)
         return [
             vast.NonBlockingSubsitution(
-                self.output_vars[idx], self.__parse_expression(elem).to_string()
+                self._output_vars[idx], self.__parse_expression(elem).to_string()
             )
             for idx, elem in enumerate(node.value.elts)
         ] + [vast.NonBlockingSubsitution("_valid", "1")]
@@ -471,7 +490,7 @@ class GeneratorParser:
         then_item = vast.CaseItem(
             vast.Expression("1"),
             [
-                self.parse_statements(
+                self.__parse_statements(
                     stmt.body,
                     f"{state_var}",
                     end_stmts=[vast.NonBlockingSubsitution(f"{state_var}", "0")],
