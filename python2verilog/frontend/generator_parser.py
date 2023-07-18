@@ -20,10 +20,11 @@ class GeneratorParser:
         """
         assert isinstance(python_func, pyast.FunctionDef)
         self._name = python_func.name
-        self._output_vars = self.__generate_output_vars(python_func.returns, "")
         self._unique_name_counter = 0
         self._global_vars: dict[str, str] = {}
         self._python_func = python_func
+
+        self._output_vars = self.__generate_output_vars(python_func.returns, "")
         self._root = self.__parse_statements(python_func.body, "")
 
     def __str__(self):
