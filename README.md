@@ -49,7 +49,7 @@ Those files will be stored in `tests/integration/data/integration/<test-name>/`.
 
 ## Tested Generations
 
-Outputs of tests in repo can be found as a [github workflow artifact](https://nightly.link/WorldofKerry/Python2Verilog/workflows/python-package/main/data-generator.zip)
+Outputs of tests in repo can be found as a [github workflow artifact](https://nightly.link/WorldofKerry/Python2Verilog/workflows/python-package/main/tests-data.zip)
 
 ## For Developers
 
