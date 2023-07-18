@@ -9,6 +9,6 @@ def assert_list_elements(the_list: list, elem_type):
     """
     if the_list:
         for elem in the_list:
-            assert isinstance(elem, elem_type)
+            assert isinstance(elem, elem_type), f"got {type(elem)} instead"
         return the_list
     return []

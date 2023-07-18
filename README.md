@@ -9,14 +9,14 @@ Converts a subset of python generator functions into synthesizable sequential Sy
 
 A use case is for drawing shapes on grids (for VGA output), where the user may prototype the algorithm in python and then convert it to verilog for use in an FPGA.
 
-A testbench is also generated and asserted against the Python outputs.
+A testbench can also be generated and asserted against the Python outputs.
 
 Supports Python [Generator functions](https://wiki.python.org/moin/Generators) as well as the following block types:
 
 - `if`
 - `while`
 
-**Warning**: Variables do not have block scope.
+**Warning**: Variables are treated as global and therefore no variable shadowing.
 
 ## Sample Usage
 `pip install python2verilog`
@@ -26,9 +26,7 @@ Create a python file containing a generator function with output type hints, nam
 
 A sample can be found [here](https://github.com/WorldofKerry/Python2Verilog/blob/main/tests/integration/data/integration/circle_lines/python.py)
 
-`python3 -m python2verilog.convert <name>.py`
-
-`python3 -m python2verilog.convert <name>.py -c "(10, 15, 7)"` (where the `-c` is the test case)
+`python3 -m python2verilog.convert <name>.py`. Use `--help` for additional options, including outputting a testbench.
 
 ## Testing
 
@@ -38,7 +36,7 @@ Warning: may be outdated, refer to [github workflow](.github/workflows/python-pa
 
 Verilog simulation: `sudo apt-get install iverilog expected` (uses the `unbuffer` app in `expected`). The online simulator [EDA Playground](https://edaplayground.com/) can be used as a subsitute, given that you paste the output into the "actual file" specified in the `config.ini` of the test.
 
-Python: `python3 -m pip install -r tests/requirements.txt`
+Python Libraries: `python3 -m pip install -r tests/requirements.txt`
 
 ### Creating New Test
 
@@ -51,9 +49,7 @@ Those files will be stored in `tests/integration/data/integration/<test-name>/`.
 
 ## Tested Generations
 
-Outputs of tests in repo can be found as a [github workflow artifact](https://nightly.link/WorldofKerry/Python2Verilog/workflows/python-package/main/data-generator.zip)
-
-<!-- Python vs Verilog stats on sample inputs (not up-to-date) can be found [here](tests/frontend/data/generator/stats.md), more up-to-date ones can be found in the artifact. -->
+Outputs of tests in repo can be found as a [github workflow artifact](https://nightly.link/WorldofKerry/Python2Verilog/workflows/python-package/main/tests-data.zip)
 
 ## For Developers
 
@@ -66,6 +62,8 @@ To setup pre-commit, run `pre-commit install`.
 ### Epics
 
 - Support arrays
+- Mimic combinational logic with "regular" Python functions
+- Division approximations
 
 ## Docs
 
@@ -74,6 +72,20 @@ To setup pre-commit, run `pre-commit install`.
 - `make html`
 
 ## Random Planning, Design, and Notes
+
+## What needs to be duplicated in testbenches?
+declare I/O and other signals
+declare DUT
+start clock
+
+loop for each test case
+- start signal
+- while wait for done signal
+  - clock
+  - set start zero
+  - display output
+endloop
+
 
 ### Potential API
 

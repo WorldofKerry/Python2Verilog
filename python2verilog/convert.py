@@ -37,9 +37,10 @@ if __name__ == "__main__":
 
     parser.add_argument(
         "-c",
-        "--test-case",
+        "--test-cases",
         type=str,
-        help='Test case for testbench. Required to output testbench. E.g. `-c "(1, 2, 3, 4)"`',
+        help='A list of test cases for testbench. \
+            Required to output testbench. E.g. `-c "[(1, 2, 3, 4)]"`',
         default="",
     )
 
@@ -72,8 +73,10 @@ if __name__ == "__main__":
         ) as module_file:
             module_file.write(verilog.get_module().to_string())
 
-        if args.test_case != "":
+        if args.test_cases != "":
             with open(
                 os.path.abspath(args.testbench), mode="w+", encoding="utf8"
             ) as tb_file:
-                tb_file.write(verilog.get_testbench(ast.literal_eval(args.test_case)))
+                tb_file.write(
+                    verilog.get_testbench_improved(ast.literal_eval(args.test_cases))
+                )
