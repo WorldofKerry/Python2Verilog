@@ -63,7 +63,7 @@ def script(args: argparse.Namespace, logger: logging.Logger, shell: callable) ->
     logger.info(f"Appending to {TEST_FILE_PATH} with pytest function")
     with open(TEST_FILE_PATH, mode="a") as test_file:
         test_file.write(
-            f'\n    def test_{args.test_name}(self):\n        self.run_test("{args.test_name}", ())\n'
+            f'\n    def test_{args.test_name}(self):\n        self.run_test("{args.test_name}", [()])\n'
         )
 
     logger.warning(

@@ -1,4 +1,4 @@
-def rectangle_filled_while(s_x, s_y, height, width) -> tuple[int, int]:
+def rectangle_filled(s_x, s_y, height, width) -> tuple[int, int]:
     i0 = 0
     while i0 < width:
         i1 = 0

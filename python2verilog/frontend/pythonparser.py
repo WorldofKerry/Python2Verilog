@@ -7,7 +7,7 @@ from ..utils.string import Lines, Indent
 from .. import ir as vast
 
 
-class Generator2Ast:
+class PythonParser:
     """
     Parses python generator functions to Verilog AST
     """
