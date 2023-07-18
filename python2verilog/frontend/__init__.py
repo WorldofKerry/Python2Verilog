@@ -1,4 +1,4 @@
 """Python Parsers"""
 
 # flake8: noqa
-from .pythonparser import PythonParser
+from .generator_parser import GeneratorParser

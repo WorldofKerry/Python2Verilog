@@ -7,7 +7,7 @@ import subprocess
 import csv
 
 from python2verilog.backend.verilog import Verilog
-from python2verilog.frontend import PythonParser
+from python2verilog.frontend import GeneratorParser
 from python2verilog.utils.visualization import make_visual
 
 
@@ -65,11 +65,11 @@ class TestMain(unittest.TestCase):
 
             with open(FILES_IN_ABS_DIR["module"], mode="w") as module_file:
                 function = tree.body[0]
-                ir_generator = PythonParser(function)
+                ir_generator = GeneratorParser(function)
                 output = ir_generator.parse_statements(function.body, "")
                 # warnings.warn(output.to_lines())
                 verilog = Verilog()
-                verilog.from_ir(output, ir_generator.global_vars)
+                verilog.from_ir(output, ir_generator._global_vars)
                 verilog.setup_from_python(function)
                 module_file.write(verilog.get_module().to_string())
 
