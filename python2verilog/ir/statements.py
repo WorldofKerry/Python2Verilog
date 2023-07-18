@@ -1,4 +1,4 @@
-"""Verilog Abstract Syntax Tree Components"""
+"""An Intermediate Representation for HDL based on Verilog"""
 
 import warnings
 import inspect
@@ -10,7 +10,7 @@ from .expressions import Expression
 
 class Statement:
     """
-    Represents a statement in verilog (i.e. a line or a block)
+    Represents a statements (i.e. a line or a block)
     If used directly, it is treated as a string literal
     """
 
@@ -72,18 +72,6 @@ class Subsitution(Statement):
             for stmt in self.appended:
                 lines.concat(stmt.to_lines())
         return lines
-
-    def append_end_statements(self, statements: list[Statement]):
-        """
-        Appends to last block of code
-        """
-        raise DeprecationWarning()
-        warnings.warn(
-            "want to remove "
-            + str(inspect.getouterframes(inspect.currentframe(), 2)[1][3])
-        )
-        self.appended = self.appended + assert_list_elements(statements, Statement)
-        return self
 
 
 class NonBlockingSubsitution(Subsitution):
@@ -235,7 +223,7 @@ class Case(Statement):
 
 class IfElse(Statement):
     """
-    Verilog if else
+    If Else
     """
 
     def __init__(

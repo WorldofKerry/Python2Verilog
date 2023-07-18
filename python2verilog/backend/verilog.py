@@ -162,7 +162,17 @@ class Verilog:
             return CaseItem(self.build_tree(node.condition), case_items)
         if isinstance(node, irast.Expression):
             return Expression(node.to_string())
-        return Statement(node.to_string().replace("\n", " "))
+        if isinstance(node, irast.IfElse):
+            then_body = []
+            for stmt in node.then_body:
+                then_body.append(self.build_tree(stmt))
+            else_body = []
+            for stmt in node.else_body:
+                else_body.append(self.build_tree(stmt))
+            return IfElse(self.build_tree(node.condition), then_body, else_body)
+        if isinstance(node, irast.Statement):
+            return Statement(node.to_string().replace("\n", " "))
+        raise NotImplementedError(f"Unexpected type {type(node)}")
 
     def from_ir(self, root: irast.Statement, global_vars: dict[str, str]):
         """

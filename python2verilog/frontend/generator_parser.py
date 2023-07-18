@@ -288,18 +288,17 @@ class GeneratorParser:
         If statement
         """
         assert isinstance(stmt, pyast.If)
-        state_var = self.__add_global_var("0", f"{prefix}_IF")
+        state_var = self.__add_global_var(
+            "0", f"{prefix}_IF{self.__create_unique_name()}"
+        )
         conditional_item = vast.CaseItem(
             vast.Expression("0"),
             [
-                vast.Statement(
-                    f"if ({self.__parse_expression(stmt.test).to_string()})"
-                ),
-                vast.NonBlockingSubsitution(state_var, "1"),
-                vast.Statement(
-                    "else "
-                    + vast.NonBlockingSubsitution(state_var, "2").to_string().strip()
-                ),  # TODO: cleanup
+                vast.IfElse(
+                    vast.Expression(self.__parse_expression(stmt.test).to_string()),
+                    [vast.NonBlockingSubsitution(state_var, "1")],
+                    [vast.NonBlockingSubsitution(state_var, "2")],
+                )
             ],
         )
         then_item = vast.CaseItem(
