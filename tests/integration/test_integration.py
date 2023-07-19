@@ -68,7 +68,6 @@ class TestMain(unittest.TestCase):
                 ir_generator = GeneratorParser(function)
                 verilog = Verilog()
                 verilog.from_ir(ir_generator.get_root(), ir_generator.get_context())
-                verilog.setup_from_python(function)
                 module_file.write(verilog.get_module().to_string())
 
             with open(FILES_IN_ABS_DIR["testbench"], mode="w") as testbench_file:

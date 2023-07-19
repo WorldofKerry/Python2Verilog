@@ -120,27 +120,32 @@ class Verilog:
     Code Generation for Verilog
     """
 
-    def create_module_from_python(self, func: ast.FunctionDef):
+    @staticmethod
+    def __create_module_from_python(root: Statement, context: irast.Context):
         """
-        Creates a module wrapper from python AST,
+        Creates a module wrapper from the context
         e.g. the I/O (from Python), clock, valid and done signals
         """
+        assert isinstance(root, Statement)
+        assert isinstance(context, irast.Context)
         inputs = []
-        for var in func.args.args:
-            inputs.append(var.arg)
+        for var in context.input_vars:
+            inputs.append(var)
         outputs = []
-        assert isinstance(func.returns, ast.Subscript)
-        assert isinstance(func.returns.slice, ast.Tuple)
-        for i in range(len((func.returns.slice.elts))):
+        for i in range(len((context.output_vars))):
             outputs.append(f"_out{str(i)}")
         # TODO: make these extras optional
-        return Module(func.name, inputs, outputs, body=[self.always])
+        always = PosedgeSyncAlways(
+            Expression("_clock"),
+            valid="_valid",
+            body=[Verilog.__get_init(root, context.global_vars)],
+        )
+        return Module(context.name, inputs, outputs, body=[always])
 
     def __init__(self):
         # TODO: throw errors if user tries to generate verilog beforeconfig
         self.root = None
         self.module = None
-        self.always = None
         self.context = None
 
     def build_tree(self, node: irast.Statement):
@@ -182,9 +187,11 @@ class Verilog:
         root.append_end_statements([irast.NonBlockingSubsitution("_done", "1")])
         self.root = self.build_tree(root)
         self.context = context
+        self.module = Verilog.__create_module_from_python(self.root, context)
         return self
 
-    def get_init(self, global_vars: dict[str, str]):
+    @staticmethod
+    def __get_init(root: Statement, global_vars: dict[str, str]):
         """
         if (_start) begin
             <var> = <value>;
@@ -199,7 +206,7 @@ class Verilog:
         block = IfElse(
             Expression("_start"),
             then_body,
-            [self.root],
+            [root],
         )
         return block
 
@@ -213,22 +220,6 @@ class Verilog:
         ]
         self.module.body = decls + self.module.body
         return self.module.to_lines()
-
-    def setup_from_python(self, func: ast.FunctionDef):
-        """
-        Setups up module, always block, declarations, etc from Python AST
-        """
-        assert (
-            self.context.global_vars is not None
-        ), "run from_ir first to setup global_vars"
-        assert isinstance(func, ast.FunctionDef)
-        self.always = PosedgeSyncAlways(
-            Expression("_clock"),
-            valid="_valid",
-            body=[self.get_init(self.context.global_vars)],
-        )
-        self.module = self.create_module_from_python(func)
-        return self
 
     def get_testbench_improved(self, test_cases: list[tuple[str]]):
         """

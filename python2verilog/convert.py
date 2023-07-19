@@ -72,7 +72,6 @@ if __name__ == "__main__":
         ir = GeneratorParser(function)
         verilog = Verilog()
         verilog.from_ir(ir.get_root(), ir.get_context())
-        verilog.setup_from_python(function)
 
         with open(
             os.path.abspath(args.output), mode="w+", encoding="utf8"
