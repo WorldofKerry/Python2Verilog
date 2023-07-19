@@ -5,8 +5,22 @@ To run the basic conversion as a script
 import argparse
 import os
 import ast
+import warnings
 from .frontend import GeneratorParser
 from .backend.verilog import Verilog
+from .optimizer import optimizer
+
+
+def convert(function: ast.FunctionDef, optimization_level: int):
+    """
+    Wrapper for common Python to Verilog conversion
+    """
+    ir_root, context = GeneratorParser(function).get_results()
+    if optimization_level > 0:
+        ir_root = optimizer.replace_single_case(ir_root)
+        ir_root = optimizer.optimize_if(ir_root)
+    return Verilog(ir_root, context)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -27,7 +41,7 @@ if __name__ == "__main__":
         default="",
     )
 
-    parser.add_argument(
+    TESTBENCH_ARG = parser.add_argument(
         "-t",
         "--testbench",
         type=str,
@@ -43,6 +57,20 @@ if __name__ == "__main__":
             Required to output testbench. E.g. `-c "[(1, 2, 3, 4)]"`',
         default="",
     )
+    parser.add_argument(
+        "-O",
+        "--optimization-level",
+        type=int,
+        help="Optimization level of output, between 0 and 3 inclusive, \
+            \nhigher means more optimized but may be more difficult to reason",
+        default=0,
+    )
+
+    def get_default_tb_filename(stem: str):
+        """
+        Gets default testbench filename
+        """
+        return stem + "_tb.sv"
 
     args = parser.parse_args()
     input_file_path = parser.parse_args().input_file
@@ -51,7 +79,7 @@ if __name__ == "__main__":
         args.output = input_file_stem + ".sv"
 
     if args.testbench == "":
-        args.testbench = input_file_stem + "_tb.sv"
+        args.testbench = get_default_tb_filename(input_file_stem)
 
     with open(
         os.path.abspath(input_file_path), mode="r", encoding="utf8"
@@ -61,11 +89,7 @@ if __name__ == "__main__":
         exec(python, None, _locals)  # grab's exec's populated scoped variables
 
         tree = ast.parse(python)
-        function = tree.body[0]
-        ir = GeneratorParser(function)
-        verilog = Verilog()
-        verilog.from_ir(ir.get_root(), ir.get_global_vars())
-        verilog.setup_from_python(function)
+        verilog = convert(tree.body[0], args.optimization_level)
 
         with open(
             os.path.abspath(args.output), mode="w+", encoding="utf8"
@@ -77,5 +101,15 @@ if __name__ == "__main__":
                 os.path.abspath(args.testbench), mode="w+", encoding="utf8"
             ) as tb_file:
                 tb_file.write(
-                    verilog.get_testbench_improved(ast.literal_eval(args.test_cases))
+                    verilog.get_testbench(ast.literal_eval(args.test_cases))
+                    .to_lines()
+                    .to_string()
                 )
+        elif args.test_cases == "" and args.testbench != get_default_tb_filename(
+            input_file_stem
+        ):
+            raise argparse.ArgumentError(
+                TESTBENCH_ARG,
+                f"testbench path provided by no test cases provided \
+                    {args.test_cases}, {args.testbench}",
+            )

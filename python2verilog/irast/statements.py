@@ -3,9 +3,10 @@
 import warnings
 import inspect
 
+from python2verilog.irast.expressions import Expression
+
 from ..utils.string import Lines
 from ..utils.assertions import assert_list_elements
-from .expressions import Expression
 
 
 class Statement:
@@ -29,9 +30,8 @@ class Statement:
         """
         return self.to_lines().to_string()
 
-    # def append_end_statements(self, statements: list):
-    #     warnings.warn("append_end_statements on base class")
-    #     self.literal += str(statements)
+    def __repr__(self):
+        return self.to_string()
 
 
 def is_valid_append_end_statements(stmt: Statement, statements: list[Statement]):
@@ -265,9 +265,10 @@ class IfElse(Statement):
         return self
 
 
-class While(Case):
+class WhileWrapper(Case):
     """
-    Abstract While wrapper
+    A while case statement
+
     Case (WHILE)
         0: if (!<conditional>)
                 <continue>
@@ -288,3 +289,27 @@ class While(Case):
             self.case_items[0].statements[0].then_body + statements
         )
         return self
+
+
+class IfElseWrapper(Case):
+    """
+    A if-else case statement
+
+    case (<state_name>)
+
+        0: IfElse type (condition check)
+
+        1: <then body>
+
+        2: <else body>
+
+    endcase
+    """
+
+    def __init__(
+        self, expression: Expression, case_items: list[CaseItem], *args, **kwargs
+    ):
+        assert len(case_items) == 3
+        assert len(case_items[0].statements) == 1
+        assert isinstance(case_items[0].statements[0], IfElse)
+        super().__init__(expression, case_items, *args, **kwargs)

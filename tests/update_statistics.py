@@ -54,6 +54,7 @@ if __name__ == "__main__":
         for directory in dirs:
             directory_path = os.path.join(root, directory)
             tests.append(get_expected_and_actual_lines(directory_path))
+    tests = sorted(tests, key=lambda e: e["Test Case"])
 
     with open(STATS_CSV, mode="w") as stats_csv:
         writer = csv.DictWriter(stats_csv, fieldnames=tests[0].keys())
@@ -61,5 +62,4 @@ if __name__ == "__main__":
         writer.writerows(tests)
 
     df = pd.read_csv(STATS_CSV)
-    with open(os.path.join(SCRIPT_DIR, "stats.md"), mode="w") as stats_md:
-        df.to_markdown(buf=stats_md, index=False)
+    print(df.to_markdown(index=False))

@@ -5,7 +5,7 @@ import copy
 import warnings
 import ast as pyast
 
-from .. import ir as irast
+from .. import irast
 from ..utils.string import Lines, Indent
 
 
@@ -133,8 +133,13 @@ class GeneratorParser:
         Generates the yielded variables of the function
         """
         assert isinstance(node, pyast.Subscript)
-        assert isinstance(node.slice, pyast.Tuple)
-        return [f"{prefix}_out{str(i)}" for i in range(len(node.slice.elts))]
+        if isinstance(node.slice, pyast.Tuple):
+            return [f"{prefix}_out{str(i)}" for i in range(len(node.slice.elts))]
+        if isinstance(node.slice, pyast.Name):
+            return [f"{prefix}_out0"]
+        raise NotImplementedError(
+            f"Unexpected function return type hint {type(node.slice)}, {pyast.dump(node.slice)}"
+        )
 
     def __create_unique_name(self):
         """
@@ -150,12 +155,6 @@ class GeneratorParser:
         self._global_vars[name] = initial_value
         return name
 
-    def get_global_vars(self):
-        """
-        Gets a copy of the global vars
-        """
-        return copy.deepcopy(self._global_vars)
-
     def get_context(self):
         """
         Gets the context of the Python function
@@ -166,6 +165,12 @@ class GeneratorParser:
             input_vars=[var.arg for var in self._python_func.args.args],
             output_vars=self._output_vars,
         )
+
+    def get_results(self):
+        """
+        Gets root of IR and Context
+        """
+        return (self.get_root(), self.get_context())
 
     @staticmethod
     def __stringify_always_block():
@@ -277,7 +282,7 @@ class GeneratorParser:
         if isinstance(stmt, pyast.While):
             return self.__parse_while(stmt, prefix=prefix)
         if isinstance(stmt, pyast.If):
-            return self.__parse_if(stmt, prefix=prefix)
+            return self.__parse_ifelse(stmt, prefix=prefix)
         if isinstance(stmt, pyast.AugAssign):
             assert isinstance(
                 stmt.target, pyast.Name
@@ -294,13 +299,13 @@ class GeneratorParser:
             "Error: unexpected statement type", type(stmt), pyast.dump(stmt)
         )
 
-    def __parse_if(self, stmt: pyast.If, prefix: str):
+    def __parse_ifelse(self, stmt: pyast.If, prefix: str):
         """
         If statement
         """
         assert isinstance(stmt, pyast.If)
         state_var = self.__add_global_var(
-            "0", f"{prefix}_IF{self.__create_unique_name()}"
+            "0", f"{prefix}_IFELSE{self.__create_unique_name()}"
         )
         conditional_item = irast.CaseItem(
             irast.Expression("0"),
@@ -341,7 +346,7 @@ class GeneratorParser:
             ],
         )
         return [
-            irast.Case(
+            irast.IfElseWrapper(
                 irast.Expression(f"{state_var}"),
                 [conditional_item, then_item, else_item],
             )
@@ -355,13 +360,25 @@ class GeneratorParser:
 
         yield <value>;
         """
-        assert isinstance(node.value, pyast.Tuple)
-        return [
-            irast.NonBlockingSubsitution(
-                self._output_vars[idx], self.__parse_expression(elem).to_string()
+        if isinstance(node.value, pyast.Tuple):
+            output_vars = node.value.elts  # e.g. `yield (1, 2)`
+        elif isinstance(node.value, pyast.Constant):
+            output_vars = [node.value]  # e.g. `yield 1`
+        else:
+            raise NotImplementedError(
+                f"Unexpected yield {type(node.value)} {pyast.dump(node.value)}"
             )
-            for idx, elem in enumerate(node.value.elts)
-        ] + [irast.NonBlockingSubsitution("_valid", "1")]
+        try:
+            return [
+                irast.NonBlockingSubsitution(
+                    self._output_vars[idx], self.__parse_expression(elem).to_string()
+                )
+                for idx, elem in enumerate(output_vars)
+            ] + [irast.NonBlockingSubsitution("_valid", "1")]
+        except IndexError as e:
+            raise IndexError(
+                "yield return length differs from function return length type hint"
+            ) from e
 
     @staticmethod
     def __parse_binop(node: pyast.BinOp):
@@ -510,7 +527,7 @@ class GeneratorParser:
             ],
         )
         return [
-            irast.While(
+            irast.WhileWrapper(
                 irast.Expression(f"{state_var}"),
                 [conditional_item, then_item],
             )

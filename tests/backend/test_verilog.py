@@ -83,7 +83,6 @@ def circle_lines(s_x, s_y, height) -> tuple[int, int]:
         ir = GeneratorParser(function)
         verilog = Verilog()
         verilog.from_ir(ir.get_root(), ir.get_context())
-        verilog.setup_from_python(function)
         # warnings.warn(verilog.get_module())
         # warnings.warn(
         #     verilog.get_testbench_improved([(17, 23, 15), (4, 5, 6), (1, 2, 3)])

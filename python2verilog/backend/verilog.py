@@ -5,7 +5,7 @@ import ast
 
 from ..utils.string import Lines, Indent
 from ..utils.assertions import assert_list_elements
-from .. import ir as irast
+from .. import irast
 
 
 class Expression:
@@ -120,30 +120,37 @@ class Verilog:
     Code Generation for Verilog
     """
 
-    def create_module_from_python(self, func: ast.FunctionDef):
+    @staticmethod
+    def __create_module_from_python(root: Statement, context: irast.Context):
         """
-        Creates a module wrapper from python AST,
+        Creates a module wrapper from the context
         e.g. the I/O (from Python), clock, valid and done signals
         """
+        assert isinstance(root, Statement)
+        assert isinstance(context, irast.Context)
         inputs = []
-        for var in func.args.args:
-            inputs.append(var.arg)
+        for var in context.input_vars:
+            inputs.append(var)
         outputs = []
-        assert isinstance(func.returns, ast.Subscript)
-        assert isinstance(func.returns.slice, ast.Tuple)
-        for i in range(len((func.returns.slice.elts))):
+        for i in range(len((context.output_vars))):
             outputs.append(f"_out{str(i)}")
         # TODO: make these extras optional
-        return Module(func.name, inputs, outputs, body=[self.always])
+        always = PosedgeSyncAlways(
+            Expression("_clock"),
+            valid="_valid",
+            body=[Verilog.__get_init(root, context.global_vars)],
+        )
+        return Module(context.name, inputs, outputs, body=[always])
 
-    def __init__(self):
+    def __init__(self, root: irast.Statement = None, context: irast.Context = None):
         # TODO: throw errors if user tries to generate verilog beforeconfig
-        self.root = None
         self.module = None
-        self.always = None
         self.context = None
+        if root is not None and context is not None:
+            self.from_ir(root, context)
 
-    def build_tree(self, node: irast.Statement):
+    @staticmethod
+    def build_tree(node: irast.Statement):
         """
         Builds the Verilog AST
         """
@@ -152,23 +159,23 @@ class Verilog:
         if isinstance(node, irast.Case):
             case_items = []
             for item in node.case_items:
-                case_items.append(self.build_tree(item))
-            return Case(self.build_tree(node.condition), case_items)
+                case_items.append(Verilog.build_tree(item))
+            return Case(Verilog.build_tree(node.condition), case_items)
         if isinstance(node, irast.CaseItem):
             case_items = []
             for item in node.statements:
-                case_items.append(self.build_tree(item))
-            return CaseItem(self.build_tree(node.condition), case_items)
+                case_items.append(Verilog.build_tree(item))
+            return CaseItem(Verilog.build_tree(node.condition), case_items)
         if isinstance(node, irast.Expression):
             return Expression(node.to_string())
         if isinstance(node, irast.IfElse):
             then_body = []
             for stmt in node.then_body:
-                then_body.append(self.build_tree(stmt))
+                then_body.append(Verilog.build_tree(stmt))
             else_body = []
             for stmt in node.else_body:
-                else_body.append(self.build_tree(stmt))
-            return IfElse(self.build_tree(node.condition), then_body, else_body)
+                else_body.append(Verilog.build_tree(stmt))
+            return IfElse(Verilog.build_tree(node.condition), then_body, else_body)
         if isinstance(node, irast.Statement):
             return Statement(node.to_string().replace("\n", " "))
         raise NotImplementedError(f"Unexpected type {type(node)}")
@@ -177,12 +184,17 @@ class Verilog:
         """
         Builds tree from IR
         """
+        assert isinstance(root, irast.Statement)
+        assert isinstance(context, irast.Context)
         root.append_end_statements([irast.NonBlockingSubsitution("_done", "1")])
-        self.root = self.build_tree(root)
         self.context = context
+        self.module = Verilog.__create_module_from_python(
+            Verilog.build_tree(root), context
+        )
         return self
 
-    def get_init(self, global_vars: dict[str, str]):
+    @staticmethod
+    def __get_init(root: Statement, global_vars: dict[str, str]):
         """
         if (_start) begin
             <var> = <value>;
@@ -197,7 +209,7 @@ class Verilog:
         block = IfElse(
             Expression("_start"),
             then_body,
-            [self.root],
+            [root],
         )
         return block
 
@@ -212,23 +224,7 @@ class Verilog:
         self.module.body = decls + self.module.body
         return self.module.to_lines()
 
-    def setup_from_python(self, func: ast.FunctionDef):
-        """
-        Setups up module, always block, declarations, etc from Python AST
-        """
-        assert (
-            self.context.global_vars is not None
-        ), "run from_ir first to setup global_vars"
-        assert isinstance(func, ast.FunctionDef)
-        self.always = PosedgeSyncAlways(
-            Expression("_clock"),
-            valid="_valid",
-            body=[self.get_init(self.context.global_vars)],
-        )
-        self.module = self.create_module_from_python(func)
-        return self
-
-    def get_testbench_improved(self, test_cases: list[tuple[str]]):
+    def get_testbench(self, test_cases: list[tuple[str]]):
         """
         Creates testbench with multiple test cases using the _done signal
         """
@@ -708,31 +704,6 @@ class IfElse(Statement):
         #     warnings.warn(statements[1].to_string())
         self.then_body[-1].append_end_statements(statements)
         self.else_body[-1].append_end_statements(statements)
-        return self
-
-
-class WhileCase(Case):
-    """
-    Abstract While wrapper that is synthesizable
-    Case (WHILE)
-        0: if (!<conditional>)
-                <continue>
-            else
-                <loop body / go state 1>
-        1: <loop body>
-    """
-
-    def append_end_statements(self, statements: list[Statement]):
-        """
-        While statements have a special case structure,
-        where their first case always contains an if statement
-        """
-        statements = assert_list_elements(statements, Statement)
-        assert isinstance(self.case_items[0], CaseItem)
-        assert isinstance(self.case_items[0].statements[0], IfElse)
-        self.case_items[0].statements[0].then_body = (
-            self.case_items[0].statements[0].then_body + statements
-        )
         return self
 
 
