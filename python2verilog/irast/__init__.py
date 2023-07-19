@@ -1,6 +1,6 @@
 """Intermediate Representation"""
 
 # flake8: noqa
-from .expressions import Expression
+from .expressions import *
 from .statements import *
 from .context import Context

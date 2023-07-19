@@ -392,13 +392,23 @@ class GeneratorParser:
         if isinstance(node.op, pyast.Mult):
             return " * "
         if isinstance(node.op, pyast.Div):
-            warnings.warn("Warning: division treated as integer division")
+            warnings.warn(
+                f"Warning: division treated as floor division {pyast.dump(node)}"
+            )
             return " / "
         if isinstance(node.op, pyast.FloorDiv):
+            # mostly ok
+            # warnings.warn(f"Warning: floor division is approximated {pyast.dump(node)}")
             return " / "
         raise TypeError(
             "Error: unexpected binop type", type(node.op), pyast.dump(node.op)
         )
+
+    # def __parse_binop_improved(self, expr: pyast.BinOp):
+    #     """
+    #     <left> <op> <right>
+    #     """
+    #     assert isinstance(expr, pyast.BinOp)
 
     def __parse_expression(self, expr: pyast.AST):
         """
@@ -434,6 +444,7 @@ class GeneratorParser:
                     f"({a_var} > 0) ? ({a_var} / {b_var}) : ({a_var} / {b_var} - 1)"
                 )
 
+            warnings.warn(pyast.dump(expr))
             return irast.Expression(
                 "("
                 + self.__parse_expression(expr.left).to_string()

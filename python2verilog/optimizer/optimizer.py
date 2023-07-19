@@ -72,5 +72,12 @@ def optimize_if(node: irast.Statement):
         for item in node.case_items:
             for stmt in item.statements:
                 optimize_if(stmt)
-    # recurse(node, optimize_if)
     return node
+
+
+def combine_cases(_: irast.Statement):
+    """
+    Looks at a case item.
+    Combines it with all subsequent case items if
+    subsequent case items' rvalues do not depend on any lvalues of prior case items
+    """
