@@ -78,4 +78,6 @@ if __name__ == "__main__":
             ) as tb_file:
                 tb_file.write(
                     verilog.get_testbench_improved(ast.literal_eval(args.test_cases))
+                    .to_lines()
+                    .to_string()
                 )
