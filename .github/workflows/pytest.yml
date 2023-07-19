@@ -38,6 +38,7 @@ jobs:
     - name: Update Stats
       run: |
         python3 tests/update_statistics.py tests/integration/data/integration/
+        && echo tests/integration/data/integration/stats.md
     - uses: actions/upload-artifact@v3
       with:
         name: tests-data

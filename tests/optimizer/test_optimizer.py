@@ -1,5 +1,6 @@
 import unittest
 import ast
+import warnings
 
 from python2verilog.optimizer import replace_single_case
 from python2verilog.frontend import GeneratorParser
@@ -20,3 +21,4 @@ def foo(x) -> tuple[int]:
         ir, context = GeneratorParser(function).get_results()
         ir = replace_single_case(ir)
         verilog = Verilog().from_ir(ir, context)
+        warnings.warn(verilog.get_module().to_string())
