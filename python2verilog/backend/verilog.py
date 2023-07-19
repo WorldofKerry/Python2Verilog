@@ -5,7 +5,7 @@ import ast
 
 from ..utils.string import Lines, Indent
 from ..utils.assertions import assert_list_elements
-from .. import ir as irast
+from .. import irast
 
 
 class Expression:
@@ -704,31 +704,6 @@ class IfElse(Statement):
         #     warnings.warn(statements[1].to_string())
         self.then_body[-1].append_end_statements(statements)
         self.else_body[-1].append_end_statements(statements)
-        return self
-
-
-class WhileCase(Case):
-    """
-    Abstract While wrapper that is synthesizable
-    Case (WHILE)
-        0: if (!<conditional>)
-                <continue>
-            else
-                <loop body / go state 1>
-        1: <loop body>
-    """
-
-    def append_end_statements(self, statements: list[Statement]):
-        """
-        While statements have a special case structure,
-        where their first case always contains an if statement
-        """
-        statements = assert_list_elements(statements, Statement)
-        assert isinstance(self.case_items[0], CaseItem)
-        assert isinstance(self.case_items[0].statements[0], IfElse)
-        self.case_items[0].statements[0].then_body = (
-            self.case_items[0].statements[0].then_body + statements
-        )
         return self
 
 

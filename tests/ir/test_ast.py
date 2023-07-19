@@ -1,11 +1,11 @@
-from python2verilog.ir.statements import (
+from python2verilog.irast.statements import (
     NonBlockingSubsitution,
     BlockingSubsitution,
     Declaration,
     Case,
     CaseItem,
 )
-from python2verilog.ir.expressions import Expression
+from python2verilog.irast.expressions import Expression
 
 
 import unittest

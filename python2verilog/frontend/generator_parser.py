@@ -5,7 +5,7 @@ import copy
 import warnings
 import ast as pyast
 
-from .. import ir as irast
+from .. import irast
 from ..utils.string import Lines, Indent
 
 
@@ -282,7 +282,7 @@ class GeneratorParser:
         if isinstance(stmt, pyast.While):
             return self.__parse_while(stmt, prefix=prefix)
         if isinstance(stmt, pyast.If):
-            return self.__parse_if(stmt, prefix=prefix)
+            return self.__parse_ifelse(stmt, prefix=prefix)
         if isinstance(stmt, pyast.AugAssign):
             assert isinstance(
                 stmt.target, pyast.Name
@@ -299,13 +299,13 @@ class GeneratorParser:
             "Error: unexpected statement type", type(stmt), pyast.dump(stmt)
         )
 
-    def __parse_if(self, stmt: pyast.If, prefix: str):
+    def __parse_ifelse(self, stmt: pyast.If, prefix: str):
         """
         If statement
         """
         assert isinstance(stmt, pyast.If)
         state_var = self.__add_global_var(
-            "0", f"{prefix}_IF{self.__create_unique_name()}"
+            "0", f"{prefix}_IFELSE{self.__create_unique_name()}"
         )
         conditional_item = irast.CaseItem(
             irast.Expression("0"),
@@ -346,7 +346,7 @@ class GeneratorParser:
             ],
         )
         return [
-            irast.Case(
+            irast.IfElseWrapper(
                 irast.Expression(f"{state_var}"),
                 [conditional_item, then_item, else_item],
             )
@@ -527,7 +527,7 @@ class GeneratorParser:
             ],
         )
         return [
-            irast.While(
+            irast.WhileWrapper(
                 irast.Expression(f"{state_var}"),
                 [conditional_item, then_item],
             )

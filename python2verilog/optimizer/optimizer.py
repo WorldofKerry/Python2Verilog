@@ -5,10 +5,10 @@ Optimizer algorithms that operate ontop of the intermediate representation
 import warnings
 import random
 
-from .. import ir
+from .. import irast
 
 
-def optimize(node: ir.Statement, _: ir.Context):
+def optimize(node: irast.Statement, _: irast.Context):
     """
     Optimizes node by mutating it
     """
@@ -16,20 +16,20 @@ def optimize(node: ir.Statement, _: ir.Context):
     return node
 
 
-def recurse(node: ir.Statement, func: callable):
+def recurse(node: irast.Statement, func: callable):
     """
     Warning: causes astroid-error on Pylint
     Recurses over types that have bodies
     """
     if not node:
         return
-    if isinstance(node, ir.Case):
+    if isinstance(node, irast.Case):
         for item in node.case_items:
             for stmt in item.statements:
                 func(stmt)
 
 
-def replace_single_case(node: ir.Statement):
+def replace_single_case(node: irast.Statement):
     """
     Replaces single-case case statements with a regular statement
     Excludes the root even if it may be a case statement
@@ -37,7 +37,7 @@ def replace_single_case(node: ir.Statement):
     Circle Lines is a good test case with its else block
     """
 
-    def check_caseitems(node: ir.CaseItem):
+    def check_caseitems(node: irast.CaseItem):
         """
         Checks if a case item contains a Case with one CaseItem,
         then replaces it with a statement
@@ -45,7 +45,7 @@ def replace_single_case(node: ir.Statement):
         """
         statements = []
         for stmt in node.statements:
-            if isinstance(stmt, ir.Case) and len(stmt.case_items) == 1:
+            if isinstance(stmt, irast.Case) and len(stmt.case_items) == 1:
                 statements += stmt.case_items[0].statements
             else:
                 statements.append(stmt)
@@ -53,7 +53,7 @@ def replace_single_case(node: ir.Statement):
 
     if not node:
         return node
-    if isinstance(node, ir.Case):
+    if isinstance(node, irast.Case):
         for item in node.case_items:
             item.statements = check_caseitems(item)
             for stmt in item.statements:
@@ -61,20 +61,16 @@ def replace_single_case(node: ir.Statement):
     return node
 
 
-def optimize_if(node: ir.Statement):
+def optimize_if(node: irast.Statement):
     """
     Avoids a clock cycle waste on an if statement,
     Appends the contents of the next block in the then/else blocks
     """
-    # if (
-    #     isinstance(node, ir.Case)
-    #     and len()
-    #     and isinstance(node.case_items[0].statements[0], ir.IfElse)
-    # ):
-    #     warnings.warn(f"Found IF wrapper {node.to_string()}")
-    # if isinstance(node, ir.Case):
-    #     for item in node.case_items:
-    #         for stmt in item.statements:
-    #             optimize_if(stmt)
-    # # recurse(node, optimize_if)
+    if isinstance(node, irast.IfElseWrapper):
+        warnings.warn(f"Found IF wrapper {node.to_string()}")
+    if isinstance(node, irast.Case):
+        for item in node.case_items:
+            for stmt in item.statements:
+                optimize_if(stmt)
+    # recurse(node, optimize_if)
     return node

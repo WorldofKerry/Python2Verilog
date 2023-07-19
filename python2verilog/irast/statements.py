@@ -3,9 +3,10 @@
 import warnings
 import inspect
 
+from python2verilog.irast.expressions import Expression
+
 from ..utils.string import Lines
 from ..utils.assertions import assert_list_elements
-from .expressions import Expression
 
 
 class Statement:
@@ -265,9 +266,10 @@ class IfElse(Statement):
         return self
 
 
-class While(Case):
+class WhileWrapper(Case):
     """
-    Abstract While wrapper
+    A while case statement
+
     Case (WHILE)
         0: if (!<conditional>)
                 <continue>
@@ -294,10 +296,21 @@ class IfElseWrapper(Case):
     """
     A if-else case statement
 
-    case (_IF)
-        0: IfElse (condition check)
-        1: <then body>
-        2: <else body>
-    endcase
+    case (<state_name>)
 
+        0: IfElse type (condition check)
+
+        1: <then body>
+
+        2: <else body>
+
+    endcase
     """
+
+    def __init__(
+        self, expression: Expression, case_items: list[CaseItem], *args, **kwargs
+    ):
+        assert len(case_items) == 3
+        assert len(case_items[0].statements) == 1
+        assert isinstance(case_items[0].statements[0], IfElse)
+        super().__init__(expression, case_items, *args, **kwargs)
