@@ -133,8 +133,13 @@ class GeneratorParser:
         Generates the yielded variables of the function
         """
         assert isinstance(node, pyast.Subscript)
-        assert isinstance(node.slice, pyast.Tuple)
-        return [f"{prefix}_out{str(i)}" for i in range(len(node.slice.elts))]
+        if isinstance(node.slice, pyast.Tuple):
+            return [f"{prefix}_out{str(i)}" for i in range(len(node.slice.elts))]
+        if isinstance(node.slice, pyast.Name):
+            return [f"{prefix}_out0"]
+        raise NotImplementedError(
+            f"Unexpected function return type hint {type(node.slice)}, {pyast.dump(node.slice)}"
+        )
 
     def __create_unique_name(self):
         """
@@ -355,13 +360,25 @@ class GeneratorParser:
 
         yield <value>;
         """
-        assert isinstance(node.value, pyast.Tuple)
-        return [
-            irast.NonBlockingSubsitution(
-                self._output_vars[idx], self.__parse_expression(elem).to_string()
+        if isinstance(node.value, pyast.Tuple):
+            output_vars = node.value.elts  # e.g. `yield (1, 2)`
+        elif isinstance(node.value, pyast.Constant):
+            output_vars = [node.value]  # e.g. `yield 1`
+        else:
+            raise NotImplementedError(
+                f"Unexpected yield {type(node.value)} {pyast.dump(node.value)}"
             )
-            for idx, elem in enumerate(node.value.elts)
-        ] + [irast.NonBlockingSubsitution("_valid", "1")]
+        try:
+            return [
+                irast.NonBlockingSubsitution(
+                    self._output_vars[idx], self.__parse_expression(elem).to_string()
+                )
+                for idx, elem in enumerate(output_vars)
+            ] + [irast.NonBlockingSubsitution("_valid", "1")]
+        except IndexError as e:
+            raise IndexError(
+                "yield return length differs from function return length type hint"
+            ) from e
 
     @staticmethod
     def __parse_binop(node: pyast.BinOp):

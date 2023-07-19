@@ -177,6 +177,8 @@ class Verilog:
         """
         Builds tree from IR
         """
+        assert isinstance(root, irast.Statement)
+        assert isinstance(context, irast.Context)
         root.append_end_statements([irast.NonBlockingSubsitution("_done", "1")])
         self.root = self.build_tree(root)
         self.context = context
