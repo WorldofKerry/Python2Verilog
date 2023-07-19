@@ -8,6 +8,19 @@ import ast
 import warnings
 from .frontend import GeneratorParser
 from .backend.verilog import Verilog
+from .optimizer import optimizer
+
+
+def convert(function: ast.FunctionDef, optimization_level: int):
+    """
+    Wrapper for common Python to Verilog conversion
+    """
+    ir_root, context = GeneratorParser(function).get_results()
+    if optimization_level > 0:
+        ir_root = optimizer.replace_single_case(ir_root)
+        ir_root = optimizer.optimize_if(ir_root)
+    return Verilog(ir_root, context)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -44,6 +57,14 @@ if __name__ == "__main__":
             Required to output testbench. E.g. `-c "[(1, 2, 3, 4)]"`',
         default="",
     )
+    parser.add_argument(
+        "-O",
+        "--optimization-level",
+        type=int,
+        help="Optimization level of output, between 0 and 3 inclusive, \
+            \nhigher means more optimized but may be more difficult to reason",
+        default=0,
+    )
 
     def get_default_tb_filename(stem: str):
         """
@@ -68,10 +89,7 @@ if __name__ == "__main__":
         exec(python, None, _locals)  # grab's exec's populated scoped variables
 
         tree = ast.parse(python)
-        function = tree.body[0]
-        ir = GeneratorParser(function)
-        verilog = Verilog()
-        verilog.from_ir(ir.get_root(), ir.get_context())
+        verilog = convert(tree.body[0], args.optimization_level)
 
         with open(
             os.path.abspath(args.output), mode="w+", encoding="utf8"

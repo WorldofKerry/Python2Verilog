@@ -34,6 +34,7 @@ def foo(x) -> tuple[int]:
         tree = ast.parse(python)
         function = tree.body[0]
         ir, context = GeneratorParser(function).get_results()
+        ir = replace_single_case(ir)
         ir = optimize_if(ir)
         verilog = Verilog().from_ir(ir, context)
         # warnings.warn(verilog.get_module().to_string())

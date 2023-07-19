@@ -30,9 +30,8 @@ class Statement:
         """
         return self.to_lines().to_string()
 
-    # def append_end_statements(self, statements: list):
-    #     warnings.warn("append_end_statements on base class")
-    #     self.literal += str(statements)
+    def __repr__(self):
+        return self.to_string()
 
 
 def is_valid_append_end_statements(stmt: Statement, statements: list[Statement]):

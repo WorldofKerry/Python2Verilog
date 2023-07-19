@@ -33,8 +33,6 @@ def replace_single_case(node: irast.Statement):
     """
     Replaces single-case case statements with a regular statement
     Excludes the root even if it may be a case statement
-
-    Circle Lines is a good test case with its else block
     """
 
     def check_caseitems(node: irast.CaseItem):
@@ -42,6 +40,7 @@ def replace_single_case(node: irast.Statement):
         Checks if a case item contains a Case with one CaseItem,
         then replaces it with a statement
         Note: currently doesnt remove no-longer-needed state variables
+        TODO: fix above note
         """
         statements = []
         for stmt in node.statements:
@@ -67,7 +66,8 @@ def optimize_if(node: irast.Statement):
     Appends the contents of the next block in the then/else blocks
     """
     if isinstance(node, irast.IfElseWrapper):
-        warnings.warn(f"Found IF wrapper {node.to_string()}")
+        node.case_items[0].statements[0].then_body += node.case_items[1].statements
+        node.case_items[0].statements[0].else_body += node.case_items[2].statements
     if isinstance(node, irast.Case):
         for item in node.case_items:
             for stmt in item.statements:
