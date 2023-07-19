@@ -16,6 +16,19 @@ def optimize(node: ir.Statement, _: ir.Context):
     return node
 
 
+def recurse(node: ir.Statement, func: callable):
+    """
+    Warning: causes astroid-error on Pylint
+    Recurses over types that have bodies
+    """
+    if not node:
+        return
+    if isinstance(node, ir.Case):
+        for item in node.case_items:
+            for stmt in item.statements:
+                func(stmt)
+
+
 def replace_single_case(node: ir.Statement):
     """
     Replaces single-case case statements with a regular statement
@@ -45,4 +58,23 @@ def replace_single_case(node: ir.Statement):
             item.statements = check_caseitems(item)
             for stmt in item.statements:
                 replace_single_case(stmt)
+    return node
+
+
+def optimize_if(node: ir.Statement):
+    """
+    Avoids a clock cycle waste on an if statement,
+    Appends the contents of the next block in the then/else blocks
+    """
+    # if (
+    #     isinstance(node, ir.Case)
+    #     and len()
+    #     and isinstance(node.case_items[0].statements[0], ir.IfElse)
+    # ):
+    #     warnings.warn(f"Found IF wrapper {node.to_string()}")
+    # if isinstance(node, ir.Case):
+    #     for item in node.case_items:
+    #         for stmt in item.statements:
+    #             optimize_if(stmt)
+    # # recurse(node, optimize_if)
     return node

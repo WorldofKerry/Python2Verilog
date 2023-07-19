@@ -288,3 +288,16 @@ class While(Case):
             self.case_items[0].statements[0].then_body + statements
         )
         return self
+
+
+class IfElseWrapper(Case):
+    """
+    A if-else case statement
+
+    case (_IF)
+        0: IfElse (condition check)
+        1: <then body>
+        2: <else body>
+    endcase
+
+    """

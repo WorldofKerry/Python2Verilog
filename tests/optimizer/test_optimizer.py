@@ -2,7 +2,7 @@ import unittest
 import ast
 import warnings
 
-from python2verilog.optimizer import replace_single_case
+from python2verilog.optimizer import *
 from python2verilog.frontend import GeneratorParser
 from python2verilog.backend import Verilog
 
@@ -21,4 +21,19 @@ def foo(x) -> tuple[int]:
         ir, context = GeneratorParser(function).get_results()
         ir = replace_single_case(ir)
         verilog = Verilog().from_ir(ir, context)
-        warnings.warn(verilog.get_module().to_string())
+        # warnings.warn(verilog.get_module().to_string())
+
+    def test_optimize_if(self):
+        python = """
+def foo(x) -> tuple[int]:
+    if x > 0:
+        yield 1
+    else:
+        yield 1
+"""
+        tree = ast.parse(python)
+        function = tree.body[0]
+        ir, context = GeneratorParser(function).get_results()
+        ir = optimize_if(ir)
+        verilog = Verilog().from_ir(ir, context)
+        # warnings.warn(verilog.get_module().to_string())
