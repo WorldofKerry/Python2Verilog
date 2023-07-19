@@ -5,7 +5,7 @@ To run the basic conversion as a script
 import argparse
 import os
 import ast
-from .frontend import Generator2Ast
+from .frontend import GeneratorParser
 from .backend.verilog import Verilog
 
 if __name__ == "__main__":
@@ -62,10 +62,9 @@ if __name__ == "__main__":
 
         tree = ast.parse(python)
         function = tree.body[0]
-        ir_generator = Generator2Ast(function)
-        output = ir_generator.parse_statements(function.body, "")
+        ir = GeneratorParser(function)
         verilog = Verilog()
-        verilog.from_ir(output, ir_generator.global_vars)
+        verilog.from_ir(ir.get_root(), ir.get_global_vars())
         verilog.setup_from_python(function)
 
         with open(

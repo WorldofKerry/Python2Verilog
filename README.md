@@ -95,20 +95,16 @@ import ast
 
 func = ast.parse(code).body[0]
 
-ir = p2v.from_python_get_ir(func.body) # returns an ir node for the root of the body
+ir = p2v.from_python_get_ir(func.body)
 
 # Optimization passes
 ir = p2v.optimizations.replace_single_item_cases(ir)
 ir = p2v.optimizations.remove_nesting(ir)
 ir = p2v.optimizations.combine_statements(ir)
-for i in dir(p2v.optimizations): # Do one pass of every optimization
-  item = getattr(pv2.optimizations, i)
-    if callable(item):
-      ir = item(ir)
 
 verilog = p2v.Verilog()
-verilog.from_python_do_setup(func) # module I/O is dependent on Python
-verilog.from_ir_fill_body(ir) # fills the body
+verilog.from_python_do_setup(ir.get_context()) # module I/O is dependent on Python
+verilog.from_ir_fill_body(ir.get_root()) # fills the body
 
 # whether has valid or done signal,
 # whether initialization is always happening or only on start,

@@ -139,10 +139,9 @@ class Verilog:
     def __init__(self):
         # TODO: throw errors if user tries to generate verilog beforeconfig
         self.root = None
-        self.global_vars = None
         self.module = None
         self.always = None
-        self.python_func = None
+        self.context = None
 
     def build_tree(self, node: irast.Statement):
         """
@@ -162,15 +161,25 @@ class Verilog:
             return CaseItem(self.build_tree(node.condition), case_items)
         if isinstance(node, irast.Expression):
             return Expression(node.to_string())
-        return Statement(node.to_string().replace("\n", " "))
+        if isinstance(node, irast.IfElse):
+            then_body = []
+            for stmt in node.then_body:
+                then_body.append(self.build_tree(stmt))
+            else_body = []
+            for stmt in node.else_body:
+                else_body.append(self.build_tree(stmt))
+            return IfElse(self.build_tree(node.condition), then_body, else_body)
+        if isinstance(node, irast.Statement):
+            return Statement(node.to_string().replace("\n", " "))
+        raise NotImplementedError(f"Unexpected type {type(node)}")
 
-    def from_ir(self, root: irast.Statement, global_vars: dict[str, str]):
+    def from_ir(self, root: irast.Statement, context: irast.Context):
         """
         Builds tree from IR
         """
         root.append_end_statements([irast.NonBlockingSubsitution("_done", "1")])
         self.root = self.build_tree(root)
-        self.global_vars = global_vars
+        self.context = context
         return self
 
     def get_init(self, global_vars: dict[str, str]):
@@ -196,7 +205,10 @@ class Verilog:
         """
         Get Verilog module
         """
-        decls = [Declaration(v, is_reg=True, is_signed=True) for v in self.global_vars]
+        decls = [
+            Declaration(v, is_reg=True, is_signed=True)
+            for v in self.context.global_vars
+        ]
         self.module.body = decls + self.module.body
         return self.module.to_lines()
 
@@ -204,132 +216,45 @@ class Verilog:
         """
         Setups up module, always block, declarations, etc from Python AST
         """
-        assert self.global_vars is not None, "run from_ir first to setup global_vars"
+        assert (
+            self.context.global_vars is not None
+        ), "run from_ir first to setup global_vars"
         assert isinstance(func, ast.FunctionDef)
         self.always = PosedgeSyncAlways(
-            Expression("_clock"), valid="_valid", body=[self.get_init(self.global_vars)]
+            Expression("_clock"),
+            valid="_valid",
+            body=[self.get_init(self.context.global_vars)],
         )
         self.module = self.create_module_from_python(func)
-        self.python_func = func
         return self
-
-    def get_testbench(self, test_case: tuple):
-        """
-        Creates a test bench for a test case
-        TODO: convert output to lines
-        """
-        func = self.python_func
-        func_name = func.name
-
-        text = f"module {func_name}"
-
-        text += """_tb;
-    // Inputs
-    reg _clock;
-    reg _start;
-    """  # TODO: use the NAMED_FUNCTION constant instead of generator
-        for idx, val in enumerate(func.args.args):
-            text += f"  reg signed [31:0] {val.arg};\n"
-        text += "\n  // Outputs\n"
-        for idx in range(len(func.returns.slice.elts)):
-            text += f"  wire signed [31:0] _out{idx};\n"
-
-        text += """
-    wire _done;
-    wire _valid;
-
-    // Instantiate the module under test
-    """
-        text += func_name
-
-        text += """ dut (
-    ._clock(_clock),
-    ._start(_start),
-    """
-        for idx, val in enumerate(func.args.args):
-            text += f"    .{val.arg}({val.arg}),\n"
-        for idx in range(len(func.returns.slice.elts)):
-            text += f"    ._out{idx}(_out{idx}),\n"
-        text += """
-    ._done(_done),
-    ._valid(_valid)
-    );
-
-    // Clock generation
-    always #5 _clock = !_clock;
-
-    // Stimulus
-    initial begin
-    // Initialize inputs
-    _start = 0;
-    """
-
-        for idx, val in enumerate(func.args.args):
-            text += f"    {val.arg} = {test_case[idx]};\n"
-        text += """
-    _clock = 0;
-
-    // Wait for a few clock cycles
-    #10;
-
-    // Start the drawing process
-    @(posedge _clock);
-    _start = 1;
-    @(posedge _clock);
-
-    // Wait for the drawing to complete
-    while (!_done) begin
-    @(posedge _clock);
-    _start = 0;
-    // Display the outputs for every cycle after start
-    $display(\"%0d, """  # TODO: use NAMED_FUNCTION instead of "generator dut"
-
-        text += "%0d, " * (len(func.returns.slice.elts) - 1)
-        text += """%0d\", _valid"""
-
-        for idx in range(len(func.returns.slice.elts)):
-            text += f", _out{idx}"
-
-        text += ");\n"
-
-        text += """
-    end
-
-    // Finish simulation
-    $finish;
-    end
-
-    endmodule
-    """
-        return text
 
     def get_testbench_improved(self, test_cases: list[tuple[str]]):
         """
         Creates testbench with multiple test cases using the _done signal
         """
 
-        def make_display_stmt(func: ast.FunctionDef):
+        def make_display_stmt():
+            """
+            Creates a display statement for valid + outputs
+
+            $display("%0d, ...", _valid, ...);
+            """
             string = '$display("%0d, '
-            string += "%0d, " * (len(func.returns.slice.elts) - 1)
+            string += "%0d, " * (len(self.context.output_vars) - 1)
             string += '%0d", _valid'
-            for i in range(len(func.returns.slice.elts)):
-                string += f", _out{i}"
+            for var in self.context.output_vars:
+                string += f", {var}"
             string += ");"
             return Statement(literal=string)
 
         setups = []
         setups.append(Declaration("_clock", size=1, is_reg=True))
         setups.append(Declaration("_start", size=1, is_reg=True))
-
-        func = self.python_func
-
         setups += [
-            Declaration(val.arg, is_signed=True, is_reg=True) for val in func.args.args
+            Declaration(var, is_signed=True, is_reg=True)
+            for var in self.context.input_vars
         ]
-        setups += [
-            Declaration(f"_out{idx}", is_signed=True)
-            for idx in range(len(func.returns.slice.elts))
-        ]
+        setups += [Declaration(var, is_signed=True) for var in self.context.output_vars]
 
         setups.append(Declaration("_done", size=1))
         setups.append(Declaration("_valid", size=1))
@@ -337,7 +262,7 @@ class Verilog:
         ports = {
             decl.name: decl.name for decl in setups
         }  # Caution: expects setups to only contain declarations
-        setups.append(Instantiation(func.name, "DUT", ports))
+        setups.append(Instantiation(self.context.name, "DUT", ports))
 
         setups.append(Statement(literal="always #5 _clock = !_clock;"))
 
@@ -349,9 +274,9 @@ class Verilog:
 
         for i, test_case in enumerate(test_cases):
             # setup for new test case
-            initial_body.append(Statement(comment=f"Test case {i}"))
-            for i, var in enumerate(func.args.args):
-                initial_body.append(BlockingSubsitution(var.arg, str(test_case[i])))
+            initial_body.append(Statement(comment=f"Test case {i}: {str(test_case)}"))
+            for i, var in enumerate(self.context.input_vars):
+                initial_body.append(BlockingSubsitution(var, str(test_case[i])))
             initial_body.append(BlockingSubsitution("_start", "1"))
 
             initial_body.append(AtNegedgeStatement(Expression("_clock")))
@@ -359,11 +284,11 @@ class Verilog:
             # wait for done signal
             while_body = []
             while_body.append(BlockingSubsitution("_start", "0"))
-            while_body.append(make_display_stmt(func))
+            while_body.append(make_display_stmt())
             while_body.append(AtNegedgeStatement(Expression("_clock")))
 
             initial_body.append(While(condition=Expression("!_done"), body=while_body))
-            initial_body.append(make_display_stmt(func))
+            initial_body.append(make_display_stmt())
             initial_body.append(Statement())
 
         initial_body.append(Statement(literal="$finish;"))
@@ -371,7 +296,7 @@ class Verilog:
         initial_loop = Initial(body=initial_body)
 
         module = Module(
-            f"{func.name}_tb",
+            f"{self.context.name}_tb",
             [],
             [],
             body=setups + [initial_loop],

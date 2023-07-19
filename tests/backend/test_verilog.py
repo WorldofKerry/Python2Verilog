@@ -5,7 +5,7 @@ from python2verilog.backend.verilog import (
     Instantiation,
     Expression,
 )
-from python2verilog.frontend import Generator2Ast
+from python2verilog.frontend import GeneratorParser
 import unittest
 import warnings
 import ast
@@ -80,11 +80,9 @@ def circle_lines(s_x, s_y, height) -> tuple[int, int]:
 """
         tree = ast.parse(code)
         function = tree.body[0]
-        ir_generator = Generator2Ast(function)
-        output = ir_generator.parse_statements(function.body, "")
-        # warnings.warn(output.to_lines())
+        ir = GeneratorParser(function)
         verilog = Verilog()
-        verilog.from_ir(output, ir_generator.global_vars)
+        verilog.from_ir(ir.get_root(), ir.get_context())
         verilog.setup_from_python(function)
         # warnings.warn(verilog.get_module())
         # warnings.warn(

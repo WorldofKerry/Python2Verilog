@@ -37,8 +37,7 @@ jobs:
         python3 -m pytest --verbose
     - name: Update Stats
       run: |
-        python3 tests/update_statistics.py tests/integration/data/integration/ && \
-        python3 tests/update_statistics.py tests/frontend/data/generator/
+        python3 tests/update_statistics.py tests/integration/data/integration/
     - uses: actions/upload-artifact@v3
       with:
         name: tests-data

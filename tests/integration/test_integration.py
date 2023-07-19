@@ -7,12 +7,15 @@ import subprocess
 import csv
 
 from python2verilog.backend.verilog import Verilog
-from python2verilog.frontend import Generator2Ast
+from python2verilog.frontend import GeneratorParser
 from python2verilog.utils.visualization import make_visual
 
 
 class TestMain(unittest.TestCase):
     def run_test(self, function_name, test_cases, dir="data/integration/"):
+        assert len(test_cases) > 0, "Please include at least one test case"
+        assert len(test_cases[0]) > 0, "Please have data in the test case"
+
         ABS_DIR = os.path.join(
             os.path.dirname(os.path.abspath(__file__)), dir, function_name
         )
@@ -62,11 +65,9 @@ class TestMain(unittest.TestCase):
 
             with open(FILES_IN_ABS_DIR["module"], mode="w") as module_file:
                 function = tree.body[0]
-                ir_generator = Generator2Ast(function)
-                output = ir_generator.parse_statements(function.body, "")
-                # warnings.warn(output.to_lines())
+                ir_generator = GeneratorParser(function)
                 verilog = Verilog()
-                verilog.from_ir(output, ir_generator.global_vars)
+                verilog.from_ir(ir_generator.get_root(), ir_generator.get_context())
                 verilog.setup_from_python(function)
                 module_file.write(verilog.get_module().to_string())
 
@@ -134,3 +135,9 @@ class TestMain(unittest.TestCase):
 
     def test_happy_face(self):
         self.run_test("happy_face", [(50, 50, 40), (32, 44, 13)])
+
+    def test_rectangle_filled(self):
+        self.run_test("rectangle_filled", [(32, 84, 12, 15)])
+
+    def test_rectangle_lines(self):
+        self.run_test("rectangle_lines", [(32, 84, 12, 15)])
