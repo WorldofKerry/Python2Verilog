@@ -5,6 +5,7 @@ To run the basic conversion as a script
 import argparse
 import os
 import ast
+import warnings
 from .frontend import GeneratorParser
 from .backend.verilog import Verilog
 
@@ -27,7 +28,7 @@ if __name__ == "__main__":
         default="",
     )
 
-    parser.add_argument(
+    TESTBENCH_ARG = parser.add_argument(
         "-t",
         "--testbench",
         type=str,
@@ -44,6 +45,12 @@ if __name__ == "__main__":
         default="",
     )
 
+    def get_default_tb_filename(stem: str):
+        """
+        Gets default testbench filename
+        """
+        return stem + "_tb.sv"
+
     args = parser.parse_args()
     input_file_path = parser.parse_args().input_file
     input_file_stem = os.path.splitext(input_file_path)[0]
@@ -51,7 +58,7 @@ if __name__ == "__main__":
         args.output = input_file_stem + ".sv"
 
     if args.testbench == "":
-        args.testbench = input_file_stem + "_tb.sv"
+        args.testbench = get_default_tb_filename(input_file_stem)
 
     with open(
         os.path.abspath(input_file_path), mode="r", encoding="utf8"
@@ -81,3 +88,11 @@ if __name__ == "__main__":
                     .to_lines()
                     .to_string()
                 )
+        elif args.test_cases == "" and args.testbench != get_default_tb_filename(
+            input_file_stem
+        ):
+            raise argparse.ArgumentError(
+                TESTBENCH_ARG,
+                f"testbench path provided by no test cases provided \
+                    {args.test_cases}, {args.testbench}",
+            )
