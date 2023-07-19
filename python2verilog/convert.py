@@ -83,7 +83,7 @@ if __name__ == "__main__":
                 os.path.abspath(args.testbench), mode="w+", encoding="utf8"
             ) as tb_file:
                 tb_file.write(
-                    verilog.get_testbench_improved(ast.literal_eval(args.test_cases))
+                    verilog.get_testbench(ast.literal_eval(args.test_cases))
                     .to_lines()
                     .to_string()
                 )

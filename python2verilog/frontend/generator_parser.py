@@ -155,12 +155,6 @@ class GeneratorParser:
         self._global_vars[name] = initial_value
         return name
 
-    def get_global_vars(self):
-        """
-        Gets a copy of the global vars
-        """
-        return copy.deepcopy(self._global_vars)
-
     def get_context(self):
         """
         Gets the context of the Python function
@@ -171,6 +165,12 @@ class GeneratorParser:
             input_vars=[var.arg for var in self._python_func.args.args],
             output_vars=self._output_vars,
         )
+
+    def get_results(self):
+        """
+        Gets root of IR and Context
+        """
+        return (self.get_root(), self.get_context())
 
     @staticmethod
     def __stringify_always_block():

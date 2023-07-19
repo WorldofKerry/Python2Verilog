@@ -17,5 +17,6 @@ def foo(x) -> tuple[int]:
 """
         tree = ast.parse(python)
         function = tree.body[0]
-        ir = GeneratorParser(function)
-        verilog = Verilog().from_ir(ir.get_root(), ir.get_context())
+        ir, context = GeneratorParser(function).get_results()
+        ir = replace_single_case(ir)
+        verilog = Verilog().from_ir(ir, context)
