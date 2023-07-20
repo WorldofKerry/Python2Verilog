@@ -37,8 +37,8 @@ repos:
   #       pass_filenames: false
   - repo: local
     hooks:
-      - id: mypy-id
-        name: mypy-name
+      - id: mypy
+        name: mypy
         entry: bash -c "python3 -m mypy python2verilog/"
         language: system
         types: [python]
