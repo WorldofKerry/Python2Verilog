@@ -1,4 +1,4 @@
-def fib(n) -> tuple[int]:
+def fib(n: int) -> tuple[int]:
     a = 0
     b = 1
     c = 0

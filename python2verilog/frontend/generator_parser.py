@@ -27,6 +27,7 @@ class GeneratorParser:
 
         assert python_func.returns is not None, "Write a return type-hint for function"
         self._output_vars = self.__generate_output_vars(python_func.returns, "")
+        self._input_vars = [var.arg for var in self._python_func.args.args]
         self._root = self.__parse_statements(list(python_func.body), "")
 
     def __str__(self):
@@ -167,8 +168,8 @@ class GeneratorParser:
         return ir.Context(
             name=self._name,
             global_vars=copy.deepcopy(self._global_vars),
-            input_vars=[var.arg for var in self._python_func.args.args],
-            output_vars=self._output_vars,
+            input_vars=copy.deepcopy(self._input_vars),
+            output_vars=copy.deepcopy(self._output_vars),
         )
 
     def get_results(self):
@@ -255,9 +256,22 @@ class GeneratorParser:
         """
         assert len(nodes) == 1
         node = nodes[0]
-        assert isinstance(node, pyast.Name)
-        if node.id not in self._global_vars:
-            self.__add_global_var(str(0), node.id)
+        if isinstance(node, pyast.Subscript):
+            assert isinstance(node.value, pyast.Name)
+            if node.value.id not in set(
+                [*self._global_vars, *self._output_vars, *self._input_vars]
+            ):
+                warnings.warn(
+                    str(
+                        set([*self._global_vars, *self._output_vars, *self._input_vars])
+                    )
+                )
+                self.__add_global_var(str(0), node.value.id)
+        elif isinstance(node, pyast.Name):
+            if node.id not in self._global_vars:
+                self.__add_global_var(str(0), node.id)
+        else:
+            raise TypeError(f"Unsupported lvalue type {type(node)} {pyast.dump(node)}")
         return self.__parse_expression(node)
 
     def __parse_assign(self, node: pyast.Assign):
@@ -482,7 +496,8 @@ class GeneratorParser:
         Note: built from right to left, e.g. [z] -> [y][z] -> [x][y][z] -> matrix[x][y][z]
         """
         return ir.Expression(
-            f"{self.__parse_expression(node.value)}[{self.__parse_expression(node.slice)}]"
+            f"{self.__parse_expression(node.value).to_string()}\
+                [{self.__parse_expression(node.slice).to_string()}]"
         )
 
     def __parse_compare(self, node: pyast.Compare):

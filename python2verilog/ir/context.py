@@ -19,3 +19,9 @@ class Context:
         self.input_vars = input_vars
         self.output_vars = output_vars
         # TODO: add strings for name of valid, done, clock, etc.
+
+    def is_declared(self, name: str):
+        """
+        Checks if a variable has been already declared or not
+        """
+        return name in set([*self.global_vars, *self.input_vars, *self.output_vars])

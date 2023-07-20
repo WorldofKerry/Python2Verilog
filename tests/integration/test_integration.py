@@ -150,3 +150,9 @@ class TestMain(unittest.TestCase):
 
     def test_fib(self):
         self.run_test("fib", [(30,)])
+
+    # def test_tree_bfs(self):
+    #     binary_tree = [1, 7, 8, 2, 4, 6, 8, 6, 9]
+    #     self.run_test(
+    #         "tree_bfs", [(binary_tree, [420] * len(binary_tree), len(binary_tree))]
+    #     )

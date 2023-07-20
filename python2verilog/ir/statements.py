@@ -32,8 +32,8 @@ class Statement:
         """
         return self.to_lines().to_string()
 
-    def __repr__(self):
-        return self.to_string()
+    # def __repr__(self):
+    #     return self.to_string()
 
     def append_end_statements(self, _: list[Statement]):
         """
