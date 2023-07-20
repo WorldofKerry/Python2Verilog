@@ -1,7 +1,9 @@
 """An Intermediate Representation for HDL based on Verilog"""
 
+from __future__ import annotations
 import warnings
 import inspect
+from typing import Optional
 
 from python2verilog.irast.expressions import Expression
 
@@ -15,7 +17,7 @@ class Statement:
     If used directly, it is treated as a string literal
     """
 
-    def __init__(self, literal: str = None):
+    def __init__(self, literal: Optional[str] = None):
         self.literal = literal
 
     def to_lines(self):
@@ -32,6 +34,12 @@ class Statement:
 
     def __repr__(self):
         return self.to_string()
+
+    def append_end_statements(self, _: list[Statement]):
+        """
+        Abstract
+        """
+        raise NotImplementedError("cannot append to statement")
 
 
 def is_valid_append_end_statements(stmt: Statement, statements: list[Statement]):
@@ -52,25 +60,21 @@ class Subsitution(Statement):
     <lvalue> <blocking or nonblocking> <rvalue>
     """
 
-    def __init__(self, lvalue: str, rvalue: str, *args, **kwargs):
+    def __init__(self, lvalue: str, rvalue: str, oper: str, *args, **kwargs):
         assert isinstance(rvalue, str)  # TODO: should eventually take an expression
         assert isinstance(lvalue, str)
         self.lvalue = lvalue
         self.rvalue = rvalue
-        self.type = None
-        self.appended = []
+        self.oper = oper
         super().__init__(*args, **kwargs)
 
     def to_lines(self):
         """
         Converts to Verilog
         """
-        assert isinstance(self.type, str), "Subclasses need to set self.type"
-        itself = f"{self.lvalue} {self.type} {self.rvalue};"
+        assert isinstance(self.oper, str), "Subclasses need to set self.type"
+        itself = f"{self.lvalue} {self.oper} {self.rvalue};"
         lines = Lines(itself)
-        if self.appended:
-            for stmt in self.appended:
-                lines.concat(stmt.to_lines())
         return lines
 
 
@@ -80,8 +84,7 @@ class NonBlockingSubsitution(Subsitution):
     """
 
     def __init__(self, lvalue: str, rvalue: str, *args, **kwargs):
-        super().__init__(lvalue, rvalue, *args, **kwargs)
-        self.type = "<="
+        super().__init__(lvalue, rvalue, "<=", *args, **kwargs)
 
 
 class BlockingSubsitution(Subsitution):
@@ -90,8 +93,7 @@ class BlockingSubsitution(Subsitution):
     """
 
     def __init__(self, lvalue: str, rvalue: str, *args, **kwargs):
-        super().__init__(lvalue, rvalue, *args, *kwargs)
-        self.type = "="
+        super().__init__(lvalue, rvalue, "=", *args, *kwargs)
 
 
 class Declaration(Statement):

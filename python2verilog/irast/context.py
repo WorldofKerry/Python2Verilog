@@ -10,7 +10,7 @@ class Context:
     def __init__(
         self,
         name: str,
-        global_vars: list[str],
+        global_vars: dict[str, str],
         input_vars: list[str],
         output_vars: list[str],
     ):

@@ -2,6 +2,7 @@
 Optimizer algorithms that operate ontop of the intermediate representation
 """
 
+import typing
 import warnings
 import random
 
@@ -16,7 +17,7 @@ def optimize(node: irast.Statement, _: irast.Context):
     return node
 
 
-def recurse(node: irast.Statement, func: callable):
+def recurse(node: irast.Statement, func: typing.Callable):
     """
     Warning: causes astroid-error on Pylint
     Recurses over types that have bodies
@@ -66,6 +67,7 @@ def optimize_if(node: irast.Statement):
     Appends the contents of the next block in the then/else blocks
     """
     if isinstance(node, irast.IfElseWrapper):
+        assert isinstance(node.case_items[0].statements[0], irast.IfElse)
         node.case_items[0].statements[0].then_body += node.case_items[1].statements
         node.case_items[0].statements[0].else_body += node.case_items[2].statements
     if isinstance(node, irast.Case):

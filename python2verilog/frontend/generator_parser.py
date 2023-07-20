@@ -4,6 +4,7 @@ from __future__ import annotations
 import copy
 import warnings
 import ast as pyast
+from typing import Optional
 
 from .. import irast
 from ..utils.string import Lines, Indent
@@ -24,8 +25,9 @@ class GeneratorParser:
         self._global_vars: dict[str, str] = {}
         self._python_func = python_func
 
+        assert python_func.returns is not None, "Write a return type-hint for function"
         self._output_vars = self.__generate_output_vars(python_func.returns, "")
-        self._root = self.__parse_statements(python_func.body, "")
+        self._root = self.__parse_statements(list(python_func.body), "")
 
     def __str__(self):
         return self.generate_verilog().to_string()
@@ -42,7 +44,7 @@ class GeneratorParser:
         """
         stmt_lines = (
             self.__parse_statements(
-                self._python_func.body,
+                list(self._python_func.body),
                 prefix="",
                 end_stmts=[irast.NonBlockingSubsitution("_done", "1")],
             ).to_lines(),
@@ -71,7 +73,7 @@ class GeneratorParser:
         self,
         stmts: list[pyast.AST],
         prefix: str,
-        end_stmts: list[irast.Statement] = None,
+        end_stmts: Optional[list[irast.Statement]] = None,
         reset_to_zero: bool = False,
     ):
         """
@@ -83,7 +85,7 @@ class GeneratorParser:
         self,
         stmts: list[pyast.AST],
         prefix: str,
-        end_stmts: list[irast.Statement] = None,
+        end_stmts: Optional[list[irast.Statement]] = None,
         reset_to_zero: bool = False,
     ):
         """
@@ -96,7 +98,8 @@ class GeneratorParser:
         }
         """
         if not end_stmts:
-            end_stmts = Lines()
+            end_stmts = []
+        assert end_stmts is not None
         state_var = self.__add_global_var(
             "0", f"{prefix}_STATE{self.__create_unique_name()}"
         )
@@ -116,13 +119,11 @@ class GeneratorParser:
                 )
             cases.append(case_item)  # TODO: cases can have multiple statements
             index += 1
-        # end_stmts = [vast.Statement(stmt) for stmt in end_stmts]
-        for stmt in end_stmts:
-            assert isinstance(stmt, irast.Statement)
         if reset_to_zero:
             end_stmts.append(irast.NonBlockingSubsitution(state_var, "0"))
 
         the_case = irast.Case(irast.Expression(state_var), cases)
+        assert end_stmts is not None
         the_case.append_end_statements(end_stmts)
 
         return irast.Case(irast.Expression(state_var), cases)
@@ -253,7 +254,7 @@ class GeneratorParser:
         node = nodes[0]
         assert isinstance(node, pyast.Name)
         if node.id not in self._global_vars:
-            self.__add_global_var(0, node.id)
+            self.__add_global_var("0", node.id)
         buffer += self.__parse_expression(node).to_string()
         return buffer
 
@@ -262,7 +263,7 @@ class GeneratorParser:
         <target0, target1, ...> = <value>;
         """
         assign = irast.NonBlockingSubsitution(
-            self.__parse_targets(node.targets),
+            self.__parse_targets(list(node.targets)),
             self.__parse_expression(node.value).to_string(),
         )
         return [assign]
@@ -321,7 +322,7 @@ class GeneratorParser:
             irast.Expression("1"),
             [
                 self.__parse_statements(
-                    stmt.body,
+                    list(stmt.body),
                     f"{state_var}",
                     end_stmts=[
                         irast.NonBlockingSubsitution(f"{prefix}", f"{prefix} + 1"),
@@ -335,7 +336,7 @@ class GeneratorParser:
             irast.Expression("2"),
             [
                 self.__parse_statements(
-                    stmt.orelse,
+                    list(stmt.orelse),
                     f"{state_var}",
                     end_stmts=[
                         irast.NonBlockingSubsitution(f"{prefix}", f"{prefix} + 1"),
@@ -366,7 +367,7 @@ class GeneratorParser:
             output_vars = [node.value]  # e.g. `yield 1`
         else:
             raise NotImplementedError(
-                f"Unexpected yield {type(node.value)} {pyast.dump(node.value)}"
+                f"Unexpected yield {type(node.value)} {pyast.dump(node)}"
             )
         try:
             return [
@@ -444,7 +445,7 @@ class GeneratorParser:
                     f"({a_var} > 0) ? ({a_var} / {b_var}) : ({a_var} / {b_var} - 1)"
                 )
 
-            warnings.warn(pyast.dump(expr))
+            # warnings.warn(pyast.dump(expr))
             return irast.Expression(
                 "("
                 + self.__parse_expression(expr.left).to_string()
@@ -530,7 +531,7 @@ class GeneratorParser:
             irast.Expression("1"),
             [
                 self.__parse_statements(
-                    stmt.body,
+                    list(stmt.body),
                     f"{state_var}",
                     end_stmts=[irast.NonBlockingSubsitution(f"{state_var}", "0")],
                     reset_to_zero=True,

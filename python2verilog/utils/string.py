@@ -88,7 +88,7 @@ class Lines:
         return self
 
     @staticmethod
-    def nestify(buffers: list[tuple[Lines][Lines]], indent: int = 0):
+    def nestify(buffers: list[tuple[Lines, Lines]], indent: int = 0):
         """
         pair[0][0]
             pair[1][0]
