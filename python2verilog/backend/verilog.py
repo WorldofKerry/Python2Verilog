@@ -7,7 +7,7 @@ from typing import Optional
 
 from ..utils.string import Lines, Indent
 from ..utils.assertions import assert_list_elements
-from .. import irast
+from .. import ir
 
 
 class Expression:
@@ -18,6 +18,7 @@ class Expression:
     """
 
     def __init__(self, expr: str):
+        assert isinstance(expr, str)
         self.expr = expr
 
     def to_string(self):
@@ -129,13 +130,13 @@ class Verilog:
     """
 
     @staticmethod
-    def __create_module_from_python(root: Statement, context: irast.Context):
+    def __create_module_from_python(root: Statement, context: ir.Context):
         """
         Creates a module wrapper from the context
         e.g. the I/O (from Python), clock, valid and done signals
         """
         assert isinstance(root, Statement)
-        assert isinstance(context, irast.Context)
+        assert isinstance(context, ir.Context)
         inputs = []
         for var in context.input_vars:
             inputs.append(var)
@@ -152,26 +153,26 @@ class Verilog:
 
     def __init__(
         self,
-        root: Optional[irast.Statement] = None,
-        context: Optional[irast.Context] = None,
+        root: Optional[ir.Statement] = None,
+        context: Optional[ir.Context] = None,
     ):
         # TODO: throw errors if user tries to generate verilog beforeconfig
         self.module: Optional[Module] = None
-        self.context: Optional[irast.Context] = None
+        self.context: Optional[ir.Context] = None
         if root is not None and context is not None:
             self.from_ir(root, context)
 
     @staticmethod
-    def build_tree_stmt(node: irast.Statement) -> Statement:
+    def build_tree_stmt(node: ir.Statement) -> Statement:
         """
         Builds the Verilog AST
         """
-        assert isinstance(node, (irast.Statement, irast.CaseItem))
+        assert isinstance(node, (ir.Statement, ir.CaseItem))
         if not node:
             return Statement("")
-        if isinstance(node, irast.Case):
+        if isinstance(node, ir.Case):
             return Verilog.build_tree_case(node)
-        if isinstance(node, irast.IfElse):
+        if isinstance(node, ir.IfElse):
             then_body = []
             for stmt in node.then_body:
                 then_body.append(Verilog.build_tree_stmt(stmt))
@@ -179,31 +180,31 @@ class Verilog:
             for stmt in node.else_body:
                 else_body.append(Verilog.build_tree_stmt(stmt))
             return IfElse(Verilog.build_tree_expr(node.condition), then_body, else_body)
-        if isinstance(node, irast.Statement):
+        if isinstance(node, ir.Statement):
             return Statement(node.to_string().replace("\n", " "))
         raise NotImplementedError(f"Unexpected type {type(node)}")
 
     @staticmethod
-    def build_tree_expr(node: irast.Expression) -> Expression:
+    def build_tree_expr(node: ir.Expression) -> Expression:
         """
         Handles expressions
         """
-        assert isinstance(node, irast.Expression)
+        assert isinstance(node, ir.Expression)
         return Expression(node.to_string())
 
     @staticmethod
-    def build_tree_case(node: irast.Case) -> Case:
+    def build_tree_case(node: ir.Case) -> Case:
         """
         Handles case statements
         """
-        assert isinstance(node, irast.Case)
+        assert isinstance(node, ir.Case)
         case_items = []
         for item in node.case_items:
             case_items.append(Verilog.build_tree_caseitem(item))
         return Case(Verilog.build_tree_expr(node.condition), case_items)
 
     @staticmethod
-    def build_tree_caseitem(node: irast.CaseItem) -> CaseItem:
+    def build_tree_caseitem(node: ir.CaseItem) -> CaseItem:
         """
         Handles case item
         """
@@ -212,13 +213,15 @@ class Verilog:
             case_items.append(Verilog.build_tree_stmt(item))
         return CaseItem(Verilog.build_tree_expr(node.condition), case_items)
 
-    def from_ir(self, root: irast.Statement, context: irast.Context):
+    def from_ir(self, root: ir.Statement, context: ir.Context):
         """
         Builds tree from IR
         """
-        assert isinstance(root, irast.Statement)
-        assert isinstance(context, irast.Context)
-        root.append_end_statements([irast.NonBlockingSubsitution("_done", "1")])
+        assert isinstance(root, ir.Statement)
+        assert isinstance(context, ir.Context)
+        root.append_end_statements(
+            [ir.NonBlockingSubsitution(ir.Var("_done"), ir.Int(1))]
+        )
         self.context = context
         self.module = Verilog.__create_module_from_python(
             Verilog.build_tree_stmt(root), context
@@ -707,6 +710,7 @@ class IfElse(Statement):
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
+        assert isinstance(condition, Expression)
         self.condition = condition
         self.then_body = assert_list_elements(then_body, Statement)
         self.else_body = assert_list_elements(else_body, Statement)
