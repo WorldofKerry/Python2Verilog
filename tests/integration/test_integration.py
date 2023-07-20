@@ -16,7 +16,11 @@ from python2verilog.utils.visualization import make_visual
 class TestMain(unittest.TestCase):
     def run_test(self, function_name, test_cases, dir="data/integration/"):
         assert len(test_cases) > 0, "Please include at least one test case"
-        assert len(test_cases[0]) > 0, "Please have data in the test case"
+        for test_case in test_cases:
+            assert isinstance(
+                test_case, tuple
+            ), "Inputs should be tuples, use (x,) for single-width tuple"
+            assert len(test_case) > 0, "Please have data in the test case"
 
         ABS_DIR = os.path.join(
             os.path.dirname(os.path.abspath(__file__)), dir, function_name
@@ -45,6 +49,9 @@ class TestMain(unittest.TestCase):
                     generator_inst = _locals[function_name](*test_case)
                     size = None
                     for tupl in generator_inst:
+                        assert isinstance(
+                            tupl, tuple
+                        ), "Yield tuples only, use (x,) for single-width tuples"
                         if size is None:
                             size = len(tupl)
                         else:
@@ -53,9 +60,12 @@ class TestMain(unittest.TestCase):
                             ), f"All generator yields must be same length tuple, but got {tupl} of length {len(tupl)} when previous yields had length {size}"
                         for e in tupl:
                             assert isinstance(e, int)
-                        expected_file.write(
-                            " " + str(tupl)[1:-1] + "\n"
-                        )  # Verilog row elements have a space prefix
+                        if len(tupl) > 1:
+                            expected_file.write(f"{str(tupl)[1:-1]}\n")
+                        else:
+                            expected_file.write(
+                                f"{str(tupl)[1:-2]}\n"
+                            )  # remove trailing comma
 
             make_visual(
                 _locals[function_name](*test_cases[0]),
@@ -108,20 +118,20 @@ class TestMain(unittest.TestCase):
 
                     for row in actual:
                         if row[0].strip() == "1":  # First bit is valid bit
-                            actual_coords.add(tuple(row[1:]))
+                            actual_coords.add(tuple([e.strip() for e in row[1:]]))
 
                     for row in expected:
-                        expected_coords.add(tuple(row))
+                        expected_coords.add(tuple([e.strip() for e in row]))
 
                     self.assertEqual(
                         actual_coords - expected_coords,
                         set(),
-                        f"str(actual_coords - expected_coords) <-- extra coordinates, all: {str(actual_coords)} {str(expected_coords)}",
+                        f"str(actual_coords - expected_coords) <-- extra coordinates, actual expected: {str(actual_coords)} {str(expected_coords)}",
                     )
                     self.assertEqual(
                         expected_coords - actual_coords,
                         set(),
-                        f"str(expected_coords - actual_coor <-- missing coordinates, all: {str(actual_coords)} {str(expected_coords)}",
+                        f"str(expected_coords - actual_coor <-- missing coordinates, actual expected: {str(actual_coords)} {str(expected_coords)}",
                     )
 
                     return "Running test"
@@ -139,4 +149,4 @@ class TestMain(unittest.TestCase):
         self.run_test("rectangle_lines", [(32, 84, 12, 15)])
 
     def test_fib(self):
-        self.run_test("fib", [(30)])
+        self.run_test("fib", [(30,)])
