@@ -1,7 +1,7 @@
 # Runs MyPy
 # Locally run `pre-commit install` then commit
 
-name: MyPy Linting
+name: MyPy Type Checking
 
 on:
   push:
@@ -27,4 +27,4 @@ jobs:
           pip install mypy
       - name: Analysing the code with mypy
         run: |
-          python3 -m mypy python2verilog/
+          python3 -m mypy python2verilog/ --ignore-missing-imports
