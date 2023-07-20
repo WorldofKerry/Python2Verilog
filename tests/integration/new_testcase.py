@@ -6,10 +6,7 @@ Appends the new test to `test_generator.py`.
 With --overwrite, `config.ini` is overwritten, but the python file is not if it exists.
 
 For regenerating configuration files:
-python3 tests/frontend/new_generator.py -o defaults -vv
-python3 tests/frontend/new_generator.py -o circle_lines -vv
-python3 tests/frontend/new_generator.py -o rectangle_filled_while -vv
-
+python3 tests/integration/new_testcase.py -o -v fib
 """
 
 import argparse
@@ -61,13 +58,20 @@ def script(args: argparse.Namespace, logger: logging.Logger, shell: callable) ->
         os.path.dirname(os.path.abspath(__file__)), args.test_file
     )
     logger.info(f"Appending to {TEST_FILE_PATH} with pytest function")
-    with open(TEST_FILE_PATH, mode="a") as test_file:
-        test_file.write(
-            f'\n    def test_{args.test_name}(self):\n        self.run_test("{args.test_name}", [()])\n'
-        )
+
+    need_to_add_run_cmd = True
+    with open(TEST_FILE_PATH, mode="r") as test_file:
+        if f"def test_{args.test_name}(self):" in test_file.read():
+            need_to_add_run_cmd = False  # Already exists
+
+    if need_to_add_run_cmd:
+        with open(TEST_FILE_PATH, mode="a") as test_file:
+            test_file.write(
+                f'\n    def test_{args.test_name}(self):\n        self.run_test("{args.test_name}", [()])\n'
+            )
 
     logger.warning(
-        f"Setup complete, replace content of {PYTHON_FILE_PATH} with your python generator function"
+        f"Setup complete, update content of {PYTHON_FILE_PATH} with your python generator function"
     )
 
 
@@ -99,7 +103,19 @@ if __name__ == "__main__":
         "--template",
         type=str,
         help="Template generator function",
-        default=f"def {parser.parse_args().test_name}(a, b, c, d) -> tuple[int, int]:\n  yield(a, b)\n  yield(c, d)",
+        default=f"def {parser.parse_args().test_name}(n) -> tuple[int]:"
+        + """
+    a = 0
+    b = 1
+    c = 0
+    count = 1
+    while count < n:
+        count += 1
+        a = b
+        b = c
+        c = a + b
+        yield c
+""",
     )
     parser.add_argument(
         "-d",
@@ -167,7 +183,7 @@ if __name__ == "__main__":
 
     logger = logging.getLogger(__name__)
 
-    logger.setLevel(max(40 - 10 * parser_args.verbose, 10))
+    logger.setLevel(max(30 - 10 * parser_args.verbose, 10))
 
     def shell(
         command: str,

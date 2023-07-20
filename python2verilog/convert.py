@@ -1,5 +1,5 @@
 """
-To run the basic conversion as a script
+To run the basic conversion as a CLI script
 """
 
 import argparse

@@ -126,9 +126,6 @@ class TestMain(unittest.TestCase):
 
                     return "Running test"
 
-    def test_defaults(self):
-        self.run_test("defaults", [(1, 2, 3, 4), (13, 45, 11, 17)])
-
     def test_circle_lines(self):
         self.run_test("circle_lines", [(21, 37, 13), (8, 3, 4)])
 
@@ -140,3 +137,6 @@ class TestMain(unittest.TestCase):
 
     def test_rectangle_lines(self):
         self.run_test("rectangle_lines", [(32, 84, 12, 15)])
+
+    def test_fib(self):
+        self.run_test("fib", [(30)])
