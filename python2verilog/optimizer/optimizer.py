@@ -61,7 +61,7 @@ def optimize_if(node: irast.Statement):
     return node
 
 
-def combine_cases(_):
+def combine_cases(_: irast.Statement):
     """
     Looks at a case item.
 
