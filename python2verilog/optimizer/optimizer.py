@@ -9,31 +9,13 @@ import random
 from .. import irast
 
 
-def optimize(node: irast.Statement, _: irast.Context):
-    """
-    Optimizes node by mutating it
-    """
-    replace_single_case(node)
-    return node
-
-
-def recurse(node: irast.Statement, func: typing.Callable):
-    """
-    Warning: causes astroid-error on Pylint
-    Recurses over types that have bodies
-    """
-    if not node:
-        return
-    if isinstance(node, irast.Case):
-        for item in node.case_items:
-            for stmt in item.statements:
-                func(stmt)
-
-
 def replace_single_case(node: irast.Statement):
     """
     Replaces single-case case statements with a regular statement
+
     Excludes the root even if it may be a case statement
+
+    Note: doesn't affect performance
     """
 
     def check_caseitems(node: irast.CaseItem):
@@ -65,6 +47,8 @@ def optimize_if(node: irast.Statement):
     """
     Avoids a clock cycle waste on an if statement,
     Appends the contents of the next block in the then/else blocks
+
+    Performance: a clock cycle is saved per if-else statement cycle
     """
     if isinstance(node, irast.IfElseWrapper):
         assert isinstance(node.case_items[0].statements[0], irast.IfElse)
@@ -80,6 +64,8 @@ def optimize_if(node: irast.Statement):
 def combine_cases(_: irast.Statement):
     """
     Looks at a case item.
+
     Combines it with all subsequent case items if
     subsequent case items' rvalues do not depend on any lvalues of prior case items
+
     """

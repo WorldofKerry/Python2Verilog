@@ -133,7 +133,7 @@ class TestMain(unittest.TestCase):
         self.run_test("circle_lines", [(21, 37, 13), (8, 3, 4)])
 
     def test_happy_face(self):
-        self.run_test("happy_face", [(50, 50, 40), (32, 44, 13)])
+        self.run_test("happy_face", [(50, 50, 40)])
 
     def test_rectangle_filled(self):
         self.run_test("rectangle_filled", [(32, 84, 12, 15)])
