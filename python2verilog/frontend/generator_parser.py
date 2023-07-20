@@ -395,7 +395,7 @@ class GeneratorParser:
                     ir.Var(self._output_vars[idx]), self.__parse_expression(elem)
                 )
                 for idx, elem in enumerate(output_vars)
-            ] + [ir.NonBlockingSubsitution(ir.Var("_valid"), ir.Int(1))]
+            ] + [ir.ValidSubsitution(ir.Var("_valid"), ir.Int(1))]
         except IndexError as e:
             raise IndexError(
                 "yield return length differs from function return length type hint"

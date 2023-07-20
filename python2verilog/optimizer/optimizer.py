@@ -61,7 +61,7 @@ def optimize_if(node: ir.Statement):
     return node
 
 
-def combine_cases(_: ir.Statement):
+def combine_cases(node: ir.Statement):
     """
     Looks at a case item.
 
@@ -69,3 +69,4 @@ def combine_cases(_: ir.Statement):
     subsequent case items' rvalues do not depend on any lvalues of prior case items
 
     """
+    return node

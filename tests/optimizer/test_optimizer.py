@@ -40,15 +40,54 @@ def foo(x) -> tuple[int]:
         # warnings.warn(verilog.get_module().to_string())
 
     def test_combine_cases(self):
+        # Optimizable
         python = """
 def foo(x) -> tuple[int]:
-    while x < 10:
-        yield (x,)
-        x = x + 1
+    a = x
+    b = x
 """
         tree = ast.parse(python)
         function = tree.body[0]
         ir, context = GeneratorParser(function).get_results()
-        ir = replace_single_case(ir)
+        ir = combine_cases(ir)
+        verilog = Verilog().from_ir(ir, context)
+        # warnings.warn(verilog.get_module().to_string())
+
+        # Not Optimizable - dependent variables
+        python = """
+def foo(x) -> tuple[int]:
+    a = x
+    b = a
+"""
+        tree = ast.parse(python)
+        function = tree.body[0]
+        ir, context = GeneratorParser(function).get_results()
+        ir = combine_cases(ir)
+        verilog = Verilog().from_ir(ir, context)
+        # warnings.warn(verilog.get_module().to_string()
+
+        # Not Optimizable - dependent yield
+        python = """
+def foo(x) -> tuple[int]:
+    a = x
+    yield (a,)
+"""
+        tree = ast.parse(python)
+        function = tree.body[0]
+        ir, context = GeneratorParser(function).get_results()
+        ir = combine_cases(ir)
+        verilog = Verilog().from_ir(ir, context)
+        # warnings.warn(verilog.get_module().to_string())
+
+        # Not Optimizable - multiple yields
+        python = """
+def foo(x) -> tuple[int]:
+    yield (x,)
+    yield (x,)
+"""
+        tree = ast.parse(python)
+        function = tree.body[0]
+        ir, context = GeneratorParser(function).get_results()
+        ir = combine_cases(ir)
         verilog = Verilog().from_ir(ir, context)
         # warnings.warn(verilog.get_module().to_string())

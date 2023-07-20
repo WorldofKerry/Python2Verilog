@@ -97,6 +97,15 @@ class BlockingSubsitution(Subsitution):
         super().__init__(lvalue, rvalue, "=", *args, *kwargs)
 
 
+class ValidSubsitution(NonBlockingSubsitution):
+    """
+    Special type to indicate this modifies the valid signal
+
+    More than one of these cannot be in the same block / clock cycle,
+    otherwise output values may be overwriting each other
+    """
+
+
 class Declaration(Statement):
     """
     <reg or wire> <modifiers> <[size-1:0]> <name>;
