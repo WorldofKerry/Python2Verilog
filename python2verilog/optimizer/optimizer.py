@@ -109,25 +109,19 @@ def combine_cases(node: ir.Case):
         check_state = node.case_items[check_state_index]
 
         for stmt in check_state.statements:
-            if isinstance(stmt, ir.NonBlockingSubsitution) and not isinstance(
-                stmt, ir.StateSubsitution
-            ):
+            if isinstance(stmt, ir.NonBlockingSubsitution):
                 grab_vars(stmt.rvalue, rvalues)
                 grab_vars(stmt.lvalue, lvalues)
 
             if isinstance(stmt, ir.ValidSubsitution):
                 valid_stmt_count += 1
-                # warnings.warn(f"{str(lvalues)} {check_state.to_string()}")
 
             if isinstance(stmt, ir.IfElse):
                 valid_stmt_count = 9999999  # TODO: more elegant
 
         if (
-            (
-                rvalues.isdisjoint(lvalues) or not lvalues
-            )  # make sure no rvalues depend on past lvalues
-            and valid_stmt_count <= 1  # can't merge multiple _valid modifiers
-        ):
+            rvalues.isdisjoint(lvalues) or not lvalues
+        ) and valid_stmt_count <= 1:  # can't merge multiple _valid modifiers
             node.case_items[cur_index].statements += node.case_items[
                 check_state_index
             ].statements
@@ -154,6 +148,5 @@ def combine_cases(node: ir.Case):
 
         one_iteration(cur_index, lvalues, valid_stmt_count)
         cur_index += 1
-    # one_iteration(0, set())
 
     return node
