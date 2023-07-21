@@ -125,9 +125,6 @@ def combine_cases(root: ir.Case):
             root.case_items[cur_index].statements += root.case_items[
                 check_state_index
             ].statements
-            if root.case_items[check_state_index].condition.string == "_state11while2":
-                # raise Exception()
-                pass
             one_iteration(cur_index, lvalues, valid_stmt_count)
 
     assert isinstance(root, ir.Case)
@@ -146,7 +143,7 @@ def combine_cases(root: ir.Case):
                 valid_stmt_count += 1
 
             if isinstance(stmt, ir.IfElse):
-                break  # TODO: more elegant
+                valid_stmt_count = 9999999  # TODO: more elegant
 
         one_iteration(cur_index, lvalues, valid_stmt_count)
         cur_index += 1
