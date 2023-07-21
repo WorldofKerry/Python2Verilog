@@ -19,6 +19,9 @@ class Expression:
         """
         return self.string
 
+    def __repr__(self):
+        return f"({__name__}: {self.to_string()})"
+
 
 class Int(Expression):
     """

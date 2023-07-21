@@ -117,7 +117,7 @@ class GeneratorParser:
             ):
                 case_item.append_end_statements(
                     [
-                        ir.NonBlockingSubsitution(
+                        ir.StateSubsitution(
                             ir.Var(state_var), ir.Add(ir.Var(state_var), ir.Int(1))
                         )
                     ]
@@ -341,10 +341,10 @@ class GeneratorParser:
                     list(stmt.body),
                     f"{state_var}",
                     end_stmts=[
-                        ir.NonBlockingSubsitution(
+                        ir.StateSubsitution(
                             ir.Var(prefix), ir.Add(ir.Var(prefix), ir.Int(1))
                         ),
-                        ir.NonBlockingSubsitution(ir.Var(state_var), ir.Int(0)),
+                        ir.StateSubsitution(ir.Var(state_var), ir.Int(0)),
                     ],
                     reset_to_zero=True,
                 )
@@ -357,10 +357,10 @@ class GeneratorParser:
                     list(stmt.orelse),
                     f"{state_var}",
                     end_stmts=[
-                        ir.NonBlockingSubsitution(
+                        ir.StateSubsitution(
                             ir.Var(prefix), ir.Add(ir.Var(prefix), ir.Int(1))
                         ),
-                        ir.NonBlockingSubsitution(ir.Var(state_var), ir.Int(0)),
+                        ir.StateSubsitution(ir.Var(state_var), ir.Int(0)),
                     ],
                     reset_to_zero=True,
                 )
@@ -541,7 +541,7 @@ class GeneratorParser:
                         f"!({self.__parse_expression(stmt.test).to_string()})"
                     ),
                     [
-                        ir.NonBlockingSubsitution(
+                        ir.StateSubsitution(
                             ir.Var(prefix), ir.Add(ir.Var(prefix), ir.Int(1))
                         )
                     ],

@@ -28,12 +28,12 @@ class Statement:
 
     def to_string(self):
         """
-        To Strings
+        To String
         """
         return self.to_lines().to_string()
 
-    # def __repr__(self):
-    #     return self.to_string()
+    def __repr__(self):
+        return self.to_string()
 
     def append_end_statements(self, _: list[Statement]):
         """
@@ -103,6 +103,13 @@ class ValidSubsitution(NonBlockingSubsitution):
 
     More than one of these cannot be in the same block / clock cycle,
     otherwise output values may be overwriting each other
+    """
+
+
+class StateSubsitution(NonBlockingSubsitution):
+    """
+    Special type to indicate this modifies the local-to-case-statement
+    state varaible
     """
 
 
