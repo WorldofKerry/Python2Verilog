@@ -1,5 +1,5 @@
 """
-To run the basic conversion as a script
+To run the basic conversion as a CLI script
 """
 
 import argparse
@@ -11,14 +11,15 @@ from .backend.verilog import Verilog
 from .optimizer import optimizer
 
 
-def convert(function: ast.FunctionDef, optimization_level: int):
+def convert(func: ast.FunctionDef, optimization_level: int):
     """
     Wrapper for common Python to Verilog conversion
     """
-    ir_root, context = GeneratorParser(function).get_results()
+    ir_root, context = GeneratorParser(func).get_results()
     if optimization_level > 0:
         ir_root = optimizer.replace_single_case(ir_root)
         ir_root = optimizer.optimize_if(ir_root)
+        ir_root = optimizer.combine_cases(ir_root)
     return Verilog(ir_root, context)
 
 
@@ -85,11 +86,13 @@ if __name__ == "__main__":
         os.path.abspath(input_file_path), mode="r", encoding="utf8"
     ) as python_file:
         python = python_file.read()
-        _locals = {}
+        _locals: dict[str, str] = {}
         exec(python, None, _locals)  # grab's exec's populated scoped variables
 
         tree = ast.parse(python)
-        verilog = convert(tree.body[0], args.optimization_level)
+        function = tree.body[0]
+        assert isinstance(function, ast.FunctionDef)
+        verilog = convert(function, args.optimization_level)
 
         with open(
             os.path.abspath(args.output), mode="w+", encoding="utf8"

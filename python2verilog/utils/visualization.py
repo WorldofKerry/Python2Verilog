@@ -11,21 +11,20 @@ def make_visual(generator_inst, directory: str):
     """
 
     # Generate the data using the generator function
-    data_triple = []
+    data_triple_list = []
 
     for yields in generator_inst:
         if len(yields) >= 3:
-            data_triple.append(yields[:3])
+            data_triple_list.append(yields[:3])
         elif len(yields) >= 2:
-            data_triple.append((*yields[:2], 1))
+            data_triple_list.append((*yields[:2], 1))
         else:
-            data_triple.append((yields[0], 1, 2))
+            data_triple_list.append((yields[0], 1, 2))
 
-    data_triple = np.array(data_triple)
+    data_triple = np.array(data_triple_list)
 
     height = max(data_triple[:, 0])
     width = max(data_triple[:, 1])
-    # warnings.warn(f"{height}, {width}, {data_triple}")
     grid = np.zeros((int(height) + 1, int(width) + 1))
     for x_coord, y_coord, colour in data_triple:
         grid[x_coord, y_coord] = colour

@@ -5,4 +5,4 @@ from . import frontend
 from . import backend
 from . import optimizer
 from . import utils
-from . import irast
+from . import ir

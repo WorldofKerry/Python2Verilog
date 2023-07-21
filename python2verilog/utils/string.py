@@ -9,13 +9,13 @@ class Lines:
     """
 
     @staticmethod
-    def assert_no_newline(stringable: any):
+    def assert_no_newline(string: str):
         """
-        Asserts no newline character in str(stringable)
+        Asserts no newline character in string
         """
-        assert str(stringable).find("\n") == -1, "Newline in Lines: " + str(stringable)
+        assert string.find("\n") == -1, "Newline in Lines: " + string
 
-    def __init__(self, data: list[str] | str = None):
+    def __init__(self, data: list[str] | str | None = None):
         if data is None:
             self.lines = []
         elif isinstance(data, str):
@@ -51,7 +51,7 @@ class Lines:
         del self.lines[key]
 
     def __rshift__(self, indent: int):
-        indent(indent)
+        self.indent(indent)
 
     def indent(self, indent_amount: int):
         """
@@ -88,7 +88,7 @@ class Lines:
         return self
 
     @staticmethod
-    def nestify(buffers: list[tuple[Lines][Lines]], indent: int = 0):
+    def nestify(buffers: list[tuple[Lines, Lines]], indent: int = 0):
         """
         pair[0][0]
             pair[1][0]

@@ -10,7 +10,7 @@ class Context:
     def __init__(
         self,
         name: str,
-        global_vars: list[str],
+        global_vars: dict[str, str],
         input_vars: list[str],
         output_vars: list[str],
     ):
@@ -19,3 +19,9 @@ class Context:
         self.input_vars = input_vars
         self.output_vars = output_vars
         # TODO: add strings for name of valid, done, clock, etc.
+
+    def is_declared(self, name: str):
+        """
+        Checks if a variable has been already declared or not
+        """
+        return name in set([*self.global_vars, *self.input_vars, *self.output_vars])

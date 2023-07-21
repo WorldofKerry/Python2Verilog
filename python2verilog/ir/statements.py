@@ -1,9 +1,11 @@
 """An Intermediate Representation for HDL based on Verilog"""
 
+from __future__ import annotations
 import warnings
 import inspect
+from typing import Optional
 
-from python2verilog.irast.expressions import Expression
+from python2verilog.ir.expressions import Expression
 
 from ..utils.string import Lines
 from ..utils.assertions import assert_list_elements
@@ -15,23 +17,29 @@ class Statement:
     If used directly, it is treated as a string literal
     """
 
-    def __init__(self, literal: str = None):
+    def __init__(self, literal: Optional[str] = None):
         self.literal = literal
 
     def to_lines(self):
         """
-        To Verilog
+        To Lines
         """
         return Lines(self.literal)
 
     def to_string(self):
         """
-        To Verilog
+        To String
         """
         return self.to_lines().to_string()
 
     def __repr__(self):
         return self.to_string()
+
+    def append_end_statements(self, _: list[Statement]):
+        """
+        Abstract
+        """
+        raise NotImplementedError("cannot append to statement")
 
 
 def is_valid_append_end_statements(stmt: Statement, statements: list[Statement]):
@@ -52,25 +60,22 @@ class Subsitution(Statement):
     <lvalue> <blocking or nonblocking> <rvalue>
     """
 
-    def __init__(self, lvalue: str, rvalue: str, *args, **kwargs):
-        assert isinstance(rvalue, str)  # TODO: should eventually take an expression
-        assert isinstance(lvalue, str)
+    def __init__(
+        self, lvalue: Expression, rvalue: Expression, oper: str, *args, **kwargs
+    ):
+        assert isinstance(lvalue, Expression)
+        assert isinstance(rvalue, Expression)
         self.lvalue = lvalue
         self.rvalue = rvalue
-        self.type = None
-        self.appended = []
+        self.oper = oper
         super().__init__(*args, **kwargs)
 
     def to_lines(self):
         """
-        Converts to Verilog
+        To Lines
         """
-        assert isinstance(self.type, str), "Subclasses need to set self.type"
-        itself = f"{self.lvalue} {self.type} {self.rvalue};"
+        itself = f"{self.lvalue.to_string()} {self.oper} {self.rvalue.to_string()};"
         lines = Lines(itself)
-        if self.appended:
-            for stmt in self.appended:
-                lines.concat(stmt.to_lines())
         return lines
 
 
@@ -79,9 +84,8 @@ class NonBlockingSubsitution(Subsitution):
     <lvalue> <= <rvalue>
     """
 
-    def __init__(self, lvalue: str, rvalue: str, *args, **kwargs):
-        super().__init__(lvalue, rvalue, *args, **kwargs)
-        self.type = "<="
+    def __init__(self, lvalue: Expression, rvalue: Expression, *args, **kwargs):
+        super().__init__(lvalue, rvalue, "<=", *args, **kwargs)
 
 
 class BlockingSubsitution(Subsitution):
@@ -89,9 +93,24 @@ class BlockingSubsitution(Subsitution):
     <lvalue> = <rvalue>
     """
 
-    def __init__(self, lvalue: str, rvalue: str, *args, **kwargs):
-        super().__init__(lvalue, rvalue, *args, *kwargs)
-        self.type = "="
+    def __init__(self, lvalue: Expression, rvalue: Expression, *args, **kwargs):
+        super().__init__(lvalue, rvalue, "=", *args, *kwargs)
+
+
+class ValidSubsitution(NonBlockingSubsitution):
+    """
+    Special type to indicate this modifies the valid signal
+
+    More than one of these cannot be in the same block / clock cycle,
+    otherwise output values may be overwriting each other
+    """
+
+
+class StateSubsitution(NonBlockingSubsitution):
+    """
+    Special type to indicate this modifies the local-to-case-statement
+    state varaible
+    """
 
 
 class Declaration(Statement):
@@ -133,7 +152,7 @@ class Declaration(Statement):
 
 class CaseItem:
     """
-    Verilog case item, i.e.
+    case item, i.e.
     <condition>: begin
         <statements>
     end
@@ -151,7 +170,7 @@ class CaseItem:
 
     def to_lines(self):
         """
-        To Verilog lines
+        To Lines
         """
         lines = Lines()
         lines += f"{self.condition.to_string()}: begin"
@@ -162,7 +181,7 @@ class CaseItem:
 
     def to_string(self):
         """
-        To Verilog
+        To String
         """
         return self.to_lines().to_string()
 
@@ -179,7 +198,6 @@ class CaseItem:
 
 class Case(Statement):
     """
-    Verilog case statement with various cases
     case (<expression>)
         <items[0]>
         ...
@@ -202,7 +220,7 @@ class Case(Statement):
 
     def to_lines(self):
         """
-        To Verilog Lines
+        To Lines
         """
         lines = Lines()
         lines += f"case ({self.condition.to_string()})"
@@ -235,6 +253,7 @@ class IfElse(Statement):
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
+        assert isinstance(condition, Expression)
         self.condition = condition
         self.then_body = assert_list_elements(then_body, Statement)
         self.else_body = assert_list_elements(else_body, Statement)

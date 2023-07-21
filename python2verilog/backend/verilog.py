@@ -1,11 +1,13 @@
 """Verilog Abstract Syntax Tree Components"""
 
+from __future__ import annotations
 import warnings
 import ast
+from typing import Optional
 
 from ..utils.string import Lines, Indent
 from ..utils.assertions import assert_list_elements
-from .. import irast
+from .. import ir
 
 
 class Expression:
@@ -16,6 +18,7 @@ class Expression:
     """
 
     def __init__(self, expr: str):
+        assert isinstance(expr, str)
         self.expr = expr
 
     def to_string(self):
@@ -94,6 +97,12 @@ class Statement:
             lines += f"// {line}"
         return lines
 
+    def append_end_statements(self, _: list[Statement]):
+        """
+        Append end statements
+        """
+        raise NotImplementedError("Statements cannot be appended to")
+
 
 class AtPosedgeStatement(Statement):
     """
@@ -121,13 +130,13 @@ class Verilog:
     """
 
     @staticmethod
-    def __create_module_from_python(root: Statement, context: irast.Context):
+    def __create_module_from_python(root: Statement, context: ir.Context):
         """
         Creates a module wrapper from the context
         e.g. the I/O (from Python), clock, valid and done signals
         """
         assert isinstance(root, Statement)
-        assert isinstance(context, irast.Context)
+        assert isinstance(context, ir.Context)
         inputs = []
         for var in context.input_vars:
             inputs.append(var)
@@ -142,54 +151,80 @@ class Verilog:
         )
         return Module(context.name, inputs, outputs, body=[always])
 
-    def __init__(self, root: irast.Statement = None, context: irast.Context = None):
+    def __init__(
+        self,
+        root: Optional[ir.Statement] = None,
+        context: Optional[ir.Context] = None,
+    ):
         # TODO: throw errors if user tries to generate verilog beforeconfig
-        self.module = None
-        self.context = None
+        self.module: Optional[Module] = None
+        self.context: Optional[ir.Context] = None
         if root is not None and context is not None:
             self.from_ir(root, context)
 
     @staticmethod
-    def build_tree(node: irast.Statement):
+    def build_tree_stmt(node: ir.Statement) -> Statement:
         """
         Builds the Verilog AST
         """
+        assert isinstance(node, (ir.Statement, ir.CaseItem))
         if not node:
             return Statement("")
-        if isinstance(node, irast.Case):
-            case_items = []
-            for item in node.case_items:
-                case_items.append(Verilog.build_tree(item))
-            return Case(Verilog.build_tree(node.condition), case_items)
-        if isinstance(node, irast.CaseItem):
-            case_items = []
-            for item in node.statements:
-                case_items.append(Verilog.build_tree(item))
-            return CaseItem(Verilog.build_tree(node.condition), case_items)
-        if isinstance(node, irast.Expression):
-            return Expression(node.to_string())
-        if isinstance(node, irast.IfElse):
+        if isinstance(node, ir.Case):
+            return Verilog.build_tree_case(node)
+        if isinstance(node, ir.IfElse):
             then_body = []
             for stmt in node.then_body:
-                then_body.append(Verilog.build_tree(stmt))
+                then_body.append(Verilog.build_tree_stmt(stmt))
             else_body = []
             for stmt in node.else_body:
-                else_body.append(Verilog.build_tree(stmt))
-            return IfElse(Verilog.build_tree(node.condition), then_body, else_body)
-        if isinstance(node, irast.Statement):
+                else_body.append(Verilog.build_tree_stmt(stmt))
+            return IfElse(Verilog.build_tree_expr(node.condition), then_body, else_body)
+        if isinstance(node, ir.Statement):
             return Statement(node.to_string().replace("\n", " "))
         raise NotImplementedError(f"Unexpected type {type(node)}")
 
-    def from_ir(self, root: irast.Statement, context: irast.Context):
+    @staticmethod
+    def build_tree_expr(node: ir.Expression) -> Expression:
+        """
+        Handles expressions
+        """
+        assert isinstance(node, ir.Expression)
+        return Expression(node.to_string())
+
+    @staticmethod
+    def build_tree_case(node: ir.Case) -> Case:
+        """
+        Handles case statements
+        """
+        assert isinstance(node, ir.Case)
+        case_items = []
+        for item in node.case_items:
+            case_items.append(Verilog.build_tree_caseitem(item))
+        return Case(Verilog.build_tree_expr(node.condition), case_items)
+
+    @staticmethod
+    def build_tree_caseitem(node: ir.CaseItem) -> CaseItem:
+        """
+        Handles case item
+        """
+        case_items = []
+        for item in node.statements:
+            case_items.append(Verilog.build_tree_stmt(item))
+        return CaseItem(Verilog.build_tree_expr(node.condition), case_items)
+
+    def from_ir(self, root: ir.Statement, context: ir.Context):
         """
         Builds tree from IR
         """
-        assert isinstance(root, irast.Statement)
-        assert isinstance(context, irast.Context)
-        root.append_end_statements([irast.NonBlockingSubsitution("_done", "1")])
+        assert isinstance(root, ir.Statement)
+        assert isinstance(context, ir.Context)
+        root.append_end_statements(
+            [ir.NonBlockingSubsitution(ir.Var("_done"), ir.Int(1))]
+        )
         self.context = context
         self.module = Verilog.__create_module_from_python(
-            Verilog.build_tree(root), context
+            Verilog.build_tree_stmt(root), context
         )
         return self
 
@@ -203,7 +238,8 @@ class Verilog:
         ...
         end
         """
-        then_body = [NonBlockingSubsitution("_done", "0")] + [
+        then_body: list[Statement] = [NonBlockingSubsitution("_done", "0")]
+        then_body += [
             NonBlockingSubsitution(key, str(val)) for key, val in global_vars.items()
         ]
         block = IfElse(
@@ -243,26 +279,29 @@ class Verilog:
             string += ");"
             return Statement(literal=string)
 
-        setups = []
-        setups.append(Declaration("_clock", size=1, is_reg=True))
-        setups.append(Declaration("_start", size=1, is_reg=True))
-        setups += [
+        assert self.context is not None
+        decl: list[Declaration] = []
+        decl.append(Declaration("_clock", size=1, is_reg=True))
+        decl.append(Declaration("_start", size=1, is_reg=True))
+        decl += [
             Declaration(var, is_signed=True, is_reg=True)
             for var in self.context.input_vars
         ]
-        setups += [Declaration(var, is_signed=True) for var in self.context.output_vars]
+        decl += [Declaration(var, is_signed=True) for var in self.context.output_vars]
 
-        setups.append(Declaration("_done", size=1))
-        setups.append(Declaration("_valid", size=1))
+        decl.append(Declaration("_done", size=1))
+        decl.append(Declaration("_valid", size=1))
 
         ports = {
-            decl.name: decl.name for decl in setups
-        }  # Caution: expects setups to only contain declarations
+            decl.name: decl.name for decl in decl
+        }  # Caution: expects decl to only contain declarations
+
+        setups: list[Statement] = list(decl)
         setups.append(Instantiation(self.context.name, "DUT", ports))
 
         setups.append(Statement(literal="always #5 _clock = !_clock;"))
 
-        initial_body = []
+        initial_body: list[Statement | While] = []  # TODO: replace with Sequence
         initial_body.append(BlockingSubsitution("_clock", "0"))
         initial_body.append(BlockingSubsitution("_start", "0"))
         initial_body.append(AtNegedgeStatement(Expression("_clock")))
@@ -278,7 +317,7 @@ class Verilog:
             initial_body.append(AtNegedgeStatement(Expression("_clock")))
 
             # wait for done signal
-            while_body = []
+            while_body: list[Statement] = []
             while_body.append(BlockingSubsitution("_start", "0"))
             while_body.append(make_display_stmt())
             while_body.append(AtNegedgeStatement(Expression("_clock")))
@@ -291,14 +330,16 @@ class Verilog:
 
         initial_loop = Initial(body=initial_body)
 
-        module = Module(
-            f"{self.context.name}_tb",
-            [],
-            [],
-            body=setups + [initial_loop],
-            add_default_ports=False,
-        )
-        return module
+        if self.context:
+            module = Module(
+                f"{self.context.name}_tb",
+                [],
+                [],
+                body=setups + [initial_loop],
+                add_default_ports=False,
+            )
+            return module
+        raise RuntimeError("Needs the context")
 
 
 class Instantiation(Statement):
@@ -351,7 +392,7 @@ class Module:
         name: str,
         inputs: list[str],
         outputs: list[str],
-        body: list[Statement] = None,
+        body: Optional[list[Statement]] = None,
         add_default_ports=True,
     ):
         self.name = name  # TODO: assert invalid names
@@ -409,7 +450,7 @@ class Initial(Statement):
     end
     """
 
-    def __init__(self, *args, body: list[Statement] = None, **kwargs):
+    def __init__(self, *args, body: Optional[list[Statement]] = None, **kwargs):
         if body:
             assert_list_elements(body, Statement)
         self.body = body
@@ -434,15 +475,18 @@ class Always(Statement):
         self,
         trigger: Expression,
         *args,
-        body: list[Statement] = None,
-        valid: str = "",
+        body: Optional[list[Statement]] = None,
+        valid: Optional[str] = None,
         **kwargs,
     ):
         assert isinstance(trigger, Expression)
         self.trigger = trigger
-        if valid != "":
-            valid = NonBlockingSubsitution(valid, "0")
-        self.valid = valid
+        if valid:
+            self.valid: Optional[NonBlockingSubsitution] = NonBlockingSubsitution(
+                valid, "0"
+            )
+        else:
+            self.valid = None
         if body:
             for stmt in body:
                 assert isinstance(stmt, Statement)
@@ -456,7 +500,7 @@ class Always(Statement):
         To Verilog
         """
         lines = Lines(f"always {self.trigger.to_string()} begin")
-        if self.valid != "":
+        if self.valid:
             lines.concat(self.valid.to_lines(), 1)
         lines.concat(NonBlockingSubsitution("_done", "0").to_lines(), 1)
         for stmt in self.body:
@@ -484,35 +528,24 @@ class Subsitution(Statement):
     <lvalue> <blocking or nonblocking> <rvalue>
     """
 
-    def __init__(self, lvalue: str, rvalue: str, *args, **kwargs):
+    def __init__(self, lvalue: str, rvalue: str, oper: str, *args, **kwargs):
         assert isinstance(
             rvalue, str
         ), f"got {type(rvalue)} instead"  # TODO: should eventually take an expression
         assert isinstance(lvalue, str)
         self.lvalue = lvalue
         self.rvalue = rvalue
-        self.type = None
-        self.appended = []
+        self.oper = oper
         super().__init__(*args, **kwargs)
 
     def to_lines(self):
         """
         Converts to Verilog
         """
-        assert isinstance(self.type, str), "Subclasses need to set self.type"
-        itself = f"{self.lvalue} {self.type} {self.rvalue};"
+        assert isinstance(self.oper, str), "Subclasses need to set self.type"
+        itself = f"{self.lvalue} {self.oper} {self.rvalue};"
         lines = Lines(itself)
-        if self.appended:
-            for stmt in self.appended:
-                lines.concat(stmt.to_lines())
         return lines
-
-    def append_end_statements(self, statements: list[Statement]):
-        """
-        Appends to last block of code
-        """
-        self.appended = self.appended + assert_list_elements(statements, Statement)
-        return self
 
 
 class NonBlockingSubsitution(Subsitution):
@@ -521,8 +554,7 @@ class NonBlockingSubsitution(Subsitution):
     """
 
     def __init__(self, lvalue: str, rvalue: str, *args, **kwargs):
-        super().__init__(lvalue, rvalue, *args, **kwargs)
-        self.type = "<="
+        super().__init__(lvalue, rvalue, "<=", *args, **kwargs)
 
 
 class BlockingSubsitution(Subsitution):
@@ -531,8 +563,7 @@ class BlockingSubsitution(Subsitution):
     """
 
     def __init__(self, lvalue: str, rvalue: str, *args, **kwargs):
-        super().__init__(lvalue, rvalue, *args, *kwargs)
-        self.type = "="
+        super().__init__(lvalue, rvalue, "=", *args, *kwargs)
 
 
 class Declaration(Statement):
@@ -679,6 +710,7 @@ class IfElse(Statement):
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
+        assert isinstance(condition, Expression)
         self.condition = condition
         self.then_body = assert_list_elements(then_body, Statement)
         self.else_body = assert_list_elements(else_body, Statement)
@@ -716,7 +748,11 @@ class While(Statement):
     """
 
     def __init__(
-        self, *args, condition: Expression, body: list[Statement] = None, **kwargs
+        self,
+        *args,
+        condition: Expression,
+        body: Optional[list[Statement]] = None,
+        **kwargs,
     ):
         assert isinstance(condition, Expression)
         self.condition = condition
