@@ -13,13 +13,13 @@ def make_visual(generator_inst, directory: str):
     # Generate the data using the generator function
     data_triple_list = []
 
-    for yields in generator_inst:
+    for idx, yields in enumerate(generator_inst):
         if len(yields) >= 3:
             data_triple_list.append(yields[:3])
         elif len(yields) >= 2:
             data_triple_list.append((*yields[:2], 1))
         else:
-            data_triple_list.append((yields[0], 1, 2))
+            data_triple_list.append((yields[0], idx, 1))
 
     data_triple = np.array(data_triple_list)
 

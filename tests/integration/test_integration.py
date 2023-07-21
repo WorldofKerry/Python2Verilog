@@ -147,10 +147,9 @@ class TestMain(unittest.TestCase):
     @staticmethod
     def filter_tests(test_cases: list[tuple], args: dict):
         """
-        Filters tests to the first test if arg not set
+        Filters tests based on pytest args
         """
-        if not args.all_tests:
-            warnings.warn("Only first test being run")
+        if args.first_test:
             return [test_cases[0]]
         return test_cases
 

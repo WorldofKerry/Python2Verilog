@@ -25,7 +25,7 @@ def pytest_sessionfinish(session, exitstatus):
 from .utils import Argument
 
 params = [
-    Argument("all_tests", False, action="store_true"),
+    Argument("first_test", False, action="store_true"),
 ]
 
 
