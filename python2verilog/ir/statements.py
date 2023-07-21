@@ -41,6 +41,7 @@ class Statement:
         """
         raise NotImplementedError("cannot append to statement")
 
+
 def is_valid_append_end_statements(stmt: Statement, statements: list[Statement]):
     """
     Checks if stmt encapsulates other Statements or not

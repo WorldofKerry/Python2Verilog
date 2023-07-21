@@ -21,7 +21,6 @@ class GeneratorParser:
         """
         assert isinstance(python_func, pyast.FunctionDef)
         self._name = python_func.name
-        self._unique_name_counter = 0
         self._global_vars: dict[str, str] = {}
         self._state_vars: list[ir.State] = []
         self._python_func = python_func
