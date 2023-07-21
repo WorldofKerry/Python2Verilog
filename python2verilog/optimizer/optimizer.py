@@ -191,7 +191,7 @@ def combine_cases(node: ir.Statement):
             node.case_items[cur_index].statements += node.case_items[
                 check_state_index
             ].statements
-            del node.case_items[check_state_index]
+            # del node.case_items[check_state_index] # Breaks circle lines
             one_iteration(cur_index, lvalues, valid_stmt_count)
 
     assert isinstance(node, ir.Case)

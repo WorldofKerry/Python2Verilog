@@ -136,17 +136,17 @@ class TestMain(unittest.TestCase):
 
                     return "Running test"
 
-    # def test_circle_lines(self):
-    #     self.run_test("circle_lines", [(21, 37, 13), (8, 3, 4)])
+    def test_circle_lines(self):
+        self.run_test("circle_lines", [(21, 37, 13), (8, 3, 4)])
 
-    # def test_happy_face(self):
-    #     self.run_test("happy_face", [(50, 50, 40)])
+    def test_happy_face(self):
+        self.run_test("happy_face", [(50, 50, 40)])
 
-    # def test_rectangle_filled(self):
-    #     self.run_test("rectangle_filled", [(32, 84, 12, 15)])
+    def test_rectangle_filled(self):
+        self.run_test("rectangle_filled", [(32, 84, 12, 15)])
 
-    # def test_rectangle_lines(self):
-    #     self.run_test("rectangle_lines", [(32, 84, 12, 15)])
+    def test_rectangle_lines(self):
+        self.run_test("rectangle_lines", [(32, 84, 12, 15)])
 
     def test_fib(self):
         self.run_test("fib", [(30,)])
