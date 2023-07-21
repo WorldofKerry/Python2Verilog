@@ -1,5 +1,6 @@
 import subprocess
 import os
+import warnings
 
 
 def update_stats(dir: str):
@@ -7,9 +8,11 @@ def update_stats(dir: str):
         f"python3 tests/update_statistics.py {dir}",
         shell=True,
         capture_output=True,
-        check=True,
+        # check=True,
         text=True,
     )
+    if result.returncode != 0:
+        warnings.warn(result.stderr)
 
     return f"\nStats for {os.path.basename(os.path.basename(os.path.abspath(dir)))}:\n{result.stdout}"
 
