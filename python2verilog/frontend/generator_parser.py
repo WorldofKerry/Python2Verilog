@@ -32,15 +32,16 @@ class GeneratorParser:
         done_state = self.__add_state_var(ir.State("_statedone"))
         self.states = ir.Case(
             self.state,
-            [
-                ir.CaseItem(
-                    done_state,
-                    [ir.NonBlockingSubsitution(ir.Var("_done"), ir.Int(1))],
-                )
-            ],
+            [],
         )
         self._root = self.__parse_statements(
             list(python_func.body), "_state", done_state
+        )
+        self.states.case_items.append(
+            ir.CaseItem(
+                done_state,
+                [ir.NonBlockingSubsitution(ir.Var("_done"), ir.Int(1))],
+            )
         )
 
     def __str__(self):

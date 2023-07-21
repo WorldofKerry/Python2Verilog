@@ -50,16 +50,6 @@ def optimize_if(node: ir.Statement):
 
     Performance: a clock cycle is saved per if-else statement cycle
     """
-    if isinstance(node, ir.IfElseWrapper):
-        assert isinstance(node.case_items[0].statements[0], ir.IfElse)
-        node.case_items[0].statements[0].then_body += node.case_items[1].statements
-        node.case_items[0].statements[0].else_body += node.case_items[2].statements
-
-    # Recurse
-    if isinstance(node, ir.Case):
-        for item in node.case_items:
-            for stmt in item.statements:
-                optimize_if(stmt)
     return node
 
 
@@ -84,69 +74,142 @@ def combine_cases(node: ir.Statement):
             grab_vars(expr.left, variables)
             grab_vars(expr.right, variables)
 
-    def analyze_case(node: ir.Case):
+    # def analyze_case(node: ir.Case):
+    #     """
+    #     Does the actual combining
+    #     """
+    #     assert isinstance(node, ir.Case)
+    #     lvalues: set[str] = set()
+    #     valid_stmt_count = 0
+    #     item_idx = 0
+    #     while item_idx < len(node.case_items):
+    #         item = node.case_items[item_idx]
+
+    #         rvalues: set[str] = set()
+
+    #         stmt_idx = 0
+    #         while stmt_idx < len(item.statements):
+    #             stmt = item.statements[stmt_idx]
+
+    #             # warnings.warn(f"{stmt.to_string()}")
+
+    #             if isinstance(stmt, ir.ValidSubsitution):
+    #                 valid_stmt_count += 1
+
+    #             if isinstance(stmt, ir.NonBlockingSubsitution) and not isinstance(
+    #                 stmt, ir.StateSubsitution
+    #             ):
+    #                 grab_vars(stmt.rvalue, rvalues)
+    #                 grab_vars(stmt.lvalue, lvalues)
+
+    #             if isinstance(stmt, ir.Case):
+    #                 valid_stmt_count = 9999999  # TODO: more elegant
+
+    #             stmt_idx += 1
+
+    #         if (
+    #             (
+    #                 rvalues.isdisjoint(lvalues) or not lvalues
+    #             )  # make sure no rvalues depend on past lvalues
+    #             and valid_stmt_count <= 1  # can't merge multiple _valid modifiers
+    #             and item_idx != 0  # first item can't be merged with one before it
+    #         ):
+    #             node.case_items[item_idx - 1].statements += node.case_items[
+    #                 item_idx
+    #             ].statements
+    #             del node.case_items[item_idx]
+    #         else:
+    #             item_idx += 1
+
+    # reset case-item iterations
+    # for idx, item in enumerate(node.case_items):
+    #     item.condition = ir.Int(idx)
+
+    def get_idx_with_state_name(node: ir.Case, state_name: str):
         """
-        Does the actual combining
+        Gets the index of a case item with a state name
+        """
+        for idx, item in enumerate(node.case_items):
+            if (
+                isinstance(item.condition, ir.Var)
+                and item.condition.string == state_name
+            ):
+                return idx
+        # raise ValueError(f"Could not find state name {state_name}")
+        return None
+
+    def get_last_state_sub_name(stmts: list[ir.Statement]):
+        """
+        Given a list of Statements, gets the state name of the last state subsitution
+        """
+        for stmt in reversed(stmts):
+            if isinstance(stmt, ir.StateSubsitution):
+                return stmt.rvalue.string
+        return None
+
+    def one_iteration(cur_index: int, lvalues: set[str], valid_stmt_count: int = 0):
+        """
+        Optimizes one case item with its descendants
         """
         assert isinstance(node, ir.Case)
-        lvalues: set[str] = set()
-        valid_stmt_count = 0
-        item_idx = 0
-        while item_idx < len(node.case_items):
-            item = node.case_items[item_idx]
+        warnings.warn(f"{str([e.condition for e in node.case_items])}")
+        rvalues: set[str] = set()
+        for stmt in node.case_items[cur_index].statements:
+            if isinstance(stmt, ir.NonBlockingSubsitution) and not isinstance(
+                stmt, ir.StateSubsitution
+            ):
+                grab_vars(stmt.rvalue, rvalues)
+                grab_vars(stmt.lvalue, lvalues)
 
-            rvalues: set[str] = set()
+            if isinstance(stmt, ir.ValidSubsitution):
+                valid_stmt_count += 1
 
-            stmt_idx = 0
-            while stmt_idx < len(item.statements):
-                stmt = item.statements[stmt_idx]
+            if isinstance(stmt, ir.IfElse):
+                valid_stmt_count = 9999999  # TODO: more elegant
 
-                # warnings.warn(f"{stmt.to_string()}")
+        for stmt in node.case_items[cur_index].statements:
+            if isinstance(stmt, ir.IfElse):
+                return
+        check_state_name = get_last_state_sub_name(
+            node.case_items[cur_index].statements
+        )
+        if not check_state_name:
+            return
+        check_state_index = get_idx_with_state_name(node, check_state_name)
+        if not check_state_index:
+            return
+        check_state = node.case_items[check_state_index]
 
-                if isinstance(stmt, ir.ValidSubsitution):
-                    valid_stmt_count += 1
+        for stmt in check_state.statements:
+            if isinstance(stmt, ir.NonBlockingSubsitution) and not isinstance(
+                stmt, ir.StateSubsitution
+            ):
+                grab_vars(stmt.rvalue, rvalues)
+                grab_vars(stmt.lvalue, lvalues)
 
-                if isinstance(stmt, ir.NonBlockingSubsitution) and not isinstance(
-                    stmt, ir.StateSubsitution
-                ):
-                    grab_vars(stmt.rvalue, rvalues)
-                    grab_vars(stmt.lvalue, lvalues)
+            if isinstance(stmt, ir.ValidSubsitution):
+                valid_stmt_count += 1
+                # warnings.warn(f"{str(lvalues)} {check_state.to_string()}")
 
-                if isinstance(stmt, ir.Case):
-                    valid_stmt_count = 9999999  # TODO: more elegant
+            if isinstance(stmt, ir.IfElse):
+                valid_stmt_count = 9999999  # TODO: more elegant
 
-                stmt_idx += 1
+        if (
+            (
+                rvalues.isdisjoint(lvalues) or not lvalues
+            )  # make sure no rvalues depend on past lvalues
+            and valid_stmt_count <= 1  # can't merge multiple _valid modifiers
+        ):
+            node.case_items[cur_index].statements += node.case_items[
+                check_state_index
+            ].statements
+            del node.case_items[check_state_index]
+            one_iteration(cur_index, lvalues, valid_stmt_count)
 
-            if (
-                (
-                    rvalues.isdisjoint(lvalues) or not lvalues
-                )  # make sure no rvalues depend on past lvalues
-                and valid_stmt_count <= 1  # can't merge multiple _valid modifiers
-                and item_idx != 0  # first item can't be merged with one before it
-            ):  # can merge two case items
-                # node.case_items[item_idx - 1].statements += filter(
-                #     lambda stmt: not isinstance(stmt, ir.StateSubsitution),
-                #     node.case_items[item_idx].statements,
-                # )
-                node.case_items[item_idx - 1].statements += node.case_items[
-                    item_idx
-                ].statements
-                del node.case_items[item_idx]
-            else:
-                item_idx += 1
-                # warnings.warn(
-                #     f"cannot merge {item.to_string()} {str(lvalues)} {str(rvalues)}"
-                # )
-            # valid_stmt_count = 0
+    # i = 0
+    # while i < len(node.case_items):
+    #     one_iteration(i, set())
+    #     i += 1
+    # one_iteration(0, set())
 
-        # reset case-item iterations
-        for idx, item in enumerate(node.case_items):
-            item.condition = ir.Int(idx)
-
-    if isinstance(node, ir.Case):
-        analyze_case(node)
-        # Recurse
-        for item in node.case_items:
-            for stmt in item.statements:
-                combine_cases(stmt)
     return node

@@ -17,9 +17,8 @@ def convert(func: ast.FunctionDef, optimization_level: int):
     """
     ir_root, context = GeneratorParser(func).get_results()
     if optimization_level > 0:
-        ir_root = optimizer.replace_single_case(ir_root)
-        # ir_root = optimizer.optimize_if(ir_root)
-        # ir_root = optimizer.combine_cases(ir_root)
+        # ir_root = optimizer.replace_single_case(ir_root)
+        ir_root = optimizer.combine_cases(ir_root)
     return Verilog(ir_root, context)
 
 
