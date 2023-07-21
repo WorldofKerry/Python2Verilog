@@ -178,3 +178,7 @@ class TestMain(unittest.TestCase):
     #     self.run_test(
     #         "tree_bfs", [(binary_tree, [420] * len(binary_tree), len(binary_tree))]
     #     )
+
+    def test_testing(self):
+        test_cases = [(15,)]
+        self.run_test("testing", self.filter_tests(test_cases, self.args))

@@ -71,7 +71,8 @@ def script(args: argparse.Namespace, logger: logging.Logger, shell: callable) ->
             )
 
     logger.warning(
-        f"Setup complete, update content of {PYTHON_FILE_PATH} with your python generator function"
+        f"Setup complete, update content of {PYTHON_FILE_PATH} with your python generator function,\
+            \n then add your test case to {TEST_FILE_PATH}"
     )
 
 

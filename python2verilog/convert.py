@@ -19,6 +19,7 @@ def convert(func: ast.FunctionDef, optimization_level: int):
     if optimization_level > 0:
         ir_root = optimizer.optimize_if(ir_root)
         ir_root = optimizer.combine_cases(ir_root)
+        ir_root = optimizer.remove_unreferenced_states(ir_root)
     return Verilog(ir_root, context)
 
 
