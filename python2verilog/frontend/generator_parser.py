@@ -47,7 +47,13 @@ class GeneratorParser:
     def __str__(self):
         return self.generate_verilog().to_string()
 
+    wow_counter = 0
+
     def __add_state_var(self, state: ir.State):
+        if state.string == "_state4while4":
+            self.wow_counter += 1
+            # if self.wow_counter == 1:
+            #     raise Exception()
         self._state_vars.append(state)
         return state
 
@@ -271,7 +277,9 @@ class GeneratorParser:
             body = self.__parse_ifelse(stmt, cur_state, next_state)
         elif isinstance(stmt, pyast.Expr):
             # TODO: solve the inconsistency
+            # raise Exception(f"{pyast.dump(stmt)}")
             self.__parse_statement(stmt.value, cur_state, next_state)
+            return
         elif isinstance(stmt, pyast.AugAssign):
             assert isinstance(
                 stmt.target, pyast.Name

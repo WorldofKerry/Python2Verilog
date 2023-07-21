@@ -152,20 +152,8 @@ def combine_cases(node: ir.Statement):
         Optimizes one case item with its descendants
         """
         assert isinstance(node, ir.Case)
-        warnings.warn(f"{str([e.condition for e in node.case_items])}")
+        # warnings.warn(f"{str([e.condition for e in node.case_items])}")
         rvalues: set[str] = set()
-        for stmt in node.case_items[cur_index].statements:
-            if isinstance(stmt, ir.NonBlockingSubsitution) and not isinstance(
-                stmt, ir.StateSubsitution
-            ):
-                grab_vars(stmt.rvalue, rvalues)
-                grab_vars(stmt.lvalue, lvalues)
-
-            if isinstance(stmt, ir.ValidSubsitution):
-                valid_stmt_count += 1
-
-            if isinstance(stmt, ir.IfElse):
-                valid_stmt_count = 9999999  # TODO: more elegant
 
         for stmt in node.case_items[cur_index].statements:
             if isinstance(stmt, ir.IfElse):
@@ -206,10 +194,26 @@ def combine_cases(node: ir.Statement):
             del node.case_items[check_state_index]
             one_iteration(cur_index, lvalues, valid_stmt_count)
 
-    # i = 0
-    # while i < len(node.case_items):
-    #     one_iteration(i, set())
-    #     i += 1
+    assert isinstance(node, ir.Case)
+    cur_index = 0
+    while cur_index < len(node.case_items):
+        lvalues: set[str] = set()
+        valid_stmt_count = 0
+
+        for stmt in node.case_items[cur_index].statements:
+            if isinstance(stmt, ir.NonBlockingSubsitution) and not isinstance(
+                stmt, ir.StateSubsitution
+            ):
+                grab_vars(stmt.lvalue, lvalues)
+
+            if isinstance(stmt, ir.ValidSubsitution):
+                valid_stmt_count += 1
+
+            if isinstance(stmt, ir.IfElse):
+                valid_stmt_count = 9999999  # TODO: more elegant
+
+        one_iteration(cur_index, lvalues, valid_stmt_count)
+        cur_index += 1
     # one_iteration(0, set())
 
     return node
