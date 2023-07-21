@@ -112,6 +112,9 @@ def combine_cases(node: ir.Statement):
                     grab_vars(stmt.rvalue, rvalues)
                     grab_vars(stmt.lvalue, lvalues)
 
+                if isinstance(stmt, ir.Case):
+                    valid_stmt_count = 9999999  # TODO: more elegant
+
                 stmt_idx += 1
 
             if (
@@ -121,10 +124,13 @@ def combine_cases(node: ir.Statement):
                 and valid_stmt_count <= 1  # can't merge multiple _valid modifiers
                 and item_idx != 0  # first item can't be merged with one before it
             ):  # can merge two case items
-                node.case_items[item_idx - 1].statements += filter(
-                    lambda stmt: not isinstance(stmt, ir.StateSubsitution),
-                    node.case_items[item_idx].statements,
-                )
+                # node.case_items[item_idx - 1].statements += filter(
+                #     lambda stmt: not isinstance(stmt, ir.StateSubsitution),
+                #     node.case_items[item_idx].statements,
+                # )
+                node.case_items[item_idx - 1].statements += node.case_items[
+                    item_idx
+                ].statements
                 del node.case_items[item_idx]
             else:
                 item_idx += 1
@@ -142,5 +148,5 @@ def combine_cases(node: ir.Statement):
         # Recurse
         for item in node.case_items:
             for stmt in item.statements:
-                optimize_if(stmt)
+                combine_cases(stmt)
     return node
