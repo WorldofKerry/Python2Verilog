@@ -6,6 +6,7 @@ import configparser
 import subprocess
 import csv
 import pytest
+import statistics
 
 from python2verilog.backend.verilog import Verilog
 from python2verilog.frontend import GeneratorParser
@@ -17,6 +18,10 @@ from python2verilog.utils.visualization import make_visual
 @pytest.mark.usefixtures("argparse")
 class TestMain(unittest.TestCase):
     def run_test(self, function_name, test_cases, dir="data/integration/"):
+        """
+        Stats will only be gathered on the last test
+        """
+
         assert len(test_cases) > 0, "Please include at least one test case"
 
         for test_case in test_cases:
@@ -145,7 +150,9 @@ class TestMain(unittest.TestCase):
         Filters tests to the first test if arg not set
         """
         if not args.all_tests:
+            warnings.warn("Only first test being run")
             return [test_cases[0]]
+        return test_cases
 
     def test_circle_lines(self):
         test_cases = [(21, 37, 7), (89, 45, 43)]
@@ -164,7 +171,8 @@ class TestMain(unittest.TestCase):
         self.run_test("rectangle_lines", self.filter_tests(test_cases, self.args))
 
     def test_fib(self):
-        self.run_test("fib", [(30,)])
+        test_cases = [(10,), (35,)]
+        self.run_test("fib", self.filter_tests(test_cases, self.args))
 
     # def test_tree_bfs(self):
     #     binary_tree = [1, 7, 8, 2, 4, 6, 8, 6, 9]

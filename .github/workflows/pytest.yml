@@ -34,7 +34,7 @@ jobs:
         sudo apt-get install iverilog expect
     - name: Run Pytest
       run: |
-        python3 -m pytest --verbose
+        python3 -m pytest --verbose --all_tests
     - uses: actions/upload-artifact@v3
       with:
         name: tests-data

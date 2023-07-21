@@ -24,7 +24,9 @@ def pytest_sessionfinish(session, exitstatus):
 
 from .utils import Argument
 
-params = {Argument("all_tests", False)}
+params = [
+    Argument("all_tests", False, action="store_true"),
+]
 
 
 def pytest_addoption(parser: pytest.Parser):
