@@ -5,6 +5,7 @@ Optimizer algorithms that operate ontop of the intermediate representation
 import typing
 import warnings
 import random
+import copy
 
 from .. import ir
 
@@ -240,3 +241,75 @@ def remove_unreferenced_states(root: ir.Case):
     cleanup_unused_items(root)
 
     return root
+
+
+def do_item(root: ir.Case, state_name: str):
+    """
+    Optimizes an item
+    """
+    state_idx = get_idx_with_state_name(root, state_name)
+    state = root.case_items[state_idx]
+    state.statements = do_stmts(root, state.statements, {}, False, {state_name})
+
+
+def do_backwards_replace(
+    stmt: ir.Statement, mapping: dict[ir.Expression, ir.Expression]
+):
+    """
+    Replace all rvalues of expressions in stmt with mapping
+    """
+
+    def helper(expr: ir.Expression):
+        if isinstance(expr, ir.Var):
+            if expr in mapping:
+                return mapping[expr]
+        if isinstance(expr, ir.BinOp):
+            expr.left = helper(expr.left)
+            expr.right = helper(expr.right)
+        return expr
+
+    if isinstance(stmt, ir.NonBlockingSubsitution):
+        helper(stmt.rvalue)
+    else:
+        raise ValueError(f"Cannot do backwards replace on {stmt}")
+
+
+def do_stmts(
+    root: ir.Case,
+    stmts: list[ir.Statement],
+    mapping: dict[ir.Expression, ir.Expression],
+    yielded: bool,
+    visited: set[str],
+):
+    """
+    Optimizes a list of statements
+    """
+    og_stmts = copy.deepcopy(stmts)
+    for stmt in stmts:
+        if isinstance(stmt, ir.ValidSubsitution):
+            if yielded:
+                return og_stmts
+            yielded = True
+        if isinstance(stmt, ir.NonBlockingSubsitution):
+            do_backwards_replace(stmt, mapping)
+        elif isinstance(stmt, ir.IfElse):
+            then_mapping = copy.deepcopy(mapping)
+            else_mapping = copy.deepcopy(mapping)
+            stmt.then_body = do_stmts(
+                root, stmt.then_body, then_mapping, yielded, visited
+            )
+            stmt.else_body = do_stmts(
+                root, stmt.else_body, else_mapping, yielded, visited
+            )
+            return stmts
+        else:
+            raise ValueError(f"Cannot optimize {stmt}")
+    new_mapping = {}
+    for stmt in stmts:
+        assert not isinstance(stmt, ir.IfElse), "Should have been handled"
+        if isinstance(stmt, ir.NonBlockingSubsitution):
+            new_mapping[stmt.lvalue] = stmt.rvalue
+    next_state = get_last_state_sub_name(stmts)
+    state = root.case_items[get_idx_with_state_name(root, next_state)]
+    visited.add(next_state)
+    return do_stmts(root, state.statements, new_mapping, yielded, visited)
