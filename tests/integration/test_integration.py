@@ -5,6 +5,8 @@ import os
 import configparser
 import subprocess
 import csv
+import pytest
+import statistics
 
 from python2verilog.backend.verilog import Verilog
 from python2verilog.frontend import GeneratorParser
@@ -13,9 +15,15 @@ from python2verilog.convert import convert
 from python2verilog.utils.visualization import make_visual
 
 
+@pytest.mark.usefixtures("argparse")
 class TestMain(unittest.TestCase):
     def run_test(self, function_name, test_cases, dir="data/integration/"):
+        """
+        Stats will only be gathered on the last test
+        """
+
         assert len(test_cases) > 0, "Please include at least one test case"
+
         for test_case in test_cases:
             assert isinstance(
                 test_case, tuple
@@ -136,23 +144,41 @@ class TestMain(unittest.TestCase):
 
                     return "Running test"
 
+    @staticmethod
+    def filter_tests(test_cases: list[tuple], args: dict):
+        """
+        Filters tests based on pytest args
+        """
+        if args.first_test:
+            return [test_cases[0]]
+        return test_cases
+
     def test_circle_lines(self):
-        self.run_test("circle_lines", [(21, 37, 13), (8, 3, 4)])
+        test_cases = [(21, 37, 7), (89, 45, 43)]
+        self.run_test("circle_lines", self.filter_tests(test_cases, self.args))
 
     def test_happy_face(self):
-        self.run_test("happy_face", [(50, 50, 40)])
+        test_cases = [(50, 51, 7), (86, 97, 43)]
+        self.run_test("happy_face", self.filter_tests(test_cases, self.args))
 
     def test_rectangle_filled(self):
-        self.run_test("rectangle_filled", [(32, 84, 12, 15)])
+        test_cases = [(32, 84, 5, 7), (64, 78, 34, 48)]
+        self.run_test("rectangle_filled", self.filter_tests(test_cases, self.args))
 
     def test_rectangle_lines(self):
-        self.run_test("rectangle_lines", [(32, 84, 12, 15)])
+        test_cases = [(32, 84, 5, 7), (84, 96, 46, 89)]
+        self.run_test("rectangle_lines", self.filter_tests(test_cases, self.args))
 
     def test_fib(self):
-        self.run_test("fib", [(30,)])
+        test_cases = [(10,), (35,)]
+        self.run_test("fib", self.filter_tests(test_cases, self.args))
 
     # def test_tree_bfs(self):
     #     binary_tree = [1, 7, 8, 2, 4, 6, 8, 6, 9]
     #     self.run_test(
     #         "tree_bfs", [(binary_tree, [420] * len(binary_tree), len(binary_tree))]
     #     )
+
+    def test_testing(self):
+        test_cases = [(15,)]
+        self.run_test("testing", self.filter_tests(test_cases, self.args))

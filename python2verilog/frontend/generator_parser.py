@@ -21,34 +21,95 @@ class GeneratorParser:
         """
         assert isinstance(python_func, pyast.FunctionDef)
         self._name = python_func.name
-        self._unique_name_counter = 0
         self._global_vars: dict[str, str] = {}
+        self._state_vars: list[ir.State] = []
         self._python_func = python_func
 
         assert python_func.returns is not None, "Write a return type-hint for function"
         self._output_vars = self.__generate_output_vars(python_func.returns, "")
         self._input_vars = [var.arg for var in self._python_func.args.args]
-        self._root = self.__parse_statements(list(python_func.body), "")
+        self.state = ir.State("_state")
+        done_state = self.__add_state_var(ir.State("_statedone"))
+        self.states = ir.Case(
+            self.state,
+            [],
+        )
+        self._root = self.__parse_statements(
+            list(python_func.body), "_state", done_state
+        )
+        self.states.case_items.append(
+            ir.CaseItem(
+                done_state,
+                [ir.NonBlockingSubsitution(ir.Var("_done"), ir.Int(1))],
+            )
+        )
 
     def __str__(self):
         return self.generate_verilog().to_string()
+
+    wow_counter = 0
+
+    def __add_state_var(self, state: ir.State):
+        if state.string == "_state4while4":
+            self.wow_counter += 1
+            # if self.wow_counter == 1:
+            #     raise Exception()
+        self._state_vars.append(state)
+        return state
 
     def get_root(self):
         """
         Gets the root of the IR tree
         """
-        return copy.deepcopy(self._root)
+        return copy.deepcopy(self.states)
+
+    @staticmethod
+    def __generate_output_vars(node: pyast.AST, prefix: str):
+        """
+        Generates the yielded variables of the function
+        """
+        assert isinstance(node, pyast.Subscript)
+        if isinstance(node.slice, pyast.Tuple):
+            return [f"{prefix}_out{str(i)}" for i in range(len(node.slice.elts))]
+        if isinstance(node.slice, pyast.Name):
+            return [f"{prefix}_out0"]
+        raise NotImplementedError(
+            f"Unexpected function return type hint {type(node.slice)}, {pyast.dump(node.slice)}"
+        )
+
+    def __add_global_var(self, initial_value: str, name: str):
+        """
+        Adds global variables
+        """
+        self._global_vars[name] = initial_value
+        return name
+
+    def get_context(self):
+        """
+        Gets the context of the Python function
+        """
+        self.__add_global_var(str(1), self.state.to_string())  # State 0 is done
+        for i, var in enumerate(self._state_vars):
+            self.__add_global_var(str(i), var.to_string())
+        return ir.Context(
+            name=self._name,
+            global_vars=copy.deepcopy(self._global_vars),
+            input_vars=copy.deepcopy(self._input_vars),
+            output_vars=copy.deepcopy(self._output_vars),
+        )
+
+    def get_results(self):
+        """
+        Gets root of IR and Context
+        """
+        return (self.get_root(), self.get_context())
 
     def generate_verilog(self, indent: int = 0):
         """
         Generates the verilog (does the most work, calls other functions)
         """
         stmt_lines = (
-            self.__parse_statements(
-                list(self._python_func.body),
-                prefix="",
-                end_stmts=[ir.NonBlockingSubsitution(ir.Var("_done"), ir.Int(1))],
-            ).to_lines(),
+            self.states.to_lines(),
             Lines(),
         )
         module_lines = self.__stringify_module()
@@ -69,114 +130,6 @@ class GeneratorParser:
             ],
             indent,
         )
-
-    def parse_statements(
-        self,
-        stmts: list[pyast.AST],
-        prefix: str,
-        end_stmts: Optional[list[ir.Statement]] = None,
-        reset_to_zero: bool = False,
-    ):
-        """
-        Parses a list of python statements
-        """
-        return self.__parse_statements(stmts, prefix, end_stmts, reset_to_zero)
-
-    def __parse_statements(
-        self,
-        stmts: list[pyast.AST],
-        prefix: str,
-        end_stmts: Optional[list[ir.Statement]] = None,
-        reset_to_zero: bool = False,
-    ):
-        """
-        Warning: mutates global_vars
-
-        {
-            <statement0>
-            <statement1>
-            ...
-        }
-        """
-        if not end_stmts:
-            end_stmts = []
-        assert end_stmts is not None
-        state_var = self.__add_global_var(
-            str(0), f"{prefix}_STATE{self.__create_unique_name()}"
-        )
-        cases = []
-
-        index = 0
-        for stmt in stmts:
-            body = self.__parse_statement(stmt, prefix=state_var)
-            case_item = ir.CaseItem(ir.Expression(str(index)), body)
-            if (
-                not isinstance(stmt, pyast.For)
-                and not isinstance(stmt, pyast.While)
-                and not isinstance(stmt, pyast.If)
-            ):
-                case_item.append_end_statements(
-                    [
-                        ir.StateSubsitution(
-                            ir.Var(state_var), ir.Add(ir.Var(state_var), ir.Int(1))
-                        )
-                    ]
-                )
-            cases.append(case_item)  # TODO: cases can have multiple statements
-            index += 1
-        if reset_to_zero:
-            end_stmts.append(ir.NonBlockingSubsitution(ir.Var(state_var), ir.Int(0)))
-
-        the_case = ir.Case(ir.Expression(state_var), cases)
-        assert end_stmts is not None
-        the_case.append_end_statements(end_stmts)
-
-        return ir.Case(ir.Expression(state_var), cases)
-
-    @staticmethod
-    def __generate_output_vars(node: pyast.AST, prefix: str):
-        """
-        Generates the yielded variables of the function
-        """
-        assert isinstance(node, pyast.Subscript)
-        if isinstance(node.slice, pyast.Tuple):
-            return [f"{prefix}_out{str(i)}" for i in range(len(node.slice.elts))]
-        if isinstance(node.slice, pyast.Name):
-            return [f"{prefix}_out0"]
-        raise NotImplementedError(
-            f"Unexpected function return type hint {type(node.slice)}, {pyast.dump(node.slice)}"
-        )
-
-    def __create_unique_name(self):
-        """
-        Generates an id that is unique among all unique global variables
-        """
-        self._unique_name_counter += 1
-        return f"{self._unique_name_counter}"
-
-    def __add_global_var(self, initial_value: str, name: str):
-        """
-        Adds global variables
-        """
-        self._global_vars[name] = initial_value
-        return name
-
-    def get_context(self):
-        """
-        Gets the context of the Python function
-        """
-        return ir.Context(
-            name=self._name,
-            global_vars=copy.deepcopy(self._global_vars),
-            input_vars=copy.deepcopy(self._input_vars),
-            output_vars=copy.deepcopy(self._output_vars),
-        )
-
-    def get_results(self):
-        """
-        Gets root of IR and Context
-        """
-        return (self.get_root(), self.get_context())
 
     @staticmethod
     def __stringify_always_block():
@@ -242,12 +195,6 @@ class GeneratorParser:
         end_lines += "endmodule"
         return (start_lines, end_lines)
 
-    def __parse_for(self, node: pyast.For, prefix: str):
-        """
-        Creates a conditional while loop from for loop
-        """
-        raise NotImplementedError("for not implemented")
-
     def __parse_targets(self, nodes: list[pyast.AST]):
         """
         Warning: only single target on left-hand-side supported
@@ -284,27 +231,60 @@ class GeneratorParser:
         )
         return [assign]
 
-    def __parse_statement(self, stmt: pyast.AST, prefix: str):
+    def __parse_statements(
+        self, stmts: list[pyast.AST], prefix: str, next_state: ir.State
+    ):
         """
-        <statement> (e.g. assign, for loop, etc., those that do not return a value)
+        Returns state of the first stmt in block
+
+        Give it a prefix and name-mangling is handled for you
+
+        {
+            <statement0>
+            <statement1>
+            ...
+        }
         """
+        assert isinstance(stmts, list)
+        assert isinstance(prefix, str)
+        assert isinstance(next_state, ir.State)
+
+        # state[x] has next state of state[x+1]
+        cur_states = [ir.State(f"{prefix}{i}") for i in range(len(stmts))]
+        next_states = cur_states[1:] + [next_state]
+
+        for stmt, cur, nextt in zip(stmts, cur_states, next_states):
+            self.__parse_statement(stmt, cur, nextt)
+
+        return cur_states[0]
+
+    def __parse_statement(
+        self, stmt: pyast.AST, cur_state: ir.State, next_state: ir.State
+    ):
+        """
+        <statement> (e.g. assign, for loop, etc., cannot be equated to)
+
+        creates cur_state
+        """
+        body = []
         if isinstance(stmt, pyast.Assign):
-            return self.__parse_assign(stmt)
-        if isinstance(stmt, pyast.For):
-            return self.__parse_for(stmt, prefix=prefix)
-        if isinstance(stmt, pyast.Expr):
-            return self.__parse_statement(stmt.value, prefix=prefix)
-        if isinstance(stmt, pyast.Yield):
-            return self.__parse_yield(stmt)
-        if isinstance(stmt, pyast.While):
-            return self.__parse_while(stmt, prefix=prefix)
-        if isinstance(stmt, pyast.If):
-            return self.__parse_ifelse(stmt, prefix=prefix)
-        if isinstance(stmt, pyast.AugAssign):
+            body = self.__parse_assign(stmt)
+        elif isinstance(stmt, pyast.Yield):
+            body = self.__parse_yield(stmt)
+        elif isinstance(stmt, pyast.While):
+            body = self.__parse_while(stmt, cur_state, next_state)
+        elif isinstance(stmt, pyast.If):
+            body = self.__parse_ifelse(stmt, cur_state, next_state)
+        elif isinstance(stmt, pyast.Expr):
+            # TODO: solve the inconsistency
+            # raise Exception(f"{pyast.dump(stmt)}")
+            self.__parse_statement(stmt.value, cur_state, next_state)
+            return
+        elif isinstance(stmt, pyast.AugAssign):
             assert isinstance(
                 stmt.target, pyast.Name
             ), "Error: only supports single target"
-            return [
+            body = [
                 ir.NonBlockingSubsitution(
                     self.__parse_expression(stmt.target),
                     self.__parse_expression(
@@ -312,66 +292,39 @@ class GeneratorParser:
                     ),
                 )
             ]
-        raise TypeError(
-            "Error: unexpected statement type", type(stmt), pyast.dump(stmt)
+        else:
+            raise TypeError(
+                "Error: unexpected statement type", type(stmt), pyast.dump(stmt)
+            )
+
+        self.__add_state_var(cur_state)
+        self.states.case_items.append(
+            ir.CaseItem(
+                cur_state,
+                [ir.StateSubsitution(self.state, next_state), *body],
+            )
         )
 
-    def __parse_ifelse(self, stmt: pyast.If, prefix: str):
+    def __parse_ifelse(self, stmt: pyast.If, cur_state: ir.State, next_state: ir.State):
         """
         If statement
         """
         assert isinstance(stmt, pyast.If)
-        state_var = self.__add_global_var(
-            str(0), f"{prefix}_IFELSE{self.__create_unique_name()}"
+
+        then_start_state = self.__parse_statements(
+            list(stmt.body), f"{cur_state.to_string()}then", next_state
         )
-        conditional_item = ir.CaseItem(
-            ir.Int(0),
-            [
-                ir.IfElse(
-                    self.__parse_expression(stmt.test),
-                    [ir.NonBlockingSubsitution(ir.Var(state_var), ir.Int(1))],
-                    [ir.NonBlockingSubsitution(ir.Var(state_var), ir.Int(2))],
-                )
-            ],
+        else_start_state = self.__parse_statements(
+            list(stmt.orelse), f"{cur_state.to_string()}else", next_state
         )
-        then_item = ir.CaseItem(
-            ir.Expression("1"),
-            [
-                self.__parse_statements(
-                    list(stmt.body),
-                    f"{state_var}",
-                    end_stmts=[
-                        ir.StateSubsitution(
-                            ir.Var(prefix), ir.Add(ir.Var(prefix), ir.Int(1))
-                        ),
-                        ir.StateSubsitution(ir.Var(state_var), ir.Int(0)),
-                    ],
-                    reset_to_zero=True,
-                )
-            ],
+
+        ifelse = ir.IfElse(
+            self.__parse_expression(stmt.test),
+            [ir.StateSubsitution(self.state, then_start_state)],
+            [ir.StateSubsitution(self.state, else_start_state)],
         )
-        else_item = ir.CaseItem(
-            ir.Expression("2"),
-            [
-                self.__parse_statements(
-                    list(stmt.orelse),
-                    f"{state_var}",
-                    end_stmts=[
-                        ir.StateSubsitution(
-                            ir.Var(prefix), ir.Add(ir.Var(prefix), ir.Int(1))
-                        ),
-                        ir.StateSubsitution(ir.Var(state_var), ir.Int(0)),
-                    ],
-                    reset_to_zero=True,
-                )
-            ],
-        )
-        return [
-            ir.IfElseWrapper(
-                ir.Expression(f"{state_var}"),
-                [conditional_item, then_item, else_item],
-            )
-        ]
+
+        return [ifelse]
 
     def __parse_yield(self, node: pyast.Yield):
         """
@@ -448,27 +401,11 @@ class GeneratorParser:
                 and expr.right.value > 0
                 and expr.right.value % 2 == 0
             ):
-                # return vast.Expression(
-                #     f"({self.parse_expression(expr.left).to_string()}
-                # >> {int(expr.right.value / 2)})"
-                # )
                 a_var = self.__parse_expression(expr.left).to_string()
                 b_var = expr.right.value
-                # return vast.Expression(
-                #     f"({a} > 0) ? ({a} >> {int(b / 2)}) : -(-({a}) >> {int(b / 2)})"
-                # )
                 return ir.Expression(
                     f"({a_var} > 0) ? ({a_var} / {b_var}) : ({a_var} / {b_var} - 1)"
                 )
-
-            # warnings.warn(pyast.dump(expr))
-            # return irast.Expression(
-            #     "("
-            #     + self.__parse_expression(expr.left).to_string()
-            #     + self.__parse_binop(expr)
-            #     + self.__parse_expression(expr.right).to_string()
-            #     + ")"
-            # )
             return self.__parse_binop_improved(expr)
         if isinstance(expr, pyast.UnaryOp):
             if isinstance(expr.op, pyast.USub):
@@ -524,45 +461,22 @@ class GeneratorParser:
             f" {self.__parse_expression(node.comparators[0]).to_string()}"
         )
 
-    def __parse_while(self, stmt: pyast.While, prefix: str):
+    def __parse_while(
+        self, stmt: pyast.While, cur_state: ir.State, next_state: ir.State
+    ):
         """
         Converts while loop to a while-true-if-break loop
         """
         assert isinstance(stmt, pyast.While)
-        assert prefix != ""
-        state_var = self.__add_global_var(
-            str(0), f"{prefix}_WHILE{self.__create_unique_name()}"
+
+        body_start_state = self.__parse_statements(
+            list(stmt.body), f"{cur_state.to_string()}while", cur_state
         )
-        conditional_item = ir.CaseItem(
-            ir.Int(0),
-            [
-                ir.IfElse(
-                    ir.Expression(
-                        f"!({self.__parse_expression(stmt.test).to_string()})"
-                    ),
-                    [
-                        ir.StateSubsitution(
-                            ir.Var(prefix), ir.Add(ir.Var(prefix), ir.Int(1))
-                        )
-                    ],
-                    [ir.NonBlockingSubsitution(ir.Var(state_var), ir.Int(1))],
-                )
-            ],
+
+        ifelse = ir.IfElse(
+            self.__parse_expression(stmt.test),
+            [ir.StateSubsitution(self.state, body_start_state)],
+            [ir.StateSubsitution(self.state, next_state)],
         )
-        then_item = ir.CaseItem(
-            ir.Expression("1"),
-            [
-                self.__parse_statements(
-                    list(stmt.body),
-                    f"{state_var}",
-                    end_stmts=[ir.NonBlockingSubsitution(ir.Var(state_var), ir.Int(0))],
-                    reset_to_zero=True,
-                )
-            ],
-        )
-        return [
-            ir.WhileWrapper(
-                ir.Expression(f"{state_var}"),
-                [conditional_item, then_item],
-            )
-        ]
+
+        return [ifelse]

@@ -217,11 +217,11 @@ class Verilog:
         """
         Builds tree from IR
         """
-        assert isinstance(root, ir.Statement)
+        assert isinstance(root, ir.Statement), f"got {type(root)} instead"
         assert isinstance(context, ir.Context)
-        root.append_end_statements(
-            [ir.NonBlockingSubsitution(ir.Var("_done"), ir.Int(1))]
-        )
+        # root.append_end_statements(
+        #     [ir.NonBlockingSubsitution(ir.Var("_done"), ir.Int(1))]
+        # )
         self.context = context
         self.module = Verilog.__create_module_from_python(
             Verilog.build_tree_stmt(root), context

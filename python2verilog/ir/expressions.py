@@ -20,7 +20,7 @@ class Expression:
         return self.string
 
     def __repr__(self):
-        return f"({__name__}: {self.to_string()})"
+        return f"({self.to_string()})"
 
 
 class Int(Expression):
@@ -41,6 +41,12 @@ class Var(Expression):
     def __init__(self, name: str):
         assert isinstance(name, str)
         super().__init__(name)
+
+
+class State(Var):
+    """
+    State variable
+    """
 
 
 class BinOp(Expression):
