@@ -20,7 +20,13 @@ class Expression:
         return self.string
 
     def __repr__(self):
-        return f"({self.to_string()})"
+        return f"{self.to_string()}"
+
+    def __eq__(self, other):
+        return self.to_string() == other.to_string()
+
+    def __hash__(self):
+        return hash(self.to_string())
 
 
 class Int(Expression):
@@ -59,7 +65,13 @@ class BinOp(Expression):
         self.right = right
         assert oper in ["+", "-", "*", "/"], f"Unsupported operator {oper}"
         self.oper = oper
-        super().__init__(f"({left.to_string()} {self.oper} {right.to_string()})")
+        super().__init__("")
+
+    def to_string(self):
+        """
+        String
+        """
+        return f"{self.left.to_string()} {self.oper} {self.right.to_string()}"
 
 
 class Add(BinOp):

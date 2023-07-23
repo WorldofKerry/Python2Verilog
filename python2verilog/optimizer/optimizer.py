@@ -261,15 +261,28 @@ def do_backwards_replace(
 
     def helper(expr: ir.Expression):
         if isinstance(expr, ir.Var):
-            if expr in mapping:
-                return mapping[expr]
+            warnings.warn(f"doing var {expr} {mapping}")
+            for key in mapping:
+                warnings.warn(f"iterating {key.to_string()} {expr.to_string()}")
+                if key.to_string() == expr.to_string():
+                    warnings.warn(
+                        f"success {key.to_string()} replaced with {mapping[key]}"
+                    )
+                    return mapping[key]
         if isinstance(expr, ir.BinOp):
+            # warnings.warn(f"found binop {expr} {mapping}")
+            # warnings.warn(f"wtf {helper(expr.left)}")
             expr.left = helper(expr.left)
+            # expr.left = ir.Expression("fk me sideways")
+            # expr.left = None
+            # warnings.warn(f"binop left {expr} {mapping}")
             expr.right = helper(expr.right)
+            # warnings.warn(f"done binop {expr} {mapping}")
         return expr
 
     if isinstance(stmt, ir.NonBlockingSubsitution):
-        helper(stmt.rvalue)
+        warnings.warn(f"checking {stmt} {mapping}")
+        stmt.rvalue = helper(stmt.rvalue)
     else:
         raise ValueError(f"Cannot do backwards replace on {stmt}")
 
@@ -291,7 +304,9 @@ def do_stmts(
                 return og_stmts
             yielded = True
         if isinstance(stmt, ir.NonBlockingSubsitution):
+            # warnings.warn(f"backward replace {stmt} {mapping}")
             do_backwards_replace(stmt, mapping)
+            # warnings.warn(f"backward done {stmt} {mapping}")
         elif isinstance(stmt, ir.IfElse):
             then_mapping = copy.deepcopy(mapping)
             else_mapping = copy.deepcopy(mapping)
@@ -310,6 +325,9 @@ def do_stmts(
         if isinstance(stmt, ir.NonBlockingSubsitution):
             new_mapping[stmt.lvalue] = stmt.rvalue
     next_state = get_last_state_sub_name(stmts)
-    state = root.case_items[get_idx_with_state_name(root, next_state)]
-    visited.add(next_state)
-    return do_stmts(root, state.statements, new_mapping, yielded, visited)
+    next_state_idx = get_idx_with_state_name(root, next_state)
+    if next_state_idx:
+        state = root.case_items[get_idx_with_state_name(root, next_state)]
+        visited.add(next_state)
+        return stmts + do_stmts(root, state.statements, new_mapping, yielded, visited)
+    return stmts
