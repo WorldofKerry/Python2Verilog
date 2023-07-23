@@ -8,7 +8,7 @@ from typing import Optional
 from python2verilog.ir.expressions import Expression
 
 from ..utils.string import Lines
-from ..utils.assertions import assert_list_elements
+from ..utils.assertions import assert_list_type
 
 
 class Statement:
@@ -49,7 +49,7 @@ def is_valid_append_end_statements(stmt: Statement, statements: list[Statement])
     # TODO: there should be a subclass/interface for ones that do encapsulate
     """
     if isinstance(stmt, (Case, IfElse)):
-        stmt.append_end_statements(assert_list_elements(statements, Statement))
+        stmt.append_end_statements(assert_list_type(statements, Statement))
         return True
     return False
 
@@ -190,9 +190,7 @@ class CaseItem:
         Append statements to case item
         """
         if not is_valid_append_end_statements(self.statements[-1], statements):
-            self.statements = self.statements + assert_list_elements(
-                statements, Statement
-            )
+            self.statements = self.statements + assert_list_type(statements, Statement)
         return self
 
 
@@ -234,7 +232,7 @@ class Case(Statement):
         Adds statements to the last case item
         """
         self.case_items[-1].append_end_statements(
-            assert_list_elements(statements, Statement)
+            assert_list_type(statements, Statement)
         )
         return self
 
@@ -255,8 +253,8 @@ class IfElse(Statement):
         super().__init__(*args, **kwargs)
         assert isinstance(condition, Expression)
         self.condition = condition
-        self.then_body = assert_list_elements(then_body, Statement)
-        self.else_body = assert_list_elements(else_body, Statement)
+        self.then_body = assert_list_type(then_body, Statement)
+        self.else_body = assert_list_type(else_body, Statement)
 
     def to_lines(self):
         lines = Lines()
@@ -273,7 +271,7 @@ class IfElse(Statement):
         """
         Appends statements to both branches
         """
-        statements = assert_list_elements(statements, Statement)
+        statements = assert_list_type(statements, Statement)
         # warnings.warn("appending " + statements[0].to_string())
         # if len(statements) > 1:
         #     warnings.warn(statements[1].to_string())
@@ -301,7 +299,7 @@ class WhileWrapper(Case):
         While statements have a special case structure,
         where their first case always contains an if statement
         """
-        statements = assert_list_elements(statements, Statement)
+        statements = assert_list_type(statements, Statement)
         assert isinstance(self.case_items[0], CaseItem)
         assert isinstance(self.case_items[0].statements[0], IfElse)
         self.case_items[0].statements[0].then_body = (

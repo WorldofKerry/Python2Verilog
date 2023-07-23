@@ -6,7 +6,7 @@ import ast
 from typing import Optional
 
 from ..utils.string import Lines, Indent
-from ..utils.assertions import assert_list_elements
+from ..utils.assertions import assert_list_type
 from .. import ir
 
 
@@ -452,7 +452,7 @@ class Initial(Statement):
 
     def __init__(self, *args, body: Optional[list[Statement]] = None, **kwargs):
         if body:
-            assert_list_elements(body, Statement)
+            assert_list_type(body, Statement)
         self.body = body
         super().__init__(*args, **kwargs)
 
@@ -646,7 +646,7 @@ class CaseItem:
         # self.statements = self.statements + assert_list_elements(statements, Statement)
         # warnings.warn(statements[0].to_string() + " " + str(type(self.statements[-1])))
         self.statements[-1].append_end_statements(
-            assert_list_elements(statements, Statement)
+            assert_list_type(statements, Statement)
         )
         # warnings.warn(statements[0].to_string())
         return self
@@ -691,7 +691,7 @@ class Case(Statement):
         Adds statements to the last case item
         """
         self.case_items[-1].append_end_statements(
-            assert_list_elements(statements, Statement)
+            assert_list_type(statements, Statement)
         )
         return self
 
@@ -712,8 +712,8 @@ class IfElse(Statement):
         super().__init__(*args, **kwargs)
         assert isinstance(condition, Expression)
         self.condition = condition
-        self.then_body = assert_list_elements(then_body, Statement)
-        self.else_body = assert_list_elements(else_body, Statement)
+        self.then_body = assert_list_type(then_body, Statement)
+        self.else_body = assert_list_type(else_body, Statement)
 
     def to_lines(self):
         lines = Lines()
@@ -730,7 +730,7 @@ class IfElse(Statement):
         """
         Appends statements to both branches
         """
-        statements = assert_list_elements(statements, Statement)
+        statements = assert_list_type(statements, Statement)
         # warnings.warn("appending " + statements[0].to_string())
         # if len(statements) > 1:
         #     warnings.warn(statements[1].to_string())
@@ -757,7 +757,7 @@ class While(Statement):
         assert isinstance(condition, Expression)
         self.condition = condition
         if body:
-            assert_list_elements(body, Statement)
+            assert_list_type(body, Statement)
         self.body = body
         super().__init__(*args, **kwargs)
 
