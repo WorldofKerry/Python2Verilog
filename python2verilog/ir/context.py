@@ -1,4 +1,7 @@
 """Context for Intermediate Representation"""
+from __future__ import annotations
+from typing import Optional
+from ..utils.assertions import assert_list_type, assert_type, assert_dict_type
 
 
 class Context:
@@ -9,16 +12,17 @@ class Context:
 
     def __init__(
         self,
-        name: str,
-        global_vars: dict[str, str],
-        input_vars: list[str],
-        output_vars: list[str],
+        name: str = "",
+        global_vars: Optional[dict[str, str]] = None,
+        input_vars: Optional[list[str]] = None,
+        output_vars: Optional[list[str]] = None,
+        state_vars: Optional[list[str]] = None,
     ):
-        self.name = name
-        self.global_vars = global_vars
-        self.input_vars = input_vars
-        self.output_vars = output_vars
-        # TODO: add strings for name of valid, done, clock, etc.
+        self.name = assert_type(name, str)
+        self.global_vars = assert_dict_type(global_vars, str, str)
+        self.input_vars = assert_list_type(input_vars, str)
+        self.output_vars = assert_list_type(output_vars, str)
+        self.state_vars = assert_list_type(state_vars, str)
 
     def is_declared(self, name: str):
         """

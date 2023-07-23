@@ -3,7 +3,6 @@ Graph representation of the logic
 """
 
 from __future__ import annotations
-from typing import Dict
 import copy
 
 from .statements import *
