@@ -69,27 +69,47 @@ class TestOptimizer(unittest.TestCase):
     #         # warnings.warn(verilog.get_module().to_string())
 
     def test_backwards_replace(self):
-        # Optimizable
-        python = """
-def foo(x) -> tuple[int]:
-    a = 10
-    b = a + 1
-"""
-        function = ast.parse(python).body[0]
-        ir, context = GeneratorParser(function).get_results()
-        do_item(ir, "_state0")
-        # warnings.warn(str(ir))
+        #         # Optimizable
+        #         python = """
+        # def foo(x) -> tuple[int]:
+        #     a = 10
+        #     b = a + 1
+        # """
+        #         function = ast.parse(python).body[0]
+        #         ir, context = GeneratorParser(function).get_results()
+        #         do_item(ir, "_state0")
+        #         # warnings.warn(str(ir))
+
+        #         python = """
+        # def foo(x) -> tuple[int]:
+        #     a = 10
+        #     if a < 15:
+        #         b = a + 1
+        #     else:
+        #         b = a + 2
+        # """
+        #         function = ast.parse(python).body[0]
+        #         ir, context = GeneratorParser(function).get_results()
+        #         do_item(ir, "_state0")
+        #         ir = remove_unreferenced_states(ir)
+        #         # warnings.warn(str(ir))
 
         python = """
 def foo(x) -> tuple[int]:
-    a = 10
-    if a < 15:
-        b = a + 1
-    else:
-        b = a + 2
+    a = 0
+    b = 1
+    c = 0
+    count = 1
+    while count < n:
+        # count = count + 1
+        # a = b
+        # b = c
+        # c = a + b
+        # yield (c,)
+        pass
 """
         function = ast.parse(python).body[0]
         ir, context = GeneratorParser(function).get_results()
         do_item(ir, "_state0")
-        ir = remove_unreferenced_states(ir)
-        warnings.warn(str(ir))
+        # ir = remove_unreferenced_states(ir)
+        # warnings.warn(str(ir))

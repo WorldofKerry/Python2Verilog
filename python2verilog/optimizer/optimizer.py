@@ -261,27 +261,17 @@ def do_backwards_replace(
 
     def helper(expr: ir.Expression):
         if isinstance(expr, ir.Var):
-            warnings.warn(f"doing var {expr} {mapping}")
             for key in mapping:
-                warnings.warn(f"iterating {key.to_string()} {expr.to_string()}")
                 if key.to_string() == expr.to_string():
-                    warnings.warn(
-                        f"success {key.to_string()} replaced with {mapping[key]}"
-                    )
                     return mapping[key]
         if isinstance(expr, ir.BinOp):
-            # warnings.warn(f"found binop {expr} {mapping}")
-            # warnings.warn(f"wtf {helper(expr.left)}")
             expr.left = helper(expr.left)
-            # expr.left = ir.Expression("fk me sideways")
-            # expr.left = None
-            # warnings.warn(f"binop left {expr} {mapping}")
             expr.right = helper(expr.right)
-            # warnings.warn(f"done binop {expr} {mapping}")
         return expr
 
     if isinstance(stmt, ir.NonBlockingSubsitution):
-        warnings.warn(f"checking {stmt} {mapping}")
+        if "j" in stmt.lvalue.string:
+            warnings.warn(f"{stmt} {mapping}")
         stmt.rvalue = helper(stmt.rvalue)
     else:
         raise ValueError(f"Cannot do backwards replace on {stmt}")
@@ -297,12 +287,13 @@ def do_stmts(
     """
     Optimizes a list of statements
     """
+    warnings.warn(f"{stmts} {mapping}")
     og_stmts = copy.deepcopy(stmts)
     for stmt in stmts:
         if isinstance(stmt, ir.ValidSubsitution):
-            if yielded:
-                return og_stmts
-            yielded = True
+            # if yielded:
+            return og_stmts
+        # yielded = True
         if isinstance(stmt, ir.NonBlockingSubsitution):
             # warnings.warn(f"backward replace {stmt} {mapping}")
             do_backwards_replace(stmt, mapping)
@@ -311,23 +302,25 @@ def do_stmts(
             then_mapping = copy.deepcopy(mapping)
             else_mapping = copy.deepcopy(mapping)
             stmt.then_body = do_stmts(
-                root, stmt.then_body, then_mapping, yielded, visited
+                root, copy.deepcopy(stmt.then_body), then_mapping, yielded, visited
             )
             stmt.else_body = do_stmts(
-                root, stmt.else_body, else_mapping, yielded, visited
+                root, copy.deepcopy(stmt.else_body), else_mapping, yielded, visited
             )
             return stmts
         else:
             raise ValueError(f"Cannot optimize {stmt}")
-    new_mapping = {}
+    new_mapping = copy.deepcopy(mapping)
     for stmt in stmts:
         assert not isinstance(stmt, ir.IfElse), "Should have been handled"
         if isinstance(stmt, ir.NonBlockingSubsitution):
             new_mapping[stmt.lvalue] = stmt.rvalue
     next_state = get_last_state_sub_name(stmts)
     next_state_idx = get_idx_with_state_name(root, next_state)
-    if next_state_idx:
+    if next_state_idx and next_state not in visited:
         state = root.case_items[get_idx_with_state_name(root, next_state)]
         visited.add(next_state)
-        return stmts + do_stmts(root, state.statements, new_mapping, yielded, visited)
+        return stmts + do_stmts(
+            root, copy.deepcopy(state.statements), new_mapping, yielded, visited
+        )
     return stmts

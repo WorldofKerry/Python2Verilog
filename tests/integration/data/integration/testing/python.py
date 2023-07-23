@@ -1,12 +1,8 @@
-def testing(n) -> tuple[int]:
-    x = 0
-    y = 15
-    d = 3 - 2 * 15
-    while y >= x:
-        x = x + 1
-        if d > 0:
-            y = y - 1
-            # d = d + 4 * (x - y) + 10
-        else:
-            d = d + 4 * x + 6
-        yield (x,)
+def testing(n) -> tuple[int, int]:
+    i = 0
+    while i < n:
+        i = i + 1
+        j = 0
+        while j < n:
+            j = j + 1
+            yield (i, j)

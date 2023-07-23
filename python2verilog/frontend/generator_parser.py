@@ -292,6 +292,8 @@ class GeneratorParser:
                     ),
                 )
             ]
+        elif isinstance(stmt, pyast.Pass):
+            pass
         else:
             raise TypeError(
                 "Error: unexpected statement type", type(stmt), pyast.dump(stmt)

@@ -180,5 +180,5 @@ class TestMain(unittest.TestCase):
     #     )
 
     def test_testing(self):
-        test_cases = [(15,)]
+        test_cases = [(10,)]
         self.run_test("testing", self.filter_tests(test_cases, self.args))
