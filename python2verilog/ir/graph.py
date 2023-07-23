@@ -3,6 +3,9 @@ Graph representation of the logic
 """
 
 from __future__ import annotations
+from typing import Dict
+import copy
+
 from .statements import *
 from .expressions import *
 from ..utils.assertions import assert_list_type, assert_type
@@ -14,16 +17,33 @@ class Node:
     """
 
     def __init__(self, name: str = ""):
-        self.name = assert_type(name, str)
+        self._name = assert_type(name, str)
 
     def to_string(self):
         """
         To string
         """
-        return f"name: {self.name}"
+        return self._name
 
     def __str__(self):
         return self.to_string()
+
+    def __repr__(self):
+        return f"{self.__class__.__name__} name: ({self._name})"
+
+    def get_edges(self):
+        """
+        Gets edges
+        """
+        warnings.warn("get edges on base class Node")
+        result: list[Edge] = []
+        return result
+
+    def get_name(self):
+        """
+        Gets node name
+        """
+        return self._name
 
 
 class IfElseNode(Node):
@@ -34,25 +54,30 @@ class IfElseNode(Node):
     def __init__(
         self,
         *args,
-        true_branch: Optional[Edge] = None,
-        false_branch: Optional[Edge] = None,
+        true_edge: Optional[Edge] = None,
+        false_edge: Optional[Edge] = None,
         condition: Optional[Expression],
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        self.true_branch = assert_type(true_branch, Edge)
-        self.false_branch = assert_type(false_branch, Edge)
-        self.condition = assert_type(condition, Expression)
+        self._true_branch = assert_type(true_edge, Edge)
+        self._false_branch = assert_type(false_edge, Edge)
+        self._condition = assert_type(condition, Expression)
 
     def to_string(self):
         """
         To string
         """
-        return (
-            super().to_string()
-            + f", if {self.condition.to_string()} then: \
-                {self.true_branch.to_string()} else: {self.false_branch.to_string()}"
-        )
+        return f"if ({self._condition.to_string()})"
+
+    def __repr__(self):
+        return super().__repr__() + f", condition: ({self._condition})"
+
+    def get_edges(self):
+        """
+        Gets edges
+        """
+        return [copy.deepcopy(self._true_branch), copy.deepcopy(self._false_branch)]
 
 
 class AssignNode(Node):
@@ -67,22 +92,38 @@ class AssignNode(Node):
         *args,
         lvalue: Expression,
         rvalue: Expression,
-        edge: Edge,
+        edge: Optional[Edge] = None,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        self.lvalue = assert_type(lvalue, Expression)
-        self.rvalue = assert_type(rvalue, Expression)
-        self.edge = assert_type(edge, Edge)
+        self._lvalue = assert_type(lvalue, Expression)
+        self._rvalue = assert_type(rvalue, Expression)
+        self._edge = assert_type(edge, Edge)
 
     def to_string(self):
         """
         To string
         """
+        return f"{self._lvalue.to_string()} <= {self._rvalue.to_string()}"
+
+    def __repr__(self):
         return (
-            super().to_string()
-            + f", lvalue: {self.lvalue.to_string()} rvalue: {self.rvalue.to_string()}"
+            super().__repr__() + f", lvalue: ({self._lvalue}) rvalue: ({self._rvalue})"
         )
+
+    def get_edges(self):
+        """
+        Gets edges
+        """
+        return [copy.deepcopy(self._edge)]
+
+    def add_edge(self, edge: Edge):
+        """
+        Adds an edge
+        """
+        if self._edge:
+            raise ValueError(f"reassigning edge {self._edge} to {edge}")
+        self._edge = assert_type(edge, Edge)
 
 
 class Edge:
@@ -90,17 +131,45 @@ class Edge:
     Represents an edge between two nodes
     """
 
-    def __init__(self, name: str = ""):
-        self.name = assert_type(name, str)
+    def __init__(self, name: str = "", next_node: Optional[Node] = None):
+        self._name = assert_type(name, str)
+        self._node = assert_type(next_node, Node)
 
     def to_string(self):
         """
         To string
         """
-        return f"name: {self.name}"
+        if self._name:
+            return self._name
+        return "Edge"
 
     def __str__(self):
         return self.to_string()
+
+    def __repr__(self):
+        return (
+            f"{self.__class__.__name__} name: ({self._name}), next node: ({self._node})"
+        )
+
+    def set_next_node(self, node: Node):
+        """
+        Sets next node
+        """
+        if self._node:
+            raise ValueError(f"reassigning node {self._node} to {node}")
+        self._node = assert_type(node, Node)
+
+    def get_name(self):
+        """
+        Gets edge name
+        """
+        return self._name
+
+    def get_next_node(self):
+        """
+        Gets next node
+        """
+        return copy.deepcopy(self._node)
 
 
 class NonclockedEdge(Edge):
@@ -127,3 +196,30 @@ class ClockedEdge(Edge):
 
     def to_string(self):
         return super().to_string() + ", clocked"
+
+
+def create_adjacency_list(node: Node):
+    """
+    Creates adjacency list from a node
+
+    Assumes names are unique
+    """
+    adjacency_list = {}
+
+    def traverse_graph(curr_node: Node, visited: set[Node | Edge]):
+        nonlocal adjacency_list
+        if curr_node in visited:
+            return
+
+        visited.add(curr_node)
+        edges = curr_node.get_edges()
+        adjacency_list[curr_node] = list(edges)
+
+        for edge in edges:
+            next_node = edge.get_next_node()
+            if next_node:
+                adjacency_list[edge] = [next_node]
+                traverse_graph(next_node, visited)
+
+    traverse_graph(node, set())
+    return adjacency_list

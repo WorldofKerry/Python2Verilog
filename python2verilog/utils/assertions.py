@@ -20,5 +20,4 @@ def assert_type(obj, type_: type):
     """
     if obj:
         assert isinstance(obj, type_), f"expected {type_} got {type(obj)} instead"
-        return obj
-    return None
+    return obj
