@@ -11,8 +11,8 @@ class TestGraph(unittest.TestCase):
         line1 = IfElseNode(
             name="while",
             condition=Expression("i < w"),
-            true_edge=Edge("True"),
-            false_edge=Edge("False"),
+            then_edge=Edge("True"),
+            else_edge=Edge("False"),
         )
         e0to1.set_next_node(line1)
         adjacency_list = create_adjacency_list(line0)

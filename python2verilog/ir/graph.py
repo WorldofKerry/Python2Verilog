@@ -53,14 +53,14 @@ class IfElseNode(Node):
     def __init__(
         self,
         *args,
-        true_edge: Optional[Edge] = None,
-        false_edge: Optional[Edge] = None,
+        then_edge: Optional[Edge] = None,
+        else_edge: Optional[Edge] = None,
         condition: Optional[Expression],
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        self._true_branch = assert_type(true_edge, Edge)
-        self._false_branch = assert_type(false_edge, Edge)
+        self._then_edge = assert_type(then_edge, Edge)
+        self._else_edge = assert_type(else_edge, Edge)
         self._condition = assert_type(condition, Expression)
 
     def to_string(self):
@@ -76,7 +76,7 @@ class IfElseNode(Node):
         """
         Gets edges
         """
-        return [copy.deepcopy(self._true_branch), copy.deepcopy(self._false_branch)]
+        return [copy.deepcopy(self._then_edge), copy.deepcopy(self._else_edge)]
 
 
 class AssignNode(Node):
@@ -116,7 +116,7 @@ class AssignNode(Node):
         """
         return [copy.deepcopy(self._edge)]
 
-    def add_edge(self, edge: Edge):
+    def set_edge(self, edge: Edge):
         """
         Adds an edge
         """

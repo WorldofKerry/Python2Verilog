@@ -226,15 +226,17 @@ class GeneratorParser:
         """
         <target0, target1, ...> = <value>;
         """
-        assign = ir.NonBlockingSubsitution(
-            self.__parse_targets(list(node.targets)),
-            self.__parse_expression(node.value),
+        # assign = ir.NonBlockingSubsitution(
+        #     self.__parse_targets(list(node.targets)),
+        #     self.__parse_expression(node.value),
+        # )
+        # return [assign]
+        return ir.AssignNode(
+            lvalue=self.__parse_targets(list(node.targets)),
+            rvalue=self.__parse_expression(node.value),
         )
-        return [assign]
 
-    def __parse_statements(
-        self, stmts: list[pyast.AST], prefix: str, next_state: ir.State
-    ):
+    def __parse_statements(self, stmts: list[pyast.AST], prefix: str, nextt: ir.Edge):
         """
         Returns state of the first stmt in block
 
@@ -248,84 +250,116 @@ class GeneratorParser:
         """
         assert isinstance(stmts, list)
         assert isinstance(prefix, str)
-        assert isinstance(next_state, ir.State)
 
-        # state[x] has next state of state[x+1]
-        cur_states = [ir.State(f"{prefix}{i}") for i in range(len(stmts))]
-        next_states = cur_states[1:] + [next_state]
+        # # state[x] has next state of state[x+1]
+        # cur_states = [ir.State(f"{prefix}{i}") for i in range(len(stmts))]
+        # next_states = cur_states[1:] + [next_node]
 
-        for stmt, cur, nextt in zip(stmts, cur_states, next_states):
-            self.__parse_statement(stmt, cur, nextt)
+        # results = []
+        # for stmt, cur, nextt in zip(stmts, cur_states, next_states):
+        #     results.append(self.__parse_statement(stmt, cur, nextt))
 
-        return cur_states[0]
+        # for i in range(len(results) - 1):
+        #     edge = ir.Edge(next_node=results[i+1])
+        #     results[i].
 
-    def __parse_statement(
-        self, stmt: pyast.AST, cur_state: ir.State, next_state: ir.State
-    ):
+        # builds backwards
+        # builds link from the returned node to next_node
+        stmts.reverse()
+        previous = self.__parse_statement(stmt=stmts[0], nextt=nextt)
+        for i in range(1, len(stmts)):
+            edge = ir.Edge(next_node=previous)
+            previous = self.__parse_statement(stmt=stmts[i], nextt=edge)
+
+        return previous
+
+    def __parse_statement(self, stmt: pyast.AST, nextt: ir.Edge):
         """
+        next_node represents the next operation in the control flow diagram.
+
+        e.g. what does the program do after this current stmt (if-else/assignment)?
+
         <statement> (e.g. assign, for loop, etc., cannot be equated to)
 
-        creates cur_state
         """
-        body = []
+        cur_node = None
         if isinstance(stmt, pyast.Assign):
-            body = self.__parse_assign(stmt)
+            cur_node = self.__parse_assign(stmt)
         elif isinstance(stmt, pyast.Yield):
-            body = self.__parse_yield(stmt)
-        elif isinstance(stmt, pyast.While):
-            body = self.__parse_while(stmt, cur_state, next_state)
+            cur_node = self.__parse_yield(stmt)
+        # elif isinstance(stmt, pyast.While):
+        #     body = self.__parse_while(stmt, cur_state, next_state)
         elif isinstance(stmt, pyast.If):
-            body = self.__parse_ifelse(stmt, cur_state, next_state)
+            cur_node = self.__parse_ifelse(stmt=stmt, nextt=nextt)
         elif isinstance(stmt, pyast.Expr):
             # TODO: solve the inconsistency
             # raise Exception(f"{pyast.dump(stmt)}")
-            self.__parse_statement(stmt.value, cur_state, next_state)
-            return
+            return self.__parse_statement(stmt=stmt.value, nextt=nextt)
         elif isinstance(stmt, pyast.AugAssign):
             assert isinstance(
                 stmt.target, pyast.Name
             ), "Error: only supports single target"
-            body = [
-                ir.NonBlockingSubsitution(
-                    self.__parse_expression(stmt.target),
-                    self.__parse_expression(
-                        pyast.BinOp(stmt.target, stmt.op, stmt.value)
-                    ),
-                )
-            ]
+            # body = [
+            #     ir.NonBlockingSubsitution(
+            #         self.__parse_expression(stmt.target),
+            #         self.__parse_expression(
+            #             pyast.BinOp(stmt.target, stmt.op, stmt.value)
+            #         ),
+            #     )
+            # ]
+            cur_node = ir.AssignNode(
+                lvalue=self.__parse_expression(stmt.target),
+                rvalue=self.__parse_expression(
+                    pyast.BinOp(stmt.target, stmt.op, stmt.value)
+                ),
+                edge=nextt,
+            )
         else:
             raise TypeError(
                 "Error: unexpected statement type", type(stmt), pyast.dump(stmt)
             )
 
-        self.__add_state_var(cur_state)
-        self._states.case_items.append(
-            ir.CaseItem(
-                cur_state,
-                [ir.StateSubsitution(self._state_var, next_state), *body],
-            )
-        )
+        # self.__add_state_var(cur_state)
+        # self._states.case_items.append(
+        #     ir.CaseItem(
+        #         cur_state,
+        #         [ir.StateSubsitution(self._state_var, next_state), *body],
+        #     )
+        # )
+        return cur_node
 
-    def __parse_ifelse(self, stmt: pyast.If, cur_state: ir.State, next_state: ir.State):
+    def __parse_ifelse(self, stmt: pyast.If, nextt: ir.Edge):
         """
         If statement
         """
         assert isinstance(stmt, pyast.If)
 
-        then_start_state = self.__parse_statements(
-            list(stmt.body), f"{cur_state.to_string()}then", next_state
-        )
-        else_start_state = self.__parse_statements(
-            list(stmt.orelse), f"{cur_state.to_string()}else", next_state
-        )
+        # then_start_state = self.__parse_statements(
+        #     list(stmt.body), f"{cur_state.to_string()}then", next_state
+        # )
+        # else_start_state = self.__parse_statements(
+        #     list(stmt.orelse), f"{cur_state.to_string()}else", next_state
+        # )
 
-        ifelse = ir.IfElse(
-            self.__parse_expression(stmt.test),
-            [ir.StateSubsitution(self._state_var, then_start_state)],
-            [ir.StateSubsitution(self._state_var, else_start_state)],
-        )
+        # ifelse = ir.IfElse(
+        #     self.__parse_expression(stmt.test),
+        #     [ir.StateSubsitution(self._state_var, then_start_state)],
+        #     [ir.StateSubsitution(self._state_var, else_start_state)],
+        # )
 
-        return [ifelse]
+        # return [ifelse]
+        then_node = self.__parse_statements(list(stmt.body), "", nextt)
+        else_node = self.__parse_statements(list(stmt.orelse), "", nextt)
+
+        then_edge = ir.Edge(name="True", next_node=then_node)
+        else_edge = ir.Edge(name="False", next_node=else_node)
+
+        ifelse = ir.IfElseNode(
+            then_edge=then_edge,
+            else_edge=else_edge,
+            condition=self.__parse_expression(stmt.test),
+        )
+        return ifelse
 
     def __parse_yield(self, node: pyast.Yield):
         """
@@ -335,26 +369,29 @@ class GeneratorParser:
 
         yield <value>;
         """
-        if isinstance(node.value, pyast.Tuple):
-            output_vars = node.value.elts  # e.g. `yield (1, 2)`
-        elif isinstance(node.value, pyast.Constant):
-            output_vars = [node.value]  # e.g. `yield 1`
-        else:
-            raise NotImplementedError(
-                f"Unexpected yield {type(node.value)} {pyast.dump(node)}"
-            )
-        try:
-            return [
-                ir.NonBlockingSubsitution(
-                    ir.Var(self._context.output_vars[idx]),
-                    self.__parse_expression(elem),
-                )
-                for idx, elem in enumerate(output_vars)
-            ] + [ir.ValidSubsitution(ir.Var("_valid"), ir.Int(1))]
-        except IndexError as e:
-            raise IndexError(
-                "yield return length differs from function return length type hint"
-            ) from e
+        # if isinstance(node.value, pyast.Tuple):
+        #     output_vars = node.value.elts  # e.g. `yield (1, 2)`
+        # elif isinstance(node.value, pyast.Constant):
+        #     output_vars = [node.value]  # e.g. `yield 1`
+        # else:
+        #     raise NotImplementedError(
+        #         f"Unexpected yield {type(node.value)} {pyast.dump(node)}"
+        #     )
+        # try:
+        #     return [
+        #         ir.NonBlockingSubsitution(
+        #             ir.Var(self._context.output_vars[idx]),
+        #             self.__parse_expression(elem),
+        #         )
+        #         for idx, elem in enumerate(output_vars)
+        #     ] + [ir.ValidSubsitution(ir.Var("_valid"), ir.Int(1))]
+        # except IndexError as e:
+        #     raise IndexError(
+        #         "yield return length differs from function return length type hint"
+        #     ) from e
+        return ir.AssignNode(
+            name="Yield", lvalue=ir.Var(str(node.value)), rvalue=ir.Int(1)
+        )
 
     def __parse_binop_improved(self, expr: pyast.BinOp):
         """
@@ -463,22 +500,22 @@ class GeneratorParser:
             f" {self.__parse_expression(node.comparators[0]).to_string()}"
         )
 
-    def __parse_while(
-        self, stmt: pyast.While, cur_state: ir.State, next_state: ir.State
-    ):
-        """
-        Converts while loop to a while-true-if-break loop
-        """
-        assert isinstance(stmt, pyast.While)
+    # def __parse_while(
+    #     self, stmt: pyast.While, cur_state: ir.State, next_state: ir.State
+    # ):
+    #     """
+    #     Converts while loop to a while-true-if-break loop
+    #     """
+    #     assert isinstance(stmt, pyast.While)
 
-        body_start_state = self.__parse_statements(
-            list(stmt.body), f"{cur_state.to_string()}while", cur_state
-        )
+    #     body_start_state = self.__parse_statements(
+    #         list(stmt.body), f"{cur_state.to_string()}while", cur_state
+    #     )
 
-        ifelse = ir.IfElse(
-            self.__parse_expression(stmt.test),
-            [ir.StateSubsitution(self._state_var, body_start_state)],
-            [ir.StateSubsitution(self._state_var, next_state)],
-        )
+    #     ifelse = ir.IfElse(
+    #         self.__parse_expression(stmt.test),
+    #         [ir.StateSubsitution(self._state_var, body_start_state)],
+    #         [ir.StateSubsitution(self._state_var, next_state)],
+    #     )
 
-        return [ifelse]
+    #     return [ifelse]
