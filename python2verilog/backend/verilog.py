@@ -6,7 +6,7 @@ import ast
 from typing import Optional
 
 from ..utils.string import Lines, Indent
-from ..utils.assertions import assert_list_type
+from ..utils.assertions import assert_list_type, assert_type, assert_dict_type
 from .. import ir
 
 
@@ -227,6 +227,104 @@ class Verilog:
             Verilog.build_tree_stmt(root), context
         )
         return self
+
+    def from_ir_graph(self, root: ir.Node, context: ir.Context):
+        """ "
+        Builds tree from IR
+        """
+        assert_type(root, ir.Node)
+        assert_type(context, ir.Context)
+        self.context = context
+        self.module = Verilog.__create_module_from_python(
+            self.build_from_graph(root), context
+        )
+        return self
+
+    def build_from_graph(self, root: ir.Node):
+        """
+        Builds from graph
+        """
+        assert_type(root, ir.Node)
+        root_case = Case(expression=Expression("_state"), case_items=[])
+        self.build_from_node(node=root, root_case=root_case)
+        return root_case
+
+    def build_from_node(self, node: ir.Node, root_case: Case):
+        """
+        Builds from node
+        """
+        assert_type(node, ir.Node)
+
+        if isinstance(node, ir.AssignNode):
+            next_state = self.build_from_node(node._edge, root_case)
+            root_case.case_items.append(
+                CaseItem(
+                    condition=Expression(node._id),
+                    statements=[
+                        Statement(node.to_string()),
+                        NonBlockingSubsitution(
+                            lvalue=root_case.condition.to_string(), rvalue=next_state
+                        ),
+                    ],
+                )
+            )
+            return node._id
+        if isinstance(node, ir.IfElseNode):
+            then_state = self.build_from_node(node._then_edge, root_case)
+            else_state = self.build_from_node(node._else_edge, root_case)
+            root_case.case_items.append(
+                CaseItem(
+                    condition=Expression(node._id),
+                    statements=[
+                        IfElse(
+                            condition=Expression(node._condition.to_string()),
+                            then_body=[
+                                NonBlockingSubsitution(
+                                    root_case.condition.to_string(), then_state
+                                )
+                            ],
+                            else_body=[
+                                NonBlockingSubsitution(
+                                    root_case.condition.to_string(), else_state
+                                )
+                            ],
+                        )
+                    ],
+                )
+            )
+            return node._id
+        if isinstance(node, ir.YieldNode):
+            next_state = self.build_from_node(node._edge, root_case)
+            stmts = [
+                NonBlockingSubsitution(f"out{i}", v.to_string())
+                for i, v in enumerate(node._stmts)
+            ]
+            root_case.case_items.append(
+                CaseItem(
+                    condition=Expression(node._id),
+                    statements=[
+                        *stmts,
+                        NonBlockingSubsitution(
+                            lvalue=root_case.condition.to_string(), rvalue=next_state
+                        ),
+                    ],
+                )
+            )
+            return node._id
+        if isinstance(node, ir.Edge):
+            return self.build_from_node(node._node, root_case)
+        if isinstance(node, ir.Node):
+            root_case.case_items.append(
+                CaseItem(
+                    condition=Expression(node._id),
+                    statements=[
+                        NonBlockingSubsitution("regularNode", "1"),
+                    ],
+                )
+            )
+            return node._id
+        assert_type(node, ir.AssignNode)
+        return ""
 
     @staticmethod
     def __get_init(root: Statement, global_vars: dict[str, str]):

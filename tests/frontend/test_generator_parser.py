@@ -104,5 +104,5 @@ def circle_lines(s_x, s_y, height) -> tuple[int, int]:
             node_color="#00b4d9",
         )
 
-        plt.savefig("path.png")
+        # plt.savefig("path.png")
         # warnings.warn(f"{inst._root._then_edge._node}")

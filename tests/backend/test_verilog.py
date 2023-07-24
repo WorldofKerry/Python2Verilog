@@ -5,7 +5,7 @@ from python2verilog.backend.verilog import (
     Instantiation,
     Expression,
 )
-from python2verilog.frontend import GeneratorParser
+from python2verilog.frontend import GeneratorParser, Generator2Graph
 import unittest
 import warnings
 import ast
@@ -94,3 +94,31 @@ def circle_lines(s_x, s_y, height) -> tuple[int, int]:
         ports = {"_clock": "CLK", "_valid": "_valid"}
         inst = Instantiation("module0", "my_module", ports)
         # warnings.warn(inst.to_lines())
+
+
+class TestNewGraphIR(unittest.TestCase):
+    def test_basics(self):
+        python = """
+def circle_lines(s_x, s_y, height) -> tuple[int, int]:
+    if a < 150:
+        a = a + 1
+        yield (a, )
+    else:
+        yield (2, 4)
+        a = a + 2
+    yield(a + a, 6)
+    while s_x < s_y:
+        yield (s_y, height)
+        s_x = s_x + 1
+        while s_y < height:
+            yield (s_y, a)
+            s_y += 1
+        c = a
+    a = a + 1
+"""
+        func = ast.parse(python).body[0]
+        inst = Generator2Graph(func)
+        ir = Generator2Graph(func)
+        verilog = Verilog()
+        verilog.from_ir_graph(inst._root, ir.get_context())
+        warnings.warn(verilog.get_module())
