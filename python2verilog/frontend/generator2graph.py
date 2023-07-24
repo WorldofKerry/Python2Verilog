@@ -11,7 +11,7 @@ from ..utils.string import Lines, Indent
 from ..utils.assertions import assert_type, assert_list_type
 
 
-class GeneratorParser:
+class Generator2Graph:
     """
     Parses python generator functions to Verilog AST
     """
@@ -36,7 +36,13 @@ class GeneratorParser:
 
         done_state = self.__add_state_var(ir.State("_statedone"))
         self._root = self.__parse_statements(
-            list(python_func.body), "_state", done_state
+            list(python_func.body),
+            "",
+            ir.Edge(
+                id_="_edgedone",
+                name="DONE",
+                next_node=ir.Node(id_="_statedone"),
+            ),
         )
 
         self._states.case_items.append(
@@ -222,7 +228,7 @@ class GeneratorParser:
             raise TypeError(f"Unsupported lvalue type {type(node)} {pyast.dump(node)}")
         return self.__parse_expression(node)
 
-    def __parse_assign(self, node: pyast.Assign):
+    def __parse_assign(self, node: pyast.Assign, prefix: str):
         """
         <target0, target1, ...> = <value>;
         """
@@ -232,6 +238,7 @@ class GeneratorParser:
         # )
         # return [assign]
         return ir.AssignNode(
+            id_=prefix,
             lvalue=self.__parse_targets(list(node.targets)),
             rvalue=self.__parse_expression(node.value),
         )
@@ -266,14 +273,18 @@ class GeneratorParser:
         # builds backwards
         # builds link from the returned node to next_node
         stmts.reverse()
-        previous = self.__parse_statement(stmt=stmts[0], nextt=nextt)
+        previous = self.__parse_statement(
+            stmt=stmts[0], nextt=nextt, prefix=f"{prefix}_0"
+        )
         for i in range(1, len(stmts)):
-            edge = ir.Edge(next_node=previous)
-            previous = self.__parse_statement(stmt=stmts[i], nextt=edge)
+            edge = ir.Edge(id_=f"{prefix}_e{i}", next_node=previous)
+            previous = self.__parse_statement(
+                stmt=stmts[i], nextt=edge, prefix=f"{prefix}_{i}"
+            )
 
         return previous
 
-    def __parse_statement(self, stmt: pyast.AST, nextt: ir.Edge):
+    def __parse_statement(self, stmt: pyast.AST, nextt: ir.Edge, prefix: str):
         """
         next_node represents the next operation in the control flow diagram.
 
@@ -282,19 +293,25 @@ class GeneratorParser:
         <statement> (e.g. assign, for loop, etc., cannot be equated to)
 
         """
+        assert_type(stmt, pyast.AST)
+        assert_type(nextt, ir.Edge)
         cur_node = None
         if isinstance(stmt, pyast.Assign):
-            cur_node = self.__parse_assign(stmt)
+            cur_node = self.__parse_assign(stmt, prefix=prefix)
+            cur_node.set_edge(nextt)
         elif isinstance(stmt, pyast.Yield):
-            cur_node = self.__parse_yield(stmt)
+            cur_node = self.__parse_yield(stmt, prefix=prefix)
+            cur_node.set_edge(nextt)
         # elif isinstance(stmt, pyast.While):
         #     body = self.__parse_while(stmt, cur_state, next_state)
         elif isinstance(stmt, pyast.If):
-            cur_node = self.__parse_ifelse(stmt=stmt, nextt=nextt)
+            cur_node = self.__parse_ifelse(stmt=stmt, nextt=nextt, prefix=prefix)
         elif isinstance(stmt, pyast.Expr):
             # TODO: solve the inconsistency
             # raise Exception(f"{pyast.dump(stmt)}")
-            return self.__parse_statement(stmt=stmt.value, nextt=nextt)
+            cur_node = self.__parse_statement(
+                stmt=stmt.value, nextt=nextt, prefix=prefix
+            )
         elif isinstance(stmt, pyast.AugAssign):
             assert isinstance(
                 stmt.target, pyast.Name
@@ -308,6 +325,7 @@ class GeneratorParser:
             #     )
             # ]
             cur_node = ir.AssignNode(
+                id_=prefix,
                 lvalue=self.__parse_expression(stmt.target),
                 rvalue=self.__parse_expression(
                     pyast.BinOp(stmt.target, stmt.op, stmt.value)
@@ -328,7 +346,7 @@ class GeneratorParser:
         # )
         return cur_node
 
-    def __parse_ifelse(self, stmt: pyast.If, nextt: ir.Edge):
+    def __parse_ifelse(self, stmt: pyast.If, nextt: ir.Edge, prefix: str):
         """
         If statement
         """
@@ -348,20 +366,21 @@ class GeneratorParser:
         # )
 
         # return [ifelse]
-        then_node = self.__parse_statements(list(stmt.body), "", nextt)
-        else_node = self.__parse_statements(list(stmt.orelse), "", nextt)
+        then_node = self.__parse_statements(list(stmt.body), f"{prefix}_t", nextt)
+        else_node = self.__parse_statements(list(stmt.orelse), f"{prefix}_f", nextt)
 
-        then_edge = ir.Edge(name="True", next_node=then_node)
-        else_edge = ir.Edge(name="False", next_node=else_node)
+        then_edge = ir.Edge(id_=f"{prefix}_et", name="True", next_node=then_node)
+        else_edge = ir.Edge(id_=f"{prefix}_ef", name="False", next_node=else_node)
 
         ifelse = ir.IfElseNode(
+            id_=prefix,
             then_edge=then_edge,
             else_edge=else_edge,
             condition=self.__parse_expression(stmt.test),
         )
         return ifelse
 
-    def __parse_yield(self, node: pyast.Yield):
+    def __parse_yield(self, node: pyast.Yield, prefix: str):
         """
         Warning: may not work for single output
 
@@ -389,8 +408,11 @@ class GeneratorParser:
         #     raise IndexError(
         #         "yield return length differs from function return length type hint"
         #     ) from e
-        return ir.AssignNode(
-            name="Yield", lvalue=ir.Var(str(node.value)), rvalue=ir.Int(1)
+        assert isinstance(node.value, pyast.Tuple)
+        return ir.YieldNode(
+            id_=prefix,
+            name="Yield",
+            stmts=[self.__parse_expression(c) for c in node.value.elts],
         )
 
     def __parse_binop_improved(self, expr: pyast.BinOp):

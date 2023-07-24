@@ -1,4 +1,4 @@
-from python2verilog.frontend import GeneratorParser
+from python2verilog.frontend import GeneratorParser, Generator2Graph
 import unittest
 import ast
 import warnings
@@ -60,3 +60,41 @@ def circle_lines(s_x, s_y, height) -> tuple[int, int]:
 
         with open("module_circle.log", mode="w") as module_file:
             module_file.write(generatorParser.generate_verilog().to_string())
+
+
+import networkx as nx
+from matplotlib import pyplot as plt
+from python2verilog.ir import *
+
+
+class TestGenerator2Graph(unittest.TestCase):
+    def test_basics(self):
+        python = """
+def circle_lines(s_x, s_y, height) -> tuple[int, int]:
+    if a < 150:
+        a = a + 1
+        yield (a, )
+    else:
+        yield (2, 4)
+        a = a + 2
+    yield(a + a, 6)
+"""
+        func = ast.parse(python).body[0]
+        inst = Generator2Graph(func)
+
+        adjacency_list = create_adjacency_list(inst._root)
+        g = nx.DiGraph(adjacency_list)
+
+        plt.figure(figsize=(15, 15))
+        nx.draw(
+            g,
+            with_labels=True,
+            font_weight="bold",
+            arrowsize=30,
+            node_size=4000,
+            node_shape="s",
+            node_color="#00b4d9",
+        )
+
+        plt.savefig("path.png")
+        # warnings.warn(f"{inst._root._then_edge._node}")

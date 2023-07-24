@@ -15,8 +15,9 @@ class Node:
     Represents logic
     """
 
-    def __init__(self, name: str = ""):
+    def __init__(self, id_: str, name: str = ""):
         self._name = assert_type(name, str)
+        self._id = assert_type(id_, str)
 
     def to_string(self):
         """
@@ -30,19 +31,25 @@ class Node:
     def __repr__(self):
         return f"{self.__class__.__name__} name: ({self._name})"
 
-    def get_edges(self):
+    def get_children(self):
         """
         Gets edges
         """
-        warnings.warn("get edges on base class Node")
-        result: list[Edge] = []
-        return result
+        return []
 
     def get_name(self):
         """
         Gets node name
         """
         return self._name
+
+    def __hash__(self) -> int:
+        return hash(self._id)
+
+    def __eq__(self, __value: object) -> bool:
+        if isinstance(__value, Node):
+            return self._id == __value._id
+        return False
 
 
 class IfElseNode(Node):
@@ -52,13 +59,14 @@ class IfElseNode(Node):
 
     def __init__(
         self,
+        id_: str,
         *args,
         then_edge: Optional[Edge] = None,
         else_edge: Optional[Edge] = None,
         condition: Optional[Expression],
         **kwargs,
     ):
-        super().__init__(*args, **kwargs)
+        super().__init__(id_, *args, **kwargs)
         self._then_edge = assert_type(then_edge, Edge)
         self._else_edge = assert_type(else_edge, Edge)
         self._condition = assert_type(condition, Expression)
@@ -72,7 +80,7 @@ class IfElseNode(Node):
     def __repr__(self):
         return super().__repr__() + f", condition: ({self._condition})"
 
-    def get_edges(self):
+    def get_children(self):
         """
         Gets edges
         """
@@ -88,13 +96,14 @@ class AssignNode(Node):
 
     def __init__(
         self,
+        id_: str,
         *args,
         lvalue: Expression,
         rvalue: Expression,
         edge: Optional[Edge] = None,
         **kwargs,
     ):
-        super().__init__(*args, **kwargs)
+        super().__init__(id_, *args, **kwargs)
         self._lvalue = assert_type(lvalue, Expression)
         self._rvalue = assert_type(rvalue, Expression)
         self._edge = assert_type(edge, Edge)
@@ -110,7 +119,7 @@ class AssignNode(Node):
             super().__repr__() + f", lvalue: ({self._lvalue}) rvalue: ({self._rvalue})"
         )
 
-    def get_edges(self):
+    def get_children(self):
         """
         Gets edges
         """
@@ -125,14 +134,51 @@ class AssignNode(Node):
         self._edge = assert_type(edge, Edge)
 
 
-class Edge:
+class YieldNode(Node):
+    """
+    Yield statement, represents output
+    """
+
+    def __init__(
+        self,
+        id_: str,
+        name: str = "",
+        stmts: Optional[list[Expression]] = None,
+        edge: Optional[Edge] = None,
+    ):
+        super().__init__(id_, name)
+        self._stmts = assert_list_type(stmts, Expression)
+        self._edge = assert_type(edge, Edge)
+
+    def to_string(self):
+        """
+        To string
+        """
+        return f"yield {self._stmts}"
+
+    def set_edge(self, edge: Edge):
+        """
+        Adds an edge
+        """
+        if self._edge:
+            raise ValueError(f"reassigning edge {self._edge} to {edge}")
+        self._edge = assert_type(edge, Edge)
+
+    def get_children(self):
+        """
+        Gets edges
+        """
+        return [copy.deepcopy(self._edge)]
+
+
+class Edge(Node):
     """
     Represents an edge between two nodes
     """
 
-    def __init__(self, name: str = "", next_node: Optional[Node] = None):
-        self._name = assert_type(name, str)
+    def __init__(self, id_: str, *args, next_node: Optional[Node] = None, **kwargs):
         self._node = assert_type(next_node, Node)
+        super().__init__(id_, *args, **kwargs)
 
     def to_string(self):
         """
@@ -170,6 +216,9 @@ class Edge:
         """
         return copy.deepcopy(self._node)
 
+    def get_children(self):
+        return [self.get_next_node()]
+
 
 class NonclockedEdge(Edge):
     """
@@ -205,20 +254,22 @@ def create_adjacency_list(node: Node):
     """
     adjacency_list = {}
 
-    def traverse_graph(curr_node: Node, visited: set[Node | Edge]):
+    def traverse_graph(curr_node: Node, visited: set[Node]):
+        if not curr_node:
+            return
+
         nonlocal adjacency_list
         if curr_node in visited:
             return
 
         visited.add(curr_node)
-        edges = curr_node.get_edges()
-        adjacency_list[curr_node] = list(edges)
+        children = curr_node.get_children()
+        # if children[0] == None:
+        #     warnings.warn(f"{str(list(children))} {curr_node}")
+        adjacency_list[curr_node] = list(children)
 
-        for edge in edges:
-            next_node = edge.get_next_node()
-            if next_node:
-                adjacency_list[edge] = [next_node]
-                traverse_graph(next_node, visited)
+        for child in children:
+            traverse_graph(child, visited)
 
     traverse_graph(node, set())
     return adjacency_list
