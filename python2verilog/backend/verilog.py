@@ -161,6 +161,7 @@ class Verilog:
         self.context: Optional[ir.Context] = None
         if root is not None and context is not None:
             self.from_ir(root, context)
+        self._root_case = None
 
     @staticmethod
     def build_tree_stmt(node: ir.Statement) -> Statement:
@@ -235,93 +236,114 @@ class Verilog:
         assert_type(root, ir.Node)
         assert_type(context, ir.Context)
         self.context = context
-        self.module = Verilog.__create_module_from_python(
-            self.build_from_graph(root), context
-        )
+        self._root_case = self.build_from_graph(root, set())
+        assert isinstance(self._root_case, ir.Context)
+        self.context.global_vars["_state"] = str(len(self._root_case.case_items))
+        self.module = Verilog.__create_module_from_python(self._root_case, context)
         return self
 
-    def build_from_graph(self, root: ir.Node):
+    def build_from_graph(self, root: ir.Node, visited: set[str]):
         """
         Builds from graph
         """
         assert_type(root, ir.Node)
         root_case = Case(expression=Expression("_state"), case_items=[])
-        self.build_from_node(node=root, root_case=root_case)
+        self.build_from_node(node=root, root_case=root_case, visited=visited)
         return root_case
 
-    def build_from_node(self, node: ir.Node, root_case: Case):
+    def build_from_node(self, node: ir.Node, root_case: Case, visited: set[str]):
         """
         Builds from node
         """
         assert_type(node, ir.Node)
+        assert isinstance(self.context, ir.Context)
+        if node._id in visited:
+            return node._id
 
         if isinstance(node, ir.AssignNode):
-            next_state = self.build_from_node(node._edge, root_case)
-            root_case.case_items.append(
-                CaseItem(
-                    condition=Expression(node._id),
-                    statements=[
-                        Statement(node.to_string()),
-                        NonBlockingSubsitution(
-                            lvalue=root_case.condition.to_string(), rvalue=next_state
-                        ),
-                    ],
+            if node._id not in visited:
+                visited.add(node._id)
+                next_state = self.build_from_node(node._edge, root_case, visited)
+                root_case.case_items.append(
+                    CaseItem(
+                        condition=Expression(node._id),
+                        statements=[
+                            Statement(f"{node.to_string()};"),
+                            NonBlockingSubsitution(
+                                lvalue=root_case.condition.to_string(),
+                                rvalue=next_state,
+                            ),
+                        ],
+                    )
                 )
-            )
+                self.context.global_vars[node._id] = len(root_case.case_items)
             return node._id
         if isinstance(node, ir.IfElseNode):
-            then_state = self.build_from_node(node._then_edge, root_case)
-            else_state = self.build_from_node(node._else_edge, root_case)
-            root_case.case_items.append(
-                CaseItem(
-                    condition=Expression(node._id),
-                    statements=[
-                        IfElse(
-                            condition=Expression(node._condition.to_string()),
-                            then_body=[
-                                NonBlockingSubsitution(
-                                    root_case.condition.to_string(), then_state
-                                )
-                            ],
-                            else_body=[
-                                NonBlockingSubsitution(
-                                    root_case.condition.to_string(), else_state
-                                )
-                            ],
-                        )
-                    ],
+            if node._id not in visited:
+                visited.add(node._id)
+                then_state = self.build_from_node(node._then_edge, root_case, visited)
+                else_state = self.build_from_node(node._else_edge, root_case, visited)
+                root_case.case_items.append(
+                    CaseItem(
+                        condition=Expression(node._id),
+                        statements=[
+                            IfElse(
+                                condition=Expression(node._condition.to_string()),
+                                then_body=[
+                                    NonBlockingSubsitution(
+                                        root_case.condition.to_string(), then_state
+                                    )
+                                ],
+                                else_body=[
+                                    NonBlockingSubsitution(
+                                        root_case.condition.to_string(), else_state
+                                    )
+                                ],
+                            )
+                        ],
+                    )
                 )
-            )
+                self.context.global_vars[node._id] = len(root_case.case_items)
             return node._id
         if isinstance(node, ir.YieldNode):
-            next_state = self.build_from_node(node._edge, root_case)
-            stmts = [
-                NonBlockingSubsitution(f"out{i}", v.to_string())
-                for i, v in enumerate(node._stmts)
-            ]
-            root_case.case_items.append(
-                CaseItem(
-                    condition=Expression(node._id),
-                    statements=[
-                        *stmts,
-                        NonBlockingSubsitution(
-                            lvalue=root_case.condition.to_string(), rvalue=next_state
-                        ),
-                    ],
+            if node._id not in visited:
+                visited.add(node._id)
+                next_state = self.build_from_node(node._edge, root_case, visited)
+                stmts = [
+                    NonBlockingSubsitution(f"_out{i}", v.to_string())
+                    for i, v in enumerate(node._stmts)
+                ] + [NonBlockingSubsitution("_valid", "1")]
+                root_case.case_items.append(
+                    CaseItem(
+                        condition=Expression(node._id),
+                        statements=[
+                            *stmts,
+                            NonBlockingSubsitution(
+                                lvalue=root_case.condition.to_string(),
+                                rvalue=next_state,
+                            ),
+                        ],
+                    )
                 )
-            )
+                self.context.global_vars[node._id] = len(root_case.case_items)
             return node._id
         if isinstance(node, ir.Edge):
-            return self.build_from_node(node._node, root_case)
+            if node._id not in visited:
+                visited.add(node._id)
+                return self.build_from_node(node._node, root_case, visited)
+            return "bruvlmao"
         if isinstance(node, ir.Node):
-            root_case.case_items.append(
-                CaseItem(
-                    condition=Expression(node._id),
-                    statements=[
-                        NonBlockingSubsitution("regularNode", "1"),
-                    ],
+            if node._id not in visited:
+                visited.add(node._id)
+                root_case.case_items.append(
+                    CaseItem(
+                        condition=Expression(node._id),
+                        statements=[
+                            NonBlockingSubsitution("_done", "1"),
+                        ],
+                    )
                 )
-            )
+                self.context.global_vars[node._id] = len(root_case.case_items)
             return node._id
         assert_type(node, ir.AssignNode)
         return ""

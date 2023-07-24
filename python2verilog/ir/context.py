@@ -29,3 +29,9 @@ class Context:
         Checks if a variable has been already declared or not
         """
         return name in set([*self.global_vars, *self.input_vars, *self.output_vars])
+
+    def to_string(self):
+        """
+        To string
+        """
+        return str(self.__dict__)

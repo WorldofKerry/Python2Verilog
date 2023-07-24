@@ -41,7 +41,7 @@ class Generator2Graph:
             ir.Edge(
                 id_="_edgedone",
                 name="DONE",
-                next_node=ir.Node(id_="_statedone"),
+                next_node=ir.Node(id_="_statelmaodone"),
             ),
         )
 
@@ -90,7 +90,6 @@ class Generator2Graph:
         """
         Gets the context of the Python function
         """
-        self.__add_global_var(str(1), self._state_var.to_string())  # State 0 is done
         for i, var in enumerate(self._context.state_vars):
             self.__add_global_var(str(i), var.to_string())
         return self._context
@@ -222,7 +221,7 @@ class Generator2Graph:
                 )
                 self.__add_global_var(str(0), node.value.id)
         elif isinstance(node, pyast.Name):
-            if node.id not in self._context.global_vars:
+            if not self._context.is_declared(node.id):
                 self.__add_global_var(str(0), node.id)
         else:
             raise TypeError(f"Unsupported lvalue type {type(node)} {pyast.dump(node)}")
@@ -400,8 +399,12 @@ class Generator2Graph:
 
         # return [ifelse]
 
-        body_node = self.__parse_statements(list(stmt.body), f"{prefix}_while", nextt)
-        body_edge = ir.Edge(id_=f"{prefix}_edge", name="True", next_node=body_node)
+        body_edge = ir.Edge(id_=f"{prefix}_edge", name="True")
+        recurse_edge = ir.Edge(id_=f"{prefix}_recur", name="Recurse")
+        body_node = self.__parse_statements(
+            list(stmt.body), f"{prefix}_while", recurse_edge
+        )
+        body_edge.set_next_node(body_node)
 
         ifelse = ir.IfElseNode(
             id_=f"{prefix}_while",
@@ -409,6 +412,7 @@ class Generator2Graph:
             then_edge=body_edge,
             else_edge=nextt,
         )
+        recurse_edge.set_next_node(ifelse)
 
         return ifelse
 
