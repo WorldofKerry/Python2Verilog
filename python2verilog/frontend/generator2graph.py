@@ -302,8 +302,8 @@ class Generator2Graph:
         elif isinstance(stmt, pyast.Yield):
             cur_node = self.__parse_yield(stmt, prefix=prefix)
             cur_node.set_edge(nextt)
-        # elif isinstance(stmt, pyast.While):
-        #     body = self.__parse_while(stmt, cur_state, next_state)
+        elif isinstance(stmt, pyast.While):
+            cur_node = self.__parse_while(stmt, nextt=nextt, prefix=prefix)
         elif isinstance(stmt, pyast.If):
             cur_node = self.__parse_ifelse(stmt=stmt, nextt=nextt, prefix=prefix)
         elif isinstance(stmt, pyast.Expr):
@@ -369,8 +369,10 @@ class Generator2Graph:
         then_node = self.__parse_statements(list(stmt.body), f"{prefix}_t", nextt)
         else_node = self.__parse_statements(list(stmt.orelse), f"{prefix}_f", nextt)
 
-        then_edge = ir.Edge(id_=f"{prefix}_et", name="True", next_node=then_node)
-        else_edge = ir.Edge(id_=f"{prefix}_ef", name="False", next_node=else_node)
+        then_edge = ir.Edge(id_=f"{prefix}_true_edge", name="True", next_node=then_node)
+        else_edge = ir.Edge(
+            id_=f"{prefix}_false_edge", name="False", next_node=else_node
+        )
 
         ifelse = ir.IfElseNode(
             id_=prefix,
@@ -378,6 +380,36 @@ class Generator2Graph:
             else_edge=else_edge,
             condition=self.__parse_expression(stmt.test),
         )
+        return ifelse
+
+    def __parse_while(self, stmt: pyast.While, nextt: ir.Edge, prefix: str):
+        """
+        Converts while loop to a while-true-if-break loop
+        """
+        assert isinstance(stmt, pyast.While)
+
+        # body_start_state = self.__parse_statements(
+        #     list(stmt.body), f"{cur_state.to_string()}while", cur_state
+        # )
+
+        # ifelse = ir.IfElse(
+        #     self.__parse_expression(stmt.test),
+        #     [ir.StateSubsitution(self._state_var, body_start_state)],
+        #     [ir.StateSubsitution(self._state_var, next_state)],
+        # )
+
+        # return [ifelse]
+
+        body_node = self.__parse_statements(list(stmt.body), f"{prefix}_while", nextt)
+        body_edge = ir.Edge(id_=f"{prefix}_edge", name="True", next_node=body_node)
+
+        ifelse = ir.IfElseNode(
+            id_=f"{prefix}_while",
+            condition=self.__parse_expression(stmt.test),
+            then_edge=body_edge,
+            else_edge=nextt,
+        )
+
         return ifelse
 
     def __parse_yield(self, node: pyast.Yield, prefix: str):
@@ -521,23 +553,3 @@ class Generator2Graph:
             f"{self.__parse_expression(node.left).to_string()} {operator}"
             f" {self.__parse_expression(node.comparators[0]).to_string()}"
         )
-
-    # def __parse_while(
-    #     self, stmt: pyast.While, cur_state: ir.State, next_state: ir.State
-    # ):
-    #     """
-    #     Converts while loop to a while-true-if-break loop
-    #     """
-    #     assert isinstance(stmt, pyast.While)
-
-    #     body_start_state = self.__parse_statements(
-    #         list(stmt.body), f"{cur_state.to_string()}while", cur_state
-    #     )
-
-    #     ifelse = ir.IfElse(
-    #         self.__parse_expression(stmt.test),
-    #         [ir.StateSubsitution(self._state_var, body_start_state)],
-    #         [ir.StateSubsitution(self._state_var, next_state)],
-    #     )
-
-    #     return [ifelse]

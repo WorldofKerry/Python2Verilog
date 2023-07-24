@@ -78,6 +78,14 @@ def circle_lines(s_x, s_y, height) -> tuple[int, int]:
         yield (2, 4)
         a = a + 2
     yield(a + a, 6)
+    while s_x < s_y:
+        yield (s_y, height)
+        s_x = s_x + 1
+        while s_y < height:
+            yield (s_y, a)
+            s_y += 1
+        c = a
+    a = a + 1
 """
         func = ast.parse(python).body[0]
         inst = Generator2Graph(func)
@@ -85,7 +93,7 @@ def circle_lines(s_x, s_y, height) -> tuple[int, int]:
         adjacency_list = create_adjacency_list(inst._root)
         g = nx.DiGraph(adjacency_list)
 
-        plt.figure(figsize=(15, 15))
+        plt.figure(figsize=(20, 20))
         nx.draw(
             g,
             with_labels=True,
