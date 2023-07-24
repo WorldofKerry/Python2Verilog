@@ -28,9 +28,9 @@ class GeneratorParser:
         self._context.output_vars = self.__generate_output_vars(python_func.returns, "")
         self._context.input_vars = [var.arg for var in self._python_func.args.args]
 
-        self.state_var = ir.State("_state")
-        self.states = ir.Case(
-            self.state_var,
+        self._state_var = ir.State("_state")
+        self._states = ir.Case(
+            self._state_var,
             [],
         )
 
@@ -39,7 +39,7 @@ class GeneratorParser:
             list(python_func.body), "_state", done_state
         )
 
-        self.states.case_items.append(
+        self._states.case_items.append(
             ir.CaseItem(
                 done_state,
                 [ir.NonBlockingSubsitution(ir.Var("_done"), ir.Int(1))],
@@ -49,13 +49,7 @@ class GeneratorParser:
     def __str__(self):
         return self.generate_verilog().to_string()
 
-    wow_counter = 0
-
     def __add_state_var(self, state: ir.State):
-        if state.string == "_state4while4":
-            self.wow_counter += 1
-            # if self.wow_counter == 1:
-            #     raise Exception()
         self._context.state_vars.append(state)
         return state
 
@@ -63,7 +57,7 @@ class GeneratorParser:
         """
         Gets the root of the IR tree
         """
-        return copy.deepcopy(self.states)
+        return copy.deepcopy(self._states)
 
     @staticmethod
     def __generate_output_vars(node: pyast.AST, prefix: str):
@@ -90,7 +84,7 @@ class GeneratorParser:
         """
         Gets the context of the Python function
         """
-        self.__add_global_var(str(1), self.state_var.to_string())  # State 0 is done
+        self.__add_global_var(str(1), self._state_var.to_string())  # State 0 is done
         for i, var in enumerate(self._context.state_vars):
             self.__add_global_var(str(i), var.to_string())
         return self._context
@@ -106,7 +100,7 @@ class GeneratorParser:
         Generates the verilog (does the most work, calls other functions)
         """
         stmt_lines = (
-            self.states.to_lines(),
+            self._states.to_lines(),
             Lines(),
         )
         module_lines = self.__stringify_module()
@@ -305,10 +299,10 @@ class GeneratorParser:
             )
 
         self.__add_state_var(cur_state)
-        self.states.case_items.append(
+        self._states.case_items.append(
             ir.CaseItem(
                 cur_state,
-                [ir.StateSubsitution(self.state_var, next_state), *body],
+                [ir.StateSubsitution(self._state_var, next_state), *body],
             )
         )
 
@@ -327,8 +321,8 @@ class GeneratorParser:
 
         ifelse = ir.IfElse(
             self.__parse_expression(stmt.test),
-            [ir.StateSubsitution(self.state_var, then_start_state)],
-            [ir.StateSubsitution(self.state_var, else_start_state)],
+            [ir.StateSubsitution(self._state_var, then_start_state)],
+            [ir.StateSubsitution(self._state_var, else_start_state)],
         )
 
         return [ifelse]
@@ -483,8 +477,8 @@ class GeneratorParser:
 
         ifelse = ir.IfElse(
             self.__parse_expression(stmt.test),
-            [ir.StateSubsitution(self.state_var, body_start_state)],
-            [ir.StateSubsitution(self.state_var, next_state)],
+            [ir.StateSubsitution(self._state_var, body_start_state)],
+            [ir.StateSubsitution(self._state_var, next_state)],
         )
 
         return [ifelse]
