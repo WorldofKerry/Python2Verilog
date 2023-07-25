@@ -130,10 +130,11 @@ class Verilog:
     """
 
     @staticmethod
-    def __create_module_from_python(root: Statement, context: ir.Context):
+    def __new_module(root: Statement, context: ir.Context):
         """
         Creates a module wrapper from the context
-        e.g. the I/O (from Python), clock, valid and done signals
+
+        Requires context for I/O and declarations
         """
         assert isinstance(root, Statement)
         assert isinstance(context, ir.Context)
@@ -149,7 +150,11 @@ class Verilog:
             valid="_valid",
             body=[Verilog.__get_init(root, context.global_vars)],
         )
-        return Module(context.name, inputs, outputs, body=[always])
+        body: list[Statement] = [
+            Declaration(v, is_reg=True, is_signed=True) for v in context.global_vars
+        ]
+        body.append(always)
+        return Module(name=context.name, inputs=inputs, outputs=outputs, body=body)
 
     def __init__(
         self,
@@ -226,9 +231,7 @@ class Verilog:
         #     [ir.NonBlockingSubsitution(ir.Var("_done"), ir.Int(1))]
         # )
         self.context = context
-        self.module = Verilog.__create_module_from_python(
-            Verilog.list_build_tree_stmt(root), context
-        )
+        self.module = Verilog.__new_module(Verilog.list_build_tree_stmt(root), context)
         return self
 
     def from_graph_ir(self, root: ir.Node, context: ir.Context):
@@ -241,7 +244,7 @@ class Verilog:
         self._root_case = self.graph_build(root, set())
         assert isinstance(self._root_case, Case), f"got {type(self._root_case)} instead"
         self.context.global_vars["_state"] = str(len(self._root_case.case_items))
-        self.module = Verilog.__create_module_from_python(self._root_case, context)
+        self.module = Verilog.__new_module(self._root_case, context)
         return self
 
     def graph_build(self, root: ir.Node, visited: set[str]):
@@ -375,11 +378,6 @@ class Verilog:
         """
         Get Verilog module
         """
-        decls = [
-            Declaration(v, is_reg=True, is_signed=True)
-            for v in self.context.global_vars
-        ]
-        self.module.body = decls + self.module.body
         return self.module.to_lines()
 
     def get_testbench(self, test_cases: list[tuple[str]]):
