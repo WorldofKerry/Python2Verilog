@@ -6,6 +6,7 @@ import argparse
 import os
 import ast
 import warnings
+from typing import Optional
 from .frontend import Generator2List, Generator2Graph
 from .backend.verilog import Verilog
 from .optimizer import optimizer

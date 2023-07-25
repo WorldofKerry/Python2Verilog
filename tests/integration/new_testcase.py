@@ -7,6 +7,12 @@ With --overwrite, `config.ini` is overwritten, but the python file is not if it 
 
 For regenerating configuration files:
 python3 tests/integration/new_testcase.py -o -v fib
+python3 tests/integration/new_testcase.py -o -v happy_face
+python3 tests/integration/new_testcase.py -o -v rectangle_filled
+python3 tests/integration/new_testcase.py -o -v rectangle_lines
+python3 tests/integration/new_testcase.py -o -v testing
+python3 tests/integration/new_testcase.py -o -v tree_bfs
+python3 tests/integration/new_testcase.py -o -v circle_lines
 """
 
 import argparse
@@ -41,6 +47,7 @@ def script(args: argparse.Namespace, logger: logging.Logger, shell: callable) ->
             "actual_visual": args.actual_visual,
             "ast_dump": args.ast_dump,
             "filtered_actual": args.filtered_actual,
+            "ir_dump": args.ir_dump,
         }
         config.write(config_file)
 
@@ -157,6 +164,12 @@ if __name__ == "__main__":
         type=str,
         help="Where `ast.dump(...)` is saved",
         default="ast_dump.log",
+    )
+    parser.add_argument(
+        "--ir-dump",
+        type=str,
+        help="File to dump intermediate representation",
+        default="ir_dump.png",
     )
     parser.add_argument(
         "--expected-visual",
