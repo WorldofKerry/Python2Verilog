@@ -20,10 +20,10 @@ def convert_list(func: ast.FunctionDef, optimization_level: int):
         ir_root = optimizer.optimize_if(ir_root)
         ir_root = optimizer.combine_cases(ir_root)
         ir_root = optimizer.remove_unreferenced_states(ir_root)
-    return Verilog(ir_root, context)
+    return Verilog.from_list_ir(ir_root, context)
 
 
-def convert(func: ast.FunctionDef, optimization_level: int):
+def convert_graph(func: ast.FunctionDef, optimization_level: int):
     """
     Wrapper for Python to Verilog conversion
     """
@@ -31,9 +31,7 @@ def convert(func: ast.FunctionDef, optimization_level: int):
     ir, context = Generator2Graph(func).results
     if optimization_level > 0:
         pass
-    ver = Verilog()
-    ver.from_graph_ir(ir, context)
-    return ver
+    return Verilog.from_graph_ir(ir, context)
 
 
 if __name__ == "__main__":
@@ -117,7 +115,7 @@ if __name__ == "__main__":
                 os.path.abspath(args.testbench), mode="w+", encoding="utf8"
             ) as tb_file:
                 tb_file.write(
-                    verilog.get_testbench(ast.literal_eval(args.test_cases))
+                    verilog.new_testbench(ast.literal_eval(args.test_cases))
                     .to_lines()
                     .to_string()
                 )

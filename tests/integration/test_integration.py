@@ -85,12 +85,12 @@ class TestMain(unittest.TestCase):
 
             with open(FILES_IN_ABS_DIR["module"], mode="w") as module_file:
                 function = tree.body[0]
-                verilog = convert(function, optimization_level=3)
+                verilog = convert_graph(function, optimization_level=3)
                 module_file.write(verilog.get_module().to_string())
 
             with open(FILES_IN_ABS_DIR["testbench"], mode="w") as testbench_file:
                 testbench_file.write(
-                    verilog.get_testbench(test_cases).to_lines().to_string()
+                    verilog.new_testbench(test_cases).to_lines().to_string()
                 )
 
             open(FILES_IN_ABS_DIR["actual"], mode="w+")
