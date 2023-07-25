@@ -140,14 +140,14 @@ class Indent:
 
 class ImplementsToLines:
     """
-    Interface for classes that implement a to_lines function
+    A base class defining an interface for classes that need to provide a 'to_lines' method
     """
 
     def to_lines(self):
         """
         To Lines
         """
-        raise NotImplementedError("Derived class must implement to_lines()")
+        raise NotImplementedError("Derived class must implement to_lines")
 
     def to_string(self):
         """

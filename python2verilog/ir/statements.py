@@ -7,11 +7,11 @@ from typing import Optional
 
 from python2verilog.ir.expressions import Expression
 
-from ..utils.string import Lines
+from ..utils.string import Lines, ImplementsToLines
 from ..utils.assertions import assert_list_type
 
 
-class Statement:
+class Statement(ImplementsToLines):
     """
     Represents a statements (i.e. a line or a block)
     If used directly, it is treated as a string literal
@@ -25,12 +25,6 @@ class Statement:
         To Lines
         """
         return Lines(self.literal)
-
-    def to_string(self):
-        """
-        To String
-        """
-        return self.to_lines().to_string()
 
     def __repr__(self):
         return self.to_string()
@@ -150,7 +144,7 @@ class Declaration(Statement):
         return Lines(string)
 
 
-class CaseItem:
+class CaseItem(ImplementsToLines):
     """
     case item, i.e.
     <condition>: begin
@@ -178,12 +172,6 @@ class CaseItem:
             lines.concat(stmt.to_lines(), indent=1)
         lines += "end"
         return lines
-
-    def to_string(self):
-        """
-        To String
-        """
-        return self.to_lines().to_string()
 
     def append_end_statements(self, statements: list[Statement]):
         """
