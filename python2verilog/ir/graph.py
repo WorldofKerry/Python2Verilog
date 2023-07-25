@@ -186,15 +186,13 @@ class Edge(Node):
         """
         if self._name:
             return self._name
-        return "Edge"
+        return "Next"
 
     def __str__(self):
         return self.to_string()
 
     def __repr__(self):
-        return (
-            f"{self.__class__.__name__} name: ({self._name}), next node: ({self._node})"
-        )
+        return f"{self.__class__.__name__} name: ({self._name}), node: ({self._node})"
 
     def set_next_node(self, node: Node):
         """
