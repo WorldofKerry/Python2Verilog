@@ -20,46 +20,42 @@ class Generator2Graph:
         """
         Initializes the parser, does quick setup work
         """
-        self._name = assert_type(python_func.name, str)
         self._context = ir.Context(name=assert_type(python_func.name, str))
-        self._python_func = python_func
 
         assert python_func.returns is not None, "Write a return type-hint for function"
-        self._context.output_vars = self.__generate_output_vars(python_func.returns, "")
-        self._context.input_vars = [var.arg for var in self._python_func.args.args]
-
-        self._state_var = ir.State("_state")
-        self._states = ir.Case(
-            self._state_var,
-            [],
+        self._context.output_vars = self.__generate_output_vars(
+            node=python_func.returns, prefix=""
         )
+        self._context.input_vars = [var.arg for var in python_func.args.args]
 
-        done_state = self.__add_state_var(ir.State("_statedone"))
         self._root = self.__parse_statements(
-            list(python_func.body),
-            "",
-            ir.Node(id_="_statelmaodone", name="done"),
+            stmts=list(python_func.body),
+            prefix="",
+            nextt=ir.Node(unique_id="_statelmaodone", name="done"),
         )
+        for i, var in enumerate(self._context.state_vars):
+            self.__add_global_var(str(i), var.to_string())
 
-        self._states.case_items.append(
-            ir.CaseItem(
-                done_state,
-                [ir.NonBlockingSubsitution(ir.Var("_done"), ir.Int(1))],
-            )
-        )
-
-    def __str__(self):
-        return self.generate_verilog().to_string()
-
-    def __add_state_var(self, state: ir.State):
-        self._context.state_vars.append(state)
-        return state
-
-    def get_root(self):
+    @property
+    def root(self):
         """
-        Gets the root of the IR tree
+        Returns the root of the IR Graph
         """
-        return copy.deepcopy(self._states)
+        return copy.deepcopy(self._root)
+
+    @property
+    def context(self):
+        """
+        Returns the context surrounding the Python generator function
+        """
+        return copy.deepcopy(self._context)
+
+    @property
+    def results(self):
+        """
+        Returns tuple containing the root and the context
+        """
+        return (self.root, self.context)
 
     @staticmethod
     def __generate_output_vars(node: pyast.AST, prefix: str):
@@ -81,111 +77,6 @@ class Generator2Graph:
         """
         self._context.global_vars[name] = initial_value
         return name
-
-    def get_context(self):
-        """
-        Gets the context of the Python function
-        """
-        for i, var in enumerate(self._context.state_vars):
-            self.__add_global_var(str(i), var.to_string())
-        return self._context
-
-    def get_results(self):
-        """
-        Gets root of IR and Context
-        """
-        return (self.get_root(), self.get_context())
-
-    def generate_verilog(self, indent: int = 0):
-        """
-        Generates the verilog (does the most work, calls other functions)
-        """
-        stmt_lines = (
-            self._states.to_lines(),
-            Lines(),
-        )
-        module_lines = self.__stringify_module()
-        decl_lines = self.__stringify_declarations(self._context.global_vars)
-        always_blk_lines = self.__stringify_always_block()
-        decl_and_always_blk_lines = (
-            decl_lines[0].concat(always_blk_lines[0]),
-            decl_lines[1].concat(always_blk_lines[1]),
-        )  # TODO: there should be a function for this
-        init_lines = self.__stringify_initialization(self._context.global_vars)
-
-        return Lines.nestify(
-            [
-                module_lines,
-                decl_and_always_blk_lines,
-                init_lines,
-                stmt_lines,
-            ],
-            indent,
-        )
-
-    @staticmethod
-    def __stringify_always_block():
-        """
-        always @(posedge _clock) begin
-        end
-        """
-        return (
-            Lines(["always @(posedge _clock) begin", Indent(1) + "_valid <= 0;"]),
-            Lines(["end"]),
-        )
-
-    @staticmethod
-    def __stringify_initialization(global_vars: dict[str, str]):
-        """
-        if (_start) begin
-            <var> = <value>;
-            ...
-        end else begin
-        ...
-        end
-        """
-        start_lines, end_lines = Lines(), Lines()
-        start_lines += "if (_start) begin"
-        start_lines += Indent(1) + "_done <= 0;"
-        for var in global_vars:
-            start_lines += Indent(1) + f"{var} <= {global_vars[var]};"
-        start_lines += "end else begin"
-        end_lines += "end"
-        return (start_lines, end_lines)
-
-    @staticmethod
-    def __stringify_declarations(global_vars: dict[str, str]) -> tuple[Lines, Lines]:
-        """
-        reg [31:0] <name>;
-        ...
-        """
-        return (Lines([f"reg signed [31:0] {v};" for v in global_vars]), Lines())
-
-    def __stringify_module(self) -> tuple[Lines, Lines]:
-        """
-        module <name>(...);
-
-        endmodule
-        """
-        start_lines, end_lines = Lines(), Lines()
-        assert self._name not in {
-            "default",
-            "module",
-            "output",
-            "function",
-        }  # Verilog Reserved Keywords
-        start_lines += f"module {self._name}("
-        start_lines += Indent(1) + "input wire _clock,"
-        start_lines += Indent(1) + "input wire _start,"
-        for var in self._python_func.args.args:
-            start_lines += Indent(1) + f"input wire signed [31:0] {var.arg},"
-        for var in self._context.output_vars:
-            start_lines += Indent(1) + f"output reg signed [31:0] {var},"
-        start_lines += Indent(1) + "output reg _done,"
-        start_lines += Indent(1) + "output reg _valid"
-        start_lines += ");"
-        end_lines += "endmodule"
-        return (start_lines, end_lines)
 
     def __parse_targets(self, nodes: list[pyast.AST]):
         """
@@ -228,7 +119,7 @@ class Generator2Graph:
         <target0, target1, ...> = <value>;
         """
         return ir.AssignNode(
-            id_=prefix,
+            unique_id=prefix,
             lvalue=self.__parse_targets(list(node.targets)),
             rvalue=self.__parse_expression(node.value),
         )
@@ -276,11 +167,11 @@ class Generator2Graph:
         cur_node = None
         if isinstance(stmt, pyast.Assign):
             cur_node = self.__parse_assign(stmt, prefix=prefix)
-            edge = ir.Edge(id_=f"{prefix}_e", next_node=nextt)
+            edge = ir.Edge(unique_id=f"{prefix}_e", next_node=nextt)
             cur_node.set_edge(edge)
         elif isinstance(stmt, pyast.Yield):
             cur_node = self.__parse_yield(stmt, prefix=prefix)
-            edge = ir.Edge(id_=f"{prefix}_e", next_node=nextt)
+            edge = ir.Edge(unique_id=f"{prefix}_e", next_node=nextt)
             cur_node.set_edge(edge)
         elif isinstance(stmt, pyast.While):
             cur_node = self.__parse_while(stmt, nextt=nextt, prefix=prefix)
@@ -294,9 +185,9 @@ class Generator2Graph:
             assert isinstance(
                 stmt.target, pyast.Name
             ), "Error: only supports single target"
-            edge = ir.Edge(id_=f"{prefix}_e", next_node=nextt)
+            edge = ir.Edge(unique_id=f"{prefix}_e", next_node=nextt)
             cur_node = ir.AssignNode(
-                id_=prefix,
+                unique_id=prefix,
                 lvalue=self.__parse_expression(stmt.target),
                 rvalue=self.__parse_expression(
                     pyast.BinOp(stmt.target, stmt.op, stmt.value)
@@ -314,17 +205,21 @@ class Generator2Graph:
         If statement
         """
         assert isinstance(stmt, pyast.If)
-        then_to = ir.Edge(id_=f"{prefix}_e0", next_node=nextt)
-        else_to = ir.Edge(id_=f"{prefix}_e1", next_node=nextt)
+        then_to = ir.Edge(unique_id=f"{prefix}_e0", next_node=nextt)
+        else_to = ir.Edge(unique_id=f"{prefix}_e1", next_node=nextt)
 
         then_node = self.__parse_statements(list(stmt.body), f"{prefix}_t", then_to)
         else_node = self.__parse_statements(list(stmt.orelse), f"{prefix}_f", else_to)
 
-        to_then = ir.Edge(id_=f"{prefix}_true_edge", name="True", next_node=then_node)
-        to_else = ir.Edge(id_=f"{prefix}_false_edge", name="False", next_node=else_node)
+        to_then = ir.Edge(
+            unique_id=f"{prefix}_true_edge", name="True", next_node=then_node
+        )
+        to_else = ir.Edge(
+            unique_id=f"{prefix}_false_edge", name="False", next_node=else_node
+        )
 
         ifelse = ir.IfElseNode(
-            id_=prefix,
+            unique_id=prefix,
             then_edge=to_then,
             else_edge=to_else,
             condition=self.__parse_expression(stmt.test),
@@ -337,16 +232,16 @@ class Generator2Graph:
         """
         assert isinstance(stmt, pyast.While)
 
-        body_edge = ir.Edge(id_=f"{prefix}_edge", name="True")
-        final_edge = ir.Edge(id_=f"{prefix}_f", name="False", next_node=nextt)
-        recurse_edge = ir.Edge(id_=f"{prefix}_recur", name="Recurse")
+        body_edge = ir.Edge(unique_id=f"{prefix}_edge", name="True")
+        final_edge = ir.Edge(unique_id=f"{prefix}_f", name="False", next_node=nextt)
+        recurse_edge = ir.Edge(unique_id=f"{prefix}_recur", name="Recurse")
         body_node = self.__parse_statements(
             list(stmt.body), f"{prefix}_while", recurse_edge
         )
         body_edge.set_next_node(body_node)
 
         ifelse = ir.IfElseNode(
-            id_=f"{prefix}_while",
+            unique_id=f"{prefix}_while",
             condition=self.__parse_expression(stmt.test),
             then_edge=body_edge,
             else_edge=final_edge,
@@ -365,7 +260,7 @@ class Generator2Graph:
         """
         assert isinstance(node.value, pyast.Tuple)
         return ir.YieldNode(
-            id_=prefix,
+            unique_id=prefix,
             name="Yield",
             stmts=[self.__parse_expression(c) for c in node.value.elts],
         )

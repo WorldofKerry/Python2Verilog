@@ -1,5 +1,5 @@
 [BASIC]
-good-names=i, j, k
+good-names=i, j, k, ir
 
 [FORMAT]
 # variable-rgx="[a-z_][a-z0-9_]{0,30}$"

@@ -135,6 +135,6 @@ def fib(n: int) -> tuple[int]:
         # plt.savefig("path.png")
 
         verilog = Verilog()
-        verilog.from_ir_graph(inst._root, inst.get_context())
+        verilog.from_ir_graph(inst.root, inst.context)
         warnings.warn(verilog.get_module())
         # warnings.warn(verilog.get_testbench([(10,)]).to_lines().to_string())

@@ -28,11 +28,11 @@ def convert(func: ast.FunctionDef, optimization_level: int):
     Wrapper for Python to Verilog conversion
     """
 
-    inst = Generator2Graph(func)
+    ir, context = Generator2Graph(func).results
     if optimization_level > 0:
         pass
     ver = Verilog()
-    ver.from_ir_graph(inst._root, inst.get_context())
+    ver.from_ir_graph(ir, context)
     return ver
 
 

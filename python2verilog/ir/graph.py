@@ -15,9 +15,9 @@ class Node:
     Represents logic
     """
 
-    def __init__(self, id_: str, name: str = ""):
+    def __init__(self, unique_id: str, name: str = ""):
         self._name = assert_type(name, str)
-        self._id = assert_type(id_, str)
+        self._id = assert_type(unique_id, str)
 
     def to_string(self):
         """
@@ -59,14 +59,14 @@ class IfElseNode(Node):
 
     def __init__(
         self,
-        id_: str,
+        unique_id: str,
         *args,
         then_edge: Optional[Edge] = None,
         else_edge: Optional[Edge] = None,
         condition: Optional[Expression],
         **kwargs,
     ):
-        super().__init__(id_, *args, **kwargs)
+        super().__init__(unique_id, *args, **kwargs)
         self._then_edge = assert_type(then_edge, Edge)
         self._else_edge = assert_type(else_edge, Edge)
         self._condition = assert_type(condition, Expression)
@@ -96,14 +96,14 @@ class AssignNode(Node):
 
     def __init__(
         self,
-        id_: str,
+        unique_id: str,
         *args,
         lvalue: Expression,
         rvalue: Expression,
         edge: Optional[Edge] = None,
         **kwargs,
     ):
-        super().__init__(id_, *args, **kwargs)
+        super().__init__(unique_id, *args, **kwargs)
         self._lvalue = assert_type(lvalue, Expression)
         self._rvalue = assert_type(rvalue, Expression)
         self._edge = assert_type(edge, Edge)
@@ -141,12 +141,12 @@ class YieldNode(Node):
 
     def __init__(
         self,
-        id_: str,
+        unique_id: str,
         name: str = "",
         stmts: Optional[list[Expression]] = None,
         edge: Optional[Edge] = None,
     ):
-        super().__init__(id_, name)
+        super().__init__(unique_id, name)
         self._stmts = assert_list_type(stmts, Expression)
         self._edge = assert_type(edge, Edge)
 
@@ -176,9 +176,11 @@ class Edge(Node):
     Represents an edge between two nodes
     """
 
-    def __init__(self, id_: str, *args, next_node: Optional[Node] = None, **kwargs):
+    def __init__(
+        self, unique_id: str, *args, next_node: Optional[Node] = None, **kwargs
+    ):
         self._node = assert_type(next_node, Node)
-        super().__init__(id_, *args, **kwargs)
+        super().__init__(unique_id, *args, **kwargs)
 
     def to_string(self):
         """
