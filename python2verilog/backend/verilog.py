@@ -6,7 +6,7 @@ import ast
 from typing import Optional
 import copy
 
-from ..utils.string import Lines, Indent
+from ..utils.string import Lines, Indent, ImplementsToLines
 from ..utils.assertions import assert_list_type, assert_type, assert_dict_type
 from .. import ir
 
@@ -51,7 +51,7 @@ class AtNegedge(Expression):
         super().__init__(f"@(negedge {condition.to_string()})")
 
 
-class Statement:
+class Statement(ImplementsToLines):
     """
     Represents a statement in verilog (i.e. a line or a block)
     If used directly, it is treated as a string literal
@@ -70,12 +70,6 @@ class Statement:
                 self.literal + self.get_inline_comment()[1:]
             )  # Removes leading space
         return Lines(self.get_inline_comment()[1:])
-
-    def to_string(self):
-        """
-        To Verilog
-        """
-        return self.to_lines().to_string()
 
     def get_inline_comment(self):
         """
@@ -521,7 +515,7 @@ class Instantiation(Statement):
         return lines
 
 
-class Module:
+class Module(ImplementsToLines):
     """
     module name(...); endmodule
     """
