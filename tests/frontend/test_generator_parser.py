@@ -71,21 +71,10 @@ class TestGenerator2Graph(unittest.TestCase):
     def test_basics(self):
         python = """
 def circle_lines(s_x, s_y, height) -> tuple[int, int]:
-    if a < 150:
-        a = a + 1
-        yield (a, )
-    else:
-        yield (2, 4)
-        a = a + 2
-    yield(a + a, 6)
-    while s_x < s_y:
-        yield (s_y, height)
-        s_x = s_x + 1
-        while s_y < height:
-            yield (s_y, a)
-            s_y += 1
-        c = a
-    a = a + 1
+    i = 0
+    while i < s_y:
+        i += s_x
+    yield (i, height)
 """
         func = ast.parse(python).body[0]
         inst = Generator2Graph(func)
@@ -104,5 +93,5 @@ def circle_lines(s_x, s_y, height) -> tuple[int, int]:
             node_color="#00b4d9",
         )
 
-        # plt.savefig("path.png")
+        plt.savefig("path.png")
         # warnings.warn(f"{inst._root._then_edge._node}")

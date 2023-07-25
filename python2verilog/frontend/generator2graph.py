@@ -231,11 +231,6 @@ class Generator2Graph:
         """
         <target0, target1, ...> = <value>;
         """
-        # assign = ir.NonBlockingSubsitution(
-        #     self.__parse_targets(list(node.targets)),
-        #     self.__parse_expression(node.value),
-        # )
-        # return [assign]
         return ir.AssignNode(
             id_=prefix,
             lvalue=self.__parse_targets(list(node.targets)),
@@ -256,18 +251,6 @@ class Generator2Graph:
         """
         assert isinstance(stmts, list)
         assert isinstance(prefix, str)
-
-        # # state[x] has next state of state[x+1]
-        # cur_states = [ir.State(f"{prefix}{i}") for i in range(len(stmts))]
-        # next_states = cur_states[1:] + [next_node]
-
-        # results = []
-        # for stmt, cur, nextt in zip(stmts, cur_states, next_states):
-        #     results.append(self.__parse_statement(stmt, cur, nextt))
-
-        # for i in range(len(results) - 1):
-        #     edge = ir.Edge(next_node=results[i+1])
-        #     results[i].
 
         # builds backwards
         # builds link from the returned node to next_node
@@ -306,8 +289,6 @@ class Generator2Graph:
         elif isinstance(stmt, pyast.If):
             cur_node = self.__parse_ifelse(stmt=stmt, nextt=nextt, prefix=prefix)
         elif isinstance(stmt, pyast.Expr):
-            # TODO: solve the inconsistency
-            # raise Exception(f"{pyast.dump(stmt)}")
             cur_node = self.__parse_statement(
                 stmt=stmt.value, nextt=nextt, prefix=prefix
             )
@@ -315,14 +296,6 @@ class Generator2Graph:
             assert isinstance(
                 stmt.target, pyast.Name
             ), "Error: only supports single target"
-            # body = [
-            #     ir.NonBlockingSubsitution(
-            #         self.__parse_expression(stmt.target),
-            #         self.__parse_expression(
-            #             pyast.BinOp(stmt.target, stmt.op, stmt.value)
-            #         ),
-            #     )
-            # ]
             cur_node = ir.AssignNode(
                 id_=prefix,
                 lvalue=self.__parse_expression(stmt.target),
@@ -335,14 +308,6 @@ class Generator2Graph:
             raise TypeError(
                 "Error: unexpected statement type", type(stmt), pyast.dump(stmt)
             )
-
-        # self.__add_state_var(cur_state)
-        # self._states.case_items.append(
-        #     ir.CaseItem(
-        #         cur_state,
-        #         [ir.StateSubsitution(self._state_var, next_state), *body],
-        #     )
-        # )
         return cur_node
 
     def __parse_ifelse(self, stmt: pyast.If, nextt: ir.Edge, prefix: str):
@@ -350,21 +315,6 @@ class Generator2Graph:
         If statement
         """
         assert isinstance(stmt, pyast.If)
-
-        # then_start_state = self.__parse_statements(
-        #     list(stmt.body), f"{cur_state.to_string()}then", next_state
-        # )
-        # else_start_state = self.__parse_statements(
-        #     list(stmt.orelse), f"{cur_state.to_string()}else", next_state
-        # )
-
-        # ifelse = ir.IfElse(
-        #     self.__parse_expression(stmt.test),
-        #     [ir.StateSubsitution(self._state_var, then_start_state)],
-        #     [ir.StateSubsitution(self._state_var, else_start_state)],
-        # )
-
-        # return [ifelse]
         then_node = self.__parse_statements(list(stmt.body), f"{prefix}_t", nextt)
         else_node = self.__parse_statements(list(stmt.orelse), f"{prefix}_f", nextt)
 
@@ -386,18 +336,6 @@ class Generator2Graph:
         Converts while loop to a while-true-if-break loop
         """
         assert isinstance(stmt, pyast.While)
-
-        # body_start_state = self.__parse_statements(
-        #     list(stmt.body), f"{cur_state.to_string()}while", cur_state
-        # )
-
-        # ifelse = ir.IfElse(
-        #     self.__parse_expression(stmt.test),
-        #     [ir.StateSubsitution(self._state_var, body_start_state)],
-        #     [ir.StateSubsitution(self._state_var, next_state)],
-        # )
-
-        # return [ifelse]
 
         body_edge = ir.Edge(id_=f"{prefix}_edge", name="True")
         recurse_edge = ir.Edge(id_=f"{prefix}_recur", name="Recurse")
@@ -424,26 +362,6 @@ class Generator2Graph:
 
         yield <value>;
         """
-        # if isinstance(node.value, pyast.Tuple):
-        #     output_vars = node.value.elts  # e.g. `yield (1, 2)`
-        # elif isinstance(node.value, pyast.Constant):
-        #     output_vars = [node.value]  # e.g. `yield 1`
-        # else:
-        #     raise NotImplementedError(
-        #         f"Unexpected yield {type(node.value)} {pyast.dump(node)}"
-        #     )
-        # try:
-        #     return [
-        #         ir.NonBlockingSubsitution(
-        #             ir.Var(self._context.output_vars[idx]),
-        #             self.__parse_expression(elem),
-        #         )
-        #         for idx, elem in enumerate(output_vars)
-        #     ] + [ir.ValidSubsitution(ir.Var("_valid"), ir.Int(1))]
-        # except IndexError as e:
-        #     raise IndexError(
-        #         "yield return length differs from function return length type hint"
-        #     ) from e
         assert isinstance(node.value, pyast.Tuple)
         return ir.YieldNode(
             id_=prefix,

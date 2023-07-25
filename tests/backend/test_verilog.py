@@ -132,7 +132,7 @@ def fib(n: int) -> tuple[int]:
             node_shape="s",
             node_color="#00b4d9",
         )
-        plt.savefig("path.png")
+        # plt.savefig("path.png")
 
         verilog = Verilog()
         verilog.from_ir_graph(inst._root, inst.get_context())

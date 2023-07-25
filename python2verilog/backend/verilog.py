@@ -237,7 +237,7 @@ class Verilog:
         assert_type(context, ir.Context)
         self.context = context
         self._root_case = self.build_from_graph(root, set())
-        assert isinstance(self._root_case, ir.Context)
+        assert isinstance(self._root_case, Case), f"got {type(self._root_case)} instead"
         self.context.global_vars["_state"] = str(len(self._root_case.case_items))
         self.module = Verilog.__create_module_from_python(self._root_case, context)
         return self
