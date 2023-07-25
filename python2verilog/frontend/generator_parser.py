@@ -11,7 +11,7 @@ from ..utils.string import Lines, Indent
 from ..utils.assertions import assert_type, assert_list_type
 
 
-class GeneratorParser:
+class Generator2List:
     """
     Parses python generator functions to Verilog AST
     """
@@ -357,10 +357,10 @@ class GeneratorParser:
                 )
                 for idx, elem in enumerate(output_vars)
             ] + [ir.ValidSubsitution(ir.Var("_valid"), ir.Int(1))]
-        except IndexError as e:
+        except IndexError as err:
             raise IndexError(
                 "yield return length differs from function return length type hint"
-            ) from e
+            ) from err
 
     def __parse_binop_improved(self, expr: pyast.BinOp):
         """

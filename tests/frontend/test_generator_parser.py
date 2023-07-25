@@ -1,4 +1,4 @@
-from python2verilog.frontend import GeneratorParser, Generator2Graph
+from python2verilog.frontend import Generator2List, Generator2Graph
 import unittest
 import ast
 import warnings
@@ -18,7 +18,7 @@ def circle_lines(s_x, s_y, height) -> tuple[int, int]:
         tree = ast.parse(func)
         with open("ast.log", mode="w") as ast_file:
             ast_file.write(ast.dump(tree, indent="  "))
-        generatorParser = GeneratorParser(tree.body[0])
+        generatorParser = Generator2List(tree.body[0])
 
         with open("module.log", mode="w") as module_file:
             module_file.write(generatorParser.generate_verilog().to_string())
@@ -56,7 +56,7 @@ def circle_lines(s_x, s_y, height) -> tuple[int, int]:
         tree = ast.parse(func)
         with open("ast_circle.log", mode="w") as ast_file:
             ast_file.write(ast.dump(tree, indent="  "))
-        generatorParser = GeneratorParser(tree.body[0])
+        generatorParser = Generator2List(tree.body[0])
 
         with open("module_circle.log", mode="w") as module_file:
             module_file.write(generatorParser.generate_verilog().to_string())
