@@ -370,13 +370,20 @@ class Verilog:
         """
         Get Verilog module
         """
+        assert isinstance(self._module, Module)
         return copy.deepcopy(self._module)
 
-    def get_module(self):
+    def get_module_lines(self):
         """
-        Get Verilog module
+        Get Verilog module as Lines
         """
         return self.module.to_lines()
+
+    def get_module_str(self):
+        """
+        Get Verilog module as string
+        """
+        return str(self.get_module_lines())
 
     def new_testbench(self, test_cases: list[tuple[str]]):
         """
@@ -399,7 +406,7 @@ class Verilog:
             string += ");"
             return Statement(literal=string)
 
-        assert self._context is not None
+        assert isinstance(self._context, ir.Context)
         decl: list[Declaration] = []
         decl.append(Declaration("_clock", size=1, is_reg=True))
         decl.append(Declaration("_start", size=1, is_reg=True))
@@ -460,6 +467,18 @@ class Verilog:
             )
             return module
         raise RuntimeError("Needs the context")
+
+    def new_testbench_lines(self, test_cases: list[tuple[str]]):
+        """
+        New Testbench as lines
+        """
+        return self.new_testbench(test_cases).to_lines()
+
+    def new_testbench_str(self, test_cases: list[tuple[str]]):
+        """
+        New testbench as str
+        """
+        return str(self.new_testbench_lines(test_cases))
 
 
 class Instantiation(Statement):

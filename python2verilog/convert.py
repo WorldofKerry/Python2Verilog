@@ -108,7 +108,7 @@ if __name__ == "__main__":
         with open(
             os.path.abspath(args.output), mode="w+", encoding="utf8"
         ) as module_file:
-            module_file.write(verilog.get_module().to_string())
+            module_file.write(verilog.get_module_lines().to_string())
 
         if args.test_cases != "":
             with open(
