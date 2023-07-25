@@ -6,12 +6,12 @@ import argparse
 import os
 import ast
 import warnings
-from .frontend import GeneratorParser
+from .frontend import GeneratorParser, Generator2Graph
 from .backend.verilog import Verilog
 from .optimizer import optimizer
 
 
-def convert(func: ast.FunctionDef, optimization_level: int):
+def convert_old(func: ast.FunctionDef, optimization_level: int):
     """
     Wrapper for common Python to Verilog conversion
     """
@@ -21,6 +21,19 @@ def convert(func: ast.FunctionDef, optimization_level: int):
         ir_root = optimizer.combine_cases(ir_root)
         ir_root = optimizer.remove_unreferenced_states(ir_root)
     return Verilog(ir_root, context)
+
+
+def convert(func: ast.FunctionDef, optimization_level: int):
+    """
+    Wrapper for Python to Verilog conversion
+    """
+
+    inst = Generator2Graph(func)
+    if optimization_level > 0:
+        pass
+    ver = Verilog()
+    ver.from_ir_graph(inst._root, inst.get_context())
+    return ver
 
 
 if __name__ == "__main__":
@@ -92,7 +105,7 @@ if __name__ == "__main__":
         tree = ast.parse(python)
         function = tree.body[0]
         assert isinstance(function, ast.FunctionDef)
-        verilog = convert(function, args.optimization_level)
+        verilog = convert_old(function, args.optimization_level)
 
         with open(
             os.path.abspath(args.output), mode="w+", encoding="utf8"

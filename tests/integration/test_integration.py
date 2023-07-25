@@ -11,7 +11,7 @@ import statistics
 from python2verilog.backend.verilog import Verilog
 from python2verilog.frontend import GeneratorParser
 from python2verilog.optimizer import optimizer
-from python2verilog.convert import convert
+from python2verilog.convert import *
 from python2verilog.utils.visualization import make_visual
 
 
@@ -85,7 +85,7 @@ class TestMain(unittest.TestCase):
 
             with open(FILES_IN_ABS_DIR["module"], mode="w") as module_file:
                 function = tree.body[0]
-                verilog = convert(function, 3)
+                verilog = convert(function, optimization_level=3)
                 module_file.write(verilog.get_module().to_string())
 
             with open(FILES_IN_ABS_DIR["testbench"], mode="w") as testbench_file:
