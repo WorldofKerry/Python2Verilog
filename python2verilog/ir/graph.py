@@ -29,19 +29,7 @@ class Node:
         return self.to_string()
 
     def __repr__(self):
-        return f"{self.__class__.__name__} name: ({self._name})"
-
-    def get_children(self):
-        """
-        Gets edges
-        """
-        return []
-
-    def get_name(self):
-        """
-        Gets node name
-        """
-        return self._name
+        return f"{self.__class__.__name__}(unique_id={self._id}, name={self._name})"
 
     def __hash__(self) -> int:
         return hash(self._id)
@@ -50,6 +38,40 @@ class Node:
         if isinstance(__value, Node):
             return self._id == __value._id
         return False
+
+    @property
+    def unique_id(self):
+        """
+        Gets node id
+        """
+        return self._id
+
+    @unique_id.setter
+    def unique_id(self, value):
+        """
+        Sets node id
+        """
+        self._id = assert_type(value, str)
+
+    def get_children(self):
+        """
+        Gets children
+        """
+        return []
+
+    @property
+    def children(self):
+        """
+        Gets children
+        """
+        return self.get_children()
+
+    @property
+    def name(self):
+        """
+        Gets name
+        """
+        return self._name
 
 
 class IfElseNode(Node):
@@ -87,7 +109,37 @@ class IfElseNode(Node):
         return [copy.deepcopy(self._then_edge), copy.deepcopy(self._else_edge)]
 
 
-class AssignNode(Node):
+class BasicNode(Node):
+    """
+    Basic node with a single edge
+    """
+
+    def __init__(
+        self,
+        unique_id: str,
+        *args,
+        edge: Optional[Edge] = None,
+        **kwargs,
+    ):
+        super().__init__(unique_id, *args, **kwargs)
+        self._edge = assert_type(edge, Edge)
+
+    def get_children(self):
+        """
+        Gets edges
+        """
+        return [copy.deepcopy(self._edge)]
+
+    def set_edge(self, edge: Edge):
+        """
+        Adds an edge
+        """
+        if self._edge:
+            raise ValueError(f"reassigning edge {self._edge} to {edge}")
+        self._edge = assert_type(edge, Edge)
+
+
+class AssignNode(BasicNode):
     """
     Represents a non-blocking assignment,
     i.e. assignments that do not block the execution of
@@ -103,10 +155,9 @@ class AssignNode(Node):
         edge: Optional[Edge] = None,
         **kwargs,
     ):
-        super().__init__(unique_id, *args, **kwargs)
+        super().__init__(unique_id, *args, edge=edge, **kwargs)
         self._lvalue = assert_type(lvalue, Expression)
         self._rvalue = assert_type(rvalue, Expression)
-        self._edge = assert_type(edge, Edge)
 
     def to_string(self):
         """
@@ -119,22 +170,8 @@ class AssignNode(Node):
             super().__repr__() + f", lvalue: ({self._lvalue}) rvalue: ({self._rvalue})"
         )
 
-    def get_children(self):
-        """
-        Gets edges
-        """
-        return [copy.deepcopy(self._edge)]
 
-    def set_edge(self, edge: Edge):
-        """
-        Adds an edge
-        """
-        if self._edge:
-            raise ValueError(f"reassigning edge {self._edge} to {edge}")
-        self._edge = assert_type(edge, Edge)
-
-
-class YieldNode(Node):
+class YieldNode(BasicNode):
     """
     Yield statement, represents output
     """
@@ -146,29 +183,14 @@ class YieldNode(Node):
         stmts: Optional[list[Expression]] = None,
         edge: Optional[Edge] = None,
     ):
-        super().__init__(unique_id, name)
+        super().__init__(unique_id, name=name, edge=edge)
         self._stmts = assert_list_type(stmts, Expression)
-        self._edge = assert_type(edge, Edge)
 
     def to_string(self):
         """
         To string
         """
         return f"yield {self._stmts}"
-
-    def set_edge(self, edge: Edge):
-        """
-        Adds an edge
-        """
-        if self._edge:
-            raise ValueError(f"reassigning edge {self._edge} to {edge}")
-        self._edge = assert_type(edge, Edge)
-
-    def get_children(self):
-        """
-        Gets edges
-        """
-        return [copy.deepcopy(self._edge)]
 
 
 class Edge(Node):
@@ -217,6 +239,9 @@ class Edge(Node):
         return copy.deepcopy(self._node)
 
     def get_children(self):
+        """
+        Gets children
+        """
         return [self.get_next_node()]
 
 

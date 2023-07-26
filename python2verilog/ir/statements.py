@@ -29,12 +29,6 @@ class Statement(ImplementsToLines):
     def __repr__(self):
         return self.to_string()
 
-    def append_end_statements(self, _: list[Statement]):
-        """
-        Abstract
-        """
-        raise NotImplementedError("cannot append to statement")
-
 
 def is_valid_append_end_statements(stmt: Statement, statements: list[Statement]):
     """

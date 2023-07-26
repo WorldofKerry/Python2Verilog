@@ -140,7 +140,6 @@ class Generator2Graph:
         assert isinstance(prefix, str)
 
         # builds backwards
-        # builds link from the returned node to next_node
         stmts.reverse()
         previous = self.__parse_statement(
             stmt=stmts[0], nextt=nextt, prefix=f"{prefix}_0"

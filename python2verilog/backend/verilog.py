@@ -92,12 +92,6 @@ class Statement(ImplementsToLines):
             lines += f"// {line}"
         return lines
 
-    def append_end_statements(self, _: list[Statement]):
-        """
-        Append end statements
-        """
-        raise NotImplementedError("Statements cannot be appended to")
-
 
 class AtPosedgeStatement(Statement):
     """
@@ -247,16 +241,16 @@ class Verilog:
         """
         assert_type(node, ir.Node)
         assert isinstance(self._context, ir.Context)
-        if node._id in visited:
-            return node._id
+        if node.unique_id in visited:
+            return node.unique_id
 
         if isinstance(node, ir.AssignNode):
-            if node._id not in visited:
-                visited.add(node._id)
+            if node.unique_id not in visited:
+                visited.add(node.unique_id)
                 next_state = self.graph_build_node(node._edge, root_case, visited)
                 root_case.case_items.append(
                     CaseItem(
-                        condition=Expression(node._id),
+                        condition=Expression(node.unique_id),
                         statements=[
                             Statement(f"{node.to_string()};"),
                             NonBlockingSubsitution(
@@ -266,16 +260,16 @@ class Verilog:
                         ],
                     )
                 )
-                self._context.global_vars[node._id] = len(root_case.case_items)
-            return node._id
+                self._context.global_vars[node.unique_id] = len(root_case.case_items)
+            return node.unique_id
         if isinstance(node, ir.IfElseNode):
-            if node._id not in visited:
-                visited.add(node._id)
+            if node.unique_id not in visited:
+                visited.add(node.unique_id)
                 then_state = self.graph_build_node(node._then_edge, root_case, visited)
                 else_state = self.graph_build_node(node._else_edge, root_case, visited)
                 root_case.case_items.append(
                     CaseItem(
-                        condition=Expression(node._id),
+                        condition=Expression(node.unique_id),
                         statements=[
                             IfElse(
                                 condition=Expression(node._condition.to_string()),
@@ -293,11 +287,11 @@ class Verilog:
                         ],
                     )
                 )
-                self._context.global_vars[node._id] = len(root_case.case_items)
-            return node._id
+                self._context.global_vars[node.unique_id] = len(root_case.case_items)
+            return node.unique_id
         if isinstance(node, ir.YieldNode):
-            if node._id not in visited:
-                visited.add(node._id)
+            if node.unique_id not in visited:
+                visited.add(node.unique_id)
                 next_state = self.graph_build_node(node._edge, root_case, visited)
                 stmts = [
                     NonBlockingSubsitution(f"_out{i}", v.to_string())
@@ -305,7 +299,7 @@ class Verilog:
                 ] + [NonBlockingSubsitution("_valid", "1")]
                 root_case.case_items.append(
                     CaseItem(
-                        condition=Expression(node._id),
+                        condition=Expression(node.unique_id),
                         statements=[
                             *stmts,
                             NonBlockingSubsitution(
@@ -315,26 +309,26 @@ class Verilog:
                         ],
                     )
                 )
-                self._context.global_vars[node._id] = len(root_case.case_items)
-            return node._id
+                self._context.global_vars[node.unique_id] = len(root_case.case_items)
+            return node.unique_id
         if isinstance(node, ir.Edge):
-            if node._id not in visited:
-                visited.add(node._id)
+            if node.unique_id not in visited:
+                visited.add(node.unique_id)
                 return self.graph_build_node(node._node, root_case, visited)
             return "bruvlmao"
         if isinstance(node, ir.Node):
-            if node._id not in visited:
-                visited.add(node._id)
+            if node.unique_id not in visited:
+                visited.add(node.unique_id)
                 root_case.case_items.append(
                     CaseItem(
-                        condition=Expression(node._id),
+                        condition=Expression(node.unique_id),
                         statements=[
                             NonBlockingSubsitution("_done", "1"),
                         ],
                     )
                 )
-                self._context.global_vars[node._id] = len(root_case.case_items)
-            return node._id
+                self._context.global_vars[node.unique_id] = len(root_case.case_items)
+            return node.unique_id
         assert_type(node, ir.AssignNode)
         return ""
 
@@ -772,18 +766,6 @@ class CaseItem:
         """
         return self.to_lines().to_string()
 
-    def append_end_statements(self, statements: list[Statement]):
-        """
-        Append statements to case item
-        """
-        # self.statements = self.statements + assert_list_elements(statements, Statement)
-        # warnings.warn(statements[0].to_string() + " " + str(type(self.statements[-1])))
-        self.statements[-1].append_end_statements(
-            assert_list_type(statements, Statement)
-        )
-        # warnings.warn(statements[0].to_string())
-        return self
-
 
 class Case(Statement):
     """
@@ -818,15 +800,6 @@ class Case(Statement):
             lines.concat(item.to_lines(), indent=1)
         lines += "endcase"
         return lines
-
-    def append_end_statements(self, statements: list[Statement]):
-        """
-        Adds statements to the last case item
-        """
-        self.case_items[-1].append_end_statements(
-            assert_list_type(statements, Statement)
-        )
-        return self
 
 
 class IfElse(Statement):
