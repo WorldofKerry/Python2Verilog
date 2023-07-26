@@ -30,7 +30,7 @@ class Statistics:
     function_name: str = "Unspecified"
     python_yields: int = -1
     verilog_clocks: int = -1
-    module_file_size: int = -1
+    module_num_chars: int = -1
 
     def __iter__(self):
         yield from self.values()
