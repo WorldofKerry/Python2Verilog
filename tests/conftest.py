@@ -26,6 +26,7 @@ from .utils import Argument
 
 params = [
     Argument("first_test", False, action="store_true"),
+    Argument("write", False, action="store_true"),
 ]
 
 
