@@ -136,7 +136,7 @@ class TestMain(unittest.TestCase):
                 function = tree.body[0]
                 verilog = convert_list(function, optimization_level=3)
                 module = verilog.get_module_lines().to_string()
-                statistics.module_file_size = len(
+                statistics.module_num_chars = len(
                     module.replace("\n", "").replace(" ", "")
                 )
                 module_file.write(module)

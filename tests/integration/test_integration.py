@@ -155,7 +155,7 @@ class TestMain(unittest.TestCase):
                     plt.savefig(FILES_IN_ABS_DIR["ir_dump"])
 
                 module = verilog.get_module_lines().to_string()
-                statistics.module_file_size = len(
+                statistics.module_num_chars = len(
                     module.replace("\n", "").replace(" ", "")
                 )
                 module_file.write(module)
