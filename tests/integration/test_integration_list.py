@@ -14,7 +14,7 @@ import networkx as nx
 from matplotlib import pyplot as plt
 
 from python2verilog.backend.verilog import Verilog
-from python2verilog.frontend import Generator2Graph
+from python2verilog.frontend import Generator2List
 from python2verilog.optimizer import optimizer
 from python2verilog.convert import *
 from python2verilog.ir import create_adjacency_list
@@ -51,7 +51,7 @@ class TestMain(unittest.TestCase):
         function_name: str,
         test_cases: list[tuple],
         args: dict,
-        dir: str = "data/integration/",
+        dir: str = "data/integration_list/",
     ):
         """
         Stats will only be gathered on the last test
@@ -134,26 +134,7 @@ class TestMain(unittest.TestCase):
 
             with open(FILES_IN_ABS_DIR["module"], mode="w") as module_file:
                 function = tree.body[0]
-
-                ir, context = Generator2Graph(function).results
-                verilog = Verilog.from_graph_ir(ir, context)
-
-                if args.write:
-                    adjacency_list = create_adjacency_list(ir)
-                    g = nx.DiGraph(adjacency_list)
-
-                    plt.figure(figsize=(20, 20))
-                    nx.draw(
-                        g,
-                        with_labels=True,
-                        font_weight="bold",
-                        arrowsize=30,
-                        node_size=4000,
-                        node_shape="s",
-                        node_color="#00b4d9",
-                    )
-                    plt.savefig(FILES_IN_ABS_DIR["ir_dump"])
-
+                verilog = convert_list(function, optimization_level=3)
                 module = verilog.get_module_lines().to_string()
                 statistics.module_num_chars = len(
                     module.replace("\n", "").replace(" ", "")

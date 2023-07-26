@@ -8,9 +8,10 @@ from typing import Optional
 
 from .. import ir
 from ..utils.string import Lines, Indent
+from ..utils.assertions import assert_type, assert_list_type
 
 
-class GeneratorParser:
+class Generator2List:
     """
     Parses python generator functions to Verilog AST
     """
@@ -19,24 +20,25 @@ class GeneratorParser:
         """
         Initializes the parser, does quick setup work
         """
-        assert isinstance(python_func, pyast.FunctionDef)
-        self._name = python_func.name
-        self._global_vars: dict[str, str] = {}
-        self._state_vars: list[ir.State] = []
+        self._name = assert_type(python_func.name, str)
+        self._context = ir.Context(name=assert_type(python_func.name, str))
         self._python_func = python_func
 
         assert python_func.returns is not None, "Write a return type-hint for function"
-        self._output_vars = self.__generate_output_vars(python_func.returns, "")
-        self._input_vars = [var.arg for var in self._python_func.args.args]
-        self.state = ir.State("_state")
-        done_state = self.__add_state_var(ir.State("_statedone"))
+        self._context.output_vars = self.__generate_output_vars(python_func.returns, "")
+        self._context.input_vars = [var.arg for var in self._python_func.args.args]
+
+        self.state_var = ir.State("_state")
         self.states = ir.Case(
-            self.state,
+            self.state_var,
             [],
         )
+
+        done_state = self.__add_state_var(ir.State("_statedone"))
         self._root = self.__parse_statements(
             list(python_func.body), "_state", done_state
         )
+
         self.states.case_items.append(
             ir.CaseItem(
                 done_state,
@@ -54,7 +56,7 @@ class GeneratorParser:
             self.wow_counter += 1
             # if self.wow_counter == 1:
             #     raise Exception()
-        self._state_vars.append(state)
+        self._context.state_vars.append(state)
         return state
 
     def get_root(self):
@@ -81,22 +83,17 @@ class GeneratorParser:
         """
         Adds global variables
         """
-        self._global_vars[name] = initial_value
+        self._context.global_vars[name] = initial_value
         return name
 
     def get_context(self):
         """
         Gets the context of the Python function
         """
-        self.__add_global_var(str(1), self.state.to_string())  # State 0 is done
-        for i, var in enumerate(self._state_vars):
+        self.__add_global_var(str(1), self.state_var.to_string())  # State 0 is done
+        for i, var in enumerate(self._context.state_vars):
             self.__add_global_var(str(i), var.to_string())
-        return ir.Context(
-            name=self._name,
-            global_vars=copy.deepcopy(self._global_vars),
-            input_vars=copy.deepcopy(self._input_vars),
-            output_vars=copy.deepcopy(self._output_vars),
-        )
+        return self._context
 
     def get_results(self):
         """
@@ -113,13 +110,13 @@ class GeneratorParser:
             Lines(),
         )
         module_lines = self.__stringify_module()
-        decl_lines = self.__stringify_declarations(self._global_vars)
+        decl_lines = self.__stringify_declarations(self._context.global_vars)
         always_blk_lines = self.__stringify_always_block()
         decl_and_always_blk_lines = (
             decl_lines[0].concat(always_blk_lines[0]),
             decl_lines[1].concat(always_blk_lines[1]),
         )  # TODO: there should be a function for this
-        init_lines = self.__stringify_initialization(self._global_vars)
+        init_lines = self.__stringify_initialization(self._context.global_vars)
 
         return Lines.nestify(
             [
@@ -187,7 +184,7 @@ class GeneratorParser:
         start_lines += Indent(1) + "input wire _start,"
         for var in self._python_func.args.args:
             start_lines += Indent(1) + f"input wire signed [31:0] {var.arg},"
-        for var in self._output_vars:
+        for var in self._context.output_vars:
             start_lines += Indent(1) + f"output reg signed [31:0] {var},"
         start_lines += Indent(1) + "output reg _done,"
         start_lines += Indent(1) + "output reg _valid"
@@ -206,16 +203,26 @@ class GeneratorParser:
         if isinstance(node, pyast.Subscript):
             assert isinstance(node.value, pyast.Name)
             if node.value.id not in set(
-                [*self._global_vars, *self._output_vars, *self._input_vars]
+                [
+                    *self._context.global_vars,
+                    *self._context.output_vars,
+                    *self._context.input_vars,
+                ]
             ):
                 warnings.warn(
                     str(
-                        set([*self._global_vars, *self._output_vars, *self._input_vars])
+                        set(
+                            [
+                                *self._context.global_vars,
+                                *self._context.output_vars,
+                                *self._context.input_vars,
+                            ]
+                        )
                     )
                 )
                 self.__add_global_var(str(0), node.value.id)
         elif isinstance(node, pyast.Name):
-            if node.id not in self._global_vars:
+            if node.id not in self._context.global_vars:
                 self.__add_global_var(str(0), node.id)
         else:
             raise TypeError(f"Unsupported lvalue type {type(node)} {pyast.dump(node)}")
@@ -301,7 +308,7 @@ class GeneratorParser:
         self.states.case_items.append(
             ir.CaseItem(
                 cur_state,
-                [ir.StateSubsitution(self.state, next_state), *body],
+                [ir.StateSubsitution(self.state_var, next_state), *body],
             )
         )
 
@@ -320,8 +327,8 @@ class GeneratorParser:
 
         ifelse = ir.IfElse(
             self.__parse_expression(stmt.test),
-            [ir.StateSubsitution(self.state, then_start_state)],
-            [ir.StateSubsitution(self.state, else_start_state)],
+            [ir.StateSubsitution(self.state_var, then_start_state)],
+            [ir.StateSubsitution(self.state_var, else_start_state)],
         )
 
         return [ifelse]
@@ -345,14 +352,15 @@ class GeneratorParser:
         try:
             return [
                 ir.NonBlockingSubsitution(
-                    ir.Var(self._output_vars[idx]), self.__parse_expression(elem)
+                    ir.Var(self._context.output_vars[idx]),
+                    self.__parse_expression(elem),
                 )
                 for idx, elem in enumerate(output_vars)
             ] + [ir.ValidSubsitution(ir.Var("_valid"), ir.Int(1))]
-        except IndexError as e:
+        except IndexError as err:
             raise IndexError(
                 "yield return length differs from function return length type hint"
-            ) from e
+            ) from err
 
     def __parse_binop_improved(self, expr: pyast.BinOp):
         """
@@ -475,8 +483,8 @@ class GeneratorParser:
 
         ifelse = ir.IfElse(
             self.__parse_expression(stmt.test),
-            [ir.StateSubsitution(self.state, body_start_state)],
-            [ir.StateSubsitution(self.state, next_state)],
+            [ir.StateSubsitution(self.state_var, body_start_state)],
+            [ir.StateSubsitution(self.state_var, next_state)],
         )
 
         return [ifelse]

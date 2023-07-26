@@ -7,11 +7,11 @@ from typing import Optional
 
 from python2verilog.ir.expressions import Expression
 
-from ..utils.string import Lines
-from ..utils.assertions import assert_list_elements
+from ..utils.string import Lines, ImplementsToLines
+from ..utils.assertions import assert_list_type
 
 
-class Statement:
+class Statement(ImplementsToLines):
     """
     Represents a statements (i.e. a line or a block)
     If used directly, it is treated as a string literal
@@ -26,20 +26,8 @@ class Statement:
         """
         return Lines(self.literal)
 
-    def to_string(self):
-        """
-        To String
-        """
-        return self.to_lines().to_string()
-
     def __repr__(self):
         return self.to_string()
-
-    def append_end_statements(self, _: list[Statement]):
-        """
-        Abstract
-        """
-        raise NotImplementedError("cannot append to statement")
 
 
 def is_valid_append_end_statements(stmt: Statement, statements: list[Statement]):
@@ -49,7 +37,7 @@ def is_valid_append_end_statements(stmt: Statement, statements: list[Statement])
     # TODO: there should be a subclass/interface for ones that do encapsulate
     """
     if isinstance(stmt, (Case, IfElse)):
-        stmt.append_end_statements(assert_list_elements(statements, Statement))
+        stmt.append_end_statements(assert_list_type(statements, Statement))
         return True
     return False
 
@@ -150,7 +138,7 @@ class Declaration(Statement):
         return Lines(string)
 
 
-class CaseItem:
+class CaseItem(ImplementsToLines):
     """
     case item, i.e.
     <condition>: begin
@@ -179,20 +167,12 @@ class CaseItem:
         lines += "end"
         return lines
 
-    def to_string(self):
-        """
-        To String
-        """
-        return self.to_lines().to_string()
-
     def append_end_statements(self, statements: list[Statement]):
         """
         Append statements to case item
         """
         if not is_valid_append_end_statements(self.statements[-1], statements):
-            self.statements = self.statements + assert_list_elements(
-                statements, Statement
-            )
+            self.statements = self.statements + assert_list_type(statements, Statement)
         return self
 
 
@@ -234,7 +214,7 @@ class Case(Statement):
         Adds statements to the last case item
         """
         self.case_items[-1].append_end_statements(
-            assert_list_elements(statements, Statement)
+            assert_list_type(statements, Statement)
         )
         return self
 
@@ -255,8 +235,8 @@ class IfElse(Statement):
         super().__init__(*args, **kwargs)
         assert isinstance(condition, Expression)
         self.condition = condition
-        self.then_body = assert_list_elements(then_body, Statement)
-        self.else_body = assert_list_elements(else_body, Statement)
+        self.then_body = assert_list_type(then_body, Statement)
+        self.else_body = assert_list_type(else_body, Statement)
 
     def to_lines(self):
         lines = Lines()
@@ -273,7 +253,7 @@ class IfElse(Statement):
         """
         Appends statements to both branches
         """
-        statements = assert_list_elements(statements, Statement)
+        statements = assert_list_type(statements, Statement)
         # warnings.warn("appending " + statements[0].to_string())
         # if len(statements) > 1:
         #     warnings.warn(statements[1].to_string())
@@ -301,7 +281,7 @@ class WhileWrapper(Case):
         While statements have a special case structure,
         where their first case always contains an if statement
         """
-        statements = assert_list_elements(statements, Statement)
+        statements = assert_list_type(statements, Statement)
         assert isinstance(self.case_items[0], CaseItem)
         assert isinstance(self.case_items[0].statements[0], IfElse)
         self.case_items[0].statements[0].then_body = (

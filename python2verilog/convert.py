@@ -6,21 +6,33 @@ import argparse
 import os
 import ast
 import warnings
-from .frontend import GeneratorParser
+from typing import Optional
+from .frontend import Generator2List, Generator2Graph
 from .backend.verilog import Verilog
 from .optimizer import optimizer
 
 
-def convert(func: ast.FunctionDef, optimization_level: int):
+def convert_list(func: ast.FunctionDef, optimization_level: int):
     """
     Wrapper for common Python to Verilog conversion
     """
-    ir_root, context = GeneratorParser(func).get_results()
+    ir_root, context = Generator2List(func).get_results()
     if optimization_level > 0:
         ir_root = optimizer.optimize_if(ir_root)
         ir_root = optimizer.combine_cases(ir_root)
         ir_root = optimizer.remove_unreferenced_states(ir_root)
-    return Verilog(ir_root, context)
+    return Verilog.from_list_ir(ir_root, context)
+
+
+def convert_graph(func: ast.FunctionDef, optimization_level: int):
+    """
+    Wrapper for Python to Verilog conversion
+    """
+
+    ir, context = Generator2Graph(func).results
+    if optimization_level > 0:
+        pass
+    return Verilog.from_graph_ir(ir, context)
 
 
 if __name__ == "__main__":
@@ -92,19 +104,19 @@ if __name__ == "__main__":
         tree = ast.parse(python)
         function = tree.body[0]
         assert isinstance(function, ast.FunctionDef)
-        verilog = convert(function, args.optimization_level)
+        verilog = convert_list(function, args.optimization_level)
 
         with open(
             os.path.abspath(args.output), mode="w+", encoding="utf8"
         ) as module_file:
-            module_file.write(verilog.get_module().to_string())
+            module_file.write(verilog.get_module_lines().to_string())
 
         if args.test_cases != "":
             with open(
                 os.path.abspath(args.testbench), mode="w+", encoding="utf8"
             ) as tb_file:
                 tb_file.write(
-                    verilog.get_testbench(ast.literal_eval(args.test_cases))
+                    verilog.new_testbench(ast.literal_eval(args.test_cases))
                     .to_lines()
                     .to_string()
                 )

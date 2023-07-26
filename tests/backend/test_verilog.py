@@ -5,7 +5,7 @@ from python2verilog.backend.verilog import (
     Instantiation,
     Expression,
 )
-from python2verilog.frontend import GeneratorParser
+from python2verilog.frontend import Generator2List, Generator2Graph
 import unittest
 import warnings
 import ast
@@ -80,9 +80,9 @@ def circle_lines(s_x, s_y, height) -> tuple[int, int]:
 """
         tree = ast.parse(code)
         function = tree.body[0]
-        ir = GeneratorParser(function)
+        ir = Generator2List(function)
         verilog = Verilog()
-        verilog.from_ir(ir.get_root(), ir.get_context())
+        verilog.from_list_ir(ir.get_root(), ir.get_context())
         # warnings.warn(verilog.get_module())
         # warnings.warn(
         #     verilog.get_testbench_improved([(17, 23, 15), (4, 5, 6), (1, 2, 3)])
@@ -94,3 +94,46 @@ def circle_lines(s_x, s_y, height) -> tuple[int, int]:
         ports = {"_clock": "CLK", "_valid": "_valid"}
         inst = Instantiation("module0", "my_module", ports)
         # warnings.warn(inst.to_lines())
+
+
+import networkx as nx
+from matplotlib import pyplot as plt
+from python2verilog import ir
+
+
+class TestNewGraphIR(unittest.TestCase):
+    def test_basics(self):
+        python = """
+def fib(n: int) -> tuple[int]:
+    a = 0
+    b = 1
+    c = 0
+    count = 1
+    while count < n:
+        count += 1
+        a = b
+        b = c
+        c = a + b
+        yield (c,)
+"""
+        func = ast.parse(python).body[0]
+        inst = Generator2Graph(func)
+
+        adjacency_list = ir.create_adjacency_list(inst._root)
+        g = nx.DiGraph(adjacency_list)
+
+        plt.figure(figsize=(20, 20))
+        nx.draw(
+            g,
+            with_labels=True,
+            font_weight="bold",
+            arrowsize=30,
+            node_size=4000,
+            node_shape="s",
+            node_color="#00b4d9",
+        )
+        # plt.savefig("path.png")
+
+        verilog = Verilog.from_graph_ir(inst.root, inst.context)
+        # warnings.warn(verilog.get_module_lines())
+        # warnings.warn(verilog.get_testbench([(10,)]).to_lines().to_string())

@@ -1,4 +1,5 @@
 from typing import Optional, Any
+import networkx as nx
 
 
 class Argument:

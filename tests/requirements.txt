@@ -1,4 +1,6 @@
 pytest
+pytest-cov
 pandas
 tabulate
 matplotlib
+networkx

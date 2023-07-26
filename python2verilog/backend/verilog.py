@@ -4,9 +4,10 @@ from __future__ import annotations
 import warnings
 import ast
 from typing import Optional
+import copy
 
-from ..utils.string import Lines, Indent
-from ..utils.assertions import assert_list_elements
+from ..utils.string import Lines, Indent, ImplementsToLines
+from ..utils.assertions import assert_list_type, assert_type, assert_dict_type
 from .. import ir
 
 
@@ -50,7 +51,7 @@ class AtNegedge(Expression):
         super().__init__(f"@(negedge {condition.to_string()})")
 
 
-class Statement:
+class Statement(ImplementsToLines):
     """
     Represents a statement in verilog (i.e. a line or a block)
     If used directly, it is treated as a string literal
@@ -69,12 +70,6 @@ class Statement:
                 self.literal + self.get_inline_comment()[1:]
             )  # Removes leading space
         return Lines(self.get_inline_comment()[1:])
-
-    def to_string(self):
-        """
-        To Verilog
-        """
-        return self.to_lines().to_string()
 
     def get_inline_comment(self):
         """
@@ -96,12 +91,6 @@ class Statement:
         for line in actual_lines:
             lines += f"// {line}"
         return lines
-
-    def append_end_statements(self, _: list[Statement]):
-        """
-        Append end statements
-        """
-        raise NotImplementedError("Statements cannot be appended to")
 
 
 class AtPosedgeStatement(Statement):
@@ -130,10 +119,11 @@ class Verilog:
     """
 
     @staticmethod
-    def __create_module_from_python(root: Statement, context: ir.Context):
+    def __new_module(root: Statement, context: ir.Context):
         """
         Creates a module wrapper from the context
-        e.g. the I/O (from Python), clock, valid and done signals
+
+        Requires context for I/O and declarations
         """
         assert isinstance(root, Statement)
         assert isinstance(context, ir.Context)
@@ -147,23 +137,46 @@ class Verilog:
         always = PosedgeSyncAlways(
             Expression("_clock"),
             valid="_valid",
-            body=[Verilog.__get_init(root, context.global_vars)],
+            body=[Verilog.__get_start_ifelse(root, context.global_vars)],
         )
-        return Module(context.name, inputs, outputs, body=[always])
+        body: list[Statement] = [
+            Declaration(v, is_reg=True, is_signed=True) for v in context.global_vars
+        ]
+        body.append(always)
+        return Module(name=context.name, inputs=inputs, outputs=outputs, body=body)
 
-    def __init__(
-        self,
-        root: Optional[ir.Statement] = None,
-        context: Optional[ir.Context] = None,
-    ):
-        # TODO: throw errors if user tries to generate verilog beforeconfig
-        self.module: Optional[Module] = None
-        self.context: Optional[ir.Context] = None
-        if root is not None and context is not None:
-            self.from_ir(root, context)
+    def __init__(self):
+        self._context = None
+        self._module = None
+
+    @classmethod
+    def from_list_ir(cls, root: ir.Statement, context: ir.Context):
+        """
+        Builds tree from list IR
+        """
+        assert isinstance(root, ir.Statement), f"got {type(root)} instead"
+        assert isinstance(context, ir.Context)
+        inst = Verilog()
+        inst._context = context
+        inst._module = Verilog.__new_module(Verilog.list_build_stmt(root), context)
+        return inst
+
+    @classmethod
+    def from_graph_ir(cls, root: ir.Node, context: ir.Context):
+        """ "
+        Builds tree from Graph IR
+        """
+        assert_type(root, ir.Node)
+        assert_type(context, ir.Context)
+        inst = Verilog()
+        inst._context = context
+        root_case = inst.graph_build(root, set())
+        inst._context.global_vars["_state"] = str(len(root_case.case_items))
+        inst._module = Verilog.__new_module(root_case, context)
+        return inst
 
     @staticmethod
-    def build_tree_stmt(node: ir.Statement) -> Statement:
+    def list_build_stmt(node: ir.Statement) -> Statement:
         """
         Builds the Verilog AST
         """
@@ -171,21 +184,21 @@ class Verilog:
         if not node:
             return Statement("")
         if isinstance(node, ir.Case):
-            return Verilog.build_tree_case(node)
+            return Verilog.list_build_case(node)
         if isinstance(node, ir.IfElse):
             then_body = []
             for stmt in node.then_body:
-                then_body.append(Verilog.build_tree_stmt(stmt))
+                then_body.append(Verilog.list_build_stmt(stmt))
             else_body = []
             for stmt in node.else_body:
-                else_body.append(Verilog.build_tree_stmt(stmt))
-            return IfElse(Verilog.build_tree_expr(node.condition), then_body, else_body)
+                else_body.append(Verilog.list_build_stmt(stmt))
+            return IfElse(Verilog.list_build_expr(node.condition), then_body, else_body)
         if isinstance(node, ir.Statement):
             return Statement(node.to_string().replace("\n", " "))
         raise NotImplementedError(f"Unexpected type {type(node)}")
 
     @staticmethod
-    def build_tree_expr(node: ir.Expression) -> Expression:
+    def list_build_expr(node: ir.Expression) -> Expression:
         """
         Handles expressions
         """
@@ -193,43 +206,134 @@ class Verilog:
         return Expression(node.to_string())
 
     @staticmethod
-    def build_tree_case(node: ir.Case) -> Case:
+    def list_build_case(node: ir.Case) -> Case:
         """
         Handles case statements
         """
         assert isinstance(node, ir.Case)
         case_items = []
         for item in node.case_items:
-            case_items.append(Verilog.build_tree_caseitem(item))
-        return Case(Verilog.build_tree_expr(node.condition), case_items)
+            case_items.append(Verilog.list_build_case_item(item))
+        return Case(Verilog.list_build_expr(node.condition), case_items)
 
     @staticmethod
-    def build_tree_caseitem(node: ir.CaseItem) -> CaseItem:
+    def list_build_case_item(node: ir.CaseItem) -> CaseItem:
         """
         Handles case item
         """
         case_items = []
         for item in node.statements:
-            case_items.append(Verilog.build_tree_stmt(item))
-        return CaseItem(Verilog.build_tree_expr(node.condition), case_items)
+            case_items.append(Verilog.list_build_stmt(item))
+        return CaseItem(Verilog.list_build_expr(node.condition), case_items)
 
-    def from_ir(self, root: ir.Statement, context: ir.Context):
+    def graph_build(self, root: ir.Node, visited: set[str]):
         """
-        Builds tree from IR
+        Builds from graph
         """
-        assert isinstance(root, ir.Statement), f"got {type(root)} instead"
-        assert isinstance(context, ir.Context)
-        # root.append_end_statements(
-        #     [ir.NonBlockingSubsitution(ir.Var("_done"), ir.Int(1))]
-        # )
-        self.context = context
-        self.module = Verilog.__create_module_from_python(
-            Verilog.build_tree_stmt(root), context
-        )
-        return self
+        assert_type(root, ir.Node)
+        root_case = Case(expression=Expression("_state"), case_items=[])
+        self.graph_build_node(node=root, root_case=root_case, visited=visited)
+        return root_case
+
+    def graph_build_node(self, node: ir.Node, root_case: Case, visited: set[str]):
+        """
+        Builds from node
+        """
+        assert_type(node, ir.Node)
+        assert isinstance(self._context, ir.Context)
+        if node.unique_id in visited:
+            return node.unique_id
+
+        if isinstance(node, ir.AssignNode):
+            if node.unique_id not in visited:
+                visited.add(node.unique_id)
+                next_state = self.graph_build_node(node._edge, root_case, visited)
+                root_case.case_items.append(
+                    CaseItem(
+                        condition=Expression(node.unique_id),
+                        statements=[
+                            Statement(f"{node.to_string()};"),
+                            NonBlockingSubsitution(
+                                lvalue=root_case.condition.to_string(),
+                                rvalue=next_state,
+                            ),
+                        ],
+                    )
+                )
+                self._context.global_vars[node.unique_id] = len(root_case.case_items)
+            return node.unique_id
+        if isinstance(node, ir.IfElseNode):
+            if node.unique_id not in visited:
+                visited.add(node.unique_id)
+                then_state = self.graph_build_node(node._then_edge, root_case, visited)
+                else_state = self.graph_build_node(node._else_edge, root_case, visited)
+                root_case.case_items.append(
+                    CaseItem(
+                        condition=Expression(node.unique_id),
+                        statements=[
+                            IfElse(
+                                condition=Expression(node._condition.to_string()),
+                                then_body=[
+                                    NonBlockingSubsitution(
+                                        root_case.condition.to_string(), then_state
+                                    )
+                                ],
+                                else_body=[
+                                    NonBlockingSubsitution(
+                                        root_case.condition.to_string(), else_state
+                                    )
+                                ],
+                            )
+                        ],
+                    )
+                )
+                self._context.global_vars[node.unique_id] = len(root_case.case_items)
+            return node.unique_id
+        if isinstance(node, ir.YieldNode):
+            if node.unique_id not in visited:
+                visited.add(node.unique_id)
+                next_state = self.graph_build_node(node._edge, root_case, visited)
+                stmts = [
+                    NonBlockingSubsitution(f"_out{i}", v.to_string())
+                    for i, v in enumerate(node._stmts)
+                ] + [NonBlockingSubsitution("_valid", "1")]
+                root_case.case_items.append(
+                    CaseItem(
+                        condition=Expression(node.unique_id),
+                        statements=[
+                            *stmts,
+                            NonBlockingSubsitution(
+                                lvalue=root_case.condition.to_string(),
+                                rvalue=next_state,
+                            ),
+                        ],
+                    )
+                )
+                self._context.global_vars[node.unique_id] = len(root_case.case_items)
+            return node.unique_id
+        if isinstance(node, ir.Edge):
+            if node.unique_id not in visited:
+                visited.add(node.unique_id)
+                return self.graph_build_node(node._node, root_case, visited)
+            return "bruvlmao"
+        if isinstance(node, ir.Node):
+            if node.unique_id not in visited:
+                visited.add(node.unique_id)
+                root_case.case_items.append(
+                    CaseItem(
+                        condition=Expression(node.unique_id),
+                        statements=[
+                            NonBlockingSubsitution("_done", "1"),
+                        ],
+                    )
+                )
+                self._context.global_vars[node.unique_id] = len(root_case.case_items)
+            return node.unique_id
+        assert_type(node, ir.AssignNode)
+        return ""
 
     @staticmethod
-    def __get_init(root: Statement, global_vars: dict[str, str]):
+    def __get_start_ifelse(root: Statement, global_vars: dict[str, str]):
         """
         if (_start) begin
             <var> = <value>;
@@ -249,20 +353,31 @@ class Verilog:
         )
         return block
 
-    def get_module(self):
+    @property
+    def module(self):
         """
         Get Verilog module
         """
-        decls = [
-            Declaration(v, is_reg=True, is_signed=True)
-            for v in self.context.global_vars
-        ]
-        self.module.body = decls + self.module.body
+        assert isinstance(self._module, Module)
+        return copy.deepcopy(self._module)
+
+    def get_module_lines(self):
+        """
+        Get Verilog module as Lines
+        """
         return self.module.to_lines()
 
-    def get_testbench(self, test_cases: list[tuple[str]]):
+    def get_module_str(self):
         """
-        Creates testbench with multiple test cases using the _done signal
+        Get Verilog module as string
+        """
+        return str(self.get_module_lines())
+
+    def new_testbench(self, test_cases: list[tuple[str]]):
+        """
+        Creates testbench with multiple test cases
+
+        Each element of test_cases represents a single test case
         """
 
         def make_display_stmt():
@@ -272,22 +387,22 @@ class Verilog:
             $display("%0d, ...", _valid, ...);
             """
             string = '$display("%0d, '
-            string += "%0d, " * (len(self.context.output_vars) - 1)
+            string += "%0d, " * (len(self._context.output_vars) - 1)
             string += '%0d", _valid'
-            for var in self.context.output_vars:
+            for var in self._context.output_vars:
                 string += f", {var}"
             string += ");"
             return Statement(literal=string)
 
-        assert self.context is not None
+        assert isinstance(self._context, ir.Context)
         decl: list[Declaration] = []
         decl.append(Declaration("_clock", size=1, is_reg=True))
         decl.append(Declaration("_start", size=1, is_reg=True))
         decl += [
             Declaration(var, is_signed=True, is_reg=True)
-            for var in self.context.input_vars
+            for var in self._context.input_vars
         ]
-        decl += [Declaration(var, is_signed=True) for var in self.context.output_vars]
+        decl += [Declaration(var, is_signed=True) for var in self._context.output_vars]
 
         decl.append(Declaration("_done", size=1))
         decl.append(Declaration("_valid", size=1))
@@ -297,7 +412,7 @@ class Verilog:
         }  # Caution: expects decl to only contain declarations
 
         setups: list[Statement] = list(decl)
-        setups.append(Instantiation(self.context.name, "DUT", ports))
+        setups.append(Instantiation(self._context.name, "DUT", ports))
 
         setups.append(Statement(literal="always #5 _clock = !_clock;"))
 
@@ -310,7 +425,7 @@ class Verilog:
         for i, test_case in enumerate(test_cases):
             # setup for new test case
             initial_body.append(Statement(comment=f"Test case {i}: {str(test_case)}"))
-            for i, var in enumerate(self.context.input_vars):
+            for i, var in enumerate(self._context.input_vars):
                 initial_body.append(BlockingSubsitution(var, str(test_case[i])))
             initial_body.append(BlockingSubsitution("_start", "1"))
 
@@ -330,9 +445,9 @@ class Verilog:
 
         initial_loop = Initial(body=initial_body)
 
-        if self.context:
+        if self._context:
             module = Module(
-                f"{self.context.name}_tb",
+                f"{self._context.name}_tb",
                 [],
                 [],
                 body=setups + [initial_loop],
@@ -340,6 +455,18 @@ class Verilog:
             )
             return module
         raise RuntimeError("Needs the context")
+
+    def new_testbench_lines(self, test_cases: list[tuple[str]]):
+        """
+        New Testbench as lines
+        """
+        return self.new_testbench(test_cases).to_lines()
+
+    def new_testbench_str(self, test_cases: list[tuple[str]]):
+        """
+        New testbench as str
+        """
+        return str(self.new_testbench_lines(test_cases))
 
 
 class Instantiation(Statement):
@@ -382,7 +509,7 @@ class Instantiation(Statement):
         return lines
 
 
-class Module:
+class Module(ImplementsToLines):
     """
     module name(...); endmodule
     """
@@ -452,7 +579,7 @@ class Initial(Statement):
 
     def __init__(self, *args, body: Optional[list[Statement]] = None, **kwargs):
         if body:
-            assert_list_elements(body, Statement)
+            assert_list_type(body, Statement)
         self.body = body
         super().__init__(*args, **kwargs)
 
@@ -639,18 +766,6 @@ class CaseItem:
         """
         return self.to_lines().to_string()
 
-    def append_end_statements(self, statements: list[Statement]):
-        """
-        Append statements to case item
-        """
-        # self.statements = self.statements + assert_list_elements(statements, Statement)
-        # warnings.warn(statements[0].to_string() + " " + str(type(self.statements[-1])))
-        self.statements[-1].append_end_statements(
-            assert_list_elements(statements, Statement)
-        )
-        # warnings.warn(statements[0].to_string())
-        return self
-
 
 class Case(Statement):
     """
@@ -686,15 +801,6 @@ class Case(Statement):
         lines += "endcase"
         return lines
 
-    def append_end_statements(self, statements: list[Statement]):
-        """
-        Adds statements to the last case item
-        """
-        self.case_items[-1].append_end_statements(
-            assert_list_elements(statements, Statement)
-        )
-        return self
-
 
 class IfElse(Statement):
     """
@@ -712,8 +818,8 @@ class IfElse(Statement):
         super().__init__(*args, **kwargs)
         assert isinstance(condition, Expression)
         self.condition = condition
-        self.then_body = assert_list_elements(then_body, Statement)
-        self.else_body = assert_list_elements(else_body, Statement)
+        self.then_body = assert_list_type(then_body, Statement)
+        self.else_body = assert_list_type(else_body, Statement)
 
     def to_lines(self):
         lines = Lines()
@@ -730,7 +836,7 @@ class IfElse(Statement):
         """
         Appends statements to both branches
         """
-        statements = assert_list_elements(statements, Statement)
+        statements = assert_list_type(statements, Statement)
         # warnings.warn("appending " + statements[0].to_string())
         # if len(statements) > 1:
         #     warnings.warn(statements[1].to_string())
@@ -757,7 +863,7 @@ class While(Statement):
         assert isinstance(condition, Expression)
         self.condition = condition
         if body:
-            assert_list_elements(body, Statement)
+            assert_list_type(body, Statement)
         self.body = body
         super().__init__(*args, **kwargs)
 

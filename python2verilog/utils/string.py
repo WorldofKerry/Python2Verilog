@@ -136,3 +136,24 @@ class Indent:
 
     def __str__(self):
         return self.indentify(self.indent)
+
+
+class ImplementsToLines:
+    """
+    A base class defining an interface for classes that need to provide a 'to_lines' method
+    """
+
+    def to_lines(self):
+        """
+        To Lines
+        """
+        raise NotImplementedError("Derived class must implement to_lines")
+
+    def to_string(self):
+        """
+        To string
+        """
+        return str(self.to_lines())
+
+    def __str__(self):
+        return self.to_string()
