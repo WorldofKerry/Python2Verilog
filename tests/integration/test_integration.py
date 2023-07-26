@@ -5,21 +5,47 @@ import os
 import configparser
 import subprocess
 import csv
+import copy
+import re
+import pandas as pd
 import pytest
-import statistics
-from matplotlib import pyplot as plt
+from dataclasses import dataclass
 import networkx as nx
+from matplotlib import pyplot as plt
 
 from python2verilog.backend.verilog import Verilog
-from python2verilog.frontend import Generator2List
+from python2verilog.frontend import Generator2Graph
 from python2verilog.optimizer import optimizer
 from python2verilog.convert import *
 from python2verilog.ir import create_adjacency_list
 from python2verilog.utils.visualization import make_visual
 
 
+@dataclass
+class Statistics:
+    """
+    Holds a test's statistics
+    """
+
+    function_name: str = "Unspecified"
+    python_yields: int = -1
+    verilog_clocks: int = -1
+    module_file_size: int = -1
+
+    def __iter__(self):
+        yield from self.values()
+
+    def values(self):
+        return self.__dict__.values()
+
+    def keys(self):
+        return self.__dict__.keys()
+
+
 @pytest.mark.usefixtures("argparse")  # creates self.args
 class TestMain(unittest.TestCase):
+    all_statistics: list[Statistics] = []
+
     def run_test(
         self,
         function_name: str,
@@ -85,6 +111,10 @@ class TestMain(unittest.TestCase):
 
                     expected.append(tupl)
 
+            statistics = Statistics(
+                function_name=function_name, python_yields=len(expected)
+            )
+
             if args.write:
                 with open(FILES_IN_ABS_DIR["expected"], mode="w") as expected_file:
                     for tupl in expected:
@@ -107,29 +137,32 @@ class TestMain(unittest.TestCase):
 
                 ir, context = Generator2Graph(function).results
                 verilog = Verilog.from_graph_ir(ir, context)
-                # verilog = convert_graph(function, optimization_level=3)
 
-                adjacency_list = create_adjacency_list(ir)
-                g = nx.DiGraph(adjacency_list)
+                if args.write:
+                    adjacency_list = create_adjacency_list(ir)
+                    g = nx.DiGraph(adjacency_list)
 
-                plt.figure(figsize=(20, 20))
-                nx.draw(
-                    g,
-                    with_labels=True,
-                    font_weight="bold",
-                    arrowsize=30,
-                    node_size=4000,
-                    node_shape="s",
-                    node_color="#00b4d9",
+                    plt.figure(figsize=(20, 20))
+                    nx.draw(
+                        g,
+                        with_labels=True,
+                        font_weight="bold",
+                        arrowsize=30,
+                        node_size=4000,
+                        node_shape="s",
+                        node_color="#00b4d9",
+                    )
+                    plt.savefig(FILES_IN_ABS_DIR["ir_dump"])
+
+                module = verilog.get_module_lines().to_string()
+                statistics.module_file_size = len(
+                    module.replace("\n", "").replace(" ", "")
                 )
-                plt.savefig(FILES_IN_ABS_DIR["ir_dump"])
-
-                module_file.write(verilog.get_module_lines().to_string())
+                module_file.write(module)
 
             with open(FILES_IN_ABS_DIR["testbench"], mode="w") as testbench_file:
-                testbench_file.write(
-                    verilog.new_testbench(test_cases).to_lines().to_string()
-                )
+                tb_str = verilog.new_testbench(test_cases).to_string()
+                testbench_file.write(tb_str)
 
             iverilog_cmd = f"iverilog -s {function_name}_tb {FILES_IN_ABS_DIR['module']} {FILES_IN_ABS_DIR['testbench']} -o iverilog.log && unbuffer vvp iverilog.log && rm iverilog.log\n"
             output = subprocess.run(
@@ -145,6 +178,9 @@ class TestMain(unittest.TestCase):
             for line in actual_str.splitlines():
                 row = [elem.strip() for elem in line.split(",")]
                 actual_raw.append(row)
+
+            statistics.verilog_clocks = len(actual_raw)
+            TestMain.all_statistics.append(statistics)
 
             filtered_actual = []
             for row in actual_raw:
@@ -173,6 +209,12 @@ class TestMain(unittest.TestCase):
             )
 
             return "Running test"
+
+    def tearDownClass():
+        df = pd.DataFrame(
+            TestMain.all_statistics, columns=TestMain.all_statistics[0].keys()
+        )
+        print("\n" + df.to_markdown(index=False))
 
     def test_circle_lines(self):
         test_cases = [(21, 37, 7), (89, 45, 43)]

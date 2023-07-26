@@ -74,7 +74,7 @@ def script(args: argparse.Namespace, logger: logging.Logger, shell: callable) ->
     if need_to_add_run_cmd:
         with open(TEST_FILE_PATH, mode="a") as test_file:
             test_file.write(
-                f'\n    def test_{args.test_name}(self):\n        test_cases = [(,)]\n        self.run_test("{args.test_name}", self.filter_tests(test_cases, self.args))\n'
+                f'\n    def test_{args.test_name}(self):\n        test_cases = [(,)]\n        self.run_test("{args.test_name}", test_cases, self.args)\n'
             )
 
     logger.warning(
