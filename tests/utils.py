@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Union
 
 
 class Argument:
@@ -16,7 +16,7 @@ class Argument:
     def __init__(
         self,
         name: str,
-        default: str | bool | int,
+        default: Union[str, int, bool],
         help: Optional[str] = None,
         short: Optional[str] = None,
         action: Optional[str] = "store",
