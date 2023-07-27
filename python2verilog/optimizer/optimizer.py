@@ -85,8 +85,8 @@ def combine_cases(root: ir.Case):
         if isinstance(expr, ir.Var):
             variables.add(expr.string)
         if isinstance(expr, ir.BinOp):
-            grab_vars(expr.left, variables)
-            grab_vars(expr.right, variables)
+            grab_vars(expr._left, variables)
+            grab_vars(expr._right, variables)
 
     def one_iteration(cur_index: int, lvalues: set[str], valid_stmt_count: int = 0):
         """
@@ -243,27 +243,74 @@ def remove_unreferenced_states(root: ir.Case):
     return root
 
 
-def graph_backwards_replace(
-    stmt: ir.Statement, mapping: dict[ir.Expression, ir.Expression]
+def is_dependent(expr: ir.AssignNode):
+    """
+    Discriminates between dependent and independent
+    """
+
+    def helper(expr: ir.Expression, lvalue: str):
+        if isinstance(expr, ir.Var):
+            return lvalue == expr.to_string()
+        if isinstance(expr, ir.BinOp):
+            return helper(expr.left, lvalue) or helper(expr.right, lvalue)
+        if isinstance(expr, ir.Int):
+            return False
+        raise TypeError(f"unexpected {type(expr)}")
+
+    return helper(expr=expr.rvalue, lvalue=str(expr.lvalue))
+
+
+def graph_apply_mapping(
+    node: ir.AssignNode, mapping: dict[ir.Expression, ir.Expression]
 ):
     """
     Replace all rvalues of expressions in stmt with mapping
     """
 
-    def helper(expr: ir.Expression):
+    def dependent_helper(expr: ir.Expression):
+        """
+        i <= f(i), e.g. i <= i + 1
+        """
+        # print(f"recurse {type(expr)} {expr}")
         if isinstance(expr, ir.Var):
+            # print(f"found var {expr}")
             for key in mapping:
                 if key.to_string() == expr.to_string():
+                    # print(f"found {mapping[key]}")
                     return mapping[key]
         if isinstance(expr, ir.BinOp):
-            expr.left = helper(expr.left)
-            expr.right = helper(expr.right)
+            expr.left = dependent_helper(expr.left)
+            expr.right = dependent_helper(expr.right)
         return expr
 
-    if isinstance(stmt, ir.NonBlockingSubsitution):
-        stmt.rvalue = helper(stmt.rvalue)
+    def independent_helper(lvalue: str, rvalue: ir.Expression):
+        """
+        i <= constant, e.g. i <= 0
+        """
+
+        def helper(expr: ir.Expression, replacement: ir.Expression):
+            if isinstance(expr, ir.BinOp):
+                if expr.left.to_string() == lvalue:
+                    expr.left = copy.deepcopy(replacement)
+                if expr.right.to_string() == lvalue:
+                    expr.right = copy.deepcopy(replacement)
+                helper(expr.left, replacement)
+                helper(expr.right, replacement)
+            return expr
+
+        for key in mapping:
+            if key.to_string() == lvalue:
+                return helper(mapping[key], rvalue)
+        raise RuntimeError("Untested branch")
+
+    if isinstance(node, ir.AssignNode):
+        if is_dependent(node):
+            node.rvalue = dependent_helper(node.rvalue)
+        else:
+            node.rvalue = independent_helper(str(node.lvalue), node.rvalue)
     else:
-        raise ValueError(f"Cannot do backwards replace on {stmt}")
+        raise ValueError(f"Cannot do backwards replace on {node}")
+    return node
 
 
 def graph_update_mapping(
@@ -276,7 +323,7 @@ def graph_update_mapping(
     assert not isinstance(
         stmt, ir.IfElse
     ), "Should have been handled, call this method twice on the two branches"
-    if isinstance(stmt, ir.NonBlockingSubsitution):
+    if isinstance(stmt, ir.AssignNode):
         new_mapping[stmt.lvalue] = stmt.rvalue
     return new_mapping
 
@@ -291,8 +338,50 @@ def graph_optimize(root: ir.Node):
         node: ir.Node,
         mapping: dict[ir.Expression, ir.Expression],
         visited: dict[str, int],
+        threshold: int,
     ):
         """
         Helper
         """
-        # update mapping
+        if node.unique_id in visited and visited[node.unique_id] > threshold:
+            return node
+        visited[node.unique_id] = visited.get(node.unique_id, 0) + 1
+
+        if isinstance(node, ir.Edge):
+            result = helper(
+                node=node.child, mapping=mapping, visited=visited, threshold=threshold
+            )
+        if isinstance(node, ir.AssignNode):
+            print(f"assign before {mapping} {node} {type(node.rvalue)}")
+            updated_node = graph_apply_mapping(copy.deepcopy(node), mapping)
+            mapping = graph_update_mapping(updated_node, mapping)
+            print(f"assign after {mapping} {updated_node}")
+            print(f"updated {updated_node}")
+            result = helper(
+                node=updated_node.child,
+                mapping=mapping,
+                visited=visited,
+                threshold=threshold,
+            )
+            edge = ir.NonclockedEdge(unique_id=node.child.unique_id)
+        if isinstance(node, ir.IfElseNode):
+            true_mapping = graph_update_mapping(node.children[0], mapping)
+            false_mapping = graph_update_mapping(node.children[1], mapping)
+            print(f"if {true_mapping} {false_mapping}")
+            helper(
+                node=node.then_edge,
+                mapping=mapping,
+                visited=visited,
+                threshold=threshold,
+            )
+            helper(
+                node=node.else_edge,
+                mapping=mapping,
+                visited=visited,
+                threshold=threshold,
+            )
+        return node
+
+    root = helper(root, {}, {}, threshold=1)
+
+    return root

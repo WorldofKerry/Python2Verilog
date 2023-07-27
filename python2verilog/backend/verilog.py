@@ -247,7 +247,7 @@ class Verilog:
         if isinstance(node, ir.AssignNode):
             if node.unique_id not in visited:
                 visited.add(node.unique_id)
-                next_state = self.graph_build_node(node._edge, root_case, visited)
+                next_state = self.graph_build_node(node._child, root_case, visited)
                 root_case.case_items.append(
                     CaseItem(
                         condition=Expression(node.unique_id),
@@ -292,7 +292,7 @@ class Verilog:
         if isinstance(node, ir.YieldNode):
             if node.unique_id not in visited:
                 visited.add(node.unique_id)
-                next_state = self.graph_build_node(node._edge, root_case, visited)
+                next_state = self.graph_build_node(node._child, root_case, visited)
                 stmts = [
                     NonBlockingSubsitution(f"_out{i}", v.to_string())
                     for i, v in enumerate(node._stmts)
@@ -314,7 +314,7 @@ class Verilog:
         if isinstance(node, ir.Edge):
             if node.unique_id not in visited:
                 visited.add(node.unique_id)
-                return self.graph_build_node(node._node, root_case, visited)
+                return self.graph_build_node(node.child, root_case, visited)
             return "bruvlmao"
         if isinstance(node, ir.Node):
             if node.unique_id not in visited:

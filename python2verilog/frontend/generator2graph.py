@@ -191,7 +191,7 @@ class Generator2Graph:
                 rvalue=self.__parse_expression(
                     pyast.BinOp(stmt.target, stmt.op, stmt.value)
                 ),
-                edge=edge,
+                child=edge,
             )
         else:
             raise TypeError(
@@ -241,7 +241,7 @@ class Generator2Graph:
             else_edge=done_edge,
         )
         body_node = self.__parse_statements(list(stmt.body), f"{prefix}_while", ifelse)
-        loop_edge.set_next_node(body_node)
+        loop_edge.set_edge(body_node)
 
         return ifelse
 

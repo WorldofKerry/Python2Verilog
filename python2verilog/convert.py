@@ -31,7 +31,7 @@ def convert_graph(func: ast.FunctionDef, optimization_level: int):
 
     ir, context = Generator2Graph(func).results
     if optimization_level > 0:
-        pass
+        ir = optimizer.graph_optimize(ir)
     return Verilog.from_graph_ir(ir, context)
 
 

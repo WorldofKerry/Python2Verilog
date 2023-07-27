@@ -102,11 +102,25 @@ class IfElseNode(Node):
     def __repr__(self):
         return super().__repr__() + f", condition: ({self._condition})"
 
+    @property
+    def then_edge(self):
+        """
+        true edge
+        """
+        return copy.deepcopy(self._then_edge)
+
+    @property
+    def else_edge(self):
+        """
+        false edge
+        """
+        return copy.deepcopy(self._else_edge)
+
     def get_children(self):
         """
         Gets edges
         """
-        return [copy.deepcopy(self._then_edge), copy.deepcopy(self._else_edge)]
+        return [self.then_edge, self.else_edge]
 
 
 class BasicNode(Node):
@@ -118,25 +132,37 @@ class BasicNode(Node):
         self,
         unique_id: str,
         *args,
-        edge: Optional[Edge] = None,
+        child: Optional[Node] = None,
         **kwargs,
     ):
         super().__init__(unique_id, *args, **kwargs)
-        self._edge = assert_type(edge, Edge)
+        self._child = assert_type(child, Node)
+
+    @property
+    def child(self):
+        """
+        child
+        """
+        return copy.deepcopy(self._child)
+
+    @child.setter
+    def child(self, other: Node):
+        if self._child:
+            raise ValueError(f"reassigning edge {self._child} to {other}")
+        self._child = assert_type(other, Node)
 
     def get_children(self):
         """
         Gets edges
         """
-        return [copy.deepcopy(self._edge)]
+        return [self.child]
 
-    def set_edge(self, edge: Edge):
+    def set_edge(self, edge: Node):
         """
         Adds an edge
         """
-        if self._edge:
-            raise ValueError(f"reassigning edge {self._edge} to {edge}")
-        self._edge = assert_type(edge, Edge)
+        self.child = edge
+        return self.child
 
 
 class AssignNode(BasicNode):
@@ -152,11 +178,29 @@ class AssignNode(BasicNode):
         *args,
         lvalue: Expression,
         rvalue: Expression,
-        edge: Optional[Edge] = None,
+        child: Optional[Edge] = None,
         **kwargs,
     ):
-        super().__init__(unique_id, *args, edge=edge, **kwargs)
+        super().__init__(unique_id, *args, child=child, **kwargs)
         self._lvalue = assert_type(lvalue, Expression)
+        self._rvalue = assert_type(rvalue, Expression)
+
+    @property
+    def lvalue(self):
+        """
+        lvalue
+        """
+        return copy.deepcopy(self._lvalue)
+
+    @property
+    def rvalue(self):
+        """
+        rvalue
+        """
+        return copy.deepcopy(self._rvalue)
+
+    @rvalue.setter
+    def rvalue(self, rvalue: Expression):
         self._rvalue = assert_type(rvalue, Expression)
 
     def to_string(self):
@@ -183,17 +227,17 @@ class YieldNode(BasicNode):
         stmts: Optional[list[Expression]] = None,
         edge: Optional[Edge] = None,
     ):
-        super().__init__(unique_id, name=name, edge=edge)
+        super().__init__(unique_id, name=name, child=edge)
         self._stmts = assert_list_type(stmts, Expression)
 
     def to_string(self):
         """
         To string
         """
-        return f"yield {self._stmts}"
+        return f"yield {str(self._stmts)}"
 
 
-class Edge(Node):
+class Edge(BasicNode):
     """
     Represents an edge between two nodes
     """
@@ -201,8 +245,7 @@ class Edge(Node):
     def __init__(
         self, unique_id: str, *args, next_node: Optional[Node] = None, **kwargs
     ):
-        self._node = assert_type(next_node, Node)
-        super().__init__(unique_id, *args, **kwargs)
+        super().__init__(unique_id, child=next_node, *args, **kwargs)
 
     def to_string(self):
         """
@@ -216,15 +259,7 @@ class Edge(Node):
         return self.to_string()
 
     def __repr__(self):
-        return f"{self.__class__.__name__} name: ({self._name}), node: ({self._node})"
-
-    def set_next_node(self, node: Node):
-        """
-        Sets next node
-        """
-        if self._node:
-            raise ValueError(f"reassigning node {self._node} to {node}")
-        self._node = assert_type(node, Node)
+        return f"{self.__class__.__name__} name: ({self._name}), node: ({self._child})"
 
     def get_name(self):
         """
@@ -236,7 +271,7 @@ class Edge(Node):
         """
         Gets next node
         """
-        return copy.deepcopy(self._node)
+        return copy.deepcopy(self._child)
 
     def get_children(self):
         """
@@ -251,8 +286,8 @@ class NonclockedEdge(Edge):
     i.e. no clock cycle has to pass for the next node to be executed
     """
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, unique_id: str, *args, **kwargs):
+        super().__init__(unique_id, *args, **kwargs)
 
     def to_string(self):
         return super().to_string() + ", nonclocked"
@@ -264,8 +299,8 @@ class ClockedEdge(Edge):
     i.e. a clock cycle has to pass for the next node to be executed
     """
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, unique_id: str, *args, **kwargs):
+        super().__init__(unique_id, *args, **kwargs)
 
     def to_string(self):
         return super().to_string() + ", clocked"

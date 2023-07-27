@@ -137,6 +137,7 @@ class TestMain(unittest.TestCase):
                 function = tree.body[0]
 
                 ir, context = Generator2Graph(function).results
+                ir = optimizer.graph_optimize(ir)
                 verilog = Verilog.from_graph_ir(ir, context)
 
                 if args.write:
