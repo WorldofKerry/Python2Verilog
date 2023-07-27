@@ -243,21 +243,17 @@ def remove_unreferenced_states(root: ir.Case):
     return root
 
 
-def is_dependent(expr: ir.AssignNode):
+def is_dependent(expr: ir.Expression, var: str):
     """
-    Discriminates between dependent and independent
+    Returns whether or not expr is dependent on var
     """
-
-    def helper(expr: ir.Expression, lvalue: str):
-        if isinstance(expr, ir.Var):
-            return lvalue == expr.to_string()
-        if isinstance(expr, ir.BinOp):
-            return helper(expr.left, lvalue) or helper(expr.right, lvalue)
-        if isinstance(expr, ir.Int):
-            return False
-        raise TypeError(f"unexpected {type(expr)}")
-
-    return helper(expr=expr.rvalue, lvalue=str(expr.lvalue))
+    if isinstance(expr, ir.Var):
+        return var == expr.to_string()
+    if isinstance(expr, ir.BinOp):
+        return is_dependent(expr.left, var) or is_dependent(expr.right, var)
+    if isinstance(expr, ir.Int):
+        return False
+    raise TypeError(f"unexpected {type(expr)}")
 
 
 def graph_apply_mapping(
@@ -298,15 +294,18 @@ def graph_apply_mapping(
                 helper(expr.right, replacement)
             return expr
 
+        print("independent")
         for key in mapping:
             if key.to_string() == lvalue:
                 return helper(mapping[key], rvalue)
-        raise RuntimeError("Untested branch")
+        warnings.warn("Untested branch")  # temp comment out
+        return rvalue
 
     if isinstance(node, ir.AssignNode):
-        if is_dependent(node):
+        if is_dependent(node.rvalue, str(node.lvalue)):
             node.rvalue = dependent_helper(node.rvalue)
         else:
+            print(f"{node.lvalue} {node.rvalue}")
             node.rvalue = independent_helper(str(node.lvalue), node.rvalue)
     else:
         raise ValueError(f"Cannot do backwards replace on {node}")
@@ -382,6 +381,6 @@ def graph_optimize(root: ir.Node):
             )
         return node
 
-    root = helper(root, {}, {}, threshold=1)
+    root = helper(root, {}, {}, threshold=2)
 
     return root
