@@ -311,6 +311,12 @@ def graph_optimize(root: ir.Node):
     Optimizes a single node, creating branches
     Returns the improved root node
     """
+    unique_counter = 0
+
+    def make_unique():
+        nonlocal unique_counter
+        unique_counter += 1
+        return unique_counter
 
     def should_i_be_clocked(
         regular: ir.Node,
@@ -341,14 +347,15 @@ def graph_optimize(root: ir.Node):
         # if regular.unique_id in visited and visited[regular.unique_id] > threshold:
         #     print(f"return on thresh")
         #     return regular
-        visited[regular.unique_id] = visited.get(regular.unique_id, 0) + 1
+        visited[regular.unique_id] = visited.get(regular.unique_id, 1) + 1
 
         if isinstance(regular, ir.Edge):
+            print(f"edge on {regular} {regular.child}")
             if should_i_be_clocked(
                 regular, mapping, visited, threshold + 1
             ):  # + 1 accounts for pre-increment
                 new_edge = ir.ClockedEdge(
-                    unique_id=f"{regular.unique_id}_o",
+                    unique_id=f"{regular.unique_id}_o{make_unique()}",
                     child=regular.child,
                     name=regular.name,
                 )
@@ -361,13 +368,15 @@ def graph_optimize(root: ir.Node):
                 threshold=threshold,
             )
             new_edge = ir.NonclockedEdge(
-                unique_id=f"{regular.unique_id}_o", child=nextt, name=regular.name
+                unique_id=f"{regular.unique_id}_o{make_unique()}",
+                child=nextt,
+                name=regular.name,
             )
             return new_edge
         if isinstance(regular, ir.AssignNode):
             print(f"Took assign path")
             new_node = graph_apply_mapping(copy.deepcopy(regular), mapping)
-            new_node.unique_id = f"{regular.unique_id}_o"
+            new_node.unique_id = f"{regular.unique_id}_o{make_unique()}"
             updated_mapping = graph_update_mapping(new_node, mapping)
             result = helper(
                 regular=regular.child,
@@ -395,21 +404,28 @@ def graph_optimize(root: ir.Node):
                 visited=visited,
                 threshold=threshold,
             )
-            print(f"old condition {regular._condition} mapping {mapping}")
             new_condition = backwards_replace(regular._condition, mapping)
-            print(f"new condition {new_condition}")
             ifelse = ir.IfElseNode(
-                unique_id=f"{regular.unique_id}_o",
+                unique_id=f"{regular.unique_id}_o{make_unique()}",
                 condition=new_condition,
                 true_edge=new_true_edge,
                 false_edge=new_false_edge,
             )
             return ifelse
         if isinstance(regular, ir.YieldNode):
-            return regular
+            updated = []
+            for stmt in regular._stmts:
+                updated.append(backwards_replace(stmt, mapping))
+            regular._stmts = updated
+            return ir.YieldNode(
+                unique_id=f"{regular.unique_id}_o{make_unique()}",
+                stmts=updated,
+                edge=regular.child,
+                name=regular.name,
+            )
         raise RuntimeError(f"unexpected {type(regular)}")
 
     if isinstance(root, ir.BasicNode):
-        root.optimal_child = helper(root, {}, {}, threshold=1).child
+        root.optimal_child = helper(root, {}, {}, threshold=2).child
 
     return root
