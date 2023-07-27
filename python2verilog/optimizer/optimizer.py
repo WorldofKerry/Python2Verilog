@@ -304,9 +304,9 @@ def graph_apply_mapping(
     if isinstance(node, ir.AssignNode):
         if is_dependent(node.rvalue, str(node.lvalue)):
             node.rvalue = dependent_helper(node.rvalue)
-        else:
-            print(f"{node.lvalue} {node.rvalue}")
-            node.rvalue = independent_helper(str(node.lvalue), node.rvalue)
+        # else:
+        #     print(f"{node.lvalue} {node.rvalue}")
+        #     node.rvalue = independent_helper(str(node.lvalue), node.rvalue)
     else:
         raise ValueError(f"Cannot do backwards replace on {node}")
     return node
@@ -357,7 +357,7 @@ def graph_optimize(root: ir.Node):
             print(f"assign after {mapping} {updated_node}")
             print(f"updated {updated_node}")
             result = helper(
-                node=updated_node.child,
+                node=node.child,
                 mapping=mapping,
                 visited=visited,
                 threshold=threshold,
