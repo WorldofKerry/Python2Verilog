@@ -5,6 +5,7 @@ Optimizer algorithms that operate ontop of the intermediate representation
 import typing
 import warnings
 import random
+import copy
 
 from .. import ir
 
@@ -242,7 +243,9 @@ def remove_unreferenced_states(root: ir.Case):
     return root
 
 
-def backwards_replace(stmt: ir.Statement, mapping: dict[ir.Expression, ir.Expression]):
+def graph_backwards_replace(
+    stmt: ir.Statement, mapping: dict[ir.Expression, ir.Expression]
+):
     """
     Replace all rvalues of expressions in stmt with mapping
     """
@@ -263,7 +266,22 @@ def backwards_replace(stmt: ir.Statement, mapping: dict[ir.Expression, ir.Expres
         raise ValueError(f"Cannot do backwards replace on {stmt}")
 
 
-def optimize_graph(root: ir.Node):
+def graph_update_mapping(
+    stmt: ir.Statement, old_mapping: dict[ir.Expression, ir.Expression]
+):
+    """
+    Updates mapping with statements' contents
+    """
+    new_mapping = copy.deepcopy(old_mapping)
+    assert not isinstance(
+        stmt, ir.IfElse
+    ), "Should have been handled, call this method twice on the two branches"
+    if isinstance(stmt, ir.NonBlockingSubsitution):
+        new_mapping[stmt.lvalue] = stmt.rvalue
+    return new_mapping
+
+
+def graph_optimize(root: ir.Node):
     """
     Optimizes a single node, creating branches
     Returns the improved root node
