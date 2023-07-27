@@ -31,7 +31,7 @@ class Generator2Graph:
         self._root = self.__parse_statements(
             stmts=list(python_func.body),
             prefix="",
-            nextt=ir.Node(unique_id="_statelmaodone", name="done"),
+            nextt=ir.DoneNode(unique_id="_statelmaodone", name="done"),
         )
         for i, var in enumerate(self._context.state_vars):
             self.__add_global_var(str(i), var.to_string())
@@ -210,9 +210,7 @@ class Generator2Graph:
         then_node = self.__parse_statements(list(stmt.body), f"{prefix}_t", then_to)
         else_node = self.__parse_statements(list(stmt.orelse), f"{prefix}_f", else_to)
 
-        to_then = ir.Edge(
-            unique_id=f"{prefix}_true_edge", name="True", child=then_node
-        )
+        to_then = ir.Edge(unique_id=f"{prefix}_true_edge", name="True", child=then_node)
         to_else = ir.Edge(
             unique_id=f"{prefix}_false_edge", name="False", child=else_node
         )
@@ -351,7 +349,10 @@ class Generator2Graph:
         assert len(node.comparators) == 1
 
         if isinstance(node.ops[0], pyast.Lt):
-            operator = "<"
+            return ir.LessThan(
+                self.__parse_expression(node.left),
+                self.__parse_expression(node.comparators[0]),
+            )
         elif isinstance(node.ops[0], pyast.LtE):
             operator = "<="
         elif isinstance(node.ops[0], pyast.Gt):

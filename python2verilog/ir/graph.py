@@ -5,6 +5,9 @@ Graph representation of the logic
 from __future__ import annotations
 import copy
 
+from python2verilog.ir.expressions import Optional
+from python2verilog.ir.statements import Optional
+
 from .statements import *
 from .expressions import *
 from ..utils.assertions import assert_list_type, assert_type
@@ -255,6 +258,15 @@ class YieldNode(BasicNode):
         To string
         """
         return f"yield {str(self._stmts)}"
+
+
+class DoneNode(Node):
+    """
+    Signals done
+    """
+
+    def __init__(self, unique_id: str, name: str = ""):
+        super().__init__(unique_id, name)
 
 
 class Edge(BasicNode):

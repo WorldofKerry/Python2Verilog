@@ -325,7 +325,7 @@ def graph_optimize(root: ir.Node):
         visited: dict[str, int],
         threshold: int,
     ):
-        if isinstance(regular, ir.YieldNode):
+        if isinstance(regular, ir.YieldNode) or isinstance(regular, ir.DoneNode):
             return True
         if regular.unique_id in visited and visited[regular.unique_id] > threshold:
             return True
@@ -423,9 +423,11 @@ def graph_optimize(root: ir.Node):
                 edge=regular.child,
                 name=regular.name,
             )
-        raise RuntimeError(f"unexpected {type(regular)}")
+        if isinstance(regular, ir.DoneNode):
+            return regular
+        raise RuntimeError(f"unexpected {type(regular)} {regular}")
 
     if isinstance(root, ir.BasicNode):
-        root.optimal_child = helper(root, {}, {}, threshold=2).child
+        root.optimal_child = helper(root, {}, {}, threshold=1).child
 
     return root

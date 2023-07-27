@@ -144,7 +144,7 @@ class TestMain(unittest.TestCase):
                     adjacency_list = create_adjacency_list(ir)
                     g = nx.DiGraph(adjacency_list)
 
-                    plt.figure(figsize=(20, 20))
+                    plt.figure(figsize=(40, 40))
                     nx.draw(
                         g,
                         with_labels=True,

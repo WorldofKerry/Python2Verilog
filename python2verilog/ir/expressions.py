@@ -72,7 +72,6 @@ class BinOp(Expression):
     def __init__(self, left: Expression, right: Expression, oper: str):
         self._left = left
         self._right = right
-        assert oper in ["+", "-", "*", "/"], f"Unsupported operator {oper}"
         self._oper = oper
         super().__init__(f"({left.to_string()} {self._oper} {right.to_string()})")
 
@@ -136,3 +135,12 @@ class Div(BinOp):
 
     def __init__(self, left: Expression, right: Expression):
         super().__init__(left, right, "/")
+
+
+class LessThan(BinOp):
+    """
+    <left> < <right>
+    """
+
+    def __init__(self, left: Expression, right: Expression):
+        super().__init__(left, right, "<")

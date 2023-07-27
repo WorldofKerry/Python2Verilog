@@ -247,7 +247,7 @@ class Verilog:
         if isinstance(node, ir.AssignNode):
             if node.unique_id not in visited:
                 visited.add(node.unique_id)
-                next_state = self.graph_build_node(node._child, root_case, visited)
+                next_state = self.graph_build_node(node.child, root_case, visited)
                 root_case.case_items.append(
                     CaseItem(
                         condition=Expression(node.unique_id),
@@ -261,6 +261,22 @@ class Verilog:
                     )
                 )
                 self._context.global_vars[node.unique_id] = len(root_case.case_items)
+                # if node.optimal_child:
+                #     next_state = self.graph_build_node(
+                #         node.optimal_child, root_case, visited
+                #     )
+                #     root_case.case_items.append(
+                #         CaseItem(
+                #             condition=Expression(node.unique_id),
+                #             statements=[
+                #                 Statement(f"{node.to_string()};"),
+                #                 NonBlockingSubsitution(
+                #                     lvalue=root_case.condition.to_string(),
+                #                     rvalue=next_state,
+                #                 ),
+                #             ],
+                #         )
+                #     )
             return node.unique_id
         if isinstance(node, ir.IfElseNode):
             if node.unique_id not in visited:
@@ -292,7 +308,7 @@ class Verilog:
         if isinstance(node, ir.YieldNode):
             if node.unique_id not in visited:
                 visited.add(node.unique_id)
-                next_state = self.graph_build_node(node._child, root_case, visited)
+                next_state = self.graph_build_node(node.child, root_case, visited)
                 stmts = [
                     NonBlockingSubsitution(f"_out{i}", v.to_string())
                     for i, v in enumerate(node._stmts)
@@ -316,7 +332,7 @@ class Verilog:
                 visited.add(node.unique_id)
                 return self.graph_build_node(node.child, root_case, visited)
             return "bruvlmao"
-        if isinstance(node, ir.Node):
+        if isinstance(node, ir.DoneNode):
             if node.unique_id not in visited:
                 visited.add(node.unique_id)
                 root_case.case_items.append(
@@ -329,8 +345,7 @@ class Verilog:
                 )
                 self._context.global_vars[node.unique_id] = len(root_case.case_items)
             return node.unique_id
-        assert_type(node, ir.AssignNode)
-        return ""
+        raise RuntimeError(f"Unexpected type {type(node)} {node}")
 
     @staticmethod
     def __get_start_ifelse(root: Statement, global_vars: dict[str, str]):
