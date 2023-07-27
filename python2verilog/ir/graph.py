@@ -83,14 +83,14 @@ class IfElseNode(Node):
         self,
         unique_id: str,
         *args,
-        then_edge: Optional[Edge] = None,
-        else_edge: Optional[Edge] = None,
+        true_edge: Optional[Edge] = None,
+        false_edge: Optional[Edge] = None,
         condition: Optional[Expression],
         **kwargs,
     ):
         super().__init__(unique_id, *args, **kwargs)
-        self._then_edge = assert_type(then_edge, Edge)
-        self._else_edge = assert_type(else_edge, Edge)
+        self._true_edge = assert_type(true_edge, Edge)
+        self._false_edge = assert_type(false_edge, Edge)
         self._condition = assert_type(condition, Expression)
 
     def to_string(self):
@@ -103,18 +103,25 @@ class IfElseNode(Node):
         return super().__repr__() + f", condition: ({self._condition})"
 
     @property
+    def condition(self):
+        """
+        conditional
+        """
+        return copy.deepcopy(self._condition)
+
+    @property
     def then_edge(self):
         """
         true edge
         """
-        return copy.deepcopy(self._then_edge)
+        return copy.deepcopy(self._true_edge)
 
     @property
     def else_edge(self):
         """
         false edge
         """
-        return copy.deepcopy(self._else_edge)
+        return copy.deepcopy(self._false_edge)
 
     def get_children(self):
         """
@@ -137,6 +144,7 @@ class BasicNode(Node):
     ):
         super().__init__(unique_id, *args, **kwargs)
         self._child = assert_type(child, Node)
+        self._optimal_child = None
 
     @property
     def child(self):
@@ -147,15 +155,16 @@ class BasicNode(Node):
 
     @child.setter
     def child(self, other: Node):
-        if self._child:
-            raise ValueError(f"reassigning edge {self._child} to {other}")
         self._child = assert_type(other, Node)
 
     def get_children(self):
         """
         Gets edges
         """
-        return [self.child]
+        children = [self.child]
+        if self.optimal_child:
+            children.append(self.optimal_child)
+        return children
 
     def set_edge(self, edge: Node):
         """
@@ -163,6 +172,17 @@ class BasicNode(Node):
         """
         self.child = edge
         return self.child
+
+    @property
+    def optimal_child(self):
+        """
+        Optimal child
+        """
+        return copy.deepcopy(self._optimal_child)
+
+    @optimal_child.setter
+    def optimal_child(self, other: Node):
+        self._optimal_child = assert_type(other, Node)
 
 
 class AssignNode(BasicNode):
@@ -242,10 +262,8 @@ class Edge(BasicNode):
     Represents an edge between two nodes
     """
 
-    def __init__(
-        self, unique_id: str, *args, next_node: Optional[Node] = None, **kwargs
-    ):
-        super().__init__(unique_id, child=next_node, *args, **kwargs)
+    def __init__(self, unique_id: str, *args, child: Optional[Node] = None, **kwargs):
+        super().__init__(unique_id, child=child, *args, **kwargs)
 
     def to_string(self):
         """

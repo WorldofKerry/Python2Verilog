@@ -166,11 +166,11 @@ class Generator2Graph:
         cur_node = None
         if isinstance(stmt, pyast.Assign):
             cur_node = self.__parse_assign(stmt, prefix=prefix)
-            edge = ir.Edge(unique_id=f"{prefix}_e", next_node=nextt)
+            edge = ir.Edge(unique_id=f"{prefix}_e", child=nextt)
             cur_node.set_edge(edge)
         elif isinstance(stmt, pyast.Yield):
             cur_node = self.__parse_yield(stmt, prefix=prefix)
-            edge = ir.Edge(unique_id=f"{prefix}_e", next_node=nextt)
+            edge = ir.Edge(unique_id=f"{prefix}_e", child=nextt)
             cur_node.set_edge(edge)
         elif isinstance(stmt, pyast.While):
             cur_node = self.__parse_while(stmt, nextt=nextt, prefix=prefix)
@@ -184,7 +184,7 @@ class Generator2Graph:
             assert isinstance(
                 stmt.target, pyast.Name
             ), "Error: only supports single target"
-            edge = ir.Edge(unique_id=f"{prefix}_e", next_node=nextt)
+            edge = ir.Edge(unique_id=f"{prefix}_e", child=nextt)
             cur_node = ir.AssignNode(
                 unique_id=prefix,
                 lvalue=self.__parse_expression(stmt.target),
@@ -204,23 +204,23 @@ class Generator2Graph:
         If statement
         """
         assert isinstance(stmt, pyast.If)
-        then_to = ir.Edge(unique_id=f"{prefix}_e0", next_node=nextt)
-        else_to = ir.Edge(unique_id=f"{prefix}_e1", next_node=nextt)
+        then_to = ir.Edge(unique_id=f"{prefix}_e0", child=nextt)
+        else_to = ir.Edge(unique_id=f"{prefix}_e1", child=nextt)
 
         then_node = self.__parse_statements(list(stmt.body), f"{prefix}_t", then_to)
         else_node = self.__parse_statements(list(stmt.orelse), f"{prefix}_f", else_to)
 
         to_then = ir.Edge(
-            unique_id=f"{prefix}_true_edge", name="True", next_node=then_node
+            unique_id=f"{prefix}_true_edge", name="True", child=then_node
         )
         to_else = ir.Edge(
-            unique_id=f"{prefix}_false_edge", name="False", next_node=else_node
+            unique_id=f"{prefix}_false_edge", name="False", child=else_node
         )
 
         ifelse = ir.IfElseNode(
             unique_id=prefix,
-            then_edge=to_then,
-            else_edge=to_else,
+            true_edge=to_then,
+            false_edge=to_else,
             condition=self.__parse_expression(stmt.test),
         )
         return ifelse
@@ -232,13 +232,13 @@ class Generator2Graph:
         assert isinstance(stmt, pyast.While)
 
         loop_edge = ir.Edge(unique_id=f"{prefix}_edge", name="True")
-        done_edge = ir.Edge(unique_id=f"{prefix}_f", name="False", next_node=nextt)
+        done_edge = ir.Edge(unique_id=f"{prefix}_f", name="False", child=nextt)
 
         ifelse = ir.IfElseNode(
             unique_id=f"{prefix}_while",
             condition=self.__parse_expression(stmt.test),
-            then_edge=loop_edge,
-            else_edge=done_edge,
+            true_edge=loop_edge,
+            false_edge=done_edge,
         )
         body_node = self.__parse_statements(list(stmt.body), f"{prefix}_while", ifelse)
         loop_edge.set_edge(body_node)

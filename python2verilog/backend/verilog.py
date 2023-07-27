@@ -265,8 +265,8 @@ class Verilog:
         if isinstance(node, ir.IfElseNode):
             if node.unique_id not in visited:
                 visited.add(node.unique_id)
-                then_state = self.graph_build_node(node._then_edge, root_case, visited)
-                else_state = self.graph_build_node(node._else_edge, root_case, visited)
+                then_state = self.graph_build_node(node._true_edge, root_case, visited)
+                else_state = self.graph_build_node(node._false_edge, root_case, visited)
                 root_case.case_items.append(
                     CaseItem(
                         condition=Expression(node.unique_id),

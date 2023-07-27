@@ -256,6 +256,26 @@ def is_dependent(expr: ir.Expression, var: str):
     raise TypeError(f"unexpected {type(expr)}")
 
 
+def backwards_replace(expr: ir.Expression, mapping: dict[ir.Expression, ir.Expression]):
+    """
+    Replaces instances of variables with the mapped value
+    """
+    if isinstance(expr, ir.Var):
+        for key in mapping:
+            if key.to_string() == expr.to_string():
+                return mapping[key]
+    elif isinstance(expr, ir.BinOp):
+        expr.left = backwards_replace(expr.left, mapping)
+        expr.right = backwards_replace(expr.right, mapping)
+    elif isinstance(expr, ir.Expression):
+        # TODO: add BinOp for comparison
+        for key, value in mapping.items():
+            expr = ir.Expression(
+                expr.to_string().replace(key.to_string(), value.to_string())
+            )
+    return expr
+
+
 def graph_apply_mapping(
     node: ir.AssignNode, mapping: dict[ir.Expression, ir.Expression]
 ):
@@ -263,50 +283,9 @@ def graph_apply_mapping(
     Replace all rvalues of expressions in stmt with mapping
     """
 
-    def dependent_helper(expr: ir.Expression):
-        """
-        i <= f(i), e.g. i <= i + 1
-        """
-        # print(f"recurse {type(expr)} {expr}")
-        if isinstance(expr, ir.Var):
-            # print(f"found var {expr}")
-            for key in mapping:
-                if key.to_string() == expr.to_string():
-                    # print(f"found {mapping[key]}")
-                    return mapping[key]
-        if isinstance(expr, ir.BinOp):
-            expr.left = dependent_helper(expr.left)
-            expr.right = dependent_helper(expr.right)
-        return expr
-
-    def independent_helper(lvalue: str, rvalue: ir.Expression):
-        """
-        i <= constant, e.g. i <= 0
-        """
-
-        def helper(expr: ir.Expression, replacement: ir.Expression):
-            if isinstance(expr, ir.BinOp):
-                if expr.left.to_string() == lvalue:
-                    expr.left = copy.deepcopy(replacement)
-                if expr.right.to_string() == lvalue:
-                    expr.right = copy.deepcopy(replacement)
-                helper(expr.left, replacement)
-                helper(expr.right, replacement)
-            return expr
-
-        print("independent")
-        for key in mapping:
-            if key.to_string() == lvalue:
-                return helper(mapping[key], rvalue)
-        warnings.warn("Untested branch")  # temp comment out
-        return rvalue
-
     if isinstance(node, ir.AssignNode):
         if is_dependent(node.rvalue, str(node.lvalue)):
-            node.rvalue = dependent_helper(node.rvalue)
-        # else:
-        #     print(f"{node.lvalue} {node.rvalue}")
-        #     node.rvalue = independent_helper(str(node.lvalue), node.rvalue)
+            node.rvalue = backwards_replace(node.rvalue, mapping)
     else:
         raise ValueError(f"Cannot do backwards replace on {node}")
     return node
@@ -333,8 +312,22 @@ def graph_optimize(root: ir.Node):
     Returns the improved root node
     """
 
+    def should_i_be_clocked(
+        regular: ir.Node,
+        # optimal: ir.Node,
+        mapping: dict[ir.Expression, ir.Expression],
+        visited: dict[str, int],
+        threshold: int,
+    ):
+        if isinstance(regular, ir.YieldNode):
+            return True
+        if regular.unique_id in visited and visited[regular.unique_id] > threshold:
+            return True
+        return False
+
     def helper(
-        node: ir.Node,
+        regular: ir.Node,
+        # optimal: ir.Node,
         mapping: dict[ir.Expression, ir.Expression],
         visited: dict[str, int],
         threshold: int,
@@ -342,45 +335,81 @@ def graph_optimize(root: ir.Node):
         """
         Helper
         """
-        if node.unique_id in visited and visited[node.unique_id] > threshold:
-            return node
-        visited[node.unique_id] = visited.get(node.unique_id, 0) + 1
+        # if isinstance(regular, ir.YieldNode):
+        #     print(f"return on yield")
+        #     return regular
+        # if regular.unique_id in visited and visited[regular.unique_id] > threshold:
+        #     print(f"return on thresh")
+        #     return regular
+        visited[regular.unique_id] = visited.get(regular.unique_id, 0) + 1
 
-        if isinstance(node, ir.Edge):
-            result = helper(
-                node=node.child, mapping=mapping, visited=visited, threshold=threshold
-            )
-        if isinstance(node, ir.AssignNode):
-            print(f"assign before {mapping} {node} {type(node.rvalue)}")
-            updated_node = graph_apply_mapping(copy.deepcopy(node), mapping)
-            mapping = graph_update_mapping(updated_node, mapping)
-            print(f"assign after {mapping} {updated_node}")
-            print(f"updated {updated_node}")
-            result = helper(
-                node=node.child,
-                mapping=mapping,
-                visited=visited,
-                threshold=threshold,
-            )
-            edge = ir.NonclockedEdge(unique_id=node.child.unique_id)
-        if isinstance(node, ir.IfElseNode):
-            true_mapping = graph_update_mapping(node.children[0], mapping)
-            false_mapping = graph_update_mapping(node.children[1], mapping)
-            print(f"if {true_mapping} {false_mapping}")
-            helper(
-                node=node.then_edge,
-                mapping=mapping,
-                visited=visited,
-                threshold=threshold,
-            )
-            helper(
-                node=node.else_edge,
-                mapping=mapping,
-                visited=visited,
-                threshold=threshold,
-            )
-        return node
+        if isinstance(regular, ir.Edge):
+            if should_i_be_clocked(
+                regular, mapping, visited, threshold + 1
+            ):  # + 1 accounts for pre-increment
+                new_edge = ir.ClockedEdge(
+                    unique_id=f"{regular.unique_id}_o",
+                    child=regular.child,
+                    name=regular.name,
+                )
+                return new_edge
 
-    root = helper(root, {}, {}, threshold=2)
+            nextt = helper(
+                regular=regular.child,
+                mapping=mapping,
+                visited=visited,
+                threshold=threshold,
+            )
+            new_edge = ir.NonclockedEdge(
+                unique_id=f"{regular.unique_id}_o", child=nextt, name=regular.name
+            )
+            return new_edge
+        if isinstance(regular, ir.AssignNode):
+            print(f"Took assign path")
+            new_node = graph_apply_mapping(copy.deepcopy(regular), mapping)
+            new_node.unique_id = f"{regular.unique_id}_o"
+            updated_mapping = graph_update_mapping(new_node, mapping)
+            result = helper(
+                regular=regular.child,
+                mapping=updated_mapping,
+                visited=visited,
+                threshold=threshold,
+            )
+            new_node.child = result
+            print(f"result {result.child}")
+            return new_node
+        if isinstance(regular, ir.IfElseNode):
+            print(f"Took if path")
+            true_mapping = graph_update_mapping(regular.then_edge, mapping)
+            false_mapping = graph_update_mapping(regular.else_edge, mapping)
+            # print(f"if {true_mapping} {false_mapping}")
+            new_true_edge = helper(
+                regular=regular.then_edge,
+                mapping=true_mapping,
+                visited=visited,
+                threshold=threshold,
+            )
+            new_false_edge = helper(
+                regular=regular.else_edge,
+                mapping=false_mapping,
+                visited=visited,
+                threshold=threshold,
+            )
+            print(f"old condition {regular._condition} mapping {mapping}")
+            new_condition = backwards_replace(regular._condition, mapping)
+            print(f"new condition {new_condition}")
+            ifelse = ir.IfElseNode(
+                unique_id=f"{regular.unique_id}_o",
+                condition=new_condition,
+                true_edge=new_true_edge,
+                false_edge=new_false_edge,
+            )
+            return ifelse
+        if isinstance(regular, ir.YieldNode):
+            return regular
+        raise RuntimeError(f"unexpected {type(regular)}")
+
+    if isinstance(root, ir.BasicNode):
+        root.optimal_child = helper(root, {}, {}, threshold=1).child
 
     return root

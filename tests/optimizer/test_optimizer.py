@@ -38,7 +38,7 @@ class TestGraphApplyMapping(unittest.TestCase):
         )
         self.assertFalse(is_dependent(node.rvalue, str(node.lvalue)))
         updated = graph_apply_mapping(node, mapping)
-        self.assertEqual("i <= ((0 + 1) + 1)", str(updated))
+        self.assertEqual("i <= (0 + 1)", str(updated))
 
         mapping = {ir.Var("i"): ir.Add(ir.Var("i"), ir.Var("i"))}
         node = ir.AssignNode(
@@ -46,7 +46,7 @@ class TestGraphApplyMapping(unittest.TestCase):
         )
         self.assertFalse(is_dependent(node.rvalue, str(node.lvalue)))
         updated = graph_apply_mapping(node, mapping)
-        self.assertEqual("i <= ((0 + 1) + (0 + 1))", str(updated))
+        self.assertEqual("i <= (0 + 1)", str(updated))
 
         mapping = {ir.Var("i"): ir.Add(ir.Int(0), ir.Int(1))}
         node = ir.AssignNode(
@@ -54,7 +54,7 @@ class TestGraphApplyMapping(unittest.TestCase):
         )
         self.assertFalse(is_dependent(node.rvalue, str(node.lvalue)))
         updated = graph_apply_mapping(node, mapping)
-        # self.assertEqual("i <= ((0 + 1) + (0 + 1))", str(updated))
+        self.assertEqual("i <= (0 + 1)", str(updated))
 
 
 # class TestOptimizer(unittest.TestCase):
