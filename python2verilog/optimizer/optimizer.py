@@ -240,3 +240,41 @@ def remove_unreferenced_states(root: ir.Case):
     cleanup_unused_items(root)
 
     return root
+
+
+def backwards_replace(stmt: ir.Statement, mapping: dict[ir.Expression, ir.Expression]):
+    """
+    Replace all rvalues of expressions in stmt with mapping
+    """
+
+    def helper(expr: ir.Expression):
+        if isinstance(expr, ir.Var):
+            for key in mapping:
+                if key.to_string() == expr.to_string():
+                    return mapping[key]
+        if isinstance(expr, ir.BinOp):
+            expr.left = helper(expr.left)
+            expr.right = helper(expr.right)
+        return expr
+
+    if isinstance(stmt, ir.NonBlockingSubsitution):
+        stmt.rvalue = helper(stmt.rvalue)
+    else:
+        raise ValueError(f"Cannot do backwards replace on {stmt}")
+
+
+def optimize_graph(root: ir.Node):
+    """
+    Optimizes a single node, creating branches
+    Returns the improved root node
+    """
+
+    def helper(
+        node: ir.Node,
+        mapping: dict[ir.Expression, ir.Expression],
+        visited: dict[str, int],
+    ):
+        """
+        Helper
+        """
+        # update mapping

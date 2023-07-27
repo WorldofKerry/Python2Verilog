@@ -7,6 +7,7 @@ import subprocess
 import csv
 import copy
 import re
+import pathlib
 import pandas as pd
 import pytest
 from dataclasses import dataclass
@@ -51,7 +52,7 @@ class TestMain(unittest.TestCase):
         function_name: str,
         test_cases: list[tuple],
         args: dict,
-        dir: str = "data/integration_list/",
+        dir: str = f"data/{pathlib.Path(__file__).stem.replace('test_', '')}/",
     ):
         """
         Stats will only be gathered on the last test

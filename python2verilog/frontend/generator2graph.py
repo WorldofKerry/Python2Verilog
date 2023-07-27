@@ -231,21 +231,17 @@ class Generator2Graph:
         """
         assert isinstance(stmt, pyast.While)
 
-        body_edge = ir.Edge(unique_id=f"{prefix}_edge", name="True")
-        final_edge = ir.Edge(unique_id=f"{prefix}_f", name="False", next_node=nextt)
-        recurse_edge = ir.Edge(unique_id=f"{prefix}_recur", name="Recurse")
-        body_node = self.__parse_statements(
-            list(stmt.body), f"{prefix}_while", recurse_edge
-        )
-        body_edge.set_next_node(body_node)
+        loop_edge = ir.Edge(unique_id=f"{prefix}_edge", name="True")
+        done_edge = ir.Edge(unique_id=f"{prefix}_f", name="False", next_node=nextt)
 
         ifelse = ir.IfElseNode(
             unique_id=f"{prefix}_while",
             condition=self.__parse_expression(stmt.test),
-            then_edge=body_edge,
-            else_edge=final_edge,
+            then_edge=loop_edge,
+            else_edge=done_edge,
         )
-        recurse_edge.set_next_node(ifelse)
+        body_node = self.__parse_statements(list(stmt.body), f"{prefix}_while", ifelse)
+        loop_edge.set_next_node(body_node)
 
         return ifelse
 
