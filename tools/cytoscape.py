@@ -7,7 +7,7 @@ app.layout = html.Div(
     [
         cyto.Cytoscape(
             id="cytoscape-two-nodes",
-            layout={"name": "cose"},
+            layout={"name": "cose", "nodeRepulsion": 80000},
             style={"width": "100%", "height": "800px"},
             stylesheet=[
                 {
@@ -20,7 +20,16 @@ app.layout = html.Div(
                         "curve-style": "bezier",
                     },
                 },
-                {"selector": "node", "style": {"label": "data(label)"}},
+                {
+                    "selector": "node",
+                    "style": {
+                        "label": "data(label)",
+                        "font-size": "10",
+                        "text-valign": "center",
+                        "text-halign": "center",
+                        "background-color": "#FFFFFF",
+                    },
+                },
             ],
             elements=[
                 {"data": {"id": "_3", "label": "i <= 0"}},
