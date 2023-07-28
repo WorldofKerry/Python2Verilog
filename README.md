@@ -1,6 +1,7 @@
 ![PyPI](https://img.shields.io/pypi/v/python2verilog?label=pypi%20package)
 ![python versions](https://img.shields.io/badge/dynamic/yaml?url=https%3A%2F%2Fraw.githubusercontent.com%2FWorldofKerry%2FPython2Verilog%2Fmain%2F.github%2Fworkflows%2Fpytest.yml&query=%24.jobs.build.strategy.matrix%5B%22python-version%22%5D&label=python%20versions)
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/python2verilog)
+![Commits](https://img.shields.io/github/commit-activity/m/worldofkerry/python2verilog)
 ![Tests](https://github.com/worldofkerry/python2verilog/actions/workflows/pytest.yml/badge.svg)
 [![Documentation Status](https://readthedocs.org/projects/python2verilog/badge/?version=latest)](https://python2verilog.readthedocs.io/en/latest/?badge=latest)
 
