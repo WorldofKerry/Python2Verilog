@@ -1,7 +1,7 @@
 # Mimics readthedocs Sphinx commands
 # Locally run command at bottom of this file
 
-name: Sphinx Docs
+name: sphinx docs
 
 on:
   push:

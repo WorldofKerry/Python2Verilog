@@ -1,7 +1,7 @@
 # Runs all pytest tests
 # Locally run `python3 -m pytest -v`
 
-name: Pytest Testing
+name: pytest testing
 
 on:
   push:
