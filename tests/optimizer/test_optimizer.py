@@ -14,7 +14,7 @@ class TestGraphApplyMapping(unittest.TestCase):
         """
         mapping = {ir.Var("i"): ir.Int(1)}
         node = ir.AssignNode(
-            unique_id="abc", lvalue=ir.Var("i"), rvalue=ir.Add(ir.Var("i"), ir.Int(1))
+            unique_id="", lvalue=ir.Var("i"), rvalue=ir.Add(ir.Var("i"), ir.Int(1))
         )
         self.assertTrue(is_dependent(node.rvalue, str(node.lvalue)))
         updated = graph_apply_mapping(node, mapping)
@@ -22,11 +22,18 @@ class TestGraphApplyMapping(unittest.TestCase):
 
         mapping = {ir.Var("i"): ir.Add(ir.Var("i"), ir.Int(1))}
         node = ir.AssignNode(
-            unique_id="abc", lvalue=ir.Var("i"), rvalue=ir.Add(ir.Var("i"), ir.Int(1))
+            unique_id="", lvalue=ir.Var("i"), rvalue=ir.Add(ir.Var("i"), ir.Int(1))
         )
         self.assertTrue(is_dependent(node.rvalue, str(node.lvalue)))
         updated = graph_apply_mapping(node, mapping)
         self.assertEqual("i <= ((i + 1) + 1)", str(updated))
+
+        mapping = {ir.Var("i"): ir.Int(1)}
+        node = ir.AssignNode(unique_id="", lvalue=ir.Var("a"), rvalue=ir.Var("i"))
+        self.assertFalse(is_dependent(node.rvalue, str(node.lvalue)))
+        self.assertTrue(is_dependent(node.rvalue, "i"))
+        updated = graph_apply_mapping(node, mapping)
+        self.assertEqual("a <= 1", str(updated))
 
     def test_independent(self):
         """

@@ -18,7 +18,7 @@ from python2verilog.backend.verilog import Verilog
 from python2verilog.frontend import Generator2Graph
 from python2verilog.optimizer import optimizer
 from python2verilog.convert import *
-from python2verilog.ir import create_adjacency_list
+from python2verilog.ir import *
 from python2verilog.utils.visualization import make_visual
 
 
@@ -141,7 +141,8 @@ class TestMain(unittest.TestCase):
                 verilog = Verilog.from_graph_ir(ir, context)
 
                 if args.write:
-                    adjacency_list = create_adjacency_list(ir)
+                    adjacency_list = create_networkx_adjacency_list(ir)
+                    print(create_cytoscape_elements(ir))
                     g = nx.DiGraph(adjacency_list)
 
                     plt.figure(figsize=(40, 40))
@@ -152,7 +153,7 @@ class TestMain(unittest.TestCase):
                         arrowsize=30,
                         node_size=4000,
                         node_shape="s",
-                        node_color="#00b4d9",
+                        node_color="#00b4d9",  # Light Blue
                     )
                     plt.savefig(FILES_IN_ABS_DIR["ir_dump"])
 

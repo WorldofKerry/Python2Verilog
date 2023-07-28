@@ -284,8 +284,8 @@ def graph_apply_mapping(
     """
 
     if isinstance(node, ir.AssignNode):
-        if is_dependent(node.rvalue, str(node.lvalue)):
-            node.rvalue = backwards_replace(node.rvalue, mapping)
+        # if is_dependent(node.rvalue, str(node.lvalue)):
+        node.rvalue = backwards_replace(node.rvalue, mapping)
     else:
         raise ValueError(f"Cannot do backwards replace on {node}")
     return node
@@ -429,5 +429,6 @@ def graph_optimize(root: ir.Node):
 
     if isinstance(root, ir.BasicNode):
         root.optimal_child = helper(root, {}, {}, threshold=1).child
+        graph_optimize(root.child)
 
     return root

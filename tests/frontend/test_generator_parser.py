@@ -79,7 +79,7 @@ def circle_lines(s_x, s_y, height) -> tuple[int, int]:
         func = ast.parse(python).body[0]
         inst = Generator2Graph(func)
 
-        adjacency_list = create_adjacency_list(inst._root)
+        adjacency_list = create_networkx_adjacency_list(inst._root)
         g = nx.DiGraph(adjacency_list)
 
         plt.figure(figsize=(20, 20))

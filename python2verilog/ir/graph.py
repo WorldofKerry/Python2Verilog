@@ -164,10 +164,9 @@ class BasicNode(Node):
         """
         Gets edges
         """
-        children = [self.child]
         if self.optimal_child:
-            children.append(self.optimal_child)
-        return children
+            return [self.optimal_child]
+        return [self.child]
 
     def set_edge(self, edge: Node):
         """
@@ -336,7 +335,7 @@ class ClockedEdge(Edge):
         return super().to_string() + ", clocked"
 
 
-def create_adjacency_list(node: Node):
+def create_networkx_adjacency_list(node: Node):
     """
     Creates adjacency list from a node
 
@@ -354,8 +353,6 @@ def create_adjacency_list(node: Node):
 
         visited.add(curr_node)
         children = curr_node.get_children()
-        # if children[0] == None:
-        #     warnings.warn(f"{str(list(children))} {curr_node}")
         adjacency_list[curr_node] = list(children)
 
         for child in children:
@@ -363,3 +360,34 @@ def create_adjacency_list(node: Node):
 
     traverse_graph(node, set())
     return adjacency_list
+
+
+def create_cytoscape_elements(node: Node):
+    """
+    Creates adjacency list from a node
+
+    Assumes names are unique
+    """
+    elements = []
+
+    def traverse_graph(curr_node: Node, visited: set[Node]):
+        if not curr_node:
+            return
+
+        nonlocal elements
+        if curr_node in visited:
+            return
+
+        visited.add(curr_node)
+        children = curr_node.get_children()
+        elements.append({"data": {"id": curr_node.unique_id, "label": str(curr_node)}})
+        for child in curr_node.children:
+            elements.append(
+                {"data": {"source": curr_node.unique_id, "target": child.unique_id}}
+            )
+
+        for child in children:
+            traverse_graph(child, visited)
+
+    traverse_graph(node, set())
+    return elements

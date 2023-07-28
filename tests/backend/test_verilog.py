@@ -119,7 +119,7 @@ def fib(n: int) -> tuple[int]:
         func = ast.parse(python).body[0]
         inst = Generator2Graph(func)
 
-        adjacency_list = ir.create_adjacency_list(inst._root)
+        adjacency_list = ir.create_networkx_adjacency_list(inst._root)
         g = nx.DiGraph(adjacency_list)
 
         plt.figure(figsize=(20, 20))
