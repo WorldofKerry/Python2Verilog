@@ -325,7 +325,7 @@ def graph_optimize(root: ir.Node):
         visited: dict[str, int],
         threshold: int,
     ):
-        if isinstance(regular, ir.YieldNode) or isinstance(regular, ir.DoneNode):
+        if isinstance(regular, (ir.YieldNode, ir.DoneNode)):
             return True
         if regular.unique_id in visited and visited[regular.unique_id] > threshold:
             return True
@@ -354,7 +354,7 @@ def graph_optimize(root: ir.Node):
             if should_i_be_clocked(
                 regular, mapping, visited, threshold + 1
             ):  # + 1 accounts for pre-increment
-                new_edge = ir.ClockedEdge(
+                new_edge: ir.Edge = ir.ClockedEdge(
                     unique_id=f"{regular.unique_id}_o{make_unique()}",
                     child=regular.child,
                     name=regular.name,

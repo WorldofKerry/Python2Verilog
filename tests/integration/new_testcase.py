@@ -48,6 +48,7 @@ def script(args: argparse.Namespace, logger: logging.Logger, shell: callable) ->
             "ast_dump": args.ast_dump,
             "filtered_actual": args.filtered_actual,
             "ir_dump": args.ir_dump,
+            "cytoscape": args.cytoscape,
         }
         config.write(config_file)
 
@@ -168,8 +169,14 @@ if __name__ == "__main__":
     parser.add_argument(
         "--ir-dump",
         type=str,
-        help="File to dump intermediate representation",
+        help="File to put intermediate representation for networkx",
         default="ir_dump.png",
+    )
+    parser.add_argument(
+        "--cytoscape",
+        type=str,
+        help="File to put cytoscape elements array",
+        default="cytoscape.log",
     )
     parser.add_argument(
         "--expected-visual",

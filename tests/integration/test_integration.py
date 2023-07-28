@@ -141,8 +141,10 @@ class TestMain(unittest.TestCase):
                 verilog = Verilog.from_graph_ir(ir, context)
 
                 if args.write:
+                    with open(FILES_IN_ABS_DIR["cytoscape"], mode="w") as cyto_file:
+                        cyto_file.write(str(create_cytoscape_elements(ir)))
+
                     adjacency_list = create_networkx_adjacency_list(ir)
-                    print(create_cytoscape_elements(ir))
                     g = nx.DiGraph(adjacency_list)
 
                     plt.figure(figsize=(40, 40))
