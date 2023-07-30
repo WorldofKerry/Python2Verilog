@@ -41,14 +41,14 @@ class Generator2Graph:
         """
         Returns the root of the IR Graph
         """
-        return copy.deepcopy(self._root)
+        return self._root
 
     @property
     def context(self):
         """
         Returns the context surrounding the Python generator function
         """
-        return copy.deepcopy(self._context)
+        return self._context
 
     @property
     def results(self):

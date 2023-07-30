@@ -32,7 +32,8 @@ class Node:
         return self.to_string()
 
     def __repr__(self):
-        return f"{self.__class__.__name__}(unique_id={self._id}, name={self._name})"
+        items = [f"{key}=({value})" for key, value in self.__dict__.items()]
+        return f"{self.__class__.__name__}({','.join(items)})"
 
     def __hash__(self) -> int:
         return hash(self._id)
@@ -95,6 +96,8 @@ class IfElseNode(Node):
         self._true_edge = assert_type(true_edge, Edge)
         self._false_edge = assert_type(false_edge, Edge)
         self._condition = assert_type(condition, Expression)
+        self._optimal_true_edge = None
+        self._optimal_false_edge = None
 
     def to_string(self):
         """
@@ -102,35 +105,68 @@ class IfElseNode(Node):
         """
         return f"if ({self._condition.to_string()})"
 
-    def __repr__(self):
-        return super().__repr__() + f", condition: ({self._condition})"
-
     @property
     def condition(self):
         """
         conditional
         """
-        return copy.deepcopy(self._condition)
+        return self._condition
 
     @property
     def then_edge(self):
         """
         true edge
         """
-        return copy.deepcopy(self._true_edge)
+        return self._true_edge
 
     @property
     def else_edge(self):
         """
         false edge
         """
-        return copy.deepcopy(self._false_edge)
+        return self._false_edge
+
+    @property
+    def optimal_true_edge(self):
+        """
+        optimal true edge
+        """
+        return self._optimal_true_edge
+
+    @optimal_true_edge.setter
+    def optimal_true_edge(self, other: Node):
+        self._optimal_true_edge = assert_type(other, Node)
+        print(f"setting true {self._optimal_true_edge} {other} {id(self)}")
+
+    @property
+    def optimal_false_edge(self):
+        """
+        optimal false edge
+        """
+        return self._optimal_false_edge
+
+    @optimal_false_edge.setter
+    def optimal_false_edge(self, other: Node):
+        self._optimal_false_edge = assert_type(other, Node)
+        print(f"setting false {self._optimal_false_edge} {other} {id(self)}")
 
     def get_children(self):
         """
         Gets edges
         """
-        return [self.then_edge, self.else_edge]
+        # if self._optimal_false_edge and self._optimal_true_edge:
+        #     return [self.optimal_true_edge, self.optimal_false_edge]
+        # print(
+        #     f"returning unoptimized {self._optimal_true_edge} {self._optimal_false_edge}"
+        # )
+        # return [self.then_edge, self.else_edge]
+
+        children = [self.then_edge, self.else_edge]
+        if self.optimal_true_edge:
+            children.append(self.optimal_true_edge)
+        if self.optimal_false_edge:
+            children.append(self.optimal_false_edge)
+        return children
 
 
 class BasicNode(Node):
@@ -154,19 +190,26 @@ class BasicNode(Node):
         """
         child
         """
-        return copy.deepcopy(self._child)
+        return self._child
 
     @child.setter
     def child(self, other: Node):
+        print(f"set {self} child to {other}")
         self._child = assert_type(other, Node)
 
     def get_children(self):
         """
         Gets edges
         """
+        # if self.optimal_child:
+        #     return [self.optimal_child]
+        # print(f"getting children basicnode {self._optimal_child}")
+        # return [self.child]
+
+        children = [self.child]
         if self.optimal_child:
-            return [self.optimal_child]
-        return [self.child]
+            children.append(self.optimal_child)
+        return children
 
     def set_edge(self, edge: Node):
         """
@@ -180,10 +223,11 @@ class BasicNode(Node):
         """
         Optimal child
         """
-        return copy.deepcopy(self._optimal_child)
+        return self._optimal_child
 
     @optimal_child.setter
     def optimal_child(self, other: Node):
+        print(f"setting child {self._optimal_child} {other} {id(self)}")
         self._optimal_child = assert_type(other, Node)
 
 
@@ -212,14 +256,14 @@ class AssignNode(BasicNode):
         """
         lvalue
         """
-        return copy.deepcopy(self._lvalue)
+        return self._lvalue
 
     @property
     def rvalue(self):
         """
         rvalue
         """
-        return copy.deepcopy(self._rvalue)
+        return self._rvalue
 
     @rvalue.setter
     def rvalue(self, rvalue: Expression):
@@ -230,11 +274,6 @@ class AssignNode(BasicNode):
         To string
         """
         return f"{self._lvalue.to_string()} <= {self._rvalue.to_string()}"
-
-    def __repr__(self):
-        return (
-            super().__repr__() + f", lvalue: ({self._lvalue}) rvalue: ({self._rvalue})"
-        )
 
 
 class YieldNode(BasicNode):
@@ -257,6 +296,12 @@ class YieldNode(BasicNode):
         To string
         """
         return f"yield {str(self._stmts)}"
+
+    def __str__(self):
+        """
+        to string
+        """
+        return "\n".join([f"out{i} <= {str(v)}" for i, v in enumerate(self._stmts)])
 
 
 class DoneNode(Node):
@@ -281,14 +326,11 @@ class Edge(BasicNode):
         To string
         """
         if self._name:
-            return self._name
-        return "Next"
+            return f"{self._name}, normal"
+        return "Next, normal"
 
     def __str__(self):
         return self.to_string()
-
-    def __repr__(self):
-        return f"{self.__class__.__name__} name: ({self._name}), node: ({self._child})"
 
     def get_name(self):
         """
@@ -300,7 +342,7 @@ class Edge(BasicNode):
         """
         Gets next node
         """
-        return copy.deepcopy(self._child)
+        return self._child
 
     def get_children(self):
         """
@@ -319,7 +361,9 @@ class NonclockedEdge(Edge):
         super().__init__(unique_id, *args, **kwargs)
 
     def to_string(self):
-        return super().to_string() + ", nonclocked"
+        if self._name:
+            return f"{self.name}, nonclocked"
+        return f"Next, nonclocked"
 
 
 class ClockedEdge(Edge):
@@ -330,9 +374,6 @@ class ClockedEdge(Edge):
 
     def __init__(self, unique_id: str, *args, **kwargs):
         super().__init__(unique_id, *args, **kwargs)
-
-    def to_string(self):
-        return super().to_string() + ", clocked"
 
 
 def create_networkx_adjacency_list(node: Node):
@@ -380,6 +421,7 @@ def create_cytoscape_elements(node: Node):
 
         visited.add(curr_node)
         children = curr_node.get_children()
+        print(f"getting children {curr_node} {children}")
         elements.append({"data": {"id": curr_node.unique_id, "label": str(curr_node)}})
         for child in curr_node.children:
             elements.append(
@@ -389,5 +431,7 @@ def create_cytoscape_elements(node: Node):
         for child in children:
             traverse_graph(child, visited)
 
+    print("\n\nSTART")
     traverse_graph(node, set())
+    print("\n\nEND")
     return elements

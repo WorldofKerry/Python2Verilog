@@ -137,7 +137,10 @@ class TestMain(unittest.TestCase):
                 function = tree.body[0]
 
                 ir, context = Generator2Graph(function).results
-                ir = optimizer.graph_optimize(ir)
+                optimizer.graph_optimize(ir)
+                # print("\n\nnext")
+                # optimizer.graph_optimize(ir.child.child)
+                print("\n\nnextasdf3eefwe\n")
                 verilog = Verilog.from_graph_ir(ir, context)
 
                 if args.write:

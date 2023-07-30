@@ -374,7 +374,7 @@ class Verilog:
         Get Verilog module
         """
         assert isinstance(self._module, Module)
-        return copy.deepcopy(self._module)
+        return self._module
 
     def get_module_lines(self):
         """
