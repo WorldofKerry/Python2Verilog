@@ -3,4 +3,4 @@ pytest-cov
 pandas
 tabulate
 matplotlib
-networkx
+networkx[default]

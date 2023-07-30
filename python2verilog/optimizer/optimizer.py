@@ -283,7 +283,10 @@ def graph_apply_mapping(
     """
     Replace all rvalues of expressions in stmt with mapping
     """
-    node = copy.deepcopy(node)
+    try:
+        node = copy.copy(node)
+    except RecursionError as e:
+        raise RecursionError(f"{node}")
     if isinstance(node, ir.AssignNode):
         # if is_dependent(node.rvalue, str(node.lvalue)):
         node.rvalue = backwards_replace(node.rvalue, mapping)
@@ -357,6 +360,8 @@ def graph_optimize(root: ir.Node, visited: typing.Optional[set[str]] = None):
                 return new_node
 
             updated_mapping = graph_update_mapping(new_node, mapping)
+            if isinstance(regular.child.child, ir.Edge):
+                raise RuntimeError(f"{regular}")
             result = helper(
                 regular=regular.child.child,
                 mapping=updated_mapping,
@@ -365,7 +370,6 @@ def graph_optimize(root: ir.Node, visited: typing.Optional[set[str]] = None):
             )
             edge = ir.NonClockedEdge(
                 unique_id=f"{regular.child.unique_id}_o{make_unique()}",
-                name="Next",
                 child=result,
             )
             new_node.child = edge
@@ -386,6 +390,8 @@ def graph_optimize(root: ir.Node, visited: typing.Optional[set[str]] = None):
             ):
                 print("optimzing true branch")
                 true_mapping = graph_update_mapping(regular.true_edge, mapping)
+                if isinstance(regular.true_edge.child, ir.Edge):
+                    raise RuntimeError(f"{regular}")
                 optimal_true_node = helper(
                     regular=regular.true_edge.child,
                     mapping=true_mapping,
@@ -406,6 +412,8 @@ def graph_optimize(root: ir.Node, visited: typing.Optional[set[str]] = None):
             ):
                 print("optimzing false branch")
                 false_mapping = graph_update_mapping(regular.false_edge, mapping)
+                if isinstance(regular.false_edge.child, ir.Edge):
+                    raise RuntimeError(f"{regular}")
                 optimal_false_node = helper(
                     regular=regular.false_edge.child,
                     mapping=false_mapping,
@@ -426,12 +434,26 @@ def graph_optimize(root: ir.Node, visited: typing.Optional[set[str]] = None):
             updated = []
             for stmt in regular._stmts:
                 updated.append(backwards_replace(stmt, mapping))
-            return ir.YieldNode(
+            if isinstance(regular.child.child, ir.Edge):
+                raise RuntimeError(f"{regular}")
+            result = helper(
+                regular=regular.child.child,
+                mapping=mapping,
+                visited=visited,
+                threshold=threshold,
+            )
+            edge = ir.NonClockedEdge(
+                unique_id=f"{regular.child.unique_id}_o{make_unique()}",
+                child=result,
+            )
+            new_node = ir.YieldNode(
                 unique_id=f"{regular.unique_id}_o{make_unique()}",
                 stmts=updated,
-                edge=regular.child,
+                edge=edge,
                 name=regular.name,
             )
+            return new_node
+
         if isinstance(regular, ir.DoneNode):
             return regular
         raise RuntimeError(f"unexpected {type(regular)} {regular}")

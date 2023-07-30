@@ -4,11 +4,14 @@ from __future__ import annotations
 import copy
 import warnings
 import ast as pyast
+import sys
 from typing import Optional
 
 from .. import ir
 from ..utils.string import Lines, Indent
 from ..utils.assertions import assert_type, assert_list_type
+
+sys.setrecursionlimit(300)
 
 
 class Generator2Graph:
@@ -204,11 +207,9 @@ class Generator2Graph:
         If statement
         """
         assert isinstance(stmt, pyast.If)
-        then_to = ir.Edge(unique_id=f"{prefix}_e0", child=nextt)
-        else_to = ir.Edge(unique_id=f"{prefix}_e1", child=nextt)
 
-        then_node = self.__parse_statements(list(stmt.body), f"{prefix}_t", then_to)
-        else_node = self.__parse_statements(list(stmt.orelse), f"{prefix}_f", else_to)
+        then_node = self.__parse_statements(list(stmt.body), f"{prefix}_t", nextt)
+        else_node = self.__parse_statements(list(stmt.orelse), f"{prefix}_f", nextt)
 
         to_then = ir.Edge(unique_id=f"{prefix}_true_edge", name="True", child=then_node)
         to_else = ir.Edge(
