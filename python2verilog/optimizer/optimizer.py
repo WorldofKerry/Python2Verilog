@@ -328,9 +328,9 @@ def graph_optimize(root: ir.Node, visited: typing.Optional[set[str]] = None):
         visited: dict[str, int],
         threshold: int,
     ):
-        if isinstance(regular, (ir.YieldNode, ir.DoneNode)):
-            return True
-        if regular.unique_id in visited and visited[regular.unique_id] > threshold:
+        if isinstance(regular, (ir.YieldNode, ir.DoneNode)) or (
+            regular.unique_id in visited and visited[regular.unique_id] > threshold
+        ):
             return True
         return False
 
@@ -351,14 +351,12 @@ def graph_optimize(root: ir.Node, visited: typing.Optional[set[str]] = None):
         #     print(f"return on thresh")
         #     return regular
         # regular = copy.deepcopy(regular)
-        visited[regular.unique_id] = visited.get(regular.unique_id, 1) + 1
+        visited[regular.unique_id] = visited.get(regular.unique_id, -1) + 1
         # print(f"exploring {regular.unique_id} having visited {visited}")
 
         if isinstance(regular, ir.Edge):
             # print(f"edge on {regular} {regular.child}")
-            if should_i_be_clocked(
-                regular, mapping, visited, threshold + 1
-            ):  # + 1 accounts for pre-increment
+            if should_i_be_clocked(regular.child, mapping, visited, threshold):
                 new_edge: ir.Edge = ir.ClockedEdge(
                     unique_id=f"{regular.unique_id}_o{make_unique()}",
                     child=regular.child,
@@ -438,13 +436,13 @@ def graph_optimize(root: ir.Node, visited: typing.Optional[set[str]] = None):
     print(f"optimizing {root.unique_id} {type(root)} {str(root)} {id(root)}")
     visited.add(root.unique_id)
     if isinstance(root, ir.BasicNode):
-        root.optimal_child = helper(root, {}, {}, threshold=1).child
-        # graph_optimize(root.child.child, visited)
+        root.optimal_child = helper(root, {}, {}, threshold=0).child
+        graph_optimize(root.child.child, visited)
     elif isinstance(root, ir.IfElseNode):
-        root.optimal_true_edge = helper(root, {}, {}, threshold=1).then_edge
-        root.optimal_false_edge = helper(root, {}, {}, threshold=1).else_edge
-        # graph_optimize(root.then_edge.child, visited)
-        # graph_optimize(root.else_edge.child, visited)
+        root.optimal_true_edge = helper(root, {}, {}, threshold=0).then_edge
+        root.optimal_false_edge = helper(root, {}, {}, threshold=0).else_edge
+        graph_optimize(root.then_edge.child, visited)
+        graph_optimize(root.else_edge.child, visited)
     elif isinstance(root, ir.Edge):
         raise Exception()
     elif isinstance(root, ir.DoneNode):
