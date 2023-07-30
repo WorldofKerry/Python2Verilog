@@ -113,18 +113,26 @@ class IfElseNode(Node):
         return self._condition
 
     @property
-    def then_edge(self):
+    def true_edge(self):
         """
         true edge
         """
         return self._true_edge
 
+    @true_edge.setter
+    def true_edge(self, other: Node):
+        self._true_edge = assert_type(other, Node)
+
     @property
-    def else_edge(self):
+    def false_edge(self):
         """
         false edge
         """
         return self._false_edge
+
+    @false_edge.setter
+    def false_edge(self, other: Node):
+        self._false_edge = assert_type(other, Node)
 
     @property
     def optimal_true_edge(self):
@@ -136,7 +144,6 @@ class IfElseNode(Node):
     @optimal_true_edge.setter
     def optimal_true_edge(self, other: Node):
         self._optimal_true_edge = assert_type(other, Node)
-        print(f"setting true {self._optimal_true_edge} {other} {id(self)}")
 
     @property
     def optimal_false_edge(self):
@@ -148,7 +155,6 @@ class IfElseNode(Node):
     @optimal_false_edge.setter
     def optimal_false_edge(self, other: Node):
         self._optimal_false_edge = assert_type(other, Node)
-        print(f"setting false {self._optimal_false_edge} {other} {id(self)}")
 
     def get_children(self):
         """
@@ -161,7 +167,7 @@ class IfElseNode(Node):
         # )
         # return [self.then_edge, self.else_edge]
 
-        children = [self.then_edge, self.else_edge]
+        children = [self.true_edge, self.false_edge]
         if self.optimal_true_edge:
             children.append(self.optimal_true_edge)
         if self.optimal_false_edge:
@@ -194,7 +200,6 @@ class BasicNode(Node):
 
     @child.setter
     def child(self, other: Node):
-        print(f"set {self} child to {other}")
         self._child = assert_type(other, Node)
 
     def get_children(self):
@@ -227,7 +232,6 @@ class BasicNode(Node):
 
     @optimal_child.setter
     def optimal_child(self, other: Node):
-        print(f"setting child {self._optimal_child} {other} {id(self)}")
         self._optimal_child = assert_type(other, Node)
 
 
@@ -351,7 +355,7 @@ class Edge(BasicNode):
         return [self.get_next_node()]
 
 
-class NonclockedEdge(Edge):
+class NonClockedEdge(Edge):
     """
     Represents a non-clocked edge,
     i.e. no clock cycle has to pass for the next node to be executed
@@ -421,7 +425,7 @@ def create_cytoscape_elements(node: Node):
 
         visited.add(curr_node)
         children = curr_node.get_children()
-        print(f"getting children {curr_node} {children}")
+        # print(f"getting children {curr_node} {children}")
         elements.append({"data": {"id": curr_node.unique_id, "label": str(curr_node)}})
         for child in curr_node.children:
             elements.append(
@@ -431,7 +435,5 @@ def create_cytoscape_elements(node: Node):
         for child in children:
             traverse_graph(child, visited)
 
-    print("\n\nSTART")
     traverse_graph(node, set())
-    print("\n\nEND")
     return elements

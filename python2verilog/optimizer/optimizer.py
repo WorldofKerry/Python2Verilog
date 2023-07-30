@@ -260,6 +260,7 @@ def backwards_replace(expr: ir.Expression, mapping: dict[ir.Expression, ir.Expre
     """
     Replaces instances of variables with the mapped value
     """
+    expr = copy.deepcopy(expr)
     if isinstance(expr, ir.Var):
         for key in mapping:
             if key.to_string() == expr.to_string():
@@ -282,7 +283,7 @@ def graph_apply_mapping(
     """
     Replace all rvalues of expressions in stmt with mapping
     """
-
+    node = copy.deepcopy(node)
     if isinstance(node, ir.AssignNode):
         # if is_dependent(node.rvalue, str(node.lvalue)):
         node.rvalue = backwards_replace(node.rvalue, mapping)
@@ -323,16 +324,13 @@ def graph_optimize(root: ir.Node, visited: typing.Optional[set[str]] = None):
 
     def should_i_be_clocked(
         regular: ir.Node,
-        # optimal: ir.Node,
         mapping: dict[ir.Expression, ir.Expression],
         visited: dict[str, int],
         threshold: int,
     ):
-        if isinstance(regular, (ir.YieldNode, ir.DoneNode)) or (
-            regular.unique_id in visited and visited[regular.unique_id] > threshold
-        ):
-            return True
-        return False
+        if regular.unique_id not in visited:
+            return False
+        return visited[regular.unique_id] > threshold
 
     def helper(
         regular: ir.Node,
@@ -344,78 +342,85 @@ def graph_optimize(root: ir.Node, visited: typing.Optional[set[str]] = None):
         """
         Helper
         """
-        # if isinstance(regular, ir.YieldNode):
-        #     print(f"return on yield")
-        #     return regular
-        # if regular.unique_id in visited and visited[regular.unique_id] > threshold:
-        #     print(f"return on thresh")
-        #     return regular
-        # regular = copy.deepcopy(regular)
-        visited[regular.unique_id] = visited.get(regular.unique_id, -1) + 1
-        # print(f"exploring {regular.unique_id} having visited {visited}")
+        if threshold <= 0 and regular.unique_id in visited:
+            return regular
+        visited[regular.unique_id] = visited.get(regular.unique_id, 0) + 1
 
         if isinstance(regular, ir.Edge):
-            # print(f"edge on {regular} {regular.child}")
-            if should_i_be_clocked(regular.child, mapping, visited, threshold):
-                new_edge: ir.Edge = ir.ClockedEdge(
-                    unique_id=f"{regular.unique_id}_o{make_unique()}",
-                    child=regular.child,
-                    name=regular.name,
-                )
-                return new_edge
-
-            nextt = helper(
-                regular=regular.child,
-                mapping=mapping,
-                visited=visited,
-                threshold=threshold,
-            )
-            new_edge = ir.NonclockedEdge(
-                unique_id=f"{regular.unique_id}_o{make_unique()}",
-                child=nextt,
-                name=regular.name,
-            )
-            return new_edge
+            raise Exception(f"no edges allowed {regular.child}")
         if isinstance(regular, ir.AssignNode):
-            # print(f"Took assign path")
-            new_node = graph_apply_mapping(copy.deepcopy(regular), mapping)
+            new_node = graph_apply_mapping(regular, mapping)
             new_node.unique_id = f"{regular.unique_id}_o{make_unique()}"
+
+            if should_i_be_clocked(regular.child.child, mapping, visited, threshold):
+                new_node.child = regular.child
+                return new_node
+
             updated_mapping = graph_update_mapping(new_node, mapping)
             result = helper(
-                regular=regular.child,
+                regular=regular.child.child,
                 mapping=updated_mapping,
                 visited=visited,
                 threshold=threshold,
             )
-            new_node.child = result
-            # print(f"result {result.child}")
+            edge = ir.NonClockedEdge(
+                unique_id=f"{regular.child.unique_id}_o{make_unique()}",
+                name="Next",
+                child=result,
+            )
+            new_node.child = edge
             return new_node
+
         if isinstance(regular, ir.IfElseNode):
-            # print(f"Took if path")
-            true_mapping = graph_update_mapping(regular.then_edge, mapping)
-            false_mapping = graph_update_mapping(regular.else_edge, mapping)
-            # print(f"if {true_mapping} {false_mapping}")
-            new_true_edge = helper(
-                regular=regular.then_edge,
-                mapping=true_mapping,
-                visited=visited,
-                threshold=threshold,
-            )
-            new_false_edge = helper(
-                regular=regular.else_edge,
-                mapping=false_mapping,
-                visited=visited,
-                threshold=threshold,
-            )
-            new_condition = backwards_replace(
-                copy.deepcopy(regular._condition), mapping
-            )
+            new_condition = backwards_replace(regular.condition, mapping)
             ifelse = ir.IfElseNode(
                 unique_id=f"{regular.unique_id}_o{make_unique()}",
                 condition=new_condition,
-                true_edge=new_true_edge,
-                false_edge=new_false_edge,
+                true_edge=regular.true_edge,
+                false_edge=regular.false_edge,
             )
+            print(f"created {str(ifelse)}")
+
+            if not should_i_be_clocked(
+                regular.true_edge.child, mapping, visited, threshold
+            ):
+                print("optimzing true branch")
+                true_mapping = graph_update_mapping(regular.true_edge, mapping)
+                optimal_true_node = helper(
+                    regular=regular.true_edge.child,
+                    mapping=true_mapping,
+                    visited=copy.deepcopy(visited),
+                    threshold=threshold,
+                )
+                edge = ir.NonClockedEdge(
+                    unique_id=f"{regular.true_edge.unique_id}_o{make_unique()}",
+                    name="True",
+                    child=optimal_true_node,
+                )
+                ifelse.true_edge = edge
+            else:
+                print("no optimize true branch")
+
+            if not should_i_be_clocked(
+                regular.false_edge.child, mapping, visited, threshold
+            ):
+                print("optimzing false branch")
+                false_mapping = graph_update_mapping(regular.false_edge, mapping)
+                optimal_false_node = helper(
+                    regular=regular.false_edge.child,
+                    mapping=false_mapping,
+                    visited=copy.deepcopy(visited),
+                    threshold=threshold,
+                )
+                edge = ir.NonClockedEdge(
+                    unique_id=f"{regular.false_edge.unique_id}_o{make_unique()}",
+                    name="False",
+                    child=optimal_false_node,
+                )
+                ifelse.false_edge = edge
+            else:
+                print("No optimize false branch")
+
             return ifelse
         if isinstance(regular, ir.YieldNode):
             updated = []
@@ -433,16 +438,16 @@ def graph_optimize(root: ir.Node, visited: typing.Optional[set[str]] = None):
 
     if root.unique_id in visited:
         return root
-    print(f"optimizing {root.unique_id} {type(root)} {str(root)} {id(root)}")
+    print(f"==> optimizing {str(root)}")
     visited.add(root.unique_id)
     if isinstance(root, ir.BasicNode):
         root.optimal_child = helper(root, {}, {}, threshold=0).child
         graph_optimize(root.child.child, visited)
     elif isinstance(root, ir.IfElseNode):
-        root.optimal_true_edge = helper(root, {}, {}, threshold=0).then_edge
-        root.optimal_false_edge = helper(root, {}, {}, threshold=0).else_edge
-        graph_optimize(root.then_edge.child, visited)
-        graph_optimize(root.else_edge.child, visited)
+        root.optimal_true_edge = helper(root, {}, {}, threshold=0).true_edge
+        root.optimal_false_edge = helper(root, {}, {}, threshold=0).false_edge
+        graph_optimize(root.true_edge.child, visited)
+        graph_optimize(root.false_edge.child, visited)
     elif isinstance(root, ir.Edge):
         raise Exception()
     elif isinstance(root, ir.DoneNode):
