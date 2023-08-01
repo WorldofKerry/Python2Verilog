@@ -39,6 +39,8 @@ app.layout = html.Div(
                         "target-arrow-color": "#ccc",
                         "target-arrow-shape": "triangle",
                         "curve-style": "bezier",
+                        "label": "data(label)",
+                        "font-size": "5",
                     },
                 },
                 {
@@ -54,17 +56,15 @@ app.layout = html.Div(
                     },
                 },
                 {
-                    "selector": "node[class = 'ClockedEdge']",
+                    "selector": "edge[class = 'ClockedEdge']",
                     "style": {
-                        "background-color": "#FF6666",
-                        "background-opacity": "0.5",
+                        "line-color": "#FF6666",
                     },
                 },
                 {
-                    "selector": "node[class = 'NonClockedEdge']",
+                    "selector": "edge[class = 'NonClockedEdge']",
                     "style": {
-                        "background-color": "#66FF66",
-                        "background-opacity": "0.5",
+                        "line-color": "#66FF66",
                     },
                 },
             ],

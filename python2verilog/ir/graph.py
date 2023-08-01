@@ -405,23 +405,32 @@ def create_cytoscape_elements(node: Node):
 
         visited.add(curr_node.unique_id)
         children = curr_node.get_children()
-        # print(f"getting children {curr_node} {children}")
-        elements.append(
-            {
-                "data": {
-                    "id": curr_node.unique_id,
-                    "label": str(curr_node),
-                    "class": str(curr_node.__class__.__name__),
-                }
-            }
-        )
-        for child in curr_node.children:
-            elements.append(
-                {"data": {"source": curr_node.unique_id, "target": child.unique_id}}
-            )
 
-        for child in children:
-            traverse_graph(child, visited)
+        if not isinstance(curr_node, Edge):
+            elements.append(
+                {
+                    "data": {
+                        "id": curr_node.unique_id,
+                        "label": str(curr_node),
+                        "class": str(curr_node.__class__.__name__),
+                    }
+                }
+            )
+            for child in curr_node.children:
+                print(f"set {str(child.__class__.__name__)}")
+                elements.append(
+                    {
+                        "data": {
+                            "source": curr_node.unique_id,
+                            "target": child.child.unique_id,
+                            "class": str(child.__class__.__name__),
+                            "label": str(child),
+                        }
+                    }
+                )
+
+            for child in children:
+                traverse_graph(child.child, visited)
 
     traverse_graph(node, set())
     return elements

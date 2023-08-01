@@ -313,7 +313,9 @@ def graph_update_mapping(
 unique_counter = 0
 
 
-def graph_optimize(root: ir.Node, visited: typing.Optional[set[str]] = None):
+def graph_optimize(
+    root: ir.Node, visited: typing.Optional[set[str]] = None, threshold: int = 0
+):
     """
     Optimizes a single node, creating branches
     Returns the improved root node
@@ -469,13 +471,13 @@ def graph_optimize(root: ir.Node, visited: typing.Optional[set[str]] = None):
     # print(f"==> optimizing {str(root)}")
     visited.add(root.unique_id)
     if isinstance(root, ir.BasicNode):
-        root.optimal_child = helper(root, {}, {}, threshold=0).child
-        graph_optimize(root.child.child, visited)
+        root.optimal_child = helper(root, {}, {}, threshold=threshold).child
+        graph_optimize(root.child.child, visited, threshold=threshold)
     elif isinstance(root, ir.IfElseNode):
-        root.optimal_true_edge = helper(root, {}, {}, threshold=0).true_edge
-        root.optimal_false_edge = helper(root, {}, {}, threshold=0).false_edge
-        graph_optimize(root.true_edge.child, visited)
-        graph_optimize(root.false_edge.child, visited)
+        root.optimal_true_edge = helper(root, {}, {}, threshold=threshold).true_edge
+        root.optimal_false_edge = helper(root, {}, {}, threshold=threshold).false_edge
+        graph_optimize(root.true_edge.child, visited, threshold=threshold)
+        graph_optimize(root.false_edge.child, visited, threshold=threshold)
     elif isinstance(root, ir.Edge):
         raise RuntimeError()
     elif isinstance(root, ir.DoneNode):

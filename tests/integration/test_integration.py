@@ -156,7 +156,7 @@ class TestMain(unittest.TestCase):
             function = tree.body[0]
 
             ir, context = Generator2Graph(function).results
-            optimizer.graph_optimize(ir)
+            optimizer.graph_optimize(ir, threshold=2)
             # __states = IrToVerilog.create_nonclocked_list(ir, set(), [], set())
             # print("DONEEEEEEEE")
             # for __state in __states:
