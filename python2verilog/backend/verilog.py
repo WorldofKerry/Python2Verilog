@@ -113,9 +113,9 @@ class AtNegedgeStatement(Statement):
         super().__init__(f"{AtNegedge(condition).to_string()};", *args, **kwargs)
 
 
-class Verilog:
+class IrToVerilog:
     """
-    Code Generation for Verilog
+    Code Generator for Verilog
     """
 
     @staticmethod
@@ -137,7 +137,7 @@ class Verilog:
         always = PosedgeSyncAlways(
             Expression("_clock"),
             valid="_valid",
-            body=[Verilog.__get_start_ifelse(root, context.global_vars)],
+            body=[IrToVerilog.__get_start_ifelse(root, context.global_vars)],
         )
         body: list[Statement] = [
             Declaration(v, is_reg=True, is_signed=True) for v in context.global_vars
@@ -156,9 +156,11 @@ class Verilog:
         """
         assert isinstance(root, ir.Statement), f"got {type(root)} instead"
         assert isinstance(context, ir.Context)
-        inst = Verilog()
+        inst = IrToVerilog()
         inst._context = context
-        inst._module = Verilog.__new_module(Verilog.list_build_stmt(root), context)
+        inst._module = IrToVerilog.__new_module(
+            IrToVerilog.list_build_stmt(root), context
+        )
         return inst
 
     @classmethod
@@ -168,11 +170,11 @@ class Verilog:
         """
         assert_type(root, ir.Node)
         assert_type(context, ir.Context)
-        inst = Verilog()
+        inst = IrToVerilog()
         inst._context = context
         root_case = inst.graph_build(root, set())
         inst._context.global_vars["_state"] = str(len(root_case.case_items))
-        inst._module = Verilog.__new_module(root_case, context)
+        inst._module = IrToVerilog.__new_module(root_case, context)
         return inst
 
     @staticmethod
@@ -184,15 +186,17 @@ class Verilog:
         if not node:
             return Statement("")
         if isinstance(node, ir.Case):
-            return Verilog.list_build_case(node)
+            return IrToVerilog.list_build_case(node)
         if isinstance(node, ir.IfElse):
             then_body = []
             for stmt in node.then_body:
-                then_body.append(Verilog.list_build_stmt(stmt))
+                then_body.append(IrToVerilog.list_build_stmt(stmt))
             else_body = []
             for stmt in node.else_body:
-                else_body.append(Verilog.list_build_stmt(stmt))
-            return IfElse(Verilog.list_build_expr(node.condition), then_body, else_body)
+                else_body.append(IrToVerilog.list_build_stmt(stmt))
+            return IfElse(
+                IrToVerilog.list_build_expr(node.condition), then_body, else_body
+            )
         if isinstance(node, ir.Statement):
             return Statement(node.to_string().replace("\n", " "))
         raise NotImplementedError(f"Unexpected type {type(node)}")
@@ -213,8 +217,8 @@ class Verilog:
         assert isinstance(node, ir.Case)
         case_items = []
         for item in node.case_items:
-            case_items.append(Verilog.list_build_case_item(item))
-        return Case(Verilog.list_build_expr(node.condition), case_items)
+            case_items.append(IrToVerilog.list_build_case_item(item))
+        return Case(IrToVerilog.list_build_expr(node.condition), case_items)
 
     @staticmethod
     def list_build_case_item(node: ir.CaseItem) -> CaseItem:
@@ -223,8 +227,8 @@ class Verilog:
         """
         case_items = []
         for item in node.statements:
-            case_items.append(Verilog.list_build_stmt(item))
-        return CaseItem(Verilog.list_build_expr(node.condition), case_items)
+            case_items.append(IrToVerilog.list_build_stmt(item))
+        return CaseItem(IrToVerilog.list_build_expr(node.condition), case_items)
 
     def graph_build(self, root: ir.Node, visited: set[str]):
         """

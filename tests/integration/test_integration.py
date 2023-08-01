@@ -14,7 +14,7 @@ from dataclasses import dataclass
 import networkx as nx
 from matplotlib import pyplot as plt
 
-from python2verilog.backend.verilog import Verilog
+from python2verilog.backend.verilog import IrToVerilog
 from python2verilog.frontend import Generator2Graph
 from python2verilog.optimizer import optimizer
 from python2verilog.convert import *
@@ -160,7 +160,7 @@ class TestMain(unittest.TestCase):
             # print("\n\nnext")
             # optimizer.graph_optimize(ir.child.child)
             # print("\n\nnextasdf3eefwe\n")
-            verilog = Verilog.from_graph_ir(ir, context)
+            verilog = IrToVerilog.from_graph_ir(ir, context)
 
             if args.write:
                 with open(FILES_IN_ABS_DIR["cytoscape"], mode="w") as cyto_file:

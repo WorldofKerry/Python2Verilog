@@ -1,5 +1,5 @@
 from python2verilog.backend.verilog import (
-    Verilog,
+    IrToVerilog,
     Module,
     PosedgeSyncAlways,
     Instantiation,
@@ -81,7 +81,7 @@ def circle_lines(s_x, s_y, height) -> tuple[int, int]:
         tree = ast.parse(code)
         function = tree.body[0]
         ir = Generator2List(function)
-        verilog = Verilog()
+        verilog = IrToVerilog()
         verilog.from_list_ir(ir.get_root(), ir.get_context())
         # warnings.warn(verilog.get_module())
         # warnings.warn(
@@ -134,7 +134,7 @@ def fib(n: int) -> tuple[int]:
         )
         # plt.savefig("path.png")
 
-        verilog = Verilog.from_graph_ir(inst.root, inst.context)
+        verilog = IrToVerilog.from_graph_ir(inst.root, inst.context)
         # warnings.warn(verilog.get_module_lines())
         # warnings.warn(verilog.get_testbench([(10,)]).to_lines().to_string())
 
