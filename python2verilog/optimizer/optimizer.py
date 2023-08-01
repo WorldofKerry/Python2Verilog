@@ -286,7 +286,7 @@ def graph_apply_mapping(
     try:
         node = copy.copy(node)
     except RecursionError as e:
-        raise RecursionError(f"{node}")
+        raise RecursionError(f"{node}") from e
     if isinstance(node, ir.AssignNode):
         # if is_dependent(node.rvalue, str(node.lvalue)):
         node.rvalue = backwards_replace(node.rvalue, mapping)
@@ -350,7 +350,7 @@ def graph_optimize(root: ir.Node, visited: typing.Optional[set[str]] = None):
         visited[regular.unique_id] = visited.get(regular.unique_id, 0) + 1
 
         if isinstance(regular, ir.Edge):
-            raise Exception(f"no edges allowed {regular.child}")
+            raise RuntimeError(f"no edges allowed {regular.child}")
         if isinstance(regular, ir.AssignNode):
             new_node = graph_apply_mapping(regular, mapping)
             new_node.unique_id = f"{regular.unique_id}_o{make_unique()}"
@@ -383,12 +383,12 @@ def graph_optimize(root: ir.Node, visited: typing.Optional[set[str]] = None):
                 true_edge=regular.true_edge,
                 false_edge=regular.false_edge,
             )
-            print(f"created {str(ifelse)}")
+            # print(f"created {str(ifelse)}")
 
             if not should_i_be_clocked(
                 regular.true_edge.child, mapping, visited, threshold
             ):
-                print("optimzing true branch")
+                # print("optimzing true branch")
                 true_mapping = graph_update_mapping(regular.true_edge, mapping)
                 if isinstance(regular.true_edge.child, ir.Edge):
                     raise RuntimeError(f"{regular}")
@@ -405,12 +405,13 @@ def graph_optimize(root: ir.Node, visited: typing.Optional[set[str]] = None):
                 )
                 ifelse.true_edge = edge
             else:
-                print("no optimize true branch")
+                # print("no optimize true branch")
+                pass
 
             if not should_i_be_clocked(
                 regular.false_edge.child, mapping, visited, threshold
             ):
-                print("optimzing false branch")
+                # print("optimzing false branch")
                 false_mapping = graph_update_mapping(regular.false_edge, mapping)
                 if isinstance(regular.false_edge.child, ir.Edge):
                     raise RuntimeError(f"{regular}")
@@ -427,7 +428,8 @@ def graph_optimize(root: ir.Node, visited: typing.Optional[set[str]] = None):
                 )
                 ifelse.false_edge = edge
             else:
-                print("No optimize false branch")
+                # print("No optimize false branch")
+                pass
 
             return ifelse
         if isinstance(regular, ir.YieldNode):
@@ -460,7 +462,7 @@ def graph_optimize(root: ir.Node, visited: typing.Optional[set[str]] = None):
 
     if root.unique_id in visited:
         return root
-    print(f"==> optimizing {str(root)}")
+    # print(f"==> optimizing {str(root)}")
     visited.add(root.unique_id)
     if isinstance(root, ir.BasicNode):
         root.optimal_child = helper(root, {}, {}, threshold=0).child
@@ -471,7 +473,7 @@ def graph_optimize(root: ir.Node, visited: typing.Optional[set[str]] = None):
         graph_optimize(root.true_edge.child, visited)
         graph_optimize(root.false_edge.child, visited)
     elif isinstance(root, ir.Edge):
-        raise Exception()
+        raise RuntimeError()
     elif isinstance(root, ir.DoneNode):
         pass
     else:

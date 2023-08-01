@@ -5,9 +5,6 @@ Graph representation of the logic
 from __future__ import annotations
 import copy
 
-from python2verilog.ir.expressions import Optional
-from python2verilog.ir.statements import Optional
-
 from .statements import *
 from .expressions import *
 from ..utils.assertions import assert_list_type, assert_type
@@ -313,25 +310,19 @@ class DoneNode(Node):
     Signals done
     """
 
-    def __init__(self, unique_id: str, name: str = ""):
-        super().__init__(unique_id, name)
-
 
 class Edge(BasicNode):
     """
     Represents an edge between two nodes
     """
 
-    def __init__(self, unique_id: str, *args, child: Optional[Node] = None, **kwargs):
-        super().__init__(unique_id, child=child, *args, **kwargs)
-
     def to_string(self):
         """
         To string
         """
         if self._name:
-            return f"{self._name}, normal"
-        return "Next, normal"
+            return f"{self._name}"
+        return "Next"
 
     def __str__(self):
         return self.to_string()
@@ -361,23 +352,12 @@ class NonClockedEdge(Edge):
     i.e. no clock cycle has to pass for the next node to be executed
     """
 
-    def __init__(self, unique_id: str, *args, **kwargs):
-        super().__init__(unique_id, *args, **kwargs)
-
-    def to_string(self):
-        if self._name:
-            return f"{self.name}, nonclocked"
-        return f"Next, nonclocked"
-
 
 class ClockedEdge(Edge):
     """
     Represents a clocked edge,
     i.e. a clock cycle has to pass for the next node to be executed
     """
-
-    def __init__(self, unique_id: str, *args, **kwargs):
-        super().__init__(unique_id, *args, **kwargs)
 
 
 def create_networkx_adjacency_list(node: Node):
@@ -426,7 +406,15 @@ def create_cytoscape_elements(node: Node):
         visited.add(curr_node)
         children = curr_node.get_children()
         # print(f"getting children {curr_node} {children}")
-        elements.append({"data": {"id": curr_node.unique_id, "label": str(curr_node)}})
+        elements.append(
+            {
+                "data": {
+                    "id": curr_node.unique_id,
+                    "label": str(curr_node),
+                    "class": str(curr_node.__class__.__name__),
+                }
+            }
+        )
         for child in curr_node.children:
             elements.append(
                 {"data": {"source": curr_node.unique_id, "target": child.unique_id}}

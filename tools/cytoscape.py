@@ -29,7 +29,7 @@ app.layout = html.Div(
         cyto.Cytoscape(
             id="cytoscape-two-nodes",
             layout={"name": "cose", "nodeRepulsion": 80000},
-            style={"width": "100%", "height": "800px"},
+            style={"width": "100%", "height": "1920px"},
             stylesheet=[
                 {
                     "selector": "edge",
@@ -51,6 +51,27 @@ app.layout = html.Div(
                         "background-color": "#F0F0F0",
                         "width": "50",
                         "height": "50",
+                    },
+                },
+                {
+                    "selector": "node[class = 'Edge']",
+                    "style": {
+                        "background-color": "#FF6666",
+                        "background-opacity": "0.5",
+                    },
+                },
+                {
+                    "selector": "node[class = 'ClockedEdge']",
+                    "style": {
+                        "background-color": "#FF6666",
+                        "background-opacity": "0.5",
+                    },
+                },
+                {
+                    "selector": "node[class = 'NonClockedEdge']",
+                    "style": {
+                        "background-color": "#66FF66",
+                        "background-opacity": "0.5",
                     },
                 },
             ],
