@@ -94,7 +94,6 @@ class TestMain(unittest.TestCase):
             if os.path.exists(FILES_IN_ABS_DIR[key]):
                 os.remove(FILES_IN_ABS_DIR[key])
             os.mkfifo(FILES_IN_ABS_DIR[key])
-            print(f"making fifo {key} at {FILES_IN_ABS_DIR[key]}")
 
         with open(FILES_IN_ABS_DIR["python"]) as python_file:
             python = python_file.read()
@@ -146,7 +145,6 @@ class TestMain(unittest.TestCase):
                     ast_dump_file.write(ast.dump(tree, indent="  "))
 
             iverilog_cmd = f'iverilog -s {function_name}_tb {FILES_IN_ABS_DIR["module_fifo"]} {FILES_IN_ABS_DIR["testbench_fifo"]} -o iverilog.log && unbuffer vvp iverilog.log && rm iverilog.log\n'
-            # iverilog_cmd = f'cat {FILES_IN_ABS_DIR["module_fifo"]} && cat {FILES_IN_ABS_DIR["testbench_fifo"]}'
             process = subprocess.Popen(
                 iverilog_cmd,
                 shell=True,
@@ -155,58 +153,62 @@ class TestMain(unittest.TestCase):
                 stderr=subprocess.PIPE,
             )
 
-            print("stuck")
-            with open(FILES_IN_ABS_DIR["module_fifo"], mode="w") as module_file:
-                print("bruv")
-                function = tree.body[0]
+            function = tree.body[0]
 
-                ir, context = Generator2Graph(function).results
-                # optimizer.graph_optimize(ir)
-                # print("\n\nnext")
-                # optimizer.graph_optimize(ir.child.child)
-                # print("\n\nnextasdf3eefwe\n")
-                verilog = Verilog.from_graph_ir(ir, context)
+            ir, context = Generator2Graph(function).results
+            # optimizer.graph_optimize(ir)
+            # print("\n\nnext")
+            # optimizer.graph_optimize(ir.child.child)
+            # print("\n\nnextasdf3eefwe\n")
+            verilog = Verilog.from_graph_ir(ir, context)
 
-                if args.write:
-                    with open(FILES_IN_ABS_DIR["cytoscape"], mode="w") as cyto_file:
-                        cyto_file.write(str(create_cytoscape_elements(ir)))
+            if args.write:
+                with open(FILES_IN_ABS_DIR["cytoscape"], mode="w") as cyto_file:
+                    cyto_file.write(str(create_cytoscape_elements(ir)))
 
-                    adjacency_list = create_networkx_adjacency_list(ir)
-                    g = nx.DiGraph(adjacency_list)
+                adjacency_list = create_networkx_adjacency_list(ir)
+                g = nx.DiGraph(adjacency_list)
 
-                    plt.figure(figsize=(40, 40))
-                    nx.draw(
-                        g,
-                        with_labels=True,
-                        font_weight="bold",
-                        arrowsize=30,
-                        node_size=4000,
-                        node_shape="s",
-                        node_color="#00b4d9",  # Light Blue
-                    )
-                    plt.savefig(FILES_IN_ABS_DIR["ir_dump"])
-
-                module = verilog.get_module_lines().to_string()
-                statistics.module_num_chars = len(
-                    module.replace("\n", "").replace(" ", "")
+                plt.figure(figsize=(40, 40))
+                nx.draw(
+                    g,
+                    with_labels=True,
+                    font_weight="bold",
+                    arrowsize=30,
+                    node_size=4000,
+                    node_shape="s",
+                    node_color="#00b4d9",  # Light Blue
                 )
-                module_file.write(module)
-                module_file.flush()
-            print("done")
+                plt.savefig(FILES_IN_ABS_DIR["ir_dump"])
+
+            module_str = verilog.get_module_lines().to_string()
+            statistics.module_num_chars = len(
+                module_str.replace("\n", "").replace(" ", "")
+            )
+            tb_str = verilog.new_testbench(test_cases).to_string()
+
+            with open(FILES_IN_ABS_DIR["module_fifo"], mode="w") as module_file:
+                module_file.write(module_str)
 
             with open(FILES_IN_ABS_DIR["testbench_fifo"], mode="w") as testbench_file:
-                tb_str = verilog.new_testbench(test_cases).to_string()
                 testbench_file.write(tb_str)
-                testbench_file.flush()
+
+            if args.write:
+                with open(FILES_IN_ABS_DIR["module"], mode="w") as module_file:
+                    module_file.write(module_str)
+
+                with open(FILES_IN_ABS_DIR["testbench"], mode="w") as testbench_file:
+                    testbench_file.write(tb_str)
 
             process.wait()
 
-            if process.stderr != "" or process.stdout == "":
+            stderr_str = process.stderr.read()
+            if stderr_str != "":
                 warnings.warn(
-                    f"ERROR with running verilog simulation on {function_name}, with: {process.stderr} {process.stdout}"
+                    f"ERROR with running verilog simulation on {function_name}, with: {stderr_str}"
                 )
+
             actual_str = process.stdout.read()
-            print(f"here we go: {actual_str} \nend\n")
 
             actual_raw: list[list[str]] = []
             for line in actual_str.splitlines():
