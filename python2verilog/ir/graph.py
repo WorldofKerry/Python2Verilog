@@ -112,9 +112,11 @@ class IfElseNode(Node):
     @property
     def true_edge(self):
         """
-        true edge
+        true edge or optimal if no edge
         """
-        return self._true_edge
+        if self._true_edge:
+            return self._true_edge
+        return self._optimal_true_edge
 
     @true_edge.setter
     def true_edge(self, other: Node):
@@ -123,9 +125,11 @@ class IfElseNode(Node):
     @property
     def false_edge(self):
         """
-        false edge
+        false edge or optimal false edge if no false edge
         """
-        return self._false_edge
+        if self._false_edge:
+            return self._false_edge
+        return self._optimal_false_edge
 
     @false_edge.setter
     def false_edge(self, other: Node):
@@ -136,7 +140,7 @@ class IfElseNode(Node):
         """
         optimal true edge
         """
-        return self._optimal_true_edge
+        return self._optimal_true_edge if self._optimal_true_edge else self._true_edge
 
     @optimal_true_edge.setter
     def optimal_true_edge(self, other: Node):
@@ -147,7 +151,9 @@ class IfElseNode(Node):
         """
         optimal false edge
         """
-        return self._optimal_false_edge
+        return (
+            self._optimal_false_edge if self._optimal_false_edge else self._false_edge
+        )
 
     @optimal_false_edge.setter
     def optimal_false_edge(self, other: Node):
@@ -164,11 +170,15 @@ class IfElseNode(Node):
         # )
         # return [self.then_edge, self.else_edge]
 
-        children = [self.true_edge, self.false_edge]
-        if self.optimal_true_edge:
-            children.append(self.optimal_true_edge)
-        if self.optimal_false_edge:
-            children.append(self.optimal_false_edge)
+        children = []
+        if self._true_edge:
+            children.append(self._true_edge)
+        if self._false_edge:
+            children.append(self._false_edge)
+        if self._optimal_true_edge:
+            children.append(self._optimal_true_edge)
+        if self._optimal_false_edge:
+            children.append(self._optimal_false_edge)
         return children
 
 
@@ -191,9 +201,11 @@ class BasicNode(Node):
     @property
     def child(self):
         """
-        child
+        child or optimal_child if no child
         """
-        return self._child
+        if self._child:
+            return self._child
+        return self._optimal_child
 
     @child.setter
     def child(self, other: Node):
@@ -209,7 +221,7 @@ class BasicNode(Node):
         # return [self.child]
 
         children = [self.child]
-        if self.optimal_child:
+        if self._optimal_child:
             children.append(self.optimal_child)
         return children
 
@@ -225,7 +237,7 @@ class BasicNode(Node):
         """
         Optimal child
         """
-        return self._optimal_child
+        return self._optimal_child if self._optimal_child else self._child
 
     @optimal_child.setter
     def optimal_child(self, other: Node):
@@ -332,18 +344,6 @@ class Edge(BasicNode):
         Gets edge name
         """
         return self._name
-
-    def get_next_node(self):
-        """
-        Gets next node
-        """
-        return self._child
-
-    def get_children(self):
-        """
-        Gets children
-        """
-        return [self.get_next_node()]
 
 
 class NonClockedEdge(Edge):

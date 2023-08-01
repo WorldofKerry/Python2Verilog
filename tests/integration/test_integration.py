@@ -157,6 +157,10 @@ class TestMain(unittest.TestCase):
 
             ir, context = Generator2Graph(function).results
             optimizer.graph_optimize(ir)
+            # __states = IrToVerilog.create_nonclocked_list(ir, set(), [], set())
+            # print("DONEEEEEEEE")
+            # for __state in __states:
+            #     print(__state)
             # print("\n\nnext")
             # optimizer.graph_optimize(ir.child.child)
             # print("\n\nnextasdf3eefwe\n")

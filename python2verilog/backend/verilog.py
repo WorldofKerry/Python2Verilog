@@ -178,6 +178,53 @@ class IrToVerilog:
         return inst
 
     @staticmethod
+    def create_nonclocked_list(
+        node: ir.Node, states: set[list[str]], stmts: list[str], visited: set[str]
+    ):
+        assert_type(node, ir.Node)
+        assert_type(states, set)
+        assert_list_type(stmts, str)
+        assert_type(visited, set)
+
+        print(f"recurse on {str(node)} {str(states)} {str(stmts)}")
+        if not node or node.unique_id in visited or isinstance(node, ir.DoneNode):
+            states.update([tuple(stmts)])
+            return states
+        visited.update([node.unique_id])
+
+        if isinstance(node, ir.IfElseNode):
+            IrToVerilog.create_nonclocked_list(
+                node.optimal_true_edge,
+                states,
+                copy.deepcopy(stmts) + [f"{str(node)} then"],
+                visited,
+            )
+            IrToVerilog.create_nonclocked_list(
+                node.optimal_false_edge,
+                states,
+                copy.deepcopy(stmts) + [f"{str(node)} else"],
+                visited,
+            )
+            return states
+        if isinstance(node, ir.ClockedEdge):
+            states.update([tuple(stmts)])
+            IrToVerilog.create_nonclocked_list(node.optimal_child, states, [], visited)
+            return states
+        if isinstance(node, ir.NonClockedEdge):
+            IrToVerilog.create_nonclocked_list(
+                node.optimal_child, states, stmts, visited
+            )
+            return states
+        if isinstance(node, ir.BasicNode):
+            stmts.append(str(node))
+            IrToVerilog.create_nonclocked_list(
+                node.optimal_child, states, stmts, visited
+            )
+            return states
+
+        raise RuntimeError(f"{type(node)}")
+
+    @staticmethod
     def list_build_stmt(node: ir.Statement) -> Statement:
         """
         Builds the Verilog AST
