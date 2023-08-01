@@ -169,11 +169,11 @@ class Generator2Graph:
         cur_node = None
         if isinstance(stmt, pyast.Assign):
             cur_node = self.__parse_assign(stmt, prefix=prefix)
-            edge = ir.Edge(unique_id=f"{prefix}_e", child=nextt)
+            edge = ir.ClockedEdge(unique_id=f"{prefix}_e", child=nextt)
             cur_node.set_edge(edge)
         elif isinstance(stmt, pyast.Yield):
             cur_node = self.__parse_yield(stmt, prefix=prefix)
-            edge = ir.Edge(unique_id=f"{prefix}_e", child=nextt)
+            edge = ir.ClockedEdge(unique_id=f"{prefix}_e", child=nextt)
             cur_node.set_edge(edge)
         elif isinstance(stmt, pyast.While):
             cur_node = self.__parse_while(stmt, nextt=nextt, prefix=prefix)
@@ -187,7 +187,7 @@ class Generator2Graph:
             assert isinstance(
                 stmt.target, pyast.Name
             ), "Error: only supports single target"
-            edge = ir.Edge(unique_id=f"{prefix}_e", child=nextt)
+            edge = ir.ClockedEdge(unique_id=f"{prefix}_e", child=nextt)
             cur_node = ir.AssignNode(
                 unique_id=prefix,
                 lvalue=self.__parse_expression(stmt.target),
@@ -211,8 +211,10 @@ class Generator2Graph:
         then_node = self.__parse_statements(list(stmt.body), f"{prefix}_t", nextt)
         else_node = self.__parse_statements(list(stmt.orelse), f"{prefix}_f", nextt)
 
-        to_then = ir.Edge(unique_id=f"{prefix}_true_edge", name="True", child=then_node)
-        to_else = ir.Edge(
+        to_then = ir.ClockedEdge(
+            unique_id=f"{prefix}_true_edge", name="True", child=then_node
+        )
+        to_else = ir.ClockedEdge(
             unique_id=f"{prefix}_false_edge", name="False", child=else_node
         )
 
@@ -230,8 +232,8 @@ class Generator2Graph:
         """
         assert isinstance(stmt, pyast.While)
 
-        loop_edge = ir.Edge(unique_id=f"{prefix}_edge", name="True")
-        done_edge = ir.Edge(unique_id=f"{prefix}_f", name="False", child=nextt)
+        loop_edge = ir.ClockedEdge(unique_id=f"{prefix}_edge", name="True")
+        done_edge = ir.ClockedEdge(unique_id=f"{prefix}_f", name="False", child=nextt)
 
         ifelse = ir.IfElseNode(
             unique_id=f"{prefix}_while",
@@ -354,7 +356,7 @@ class Generator2Graph:
                 self.__parse_expression(node.left),
                 self.__parse_expression(node.comparators[0]),
             )
-        elif isinstance(node.ops[0], pyast.LtE):
+        if isinstance(node.ops[0], pyast.LtE):
             operator = "<="
         elif isinstance(node.ops[0], pyast.Gt):
             operator = ">"

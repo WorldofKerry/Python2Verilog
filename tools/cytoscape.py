@@ -54,13 +54,6 @@ app.layout = html.Div(
                     },
                 },
                 {
-                    "selector": "node[class = 'Edge']",
-                    "style": {
-                        "background-color": "#FF6666",
-                        "background-opacity": "0.5",
-                    },
-                },
-                {
                     "selector": "node[class = 'ClockedEdge']",
                     "style": {
                         "background-color": "#FF6666",
