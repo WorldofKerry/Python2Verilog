@@ -310,6 +310,9 @@ def graph_update_mapping(
     return new_mapping
 
 
+unique_counter = 0
+
+
 def graph_optimize(root: ir.Node, visited: typing.Optional[set[str]] = None):
     """
     Optimizes a single node, creating branches
@@ -318,10 +321,8 @@ def graph_optimize(root: ir.Node, visited: typing.Optional[set[str]] = None):
     if visited is None:
         visited = set()
 
-    unique_counter = 0
-
     def make_unique():
-        nonlocal unique_counter
+        global unique_counter
         unique_counter += 1
         return unique_counter
 
@@ -368,6 +369,7 @@ def graph_optimize(root: ir.Node, visited: typing.Optional[set[str]] = None):
                 visited=visited,
                 threshold=threshold,
             )
+            print(f"got result {result} {result.unique_id}")
             edge = ir.NonClockedEdge(
                 unique_id=f"{regular.child.unique_id}_o{make_unique()}",
                 child=result,
@@ -383,6 +385,7 @@ def graph_optimize(root: ir.Node, visited: typing.Optional[set[str]] = None):
                 true_edge=regular.true_edge,
                 false_edge=regular.false_edge,
             )
+            print(f"created if with new_condition {new_condition} {ifelse.unique_id}")
             # print(f"created {str(ifelse)}")
 
             if not should_i_be_clocked(
@@ -431,6 +434,7 @@ def graph_optimize(root: ir.Node, visited: typing.Optional[set[str]] = None):
                 # print("No optimize false branch")
                 pass
 
+            # print(f"returning {str(ifelse)} {mapping}")
             return ifelse
         if isinstance(regular, ir.YieldNode):
             updated = []

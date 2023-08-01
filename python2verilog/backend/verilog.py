@@ -179,7 +179,7 @@ class IrToVerilog:
 
     @staticmethod
     def create_nonclocked_list(
-        node: ir.Node, states: set[list[str]], stmts: list[str], visited: set[str]
+        node: ir.Node, states: set[tuple[str, ...]], stmts: list[str], visited: set[str]
     ):
         assert_type(node, ir.Node)
         assert_type(states, set)

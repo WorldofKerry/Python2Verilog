@@ -395,15 +395,15 @@ def create_cytoscape_elements(node: Node):
     """
     elements = []
 
-    def traverse_graph(curr_node: Node, visited: set[Node]):
+    def traverse_graph(curr_node: Node, visited: set[str]):
         if not curr_node:
             return
 
         nonlocal elements
-        if curr_node in visited:
+        if curr_node.unique_id in visited:
             return
 
-        visited.add(curr_node)
+        visited.add(curr_node.unique_id)
         children = curr_node.get_children()
         # print(f"getting children {curr_node} {children}")
         elements.append(
