@@ -83,6 +83,18 @@ class TestMain(unittest.TestCase):
             key: os.path.join(ABS_DIR, value)
             for key, value in config["file_names"].items()
         }
+        fifos = {
+            "module_fifo": "module_fifo.sv",
+            "testbench_fifo": "tb_fifo.sv",
+        }  # named pipe in memory
+        FILES_IN_ABS_DIR.update(
+            {key: os.path.join(ABS_DIR, value) for key, value in fifos.items()}
+        )
+        for key in fifos:
+            if os.path.exists(FILES_IN_ABS_DIR[key]):
+                os.remove(FILES_IN_ABS_DIR[key])
+            os.mkfifo(FILES_IN_ABS_DIR[key])
+            print(f"making fifo {key} at {FILES_IN_ABS_DIR[key]}")
 
         with open(FILES_IN_ABS_DIR["python"]) as python_file:
             python = python_file.read()
@@ -133,11 +145,23 @@ class TestMain(unittest.TestCase):
                 with open(FILES_IN_ABS_DIR["ast_dump"], mode="w") as ast_dump_file:
                     ast_dump_file.write(ast.dump(tree, indent="  "))
 
-            with open(FILES_IN_ABS_DIR["module"], mode="w") as module_file:
+            iverilog_cmd = f'iverilog -s {function_name}_tb {FILES_IN_ABS_DIR["module_fifo"]} {FILES_IN_ABS_DIR["testbench_fifo"]} -o iverilog.log && unbuffer vvp iverilog.log && rm iverilog.log\n'
+            # iverilog_cmd = f'cat {FILES_IN_ABS_DIR["module_fifo"]} && cat {FILES_IN_ABS_DIR["testbench_fifo"]}'
+            process = subprocess.Popen(
+                iverilog_cmd,
+                shell=True,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+
+            print("stuck")
+            with open(FILES_IN_ABS_DIR["module_fifo"], mode="w") as module_file:
+                print("bruv")
                 function = tree.body[0]
 
                 ir, context = Generator2Graph(function).results
-                optimizer.graph_optimize(ir)
+                # optimizer.graph_optimize(ir)
                 # print("\n\nnext")
                 # optimizer.graph_optimize(ir.child.child)
                 # print("\n\nnextasdf3eefwe\n")
@@ -167,20 +191,22 @@ class TestMain(unittest.TestCase):
                     module.replace("\n", "").replace(" ", "")
                 )
                 module_file.write(module)
+                module_file.flush()
+            print("done")
 
-            with open(FILES_IN_ABS_DIR["testbench"], mode="w") as testbench_file:
+            with open(FILES_IN_ABS_DIR["testbench_fifo"], mode="w") as testbench_file:
                 tb_str = verilog.new_testbench(test_cases).to_string()
                 testbench_file.write(tb_str)
+                testbench_file.flush()
 
-            iverilog_cmd = f"iverilog -s {function_name}_tb {FILES_IN_ABS_DIR['module']} {FILES_IN_ABS_DIR['testbench']} -o iverilog.log && unbuffer vvp iverilog.log && rm iverilog.log\n"
-            output = subprocess.run(
-                iverilog_cmd, shell=True, capture_output=True, text=True
-            )
-            if output.stderr != "" or output.stdout == "":
+            process.wait()
+
+            if process.stderr != "" or process.stdout == "":
                 warnings.warn(
-                    f"ERROR with running verilog simulation on {function_name}, with: {output.stderr} {output.stdout}"
+                    f"ERROR with running verilog simulation on {function_name}, with: {process.stderr} {process.stdout}"
                 )
-            actual_str = output.stdout
+            actual_str = process.stdout.read()
+            print(f"here we go: {actual_str} \nend\n")
 
             actual_raw: list[list[str]] = []
             for line in actual_str.splitlines():
@@ -215,6 +241,9 @@ class TestMain(unittest.TestCase):
                 set(),
                 f"str(expected_coords - actual_coor <-- missing coordinates, actual expected: {str(actual_coords)} {str(expected_coords)}",
             )
+
+            for key in fifos:
+                os.remove(FILES_IN_ABS_DIR[key])
 
             return "Running test"
 

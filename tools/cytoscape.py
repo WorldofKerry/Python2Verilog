@@ -1,5 +1,8 @@
 """
-Visualizes IR using Cytoscape
+Visualizes IR using Dash Cytoscape
+
+example usage:
+python3 tools/cytoscape.py tests/integration/data/integration/testing/cytoscape.log
 """
 
 import argparse
