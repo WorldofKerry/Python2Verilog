@@ -137,3 +137,7 @@ def fib(n: int) -> tuple[int]:
         verilog = Verilog.from_graph_ir(inst.root, inst.context)
         # warnings.warn(verilog.get_module_lines())
         # warnings.warn(verilog.get_testbench([(10,)]).to_lines().to_string())
+
+        plt.clf()
+        plt.cla()
+        plt.close()

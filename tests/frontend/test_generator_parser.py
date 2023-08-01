@@ -95,3 +95,7 @@ def circle_lines(s_x, s_y, height) -> tuple[int, int]:
 
         plt.savefig("path.png")
         # warnings.warn(f"{inst._root._then_edge._node}")
+
+        plt.clf()
+        plt.cla()
+        plt.close()

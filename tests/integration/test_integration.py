@@ -180,6 +180,9 @@ class TestMain(unittest.TestCase):
                     node_color="#00b4d9",  # Light Blue
                 )
                 plt.savefig(FILES_IN_ABS_DIR["ir_dump"])
+                plt.clf()
+                plt.cla()
+                plt.close()
 
             module_str = verilog.get_module_lines().to_string()
             statistics.module_num_chars = len(
