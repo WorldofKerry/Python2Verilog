@@ -33,7 +33,7 @@ jobs:
           sudo apt-get install iverilog expect
       - name: Run Pytest
         run: |
-          python3 -m pytest --vs --cov=python2verilog/ --cov-report term-missing --write
+          python3 -m pytest -vs --cov=python2verilog/ --cov-report term-missing --write
       - uses: actions/upload-artifact@v3
         if: always()
         with:
