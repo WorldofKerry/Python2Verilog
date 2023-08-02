@@ -40,13 +40,15 @@ jobs:
           python3 -m pytest -vs --cov=python2verilog/ --cov-report term-missing --write
 
       - name: Install oss with yosys
+        if: always()
         run: |
           wget -nv https://github.com/YosysHQ/oss-cad-suite-build/releases/download/2023-08-02/oss-cad-suite-linux-x64-20230802.tgz
           tar -xzf oss-cad-suite-linux-x64-20230802.tgz
           echo "${pwd}/oss-cad-suite/bin/yosys" >> $GITHUB_PATH
           echo $GITHUB_PATH
 
-      - name: Run
+      - name: Run Yosys
+        if: always()
         run: |
           yosys -o synth.v -p hierarchy -p proc -p opt -p memory -p opt -p fsm -p opt -f verilog tests/integration/data/integration/testing/module.sv -p stat
 
