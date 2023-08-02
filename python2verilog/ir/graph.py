@@ -54,9 +54,15 @@ class Node:
         """
         self._id = assert_type(value, str)
 
-    def get_children(self):
+    def get_all_children(self):
         """
         Gets children
+        """
+        return []
+
+    def get_optimal_children(self):
+        """
+        Gets optimal children
         """
         return []
 
@@ -65,7 +71,7 @@ class Node:
         """
         Gets children
         """
-        return self.get_children()
+        return self.get_all_children()
 
     @property
     def name(self):
@@ -114,9 +120,7 @@ class IfElseNode(Node):
         """
         true edge or optimal if no edge
         """
-        if self._true_edge:
-            return self._true_edge
-        return self._optimal_true_edge
+        return self._true_edge
 
     @true_edge.setter
     def true_edge(self, other: Node):
@@ -127,9 +131,7 @@ class IfElseNode(Node):
         """
         false edge or optimal false edge if no false edge
         """
-        if self._false_edge:
-            return self._false_edge
-        return self._optimal_false_edge
+        return self._false_edge
 
     @false_edge.setter
     def false_edge(self, other: Node):
@@ -138,7 +140,7 @@ class IfElseNode(Node):
     @property
     def optimal_true_edge(self):
         """
-        optimal true edge
+        optimal true edge or edge otherwise
         """
         return self._optimal_true_edge if self._optimal_true_edge else self._true_edge
 
@@ -159,7 +161,7 @@ class IfElseNode(Node):
     def optimal_false_edge(self, other: Node):
         self._optimal_false_edge = assert_type(other, Node)
 
-    def get_children(self):
+    def get_all_children(self):
         """
         Gets edges
         """
@@ -180,6 +182,13 @@ class IfElseNode(Node):
         if self._optimal_false_edge:
             children.append(self._optimal_false_edge)
         return children
+
+    def get_optimal_children(self):
+        """
+        Gets optimal children
+        """
+        assert self._optimal_true_edge and self._optimal_false_edge
+        return [self._optimal_true_edge, self._optimal_false_edge]
 
 
 class BasicNode(Node):
@@ -203,15 +212,13 @@ class BasicNode(Node):
         """
         child or optimal_child if no child
         """
-        if self._child:
-            return self._child
-        return self._optimal_child
+        return self._child
 
     @child.setter
     def child(self, other: Node):
         self._child = assert_type(other, Node)
 
-    def get_children(self):
+    def get_all_children(self):
         """
         Gets edges
         """
@@ -220,22 +227,24 @@ class BasicNode(Node):
         # print(f"getting children basicnode {self._optimal_child}")
         # return [self.child]
 
-        children = [self.child]
+        children = []
+        if self._child:
+            children.append(self._child)
         if self._optimal_child:
-            children.append(self.optimal_child)
+            children.append(self._optimal_child)
         return children
 
-    def set_edge(self, edge: Node):
+    def get_optimal_children(self):
         """
-        Adds an edge
+        Gets optimal children
         """
-        self.child = edge
-        return self.child
+        assert self._optimal_child
+        return [self._optimal_child]
 
     @property
     def optimal_child(self):
         """
-        Optimal child
+        Optimal child or child otherwise
         """
         return self._optimal_child if self._optimal_child else self._child
 
@@ -377,7 +386,7 @@ def create_networkx_adjacency_list(node: Node):
             return
 
         visited.add(curr_node)
-        children = curr_node.get_children()
+        children = curr_node.get_all_children()
         adjacency_list[curr_node] = list(children)
 
         for child in children:
@@ -393,21 +402,23 @@ def create_cytoscape_elements(node: Node):
 
     Assumes names are unique
     """
-    elements = []
+    nodes = []
+    edges = []
 
     def traverse_graph(curr_node: Node, visited: set[str]):
         if not curr_node:
             return
 
-        nonlocal elements
+        nonlocal nodes
         if curr_node.unique_id in visited:
             return
 
         visited.add(curr_node.unique_id)
-        children = curr_node.get_children()
+        children = curr_node.get_all_children()
+        # optimal_children = curr_node.get_optimal_children()
 
         if not isinstance(curr_node, Edge):
-            elements.append(
+            nodes.append(
                 {
                     "data": {
                         "id": curr_node.unique_id,
@@ -418,7 +429,7 @@ def create_cytoscape_elements(node: Node):
             )
             for child in curr_node.children:
                 print(f"set {str(child.__class__.__name__)}")
-                elements.append(
+                edges.append(
                     {
                         "data": {
                             "source": curr_node.unique_id,
@@ -433,4 +444,4 @@ def create_cytoscape_elements(node: Node):
                 traverse_graph(child.child, visited)
 
     traverse_graph(node, set())
-    return elements
+    return {"nodes": nodes, "edges": edges}

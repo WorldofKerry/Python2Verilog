@@ -310,7 +310,7 @@ def graph_update_mapping(
     return new_mapping
 
 
-unique_counter = 0
+unique_counter = 0  # warning due to recursion can't be static var of func
 
 
 def graph_optimize(
@@ -359,12 +359,12 @@ def graph_optimize(
             new_node.unique_id = f"{regular.unique_id}_o{make_unique()}"
 
             if should_i_be_clocked(regular.child.child, mapping, visited, threshold):
-                new_node.child = regular.child
+                new_node.optimal_child = regular.child
                 return new_node
 
             updated_mapping = graph_update_mapping(new_node, mapping)
             if isinstance(regular.child.child, ir.Edge):
-                raise RuntimeError(f"{regular}")
+                raise RuntimeError(f"unexpected edge, only nodes allowed {regular}")
             result = helper(
                 regular=regular.child.child,
                 mapping=updated_mapping,
@@ -376,18 +376,20 @@ def graph_optimize(
                 unique_id=f"{regular.child.unique_id}_o{make_unique()}",
                 child=result,
             )
-            new_node.child = edge
+            new_node.optimal_child = edge
             return new_node
 
         if isinstance(regular, ir.IfElseNode):
             new_condition = backwards_replace(regular.condition, mapping)
-            ifelse = ir.IfElseNode(
+            new_ifelse = ir.IfElseNode(
                 unique_id=f"{regular.unique_id}_o{make_unique()}",
                 condition=new_condition,
                 true_edge=regular.true_edge,
                 false_edge=regular.false_edge,
             )
-            print(f"created if with new_condition {new_condition} {ifelse.unique_id}")
+            print(
+                f"created if with new_condition {new_condition} {new_ifelse.unique_id}"
+            )
             # print(f"created {str(ifelse)}")
 
             if not should_i_be_clocked(
@@ -408,7 +410,7 @@ def graph_optimize(
                     name="True",
                     child=optimal_true_node,
                 )
-                ifelse.true_edge = edge
+                new_ifelse.optimal_true_edge = edge
             else:
                 # print("no optimize true branch")
                 pass
@@ -431,13 +433,13 @@ def graph_optimize(
                     name="False",
                     child=optimal_false_node,
                 )
-                ifelse.false_edge = edge
+                new_ifelse.optimal_false_edge = edge
             else:
                 # print("No optimize false branch")
                 pass
 
             # print(f"returning {str(ifelse)} {mapping}")
-            return ifelse
+            return new_ifelse
         if isinstance(regular, ir.YieldNode):
             updated = []
             for stmt in regular._stmts:
@@ -457,9 +459,9 @@ def graph_optimize(
             new_node = ir.YieldNode(
                 unique_id=f"{regular.unique_id}_o{make_unique()}",
                 stmts=updated,
-                edge=edge,
                 name=regular.name,
             )
+            new_node.optimal_child = edge
             return new_node
 
         if isinstance(regular, ir.DoneNode):
@@ -471,16 +473,20 @@ def graph_optimize(
     # print(f"==> optimizing {str(root)}")
     visited.add(root.unique_id)
     if isinstance(root, ir.BasicNode):
-        root.optimal_child = helper(root, {}, {}, threshold=threshold).child
+        root.optimal_child = helper(root, {}, {}, threshold=threshold).optimal_child
         graph_optimize(root.child.child, visited, threshold=threshold)
     elif isinstance(root, ir.IfElseNode):
-        root.optimal_true_edge = helper(root, {}, {}, threshold=threshold).true_edge
-        root.optimal_false_edge = helper(root, {}, {}, threshold=threshold).false_edge
+        root.optimal_true_edge = helper(
+            root, {}, {}, threshold=threshold
+        ).optimal_true_edge
+        root.optimal_false_edge = helper(
+            root, {}, {}, threshold=threshold
+        ).optimal_false_edge
         graph_optimize(root.true_edge.child, visited, threshold=threshold)
         graph_optimize(root.false_edge.child, visited, threshold=threshold)
-    elif isinstance(root, ir.Edge):
-        raise RuntimeError()
     elif isinstance(root, ir.DoneNode):
         pass
+    elif isinstance(root, ir.Edge):
+        raise RuntimeError()
     else:
         raise RuntimeError(f"{type(root)}")

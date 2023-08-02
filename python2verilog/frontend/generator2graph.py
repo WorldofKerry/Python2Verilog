@@ -170,11 +170,11 @@ class Generator2Graph:
         if isinstance(stmt, pyast.Assign):
             cur_node = self.__parse_assign(stmt, prefix=prefix)
             edge = ir.ClockedEdge(unique_id=f"{prefix}_e", child=nextt)
-            cur_node.set_edge(edge)
+            cur_node.child = edge
         elif isinstance(stmt, pyast.Yield):
             cur_node = self.__parse_yield(stmt, prefix=prefix)
             edge = ir.ClockedEdge(unique_id=f"{prefix}_e", child=nextt)
-            cur_node.set_edge(edge)
+            cur_node.child = edge
         elif isinstance(stmt, pyast.While):
             cur_node = self.__parse_while(stmt, nextt=nextt, prefix=prefix)
         elif isinstance(stmt, pyast.If):
@@ -242,7 +242,7 @@ class Generator2Graph:
             false_edge=done_edge,
         )
         body_node = self.__parse_statements(list(stmt.body), f"{prefix}_while", ifelse)
-        loop_edge.set_edge(body_node)
+        loop_edge.child = body_node
 
         return ifelse
 
