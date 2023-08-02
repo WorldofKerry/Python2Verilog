@@ -1,6 +1,7 @@
 """Verilog Abstract Syntax Tree Components"""
 
 from __future__ import annotations
+import itertools
 import warnings
 import ast
 from typing import Optional
@@ -164,11 +165,11 @@ class IrToVerilog:
         return inst
 
     @classmethod
-    def from_graph_ir(cls, root: ir.Node, context: ir.Context):
+    def from_graph_ir(cls, root: ir.Element, context: ir.Context):
         """ "
         Builds tree from Graph IR
         """
-        assert_type(root, ir.Node)
+        assert_type(root, ir.Element)
         assert_type(context, ir.Context)
         inst = IrToVerilog()
         inst._context = context
@@ -179,12 +180,15 @@ class IrToVerilog:
 
     @staticmethod
     def create_nonclocked_list(
-        node: ir.Node, states: set[tuple[str, ...]], stmts: list[str], visited: set[str]
+        node: ir.Element,
+        states: set[tuple[str, ...]],
+        stmts: list[str],
+        visited: set[str],
     ):
         """
         Creates a list of states from optimal nodes
         """
-        assert_type(node, ir.Node)
+        assert_type(node, ir.Element)
         assert_type(states, set)
         assert_list_type(stmts, str)
         assert_type(visited, set)
@@ -244,7 +248,7 @@ class IrToVerilog:
                 node.optimal_child, states, stmts, visited
             )
             return states
-        if isinstance(node, ir.BasicNode):
+        if isinstance(node, ir.BasicElement):
             stmts.append(str(node))
             IrToVerilog.create_nonclocked_list(
                 node.optimal_child, states, stmts, visited
@@ -306,20 +310,20 @@ class IrToVerilog:
             case_items.append(IrToVerilog.list_build_stmt(item))
         return CaseItem(IrToVerilog.list_build_expr(node.condition), case_items)
 
-    def graph_build(self, root: ir.Node, visited: set[str]):
+    def graph_build(self, root: ir.Element, visited: set[str]):
         """
         Builds from graph
         """
-        assert_type(root, ir.Node)
+        assert_type(root, ir.Element)
         root_case = Case(expression=Expression("_state"), case_items=[])
         self.graph_build_node(node=root, root_case=root_case, visited=visited)
         return root_case
 
-    def graph_build_node(self, node: ir.Node, root_case: Case, visited: set[str]):
+    def graph_build_node(self, node: ir.Element, root_case: Case, visited: set[str]):
         """
         Builds from node
         """
-        assert_type(node, ir.Node)
+        assert_type(node, ir.Element)
         assert isinstance(self._context, ir.Context)
         if node.unique_id in visited:
             return node.unique_id
@@ -562,6 +566,38 @@ class IrToVerilog:
         New testbench as str
         """
         return str(self.new_testbench_lines(test_cases))
+
+
+class CaseBuilder:
+    """
+    Creates a case statement for the IR Graph
+    """
+
+    def __init__(self, root: ir.Element):
+        # Member Vars
+        self.visited: set[str] = set()
+        self.case = Case(expression=Expression("_state"), case_items=[])
+
+        # Member Funcs
+        instance = itertools.count()
+        self.next_unique = lambda: next(instance)
+
+        # Work
+        self.new_caseitem(root)
+
+    def new_caseitem(self, root: ir.Element):
+        """
+        Creates a new case item with the root's unique id as identifier
+        Does not recurse on itself
+        """
+        stmts = self.do_node(root)
+        item = CaseItem(condition=Expression(root.unique_id), statements=stmts)
+
+        return item
+
+    def do_node(self, node: ir.Element):
+        if isinstance(node, ir.Edge):
+            pass
 
 
 class Instantiation(Statement):

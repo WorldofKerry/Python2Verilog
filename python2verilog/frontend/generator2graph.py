@@ -127,7 +127,9 @@ class Generator2Graph:
             rvalue=self.__parse_expression(node.value),
         )
 
-    def __parse_statements(self, stmts: list[pyast.AST], prefix: str, nextt: ir.Node):
+    def __parse_statements(
+        self, stmts: list[pyast.AST], prefix: str, nextt: ir.Element
+    ):
         """
         Returns state of the first stmt in block
 
@@ -153,7 +155,7 @@ class Generator2Graph:
             )
         return previous
 
-    def __parse_statement(self, stmt: pyast.AST, nextt: ir.Node, prefix: str):
+    def __parse_statement(self, stmt: pyast.AST, nextt: ir.Element, prefix: str):
         """
         nextt represents the next operation in the control flow diagram.
 
@@ -165,7 +167,7 @@ class Generator2Graph:
 
         """
         assert_type(stmt, pyast.AST)
-        assert_type(nextt, ir.Node)
+        assert_type(nextt, ir.Element)
         cur_node = None
         if isinstance(stmt, pyast.Assign):
             cur_node = self.__parse_assign(stmt, prefix=prefix)
@@ -202,7 +204,7 @@ class Generator2Graph:
             )
         return cur_node
 
-    def __parse_ifelse(self, stmt: pyast.If, nextt: ir.Node, prefix: str):
+    def __parse_ifelse(self, stmt: pyast.If, nextt: ir.Element, prefix: str):
         """
         If statement
         """
@@ -226,7 +228,7 @@ class Generator2Graph:
         )
         return ifelse
 
-    def __parse_while(self, stmt: pyast.While, nextt: ir.Node, prefix: str):
+    def __parse_while(self, stmt: pyast.While, nextt: ir.Element, prefix: str):
         """
         Converts while loop to a while-true-if-break loop
         """

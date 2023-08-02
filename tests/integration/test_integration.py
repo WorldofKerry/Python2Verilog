@@ -15,7 +15,7 @@ from dataclasses import dataclass
 import networkx as nx
 from matplotlib import pyplot as plt
 
-from python2verilog.backend.verilog import IrToVerilog
+from python2verilog.backend.verilog import IrToVerilog, CaseBuilder
 from python2verilog.frontend import Generator2Graph
 from python2verilog.optimizer import optimizer
 from python2verilog.convert import *
@@ -165,12 +165,13 @@ class TestMain(unittest.TestCase):
 
             ir, context = Generator2Graph(function).results
             optimizer.graph_optimize(ir, threshold=0)
-            __states = IrToVerilog.create_nonclocked_list(
-                ir, set(), [f"state {ir.unique_id}"], set()
-            )
-            print("DONEEEEEEEE")
-            for __state in __states:
-                print(__state)
+            case_builder = CaseBuilder(ir)
+            # __states = IrToVerilog.create_nonclocked_list(
+            #     ir, set(), [f"state {ir.unique_id}"], set()
+            # )
+            # print("DONEEEEEEEE")
+            # for __state in __states:
+            #     print(__state)
 
             # print("\n\nnext")
             # optimizer.graph_optimize(ir.child.child)

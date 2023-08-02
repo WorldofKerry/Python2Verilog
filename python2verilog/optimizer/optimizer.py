@@ -314,7 +314,7 @@ unique_counter = 0  # warning due to recursion can't be static var of func
 
 
 def graph_optimize(
-    root: ir.Node, visited: typing.Optional[set[str]] = None, threshold: int = 0
+    root: ir.Element, visited: typing.Optional[set[str]] = None, threshold: int = 0
 ):
     """
     Optimizes a single node, creating branches
@@ -329,7 +329,7 @@ def graph_optimize(
         return unique_counter
 
     def should_i_be_clocked(
-        regular: ir.Node,
+        regular: ir.Element,
         mapping: dict[ir.Expression, ir.Expression],
         visited: dict[str, int],
         threshold: int,
@@ -339,7 +339,7 @@ def graph_optimize(
         return visited[regular.unique_id] > threshold
 
     def helper(
-        regular: ir.Node,
+        regular: ir.Element,
         # optimal: ir.Node,
         mapping: dict[ir.Expression, ir.Expression],
         visited: dict[str, int],
@@ -472,7 +472,7 @@ def graph_optimize(
         return root
     # print(f"==> optimizing {str(root)}")
     visited.add(root.unique_id)
-    if isinstance(root, ir.BasicNode):
+    if isinstance(root, ir.BasicElement):
         root.optimal_child = helper(root, {}, {}, threshold=threshold).optimal_child
         graph_optimize(root.child.child, visited, threshold=threshold)
     elif isinstance(root, ir.IfElseNode):
