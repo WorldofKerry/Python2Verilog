@@ -588,16 +588,58 @@ class CaseBuilder:
     def new_caseitem(self, root: ir.Element):
         """
         Creates a new case item with the root's unique id as identifier
-        Does not recurse on itself
         """
-        stmts = self.do_node(root)
+        stmts = self.do_vertex(root)
         item = CaseItem(condition=Expression(root.unique_id), statements=stmts)
+        print(item.to_string())
 
         return item
 
-    def do_node(self, node: ir.Element):
-        if isinstance(node, ir.Edge):
-            pass
+    def do_vertex(self, vertex: ir.Vertex):
+        """
+        Processes a node
+        """
+        assert isinstance(vertex, ir.Vertex)
+        if vertex.unique_id in self.visited:
+            print(f"already visited {vertex}")
+            return [Statement("bruv")]
+        self.visited.add(vertex.unique_id)
+
+        stmts: list[Statement] = []
+
+        if isinstance(vertex, ir.AssignNode):
+            stmts.append(NonBlockingSubsitution(str(vertex.lvalue), str(vertex.rvalue)))
+            stmts += self.do_edge(vertex.optimal_child)
+
+        elif isinstance(vertex, ir.IfElseNode):
+            then_body = self.do_edge(vertex.optimal_true_edge)
+            else_body = self.do_edge(vertex.optimal_false_edge)
+            stmts.append(
+                IfElse(
+                    condition=Expression(str(vertex.condition)),
+                    then_body=then_body,
+                    else_body=else_body,
+                )
+            )
+
+        elif isinstance(vertex, ir.YieldNode):
+            outputs = [
+                Statement(f"_out{i} <= {expr}") for i, expr in enumerate(vertex._stmts)
+            ]
+            stmts += outputs
+
+        return stmts
+
+    def do_edge(self, edge: ir.Edge):
+        """
+        Processes a edge
+        """
+        if isinstance(edge, ir.NonClockedEdge):
+            return self.do_vertex(edge.optimal_child)
+        if isinstance(edge, ir.ClockedEdge):
+            return []
+            # return self.do_vertex(edge.optimal_child)
+        raise RuntimeError(f"{type(edge)}")
 
 
 class Instantiation(Statement):

@@ -17,7 +17,7 @@ from ..utils.assertions import assert_list_type, assert_type
 
 class Element:
     """
-    Represents logic
+    Element, base class for vertex or edge
     """
 
     def __init__(self, unique_id: str, name: str = ""):
@@ -88,7 +88,7 @@ class Element:
 
 class BasicElement(Element):
     """
-    Basic node with a single edge as child
+    Basic element with a single child
     """
 
     def __init__(

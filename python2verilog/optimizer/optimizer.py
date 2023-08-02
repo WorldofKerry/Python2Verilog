@@ -371,7 +371,7 @@ def graph_optimize(
                 visited=visited,
                 threshold=threshold,
             )
-            print(f"got result {result} {result.unique_id}")
+            # print(f"got result {result} {result.unique_id}")
             edge = ir.NonClockedEdge(
                 unique_id=f"{regular.child.unique_id}_o{make_unique()}",
                 child=result,
@@ -387,9 +387,9 @@ def graph_optimize(
                 true_edge=regular.true_edge,
                 false_edge=regular.false_edge,
             )
-            print(
-                f"created if with new_condition {new_condition} {new_ifelse.unique_id}"
-            )
+            # print(
+            #     f"created if with new_condition {new_condition} {new_ifelse.unique_id}"
+            # )
             # print(f"created {str(ifelse)}")
 
             if not should_i_be_clocked(
