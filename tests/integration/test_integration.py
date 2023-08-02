@@ -240,8 +240,8 @@ class TestMain(unittest.TestCase):
                 stdout = syn_process.stdout.read()
 
                 print(f"STDOUTTTTT {stdout}")
-                stats = stdout[stdout.find("Printing statistics:") :]
-                print(stats)
+                stats = stdout[stdout.find("Printing statistics") :]
+                print(f"THE STATTTS{stats}")
 
                 def snake_case(text):
                     return re.sub(r"[\W_]+", "_", text).strip("_").lower()
