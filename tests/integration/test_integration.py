@@ -222,13 +222,15 @@ class TestMain(unittest.TestCase):
 
             if args.write and args.synthesis:
                 syn_process = subprocess.Popen(
-                    " ".join[
-                        "yosys",
-                        "-QT",
-                        "-fverilog",
-                        FILES_IN_ABS_DIR["module"],
-                        "-pstat",
-                    ],
+                    " ".join(
+                        [
+                            "yosys",
+                            "-QT",
+                            "-fverilog",
+                            FILES_IN_ABS_DIR["module"],
+                            "-pstat",
+                        ]
+                    ),
                     shell=True,
                     text=True,
                     stdout=subprocess.PIPE,
