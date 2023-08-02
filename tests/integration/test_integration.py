@@ -240,7 +240,7 @@ class TestMain(unittest.TestCase):
                 stdout = syn_process.stdout.read()
 
                 print(f"STDOUTTTTT {stdout}")
-                stats = stdout[stdout.find("Printing statistics") :]
+                stats = stdout[stdout.find("Printing statistics.") :]
                 print(f"THE STATTTS{stats}")
 
                 def snake_case(text):
@@ -256,12 +256,14 @@ class TestMain(unittest.TestCase):
                         value = int(value.strip())
                     else:
                         try:
-                            value = int(line.strip())
-                            key = snake_case(
-                                data["number_of_cells"] + "_" + line.strip()
-                            )
+                            index = line.find("$") + 10
+                            value = int(line[index:].strip())
+                            key = line[:index].strip()
+                            data[key] = value
+
                         except ValueError as _:
                             continue
+
                     data[key] = value
                 print(f"da data{data}")
 
