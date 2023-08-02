@@ -7,6 +7,7 @@ import subprocess
 import csv
 import copy
 import re
+import logging
 import pathlib
 import pandas as pd
 import pytest
@@ -57,6 +58,7 @@ class TestMain(unittest.TestCase):
         """
         Stats will only be gathered on the last test
         """
+        logging.info(f"starting test for {dir}/{function_name}")
 
         assert len(test_cases) > 0, "Please include at least one test case"
 
@@ -95,6 +97,8 @@ class TestMain(unittest.TestCase):
                 os.remove(FILES_IN_ABS_DIR[key])
             os.mkfifo(FILES_IN_ABS_DIR[key])
 
+        logging.info(f"executing python")
+
         with open(FILES_IN_ABS_DIR["python"]) as python_file:
             python = python_file.read()
             _locals = dict()
@@ -127,6 +131,8 @@ class TestMain(unittest.TestCase):
                 function_name=function_name, python_yields=len(expected)
             )
 
+            logging.info("generating expected")
+
             if args.write:
                 with open(FILES_IN_ABS_DIR["expected"], mode="w") as expected_file:
                     for tupl in expected:
@@ -144,6 +150,8 @@ class TestMain(unittest.TestCase):
                 with open(FILES_IN_ABS_DIR["ast_dump"], mode="w") as ast_dump_file:
                     ast_dump_file.write(ast.dump(tree, indent="  "))
 
+            logging.info(f"finished executing python and created expected")
+
             iverilog_cmd = f'iverilog -s {function_name}_tb {FILES_IN_ABS_DIR["module_fifo"]} {FILES_IN_ABS_DIR["testbench_fifo"]} -o iverilog.log && unbuffer vvp iverilog.log && rm iverilog.log\n'
             process = subprocess.Popen(
                 iverilog_cmd,
@@ -156,13 +164,14 @@ class TestMain(unittest.TestCase):
             function = tree.body[0]
 
             ir, context = Generator2Graph(function).results
-            optimizer.graph_optimize(ir, threshold=1)
+            optimizer.graph_optimize(ir, threshold=0)
             __states = IrToVerilog.create_nonclocked_list(
                 ir, set(), [f"state {ir.unique_id}"], set()
             )
             print("DONEEEEEEEE")
             for __state in __states:
                 print(__state)
+
             # print("\n\nnext")
             # optimizer.graph_optimize(ir.child.child)
             # print("\n\nnextasdf3eefwe\n")

@@ -181,6 +181,9 @@ class IrToVerilog:
     def create_nonclocked_list(
         node: ir.Node, states: set[tuple[str, ...]], stmts: list[str], visited: set[str]
     ):
+        """
+        Creates a list of states from optimal nodes
+        """
         assert_type(node, ir.Node)
         assert_type(states, set)
         assert_list_type(stmts, str)
@@ -191,12 +194,27 @@ class IrToVerilog:
             states.update([tuple([*stmts, "sus"])])
             return states
         if node.unique_id in visited:
-            states.update([tuple([*stmts, f"goto {node.child.unique_id}"])])
-            return states
+            if isinstance(node, ir.IfElseNode):
+                # checkout out data/graph_optimizer_analysis_ifelse_visited.py for the analysis
+                # states.update(
+                #     [
+                #         tuple(
+                #             [
+                #                 *stmts,
+                #                 f"goto {node.optimal_true_edge.unique_id} {node.optimal_false_edge.unique_id}",
+                #             ]
+                #         )
+                #     ]
+                # )
+                return states
+                # pass
+            else:
+                states.add(tuple([*stmts, f"goto {node.child.unique_id}"]))
+                return states
         if isinstance(node, ir.DoneNode):
-            states.update([tuple([*stmts, "goto done"])])
+            states.add(tuple([*stmts, "goto done"]))
             return states
-        visited.update([node.unique_id])
+        visited.add(node.unique_id)
 
         if isinstance(node, ir.IfElseNode):
             IrToVerilog.create_nonclocked_list(
