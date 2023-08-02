@@ -43,7 +43,7 @@ jobs:
 
       - name: Run Pytest
         run: |
-          python3 -m pytest -vs tests/ --cov=python2verilog/ --cov-report term-missing --write -k "test_integration.py and test_testing"
+          python3 -m pytest -vs tests/ --cov=python2verilog/ --cov-report term-missing --write --synthesis -k "test_integration.py and test_testing"
 
       - name: Run Yosys
         if: always()

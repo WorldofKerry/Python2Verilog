@@ -11,6 +11,7 @@ Use dashes instead of underscores in CLI
 params = [
     Argument("first_test", False, action="store_true"),
     Argument("write", False, action="store_true"),
+    Argument("synthesis", False, action="store_true"),
 ]
 """
 Other useful flags

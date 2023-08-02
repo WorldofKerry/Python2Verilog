@@ -219,6 +219,11 @@ class TestMain(unittest.TestCase):
                 with open(FILES_IN_ABS_DIR["testbench"], mode="w") as testbench_file:
                     testbench_file.write(tb_str)
 
+                if args.synthesis:
+                    subprocess.run(
+                        ["yosys", "-fverilog", FILES_IN_ABS_DIR["module"], "-pstat"]
+                    )
+
             process.wait()
 
             stderr_str = process.stderr.read()
