@@ -27,6 +27,8 @@ jobs:
           libboost-python-dev libboost-filesystem-dev zlib1g-dev
       - name: Build
         run: |
-          make
-          sudo make install
-          ls
+            git clone https://github.com/YosysHQ/yosys.git
+            cd yosys
+            make
+            sudo make install
+            ls
