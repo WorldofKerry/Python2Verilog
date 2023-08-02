@@ -221,7 +221,13 @@ class TestMain(unittest.TestCase):
 
                 if args.synthesis:
                     subprocess.run(
-                        ["yosys", "-fverilog", FILES_IN_ABS_DIR["module"], "-pstat"]
+                        [
+                            "yosys",
+                            "-QT",
+                            "-fverilog",
+                            FILES_IN_ABS_DIR["module"],
+                            "-pstat",
+                        ]
                     )
 
             process.wait()
