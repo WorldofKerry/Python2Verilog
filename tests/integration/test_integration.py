@@ -218,7 +218,6 @@ class TestMain(unittest.TestCase):
 
                 with open(FILES_IN_ABS_DIR["testbench"], mode="w") as testbench_file:
                     testbench_file.write(tb_str)
-
             process.wait()
 
             if args.write and args.synthesis:
@@ -232,8 +231,8 @@ class TestMain(unittest.TestCase):
                     ],
                     shell=True,
                     text=True,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
+                    # stdout=subprocess.PIPE,
+                    # stderr=subprocess.PIPE,
                 )
                 process.wait()
                 stdout = process.stdout.read()
