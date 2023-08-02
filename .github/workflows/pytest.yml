@@ -48,7 +48,7 @@ jobs:
       - name: Run Yosys
         if: always()
         run: |
-          yosys -f verilog tests/integration/data/integration/testing/module.sv -p stat
+          yosys -QT -f verilog tests/integration/data/integration/testing/module.sv -p stat
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
