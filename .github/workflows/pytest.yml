@@ -41,6 +41,8 @@ jobs:
 
   synthesis:
     needs: build
+    if: ${{ always() && contains(needs.*.result, 'failure') }}
+
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
