@@ -48,7 +48,7 @@ jobs:
       - name: Run Yosys
         if: always()
         run: |
-          yosys -o synth.v -p hierarchy -p proc -p opt -p memory -p opt -p fsm -p opt -f verilog tests/integration/data/integration/testing/module.sv -p stat
+          yosys -f verilog tests/integration/data/integration/testing/module.sv -p stat
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
