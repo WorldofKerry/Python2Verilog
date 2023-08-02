@@ -219,18 +219,26 @@ class TestMain(unittest.TestCase):
                 with open(FILES_IN_ABS_DIR["testbench"], mode="w") as testbench_file:
                     testbench_file.write(tb_str)
 
-                if args.synthesis:
-                    subprocess.run(
-                        [
-                            "yosys",
-                            "-QT",
-                            "-fverilog",
-                            FILES_IN_ABS_DIR["module"],
-                            "-pstat",
-                        ]
-                    )
-
             process.wait()
+
+            if args.write and args.synthesis:
+                process = subprocess.Popen(
+                    [
+                        "yosys",
+                        "-QT",
+                        "-fverilog",
+                        FILES_IN_ABS_DIR["module"],
+                        "-pstat",
+                    ],
+                    shell=True,
+                    text=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                )
+                process.wait()
+                stdout = process.stdout.read()
+                stats = stdout[stdout.find("Printing statistics:") :]
+                print(stats)
 
             stderr_str = process.stderr.read()
             if stderr_str != "":
