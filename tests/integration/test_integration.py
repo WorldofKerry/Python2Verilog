@@ -238,6 +238,9 @@ class TestMain(unittest.TestCase):
                 )
                 syn_process.wait()
                 stdout = syn_process.stdout.read()
+                stderr = syn_process.stderr.read()
+                if stderr:
+                    warnings.warn(stderr)
 
                 print(f"STDOUTTTTT {stdout}")
                 stats = stdout[stdout.find("Printing statistics.") :]
@@ -265,7 +268,7 @@ class TestMain(unittest.TestCase):
                             continue
 
                     data[key] = value
-                for key, value in data:
+                for key, value in data.items():
                     statistics.__dict__[key] = value
                 print(f"da data{data}")
 
