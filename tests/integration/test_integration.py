@@ -221,7 +221,7 @@ class TestMain(unittest.TestCase):
             process.wait()
 
             if args.write and args.synthesis:
-                process = subprocess.Popen(
+                syn_process = subprocess.Popen(
                     [
                         "yosys",
                         "-QT",
@@ -231,11 +231,11 @@ class TestMain(unittest.TestCase):
                     ],
                     shell=True,
                     text=True,
-                    # stdout=subprocess.PIPE,
-                    # stderr=subprocess.PIPE,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
                 )
-                process.wait()
-                stdout = process.stdout.read()
+                syn_process.wait()
+                stdout = syn_process.stdout.read()
 
                 print(f"STDOUTTTTT {stdout}")
                 stats = stdout[stdout.find("Printing statistics:") :]
