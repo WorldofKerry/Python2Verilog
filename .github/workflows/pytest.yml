@@ -39,7 +39,7 @@ jobs:
         run: |
           wget -nv https://github.com/YosysHQ/oss-cad-suite-build/releases/download/2023-08-02/oss-cad-suite-linux-x64-20230802.tgz
           tar -xzf oss-cad-suite-linux-x64-20230802.tgz
-          echo "${GITHUB_WORKSPACE}/oss-cad-suite/bin/yosys" >> $GITHUB_PATH
+          echo "./oss-cad-suite/bin/yosys" >> $GITHUB_PATH
 
       - name: Run Pytest
         run: |
@@ -48,7 +48,7 @@ jobs:
       - name: Run Yosys
         if: always()
         run: |
-          ./oss-cad-suite/bin/yosys -o synth.v -p hierarchy -p proc -p opt -p memory -p opt -p fsm -p opt -f verilog tests/integration/data/integration/testing/module.sv -p stat
+          yosys -o synth.v -p hierarchy -p proc -p opt -p memory -p opt -p fsm -p opt -f verilog tests/integration/data/integration/testing/module.sv -p stat
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
