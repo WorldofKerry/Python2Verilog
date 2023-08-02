@@ -36,11 +36,11 @@ jobs:
           sudo apt-get install iverilog expect
 
       - name: Run Pytest
-        continue-on-error: true
         run: |
           python3 -m pytest -vs --cov=python2verilog/ --cov-report term-missing --write
 
       - name: Install oss with yosys
+        if: always()
         run: |
           wget -nv https://github.com/YosysHQ/oss-cad-suite-build/releases/download/2023-08-02/oss-cad-suite-linux-x64-20230802.tgz
           tar -xzf oss-cad-suite-linux-x64-20230802.tgz
@@ -48,11 +48,13 @@ jobs:
           echo $GITHUB_PATH
 
       - name: Run Yosys
+        if: always()
         run: |
           yosys -o synth.v -p hierarchy -p proc -p opt -p memory -p opt -p fsm -p opt -f verilog tests/integration/data/integration/testing/module.sv -p stat
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
+        if: always()
         with:
           name: tests-data
           path: tests/
