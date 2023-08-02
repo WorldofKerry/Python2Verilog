@@ -187,8 +187,14 @@ class IrToVerilog:
         assert_type(visited, set)
 
         print(f"recurse on {str(node)} {str(states)} {str(stmts)}")
-        if not node or node.unique_id in visited or isinstance(node, ir.DoneNode):
-            states.update([tuple(stmts)])
+        if not node:
+            states.update([tuple([*stmts, "sus"])])
+            return states
+        if node.unique_id in visited:
+            states.update([tuple([*stmts, f"goto {node.child.unique_id}"])])
+            return states
+        if isinstance(node, ir.DoneNode):
+            states.update([tuple([*stmts, "goto done"])])
             return states
         visited.update([node.unique_id])
 
@@ -207,8 +213,13 @@ class IrToVerilog:
             )
             return states
         if isinstance(node, ir.ClockedEdge):
-            states.update([tuple(stmts)])
-            IrToVerilog.create_nonclocked_list(node.optimal_child, states, [], visited)
+            states.update([tuple([*stmts, f"goto {node.optimal_child.unique_id}"])])
+            IrToVerilog.create_nonclocked_list(
+                node.optimal_child,
+                states,
+                [f"state {node.optimal_child.unique_id}"],
+                visited,
+            )
             return states
         if isinstance(node, ir.NonClockedEdge):
             IrToVerilog.create_nonclocked_list(

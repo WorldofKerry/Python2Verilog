@@ -428,7 +428,6 @@ def create_cytoscape_elements(node: Node):
                 }
             )
             for child in curr_node.children:
-                print(f"set {str(child.__class__.__name__)}")
                 edges.append(
                     {
                         "data": {
