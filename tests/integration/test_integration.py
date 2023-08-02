@@ -237,8 +237,28 @@ class TestMain(unittest.TestCase):
                 )
                 process.wait()
                 stdout = process.stdout.read()
+
+                print(f"STDOUTTTTT {stdout}")
                 stats = stdout[stdout.find("Printing statistics:") :]
                 print(stats)
+
+                def snake_case(text):
+                    return re.sub(r"[\W_]+", "_", text).strip("_").lower()
+
+                lines = stats.strip().splitlines()
+                data = {}
+
+                for line in lines:
+                    if ":" in line:
+                        key, value = line.split(":")
+                        key = snake_case(key)
+                        value = int(value.strip())
+                    else:
+                        value = int(line.strip())
+                        key = snake_case(data["number_of_cells"] + "_" + line.strip())
+
+                    data[key] = value
+                print(data)
 
             stderr_str = process.stderr.read()
             if stderr_str != "":
