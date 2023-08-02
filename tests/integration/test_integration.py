@@ -222,7 +222,7 @@ class TestMain(unittest.TestCase):
 
             if args.write and args.synthesis:
                 syn_process = subprocess.Popen(
-                    [
+                    " ".join[
                         "yosys",
                         "-QT",
                         "-fverilog",
