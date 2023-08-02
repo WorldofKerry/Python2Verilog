@@ -258,13 +258,15 @@ class TestMain(unittest.TestCase):
                         try:
                             index = line.find("$") + 10
                             value = int(line[index:].strip())
-                            key = line[:index].strip()
+                            key = line[1:index].strip()
                             data[key] = value
 
                         except ValueError as _:
                             continue
 
                     data[key] = value
+                for key, value in data:
+                    statistics.__dict__[key] = value
                 print(f"da data{data}")
 
             stderr_str = process.stderr.read()
