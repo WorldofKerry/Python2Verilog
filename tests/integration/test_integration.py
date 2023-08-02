@@ -255,11 +255,15 @@ class TestMain(unittest.TestCase):
                         key = snake_case(key)
                         value = int(value.strip())
                     else:
-                        value = int(line.strip())
-                        key = snake_case(data["number_of_cells"] + "_" + line.strip())
-
+                        try:
+                            value = int(line.strip())
+                            key = snake_case(
+                                data["number_of_cells"] + "_" + line.strip()
+                            )
+                        except ValueError as _:
+                            continue
                     data[key] = value
-                print(data)
+                print(f"da data{data}")
 
             stderr_str = process.stderr.read()
             if stderr_str != "":
