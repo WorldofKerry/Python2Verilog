@@ -106,8 +106,8 @@ class TestMain(unittest.TestCase):
                     expected.append(tupl)
 
             statistics = {
-                "function_name": function_name,
-                "python_yields": len(expected),
+                "f_name": function_name,
+                "py_yields": len(expected),
             }
 
             logging.info("generating expected")
@@ -180,7 +180,7 @@ class TestMain(unittest.TestCase):
                 plt.close()
 
             module_str = verilog.get_module_lines().to_string()
-            statistics["module_num_chars"] = len(
+            statistics["module_nchars"] = len(
                 module_str.replace("\n", "").replace(" ", "")
             )
             tb_str = verilog.new_testbench(test_cases).to_string()
@@ -264,7 +264,7 @@ class TestMain(unittest.TestCase):
                 row = [elem.strip() for elem in line.split(",")]
                 actual_raw.append(row)
 
-            statistics["verilog_clocks"] = len(actual_raw)
+            statistics["ver_clks"] = len(actual_raw)
             TestMain.all_statistics.append(statistics)
 
             filtered_actual = []
