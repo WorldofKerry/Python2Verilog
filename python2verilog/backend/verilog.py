@@ -749,7 +749,7 @@ class Module(ImplementsToLines):
         input_lines = Lines()
         for inputt in inputs:
             assert isinstance(inputt, str)
-            input_lines += f"input wire [31:0] {inputt}"
+            input_lines += f"input wire signed [31:0] {inputt}"
         if add_default_ports:
             input_lines += "input wire _start"
             input_lines += "input wire _clock"
@@ -758,7 +758,7 @@ class Module(ImplementsToLines):
         output_lines = Lines()
         for output in outputs:
             assert isinstance(output, str)
-            output_lines += f"output reg [31:0] {output}"
+            output_lines += f"output reg signed [31:0] {output}"
         if add_default_ports:
             output_lines += "output reg _done"
             output_lines += "output reg _valid"

@@ -283,15 +283,20 @@ class TestMain(unittest.TestCase):
             actual_coords = set(filtered_actual)
             expected_coords = set(expected)
 
+            # self.assertEqual(
+            #     actual_coords - expected_coords,
+            #     set(),
+            #     f"str(actual_coords - expected_coords) <-- extra coordinates, actual expected: {str(actual_coords)} {str(expected_coords)}",
+            # )
+            # self.assertEqual(
+            #     expected_coords - actual_coords,
+            #     set(),
+            #     f"str(expected_coords - actual_coor <-- missing coordinates, actual expected: {str(actual_coords)} {str(expected_coords)}",
+            # )
             self.assertEqual(
-                actual_coords - expected_coords,
-                set(),
-                f"str(actual_coords - expected_coords) <-- extra coordinates, actual expected: {str(actual_coords)} {str(expected_coords)}",
-            )
-            self.assertEqual(
-                expected_coords - actual_coords,
-                set(),
-                f"str(expected_coords - actual_coor <-- missing coordinates, actual expected: {str(actual_coords)} {str(expected_coords)}",
+                actual_coords,
+                expected_coords,
+                "actual_coords vs expected_coords",
             )
 
             for key in fifos:
