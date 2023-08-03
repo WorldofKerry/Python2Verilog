@@ -40,6 +40,9 @@ class Statistics:
         result.pop("extra_nums")
         return result
 
+    def __iter__(self):
+        yield from self.__combined().items()
+
     def values(self):
         return self.__combined().values()
 
@@ -261,7 +264,7 @@ class TestMain(unittest.TestCase):
                 for line in lines:
                     if ":" in line:
                         key, value = line.split(":")
-                        key = snake_case(key.split("_")[-1])
+                        key = snake_case(key.split("number_of_")[-1])
                         value = int(value.strip())
                     else:
                         try:
