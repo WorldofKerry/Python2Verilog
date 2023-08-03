@@ -11,7 +11,7 @@ import logging
 import pathlib
 import pandas as pd
 import pytest
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import networkx as nx
 from matplotlib import pyplot as plt
 
@@ -33,15 +33,21 @@ class Statistics:
     python_yields: int = -1
     verilog_clocks: int = -1
     module_num_chars: int = -1
+    extra_nums: dict[str, int] = field(default_factory=dict)
 
-    def __iter__(self):
-        yield from self.values()
+    def __combined(self):
+        result = {**self.__dict__, **self.extra_nums}
+        result.pop("extra_nums")
+        return result
 
     def values(self):
-        return self.__dict__.values()
+        return self.__combined().values()
 
     def keys(self):
-        return self.__dict__.keys()
+        return self.__combined().keys()
+
+    def add_extra_num(self, key: str, value: int):
+        self.extra_nums[key] = value
 
 
 @pytest.mark.usefixtures("argparse")  # creates self.args
@@ -261,7 +267,7 @@ class TestMain(unittest.TestCase):
                         try:
                             index = line.find("$") + 10
                             value = int(line[index:].strip())
-                            key = line[1:index].strip()
+                            key = line[:index].strip()[1:]
                             data[key] = value
 
                         except ValueError as _:
@@ -269,8 +275,8 @@ class TestMain(unittest.TestCase):
 
                     data[key] = value
                 for key, value in data.items():
-                    statistics.__dict__[key] = value
-                print(f"da data{data}")
+                    statistics.add_extra_num(key, value)
+            print(f"da data{statistics.values()}")
 
             stderr_str = process.stderr.read()
             if stderr_str != "":
