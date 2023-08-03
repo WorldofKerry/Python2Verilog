@@ -49,6 +49,7 @@ class CodeGen:
     def from_list_ir(cls, root: ir.Statement, context: ir.Context):
         """
         Builds tree from list IR
+        Warning: being depricated
         """
         assert isinstance(root, ir.Statement), f"got {type(root)} instead"
         assert isinstance(context, ir.Context)
