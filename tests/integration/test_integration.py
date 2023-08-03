@@ -50,7 +50,7 @@ class BaseTestCases:
                         name,
                         cases,
                         self.args,
-                        "data/integration",
+                        "data",
                         f"_{self.__class__.__name__}_",
                         self.create_verilog_from_func,
                     )
