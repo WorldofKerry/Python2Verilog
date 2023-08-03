@@ -283,20 +283,14 @@ class TestMain(unittest.TestCase):
             actual_coords = set(filtered_actual)
             expected_coords = set(expected)
 
-            # self.assertEqual(
-            #     actual_coords - expected_coords,
-            #     set(),
-            #     f"str(actual_coords - expected_coords) <-- extra coordinates, actual expected: {str(actual_coords)} {str(expected_coords)}",
-            # )
-            # self.assertEqual(
-            #     expected_coords - actual_coords,
-            #     set(),
-            #     f"str(expected_coords - actual_coor <-- missing coordinates, actual expected: {str(actual_coords)} {str(expected_coords)}",
-            # )
+            err_msg = "\nactual_coords vs expected_coords"
+            if len(actual_coords) == len(expected_coords):
+                err_msg += ", lengths are same, likely a rounding or sign error"
+            err_msg += f"\n{FILES_IN_ABS_DIR['expected']}\n{FILES_IN_ABS_DIR['filtered_actual']}"
             self.assertEqual(
                 actual_coords,
                 expected_coords,
-                "actual_coords vs expected_coords",
+                err_msg,
             )
 
             for key in fifos:

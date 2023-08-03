@@ -357,7 +357,7 @@ def graph_optimize(
             raise RuntimeError(f"no edges allowed {regular.child}")
         if isinstance(regular, ir.AssignNode):
             new_node = graph_apply_mapping(regular, mapping)
-            new_node.unique_id = f"{regular.unique_id}_o{make_unique()}"
+            new_node.unique_id = f"{regular.unique_id}_{make_unique()}_optimal"
 
             if should_i_be_clocked(regular.child.child, mapping, visited, threshold):
                 new_node.optimal_child = regular.child
@@ -374,7 +374,7 @@ def graph_optimize(
             )
             # print(f"got result {result} {result.unique_id}")
             edge = ir.NonClockedEdge(
-                unique_id=f"{regular.child.unique_id}_o{make_unique()}",
+                unique_id=f"{regular.child.unique_id}_{make_unique()}_optimal",
                 child=result,
             )
             new_node.optimal_child = edge
@@ -383,7 +383,7 @@ def graph_optimize(
         if isinstance(regular, ir.IfElseNode):
             new_condition = backwards_replace(regular.condition, mapping)
             new_ifelse = ir.IfElseNode(
-                unique_id=f"{regular.unique_id}_o{make_unique()}",
+                unique_id=f"{regular.unique_id}_{make_unique()}_optimal",
                 condition=new_condition,
                 true_edge=regular.true_edge,
                 false_edge=regular.false_edge,
@@ -407,7 +407,7 @@ def graph_optimize(
                     threshold=threshold,
                 )
                 edge = ir.NonClockedEdge(  # TODO: reason about this, there are yield -> if -> yield with no clocks in-between
-                    unique_id=f"{regular.true_edge.unique_id}_o{make_unique()}",
+                    unique_id=f"{regular.true_edge.unique_id}_{make_unique()}_optimal",
                     name="True",
                     child=optimal_true_node,
                 )
@@ -430,7 +430,7 @@ def graph_optimize(
                     threshold=threshold,
                 )
                 edge = ir.NonClockedEdge(
-                    unique_id=f"{regular.false_edge.unique_id}_o{make_unique()}",
+                    unique_id=f"{regular.false_edge.unique_id}_{make_unique()}_optimal",
                     name="False",
                     child=optimal_false_node,
                 )
@@ -454,11 +454,11 @@ def graph_optimize(
                 threshold=threshold,
             )
             edge = ir.NonClockedEdge(
-                unique_id=f"{regular.child.unique_id}_o{make_unique()}",
+                unique_id=f"{regular.child.unique_id}_{make_unique()}_optimal",
                 child=result,
             )
             new_node = ir.YieldNode(
-                unique_id=f"{regular.unique_id}_o{make_unique()}",
+                unique_id=f"{regular.unique_id}_{make_unique()}_optimal",
                 stmts=updated,
                 name=regular.name,
             )
