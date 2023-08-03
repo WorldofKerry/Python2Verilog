@@ -221,9 +221,7 @@ class TestMain(unittest.TestCase):
                 if stderr:
                     warnings.warn(stderr)
 
-                print(f"STDOUTTTTT {stdout}")
                 stats = stdout[stdout.find("Printing statistics.") :]
-                print(f"THE STATTTS{stats}")
 
                 def snake_case(text):
                     return re.sub(r"[\W_]+", "_", text).strip("_").lower()
@@ -249,7 +247,6 @@ class TestMain(unittest.TestCase):
                     data[key] = value
                 for key, value in data.items():
                     statistics[key] = value
-            print(f"da data{statistics.values()}")
 
             stderr_str = process.stderr.read()
             if stderr_str != "":
