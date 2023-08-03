@@ -1,10 +1,4 @@
-from python2verilog.backend.verilog import (
-    IrToVerilog,
-    Module,
-    PosedgeSyncAlways,
-    Instantiation,
-    Expression,
-)
+from python2verilog.backend.verilog.ast import *
 from python2verilog.frontend import Generator2List, Generator2Graph
 import unittest
 import warnings

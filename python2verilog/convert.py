@@ -9,7 +9,7 @@ import warnings
 from typing import Optional
 from .frontend import Generator2List, Generator2Graph
 from .backend.verilog import IrToVerilog
-from .optimizer import basic
+from .optimizer import basic, OptimizeGraph
 
 
 def convert_list(func: ast.FunctionDef, optimization_level: int):
@@ -30,8 +30,7 @@ def convert_graph(func: ast.FunctionDef, optimization_level: int):
     """
 
     ir, context = Generator2Graph(func).results
-    if optimization_level > 0:
-        ir = basic.graph_optimize(ir)
+    OptimizeGraph(ir, threshold=optimization_level)
     return IrToVerilog.from_graph_ir(ir, context)
 
 

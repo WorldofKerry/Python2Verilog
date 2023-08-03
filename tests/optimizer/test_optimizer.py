@@ -4,7 +4,7 @@ import warnings
 
 from python2verilog.optimizer import *
 from python2verilog import ir
-from python2verilog.backend import IrToVerilog
+from python2verilog.backend.verilog import IrToVerilog
 
 
 class TestGraphApplyMapping(unittest.TestCase):
