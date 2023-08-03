@@ -20,7 +20,7 @@ def convert_list(func: ast.FunctionDef, optimization_level: int):
     if optimization_level > 0:
         ir_root = basic.optimize_if(ir_root)
         ir_root = basic.combine_cases(ir_root)
-        ir_root = basic.remove_unreferenced_states(ir_root)
+        # ir_root = basic.remove_unreferenced_states(ir_root) # buggy
     return CodeGen.from_list_ir(ir_root, context)
 
 
