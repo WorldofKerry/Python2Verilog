@@ -1,4 +1,5 @@
 from python2verilog.backend.verilog.ast import *
+from python2verilog.backend.verilog import CodeGen
 from python2verilog.frontend import Generator2List, Generator2Graph
 import unittest
 import warnings
@@ -75,7 +76,7 @@ def circle_lines(s_x, s_y, height) -> tuple[int, int]:
         tree = ast.parse(code)
         function = tree.body[0]
         ir = Generator2List(function)
-        verilog = IrToVerilog()
+        verilog = CodeGen()
         verilog.from_list_ir(ir.get_root(), ir.get_context())
         # warnings.warn(verilog.get_module())
         # warnings.warn(
@@ -128,7 +129,7 @@ def fib(n: int) -> tuple[int]:
         )
         # plt.savefig("path.png")
 
-        verilog = IrToVerilog.from_graph_ir(inst.root, inst.context)
+        verilog = CodeGen.from_graph_ir(inst.root, inst.context)
         # warnings.warn(verilog.get_module_lines())
         # warnings.warn(verilog.get_testbench([(10,)]).to_lines().to_string())
 
