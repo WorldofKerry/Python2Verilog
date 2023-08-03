@@ -11,7 +11,6 @@ import logging
 import pathlib
 import pandas as pd
 import pytest
-from dataclasses import dataclass, field
 import networkx as nx
 from matplotlib import pyplot as plt
 
@@ -23,39 +22,9 @@ from python2verilog.ir import *
 from python2verilog.utils.visualization import make_visual
 
 
-@dataclass
-class Statistics:
-    """
-    Holds a test's statistics
-    """
-
-    function_name: str = "Unspecified"
-    python_yields: int = -1
-    verilog_clocks: int = -1
-    module_num_chars: int = -1
-    extra_nums: dict[str, int] = field(default_factory=dict)
-
-    def __combined(self):
-        result = {**self.__dict__, **self.extra_nums}
-        result.pop("extra_nums")
-        return result
-
-    def __iter__(self):
-        yield from self.__combined().items()
-
-    def values(self):
-        return self.__combined().values()
-
-    def keys(self):
-        return self.__combined().keys()
-
-    def add_extra_num(self, key: str, value: int):
-        self.extra_nums[key] = value
-
-
 @pytest.mark.usefixtures("argparse")  # creates self.args
 class TestMain(unittest.TestCase):
-    all_statistics: list[Statistics] = []
+    all_statistics: list[dict] = []
 
     def run_test(
         self,
@@ -136,9 +105,10 @@ class TestMain(unittest.TestCase):
 
                     expected.append(tupl)
 
-            statistics = Statistics(
-                function_name=function_name, python_yields=len(expected)
-            )
+            statistics = {
+                "function_name": function_name,
+                "python_yields": len(expected),
+            }
 
             logging.info("generating expected")
 
@@ -210,7 +180,7 @@ class TestMain(unittest.TestCase):
                 plt.close()
 
             module_str = verilog.get_module_lines().to_string()
-            statistics.module_num_chars = len(
+            statistics["module_num_chars"] = len(
                 module_str.replace("\n", "").replace(" ", "")
             )
             tb_str = verilog.new_testbench(test_cases).to_string()
@@ -278,7 +248,7 @@ class TestMain(unittest.TestCase):
 
                     data[key] = value
                 for key, value in data.items():
-                    statistics.add_extra_num(key, value)
+                    statistics[key] = value
             print(f"da data{statistics.values()}")
 
             stderr_str = process.stderr.read()
@@ -294,7 +264,7 @@ class TestMain(unittest.TestCase):
                 row = [elem.strip() for elem in line.split(",")]
                 actual_raw.append(row)
 
-            statistics.verilog_clocks = len(actual_raw)
+            statistics["verilog_clocks"] = len(actual_raw)
             TestMain.all_statistics.append(statistics)
 
             filtered_actual = []
