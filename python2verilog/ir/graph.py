@@ -9,9 +9,9 @@ Element := Vertex | Edge
 
 from __future__ import annotations
 import copy
+from typing import Optional
 
-from .statements import *
-from .expressions import *
+from . import expressions as expr
 from ..utils.assertions import assert_list_type, assert_type
 
 
@@ -165,13 +165,13 @@ class IfElseNode(Vertex, Element):
         *args,
         true_edge: Optional[Edge] = None,
         false_edge: Optional[Edge] = None,
-        condition: Optional[Expression],
+        condition: Optional[expr.Expression],
         **kwargs,
     ):
         super().__init__(unique_id, *args, **kwargs)
         self._true_edge = assert_type(true_edge, Edge)
         self._false_edge = assert_type(false_edge, Edge)
-        self._condition = assert_type(condition, Expression)
+        self._condition = assert_type(condition, expr.Expression)
         self._optimal_true_edge = None
         self._optimal_false_edge = None
 
@@ -275,14 +275,14 @@ class AssignNode(Vertex, BasicElement):
         self,
         unique_id: str,
         *args,
-        lvalue: Expression,
-        rvalue: Expression,
+        lvalue: expr.Expression,
+        rvalue: expr.Expression,
         child: Optional[Edge] = None,
         **kwargs,
     ):
         super().__init__(unique_id, *args, child=child, **kwargs)
-        self._lvalue = assert_type(lvalue, Expression)
-        self._rvalue = assert_type(rvalue, Expression)
+        self._lvalue = assert_type(lvalue, expr.Expression)
+        self._rvalue = assert_type(rvalue, expr.Expression)
 
     @property
     def lvalue(self):
@@ -299,8 +299,8 @@ class AssignNode(Vertex, BasicElement):
         return self._rvalue
 
     @rvalue.setter
-    def rvalue(self, rvalue: Expression):
-        self._rvalue = assert_type(rvalue, Expression)
+    def rvalue(self, rvalue: expr.Expression):
+        self._rvalue = assert_type(rvalue, expr.Expression)
 
     def to_string(self):
         """
@@ -318,11 +318,11 @@ class YieldNode(Vertex, BasicElement):
         self,
         unique_id: str,
         name: str = "",
-        stmts: Optional[list[Expression]] = None,
+        stmts: Optional[list[expr.Expression]] = None,
         edge: Optional[Edge] = None,
     ):
         super().__init__(unique_id, name=name, child=edge)
-        self._stmts = assert_list_type(stmts, Expression)
+        self._stmts = assert_list_type(stmts, expr.Expression)
 
     def to_string(self):
         """

@@ -9,4 +9,17 @@ Similar to Assembly
 from .expressions import *
 from .statements import *
 from .context import Context
-from .graph import *
+from .graph import (
+    Element,
+    BasicElement,
+    Edge,
+    Vertex,
+    AssignNode,
+    ClockedEdge,
+    NonClockedEdge,
+    DoneNode,
+    IfElseNode,
+    YieldNode,
+    create_cytoscape_elements,
+    create_networkx_adjacency_list,
+)

@@ -1,3 +1,4 @@
+from typing import Callable
 import unittest
 import ast
 import warnings
@@ -31,7 +32,8 @@ class TestMain(unittest.TestCase):
         function_name: str,
         test_cases: list[tuple],
         args: dict,
-        dir: str = f"data/{pathlib.Path(__file__).stem.replace('test_', '')}/",
+        dir: str,
+        test_script: Callable[[ast.FunctionDef], CodeGen],
     ):
         """
         Stats will only be gathered on the last test
