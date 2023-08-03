@@ -190,6 +190,11 @@ class IrToVerilog:
         inst._context = context
         old_case = inst.graph_build(root, set())
         root_case = CaseBuilder(root).case
+        counter = len(old_case.case_items) + 1
+        for item in root_case.case_items:
+            if item.condition.to_string() not in inst._context.global_vars:
+                inst._context.global_vars[item.condition.to_string()] = counter
+                counter += 1
         inst._context.global_vars["_state"] = str(len(old_case.case_items))
         inst._module = IrToVerilog.__new_module(root_case, inst._context)
         return inst
@@ -600,7 +605,7 @@ class CaseBuilder:
 
         # Work
         self.case.case_items.append(self.new_caseitem(root))
-        logging.info(self.case.to_string())
+        # logging.info(self.case.to_string())
 
     def new_caseitem(self, root: ir.Element):
         """

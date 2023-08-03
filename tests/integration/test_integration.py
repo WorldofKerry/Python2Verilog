@@ -274,6 +274,10 @@ class TestMain(unittest.TestCase):
                     for tupl in filtered_actual:
                         filtered_f.write(" " + str(tupl)[1:-1] + "\n")
 
+                with open(FILES_IN_ABS_DIR["actual"], mode="w") as filtered_f:
+                    for tupl in actual_raw:
+                        filtered_f.write(" " + str(tupl)[1:-1] + "\n")
+
                 make_visual(filtered_actual, FILES_IN_ABS_DIR["actual_visual"])
 
             actual_coords = set(filtered_actual)
