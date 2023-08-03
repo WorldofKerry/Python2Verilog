@@ -74,6 +74,7 @@ class GraphBase:
     def create_create_verilog_from_func(optimization_level: int):
         def create_verilog_from_func(function: ast.FunctionDef):
             ir, context = Generator2Graph(function).results
+            logging.debug(f"running optimizer with O{optimization_level}")
             OptimizeGraph(ir, threshold=optimization_level)
             verilog = CodeGen.from_optimal_ir(ir, context)
             return verilog, ir
@@ -239,12 +240,12 @@ class GraphBase:
 
                 with open(FILES_IN_ABS_DIR["testbench"], mode="w") as testbench_file:
                     testbench_file.write(tb_str)
-            process.wait()
             with open(FILES_IN_ABS_DIR["module_fifo"], mode="w") as module_file:
                 module_file.write(module_str)
 
             with open(FILES_IN_ABS_DIR["testbench_fifo"], mode="w") as testbench_file:
                 testbench_file.write(tb_str)
+            process.wait()
 
             if args.write and args.synthesis:
                 syn_process = subprocess.Popen(
