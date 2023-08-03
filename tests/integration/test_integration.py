@@ -16,7 +16,7 @@ from matplotlib import pyplot as plt
 
 from python2verilog.backend.verilog import IrToVerilog, CaseBuilder
 from python2verilog.frontend import Generator2Graph
-from python2verilog.optimizer import optimizer
+from python2verilog.optimizer import basic, OptimizeGraph
 from python2verilog.convert import *
 from python2verilog.ir import *
 from python2verilog.utils.visualization import make_visual
@@ -144,7 +144,7 @@ class TestMain(unittest.TestCase):
             function = tree.body[0]
 
             ir, context = Generator2Graph(function).results
-            optimizer.graph_optimize(ir, threshold=0)
+            OptimizeGraph(ir, threshold=0)
             case_builder = CaseBuilder(ir)
             # __states = IrToVerilog.create_nonclocked_list(
             #     ir, set(), [f"state {ir.unique_id}"], set()

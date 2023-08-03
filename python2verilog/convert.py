@@ -9,7 +9,7 @@ import warnings
 from typing import Optional
 from .frontend import Generator2List, Generator2Graph
 from .backend.verilog import IrToVerilog
-from .optimizer import optimizer
+from .optimizer import basic
 
 
 def convert_list(func: ast.FunctionDef, optimization_level: int):
@@ -18,9 +18,9 @@ def convert_list(func: ast.FunctionDef, optimization_level: int):
     """
     ir_root, context = Generator2List(func).get_results()
     if optimization_level > 0:
-        ir_root = optimizer.optimize_if(ir_root)
-        ir_root = optimizer.combine_cases(ir_root)
-        ir_root = optimizer.remove_unreferenced_states(ir_root)
+        ir_root = basic.optimize_if(ir_root)
+        ir_root = basic.combine_cases(ir_root)
+        ir_root = basic.remove_unreferenced_states(ir_root)
     return IrToVerilog.from_list_ir(ir_root, context)
 
 
@@ -31,7 +31,7 @@ def convert_graph(func: ast.FunctionDef, optimization_level: int):
 
     ir, context = Generator2Graph(func).results
     if optimization_level > 0:
-        ir = optimizer.graph_optimize(ir)
+        ir = basic.graph_optimize(ir)
     return IrToVerilog.from_graph_ir(ir, context)
 
 

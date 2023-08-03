@@ -180,11 +180,11 @@ class IrToVerilog:
         return inst
 
     @classmethod
-    def from_optimal_ir(cls, root: ir.Element, context: ir.Context):
+    def from_optimal_ir(cls, root: ir.Vertex, context: ir.Context):
         """ "
         Builds tree from Graph IR
         """
-        assert_type(root, ir.Element)
+        assert_type(root, ir.Vertex)
         assert_type(context, ir.Context)
         inst = IrToVerilog()
         inst._context = context
@@ -198,85 +198,6 @@ class IrToVerilog:
         inst._context.global_vars["_state"] = str(len(old_case.case_items))
         inst._module = IrToVerilog.__new_module(root_case, inst._context)
         return inst
-
-    @staticmethod
-    def create_nonclocked_list(
-        node: ir.Element,
-        states: set[tuple[str, ...]],
-        stmts: list[str],
-        visited: set[str],
-    ):
-        """
-        Creates a list of states from optimal nodes
-        """
-        assert_type(node, ir.Element)
-        assert_type(states, set)
-        assert_list_type(stmts, str)
-        assert_type(visited, set)
-
-        print(f"recurse on {str(node)} {str(states)} {str(stmts)}")
-        if not node:
-            states.update([tuple([*stmts, "sus"])])
-            return states
-        if node.unique_id in visited:
-            if isinstance(node, ir.IfElseNode):
-                # checkout out data/graph_optimizer_analysis_ifelse_visited.py for the analysis
-                # states.update(
-                #     [
-                #         tuple(
-                #             [
-                #                 *stmts,
-                #                 f"goto {node.optimal_true_edge.unique_id} {node.optimal_false_edge.unique_id}",
-                #             ]
-                #         )
-                #     ]
-                # )
-                return states
-                # pass
-            else:
-                states.add(tuple([*stmts, f"goto {node.child.unique_id}"]))
-                return states
-        if isinstance(node, ir.DoneNode):
-            states.add(tuple([*stmts, "goto done"]))
-            return states
-        visited.add(node.unique_id)
-
-        if isinstance(node, ir.IfElseNode):
-            IrToVerilog.create_nonclocked_list(
-                node.optimal_true_edge,
-                states,
-                copy.deepcopy(stmts) + [f"{str(node)} then"],
-                visited,
-            )
-            IrToVerilog.create_nonclocked_list(
-                node.optimal_false_edge,
-                states,
-                copy.deepcopy(stmts) + [f"{str(node)} else"],
-                visited,
-            )
-            return states
-        if isinstance(node, ir.ClockedEdge):
-            states.update([tuple([*stmts, f"goto {node.optimal_child.unique_id}"])])
-            IrToVerilog.create_nonclocked_list(
-                node.optimal_child,
-                states,
-                [f"state {node.optimal_child.unique_id}"],
-                visited,
-            )
-            return states
-        if isinstance(node, ir.NonClockedEdge):
-            IrToVerilog.create_nonclocked_list(
-                node.optimal_child, states, stmts, visited
-            )
-            return states
-        if isinstance(node, ir.BasicElement):
-            stmts.append(str(node))
-            IrToVerilog.create_nonclocked_list(
-                node.optimal_child, states, stmts, visited
-            )
-            return states
-
-        raise RuntimeError(f"{type(node)}")
 
     @staticmethod
     def list_build_stmt(node: ir.Statement) -> Statement:
@@ -594,7 +515,7 @@ class CaseBuilder:
     Creates a case statement for the IR Graph
     """
 
-    def __init__(self, root: ir.Element):
+    def __init__(self, root: ir.Vertex):
         # Member Vars
         self.visited: set[str] = set()
         self.case = Case(expression=Expression("_state"), case_items=[])
@@ -607,7 +528,7 @@ class CaseBuilder:
         self.case.case_items.append(self.new_caseitem(root))
         # logging.info(self.case.to_string())
 
-    def new_caseitem(self, root: ir.Element):
+    def new_caseitem(self, root: ir.Vertex):
         """
         Creates a new case item with the root's unique id as identifier
         """

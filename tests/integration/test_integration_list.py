@@ -16,7 +16,7 @@ from matplotlib import pyplot as plt
 
 from python2verilog.backend.verilog import IrToVerilog
 from python2verilog.frontend import Generator2List
-from python2verilog.optimizer import optimizer
+from python2verilog.optimizer import basic
 from python2verilog.convert import *
 from python2verilog.ir import create_networkx_adjacency_list
 from python2verilog.utils.visualization import make_visual
