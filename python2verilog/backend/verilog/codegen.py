@@ -383,7 +383,7 @@ class CodeGen:
             initial_body.append(
                 ver.While(condition=ver.Expression("!_done"), body=while_body)
             )
-            # initial_body.append(make_display_stmt())
+            initial_body.append(make_display_stmt())
             initial_body.append(ver.Statement())
 
         initial_body.append(ver.Statement(literal="$finish;"))

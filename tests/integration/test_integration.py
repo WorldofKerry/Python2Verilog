@@ -44,7 +44,8 @@ class BaseTestCases:
             if self.args.first_test:
                 logging.info("Only first test being ran")
             for name, cases in test_cases.items():
-                with self.subTest():
+                cases = [cases[0]]
+                with self.subTest(msg=name):
                     logging.info(f"{name} with {cases}")
                     self.run_test(
                         name,
@@ -98,10 +99,6 @@ class GraphBase:
         logging.debug(f"starting test for {dir}/{function_name}")
 
         assert len(test_cases) > 0, "Please include at least one test case"
-
-        if args.first_test:
-            logging.debug(f"Only using first test case")
-            test_cases = [test_cases[0]]
 
         for test_case in test_cases:
             assert isinstance(
@@ -378,10 +375,6 @@ class ListBase:
         logging.debug(f"starting test for {dir}/{function_name}")
 
         assert len(test_cases) > 0, "Please include at least one test case"
-
-        if args.first_test:
-            logging.debug(f"Only using first test case")
-            test_cases = [test_cases[0]]
 
         for test_case in test_cases:
             assert isinstance(
