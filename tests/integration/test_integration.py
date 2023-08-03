@@ -261,7 +261,7 @@ class TestMain(unittest.TestCase):
                 for line in lines:
                     if ":" in line:
                         key, value = line.split(":")
-                        key = snake_case(key)
+                        key = snake_case(key.split("_")[-1])
                         value = int(value.strip())
                     else:
                         try:
