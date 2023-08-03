@@ -41,6 +41,7 @@ class TestMain(unittest.TestCase):
         assert len(test_cases) > 0, "Please include at least one test case"
 
         if args.first_test:
+            logging.info(f"Only using first test case")
             test_cases = [test_cases[0]]
 
         for test_case in test_cases:
@@ -106,7 +107,7 @@ class TestMain(unittest.TestCase):
                     expected.append(tupl)
 
             statistics = {
-                "f_name": function_name,
+                "function_name": function_name,
                 "py_yields": len(expected),
             }
 

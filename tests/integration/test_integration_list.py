@@ -29,9 +29,9 @@ class Statistics:
     """
 
     function_name: str = "Unspecified"
-    python_yields: int = -1
-    verilog_clocks: int = -1
-    module_num_chars: int = -1
+    py_yields: int = -1
+    ver_clks: int = -1
+    module_nchars: int = -1
 
     def __iter__(self):
         yield from self.values()
@@ -113,7 +113,7 @@ class TestMain(unittest.TestCase):
                     expected.append(tupl)
 
             statistics = Statistics(
-                function_name=function_name, python_yields=len(expected)
+                function_name=function_name, py_yields=len(expected)
             )
 
             if args.write:
@@ -137,7 +137,7 @@ class TestMain(unittest.TestCase):
                 function = tree.body[0]
                 verilog = convert_list(function, optimization_level=3)
                 module = verilog.get_module_lines().to_string()
-                statistics.module_num_chars = len(
+                statistics.module_nchars = len(
                     module.replace("\n", "").replace(" ", "")
                 )
                 module_file.write(module)
@@ -161,7 +161,7 @@ class TestMain(unittest.TestCase):
                 row = [elem.strip() for elem in line.split(",")]
                 actual_raw.append(row)
 
-            statistics.verilog_clocks = len(actual_raw)
+            statistics.ver_clks = len(actual_raw)
             TestMain.all_statistics.append(statistics)
 
             filtered_actual = []

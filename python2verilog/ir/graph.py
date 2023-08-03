@@ -10,6 +10,9 @@ Element := Vertex | Edge
 from __future__ import annotations
 import copy
 
+from python2verilog.ir.expressions import Optional
+from python2verilog.ir.statements import Optional
+
 from .statements import *
 from .expressions import *
 from ..utils.assertions import assert_list_type, assert_type
@@ -347,6 +350,12 @@ class Edge(BasicElement):
     """
     Represents an edge between two vertices
     """
+
+    def __init__(self, unique_id: str, *args, child: Element | None = None, **kwargs):
+        assert not isinstance(
+            child, Edge
+        )  # TODO: add these checks to verticies as well
+        super().__init__(unique_id, *args, child=child, **kwargs)
 
     def to_string(self):
         """

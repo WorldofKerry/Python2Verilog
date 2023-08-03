@@ -447,15 +447,25 @@ def graph_optimize(
                 updated.append(backwards_replace(stmt, mapping))
             if isinstance(regular.child.child, ir.Edge):
                 raise RuntimeError(f"{regular}")
-            result = helper(
-                regular=regular.child.child,
-                mapping=mapping,
-                visited=visited,
-                threshold=threshold,
-            )
-            edge = ir.NonClockedEdge(
+            # TODO: currently a clock always happens after a yield,
+            # this results in inefficiencies when there is a yield followed by done
+            # more wave analysis can be done to potentially paramatize this
+            # e.g. can valid and done both be 1 in the same clock cycle?
+
+            # result = helper(
+            #     regular=regular.child.child,
+            #     mapping=mapping,
+            #     visited=visited,
+            #     threshold=threshold,
+            # )
+            # edge = ir.NonClockedEdge(
+            #     unique_id=f"{regular.child.unique_id}_{make_unique()}_optimal",
+            #     child=result,
+            # )
+
+            edge = ir.ClockedEdge(
                 unique_id=f"{regular.child.unique_id}_{make_unique()}_optimal",
-                child=result,
+                child=regular.child.child,
             )
             new_node = ir.YieldNode(
                 unique_id=f"{regular.unique_id}_{make_unique()}_optimal",

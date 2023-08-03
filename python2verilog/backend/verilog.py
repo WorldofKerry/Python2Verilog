@@ -558,7 +558,7 @@ class IrToVerilog:
             while_body.append(AtNegedgeStatement(Expression("_clock")))
 
             initial_body.append(While(condition=Expression("!_done"), body=while_body))
-            initial_body.append(make_display_stmt())
+            # initial_body.append(make_display_stmt())
             initial_body.append(Statement())
 
         initial_body.append(Statement(literal="$finish;"))
