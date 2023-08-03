@@ -8,7 +8,7 @@ import ast
 import warnings
 from typing import Optional
 from .frontend import Generator2List, Generator2Graph
-from .backend.verilog import IrToVerilog
+from .backend.verilog import CodeGen
 from .optimizer import basic, OptimizeGraph
 
 
@@ -21,7 +21,7 @@ def convert_list(func: ast.FunctionDef, optimization_level: int):
         ir_root = basic.optimize_if(ir_root)
         ir_root = basic.combine_cases(ir_root)
         ir_root = basic.remove_unreferenced_states(ir_root)
-    return IrToVerilog.from_list_ir(ir_root, context)
+    return CodeGen.from_list_ir(ir_root, context)
 
 
 def convert_graph(func: ast.FunctionDef, optimization_level: int):
@@ -31,7 +31,7 @@ def convert_graph(func: ast.FunctionDef, optimization_level: int):
 
     ir, context = Generator2Graph(func).results
     OptimizeGraph(ir, threshold=optimization_level)
-    return IrToVerilog.from_graph_ir(ir, context)
+    return CodeGen.from_graph_ir(ir, context)
 
 
 if __name__ == "__main__":

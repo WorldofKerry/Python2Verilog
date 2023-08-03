@@ -10,9 +10,6 @@ Element := Vertex | Edge
 from __future__ import annotations
 import copy
 
-from python2verilog.ir.expressions import Optional
-from python2verilog.ir.statements import Optional
-
 from .statements import *
 from .expressions import *
 from ..utils.assertions import assert_list_type, assert_type

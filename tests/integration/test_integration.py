@@ -14,7 +14,7 @@ import pytest
 import networkx as nx
 from matplotlib import pyplot as plt
 
-from python2verilog.backend.verilog import IrToVerilog, CaseBuilder
+from python2verilog.backend.verilog import CodeGen, CaseBuilder
 from python2verilog.frontend import Generator2Graph
 from python2verilog.optimizer import basic, OptimizeGraph
 from python2verilog.convert import *
@@ -156,7 +156,7 @@ class TestMain(unittest.TestCase):
             # print("\n\nnext")
             # optimizer.graph_optimize(ir.child.child)
             # print("\n\nnextasdf3eefwe\n")
-            verilog = IrToVerilog.from_optimal_ir(ir, context)
+            verilog = CodeGen.from_optimal_ir(ir, context)
 
             if args.write:
                 with open(FILES_IN_ABS_DIR["cytoscape"], mode="w") as cyto_file:

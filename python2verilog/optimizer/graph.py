@@ -186,7 +186,8 @@ class OptimizeGraph:
                         threshold=threshold,
                     )
                     edge = ir.NonClockedEdge(
-                        # TODO: reason about this, there are yield -> if -> yield with no clocks in-between
+                        # TODO: reason about this,
+                        # there are yield -> if -> yield with no clocks in-between
                         unique_id=f"{regular.true_edge.unique_id}_{make_unique()}_optimal",
                         name="True",
                         child=optimal_true_node,

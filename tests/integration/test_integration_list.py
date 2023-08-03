@@ -14,7 +14,7 @@ from dataclasses import dataclass
 import networkx as nx
 from matplotlib import pyplot as plt
 
-from python2verilog.backend.verilog import IrToVerilog
+from python2verilog.backend.verilog import CodeGen
 from python2verilog.frontend import Generator2List
 from python2verilog.optimizer import basic
 from python2verilog.convert import *
