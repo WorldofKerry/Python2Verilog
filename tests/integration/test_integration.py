@@ -155,7 +155,7 @@ class TestMain(unittest.TestCase):
             # print("\n\nnext")
             # optimizer.graph_optimize(ir.child.child)
             # print("\n\nnextasdf3eefwe\n")
-            verilog = IrToVerilog.from_graph_ir(ir, context)
+            verilog = IrToVerilog.from_optimal_ir(ir, context)
 
             if args.write:
                 with open(FILES_IN_ABS_DIR["cytoscape"], mode="w") as cyto_file:

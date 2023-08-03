@@ -179,6 +179,21 @@ class IrToVerilog:
         inst._module = IrToVerilog.__new_module(root_case, context)
         return inst
 
+    @classmethod
+    def from_optimal_ir(cls, root: ir.Element, context: ir.Context):
+        """ "
+        Builds tree from Graph IR
+        """
+        assert_type(root, ir.Element)
+        assert_type(context, ir.Context)
+        inst = IrToVerilog()
+        inst._context = context
+        old_case = inst.graph_build(root, set())
+        root_case = CaseBuilder(root).case
+        inst._context.global_vars["_state"] = str(len(old_case.case_items))
+        inst._module = IrToVerilog.__new_module(root_case, inst._context)
+        return inst
+
     @staticmethod
     def create_nonclocked_list(
         node: ir.Element,
@@ -601,14 +616,22 @@ class CaseBuilder:
         Processes a node
         """
         assert isinstance(vertex, ir.Vertex)
-        if vertex.unique_id in self.visited:
+        if vertex.unique_id in self.visited and not isinstance(vertex, ir.DoneNode):
             logging.info(f"already visited {vertex}")
             return [Statement("bruv")]
         self.visited.add(vertex.unique_id)
 
         stmts: list[Statement] = []
 
-        if isinstance(vertex, ir.AssignNode):
+        if isinstance(vertex, ir.DoneNode):
+            stmts += [
+                NonBlockingSubsitution("_done", "1"),
+                NonBlockingSubsitution(
+                    self.case.condition.to_string(), "_statelmaodone"
+                ),
+            ]
+
+        elif isinstance(vertex, ir.AssignNode):
             stmts.append(NonBlockingSubsitution(str(vertex.lvalue), str(vertex.rvalue)))
             stmts += self.do_edge(vertex.optimal_child)
 
@@ -627,20 +650,23 @@ class CaseBuilder:
             outputs = [
                 NonBlockingSubsitution(f"_out{i}", str(expr))
                 for i, expr in enumerate(vertex._stmts)
-            ]
-            state_change = [
+            ] + [NonBlockingSubsitution("_valid", "1")]
+            state_change = []
+
+            if isinstance(vertex.optimal_child.optimal_child, ir.DoneNode):
+                outputs.append(NonBlockingSubsitution("_done", "1"))
+            state_change.append(
                 NonBlockingSubsitution(
                     "_state", str(vertex.optimal_child.optimal_child.unique_id)
                 )
-            ]
+            )
+            if vertex.optimal_child.optimal_child.unique_id not in self.visited:
+                self.case.case_items.append(
+                    self.new_caseitem(vertex.optimal_child.optimal_child)
+                )
+
             # stmts += outputs + self.do_edge(vertex.optimal_child)
             stmts += outputs + state_change
-
-        elif isinstance(vertex, ir.DoneNode):
-            stmts.append(
-                NonBlockingSubsitution(self.case.condition.to_string(), "_state_done")
-            )
-            logging.warn("visited done")
 
         else:
             raise TypeError(type(vertex))

@@ -406,7 +406,7 @@ def graph_optimize(
                     visited=copy.deepcopy(visited),
                     threshold=threshold,
                 )
-                edge = ir.NonClockedEdge(
+                edge = ir.NonClockedEdge(  # TODO: reason about this, there are yield -> if -> yield with no clocks in-between
                     unique_id=f"{regular.true_edge.unique_id}_o{make_unique()}",
                     name="True",
                     child=optimal_true_node,
