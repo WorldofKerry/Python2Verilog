@@ -2,6 +2,7 @@
 Optimizer algorithms that operate ontop of the intermediate representation
 """
 
+import logging
 import typing
 import warnings
 import random
@@ -465,7 +466,9 @@ def graph_optimize(
             return new_node
 
         if isinstance(regular, ir.DoneNode):
+            # logging.error("found done")
             return regular
+
         raise RuntimeError(f"unexpected {type(regular)} {regular}")
 
     if root.unique_id in visited:

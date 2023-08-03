@@ -584,7 +584,8 @@ class CaseBuilder:
         self.next_unique = lambda: next(instance)
 
         # Work
-        self.new_caseitem(root)
+        self.case.case_items.append(self.new_caseitem(root))
+        logging.info(self.case.to_string())
 
     def new_caseitem(self, root: ir.Element):
         """
@@ -592,7 +593,6 @@ class CaseBuilder:
         """
         stmts = self.do_vertex(root)
         item = CaseItem(condition=Expression(root.unique_id), statements=stmts)
-        logging.debug(item.to_string())
 
         return item
 
@@ -602,7 +602,7 @@ class CaseBuilder:
         """
         assert isinstance(vertex, ir.Vertex)
         if vertex.unique_id in self.visited:
-            logging.debug(f"already visited {vertex}")
+            logging.info(f"already visited {vertex}")
             return [Statement("bruv")]
         self.visited.add(vertex.unique_id)
 
@@ -625,9 +625,25 @@ class CaseBuilder:
 
         elif isinstance(vertex, ir.YieldNode):
             outputs = [
-                Statement(f"_out{i} <= {expr}") for i, expr in enumerate(vertex._stmts)
+                NonBlockingSubsitution(f"_out{i}", str(expr))
+                for i, expr in enumerate(vertex._stmts)
             ]
-            stmts += outputs
+            state_change = [
+                NonBlockingSubsitution(
+                    "_state", str(vertex.optimal_child.optimal_child.unique_id)
+                )
+            ]
+            # stmts += outputs + self.do_edge(vertex.optimal_child)
+            stmts += outputs + state_change
+
+        elif isinstance(vertex, ir.DoneNode):
+            stmts.append(
+                NonBlockingSubsitution(self.case.condition.to_string(), "_state_done")
+            )
+            logging.warn("visited done")
+
+        else:
+            raise TypeError(type(vertex))
 
         return stmts
 
@@ -638,8 +654,9 @@ class CaseBuilder:
         if isinstance(edge, ir.NonClockedEdge):
             return self.do_vertex(edge.optimal_child)
         if isinstance(edge, ir.ClockedEdge):
-            return []
-            # return self.do_vertex(edge.optimal_child)
+            if edge.optimal_child.unique_id not in self.visited:
+                self.case.case_items.append(self.new_caseitem(edge.optimal_child))
+            return [NonBlockingSubsitution("_state", str(edge.optimal_child.unique_id))]
         raise RuntimeError(f"{type(edge)}")
 
 

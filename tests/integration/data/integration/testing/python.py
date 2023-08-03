@@ -25,6 +25,7 @@ def testing(n) -> tuple[int]:
         # i = 4
         if i > 1:
             i += 1
+            yield (i + 3,)
             # i = 7
         else:
             i += 2
