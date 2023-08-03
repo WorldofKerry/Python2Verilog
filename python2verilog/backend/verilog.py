@@ -4,6 +4,7 @@ from __future__ import annotations
 import itertools
 import warnings
 import ast
+import logging
 from typing import Optional
 import copy
 
@@ -591,7 +592,7 @@ class CaseBuilder:
         """
         stmts = self.do_vertex(root)
         item = CaseItem(condition=Expression(root.unique_id), statements=stmts)
-        print(item.to_string())
+        logging.debug(item.to_string())
 
         return item
 
@@ -601,7 +602,7 @@ class CaseBuilder:
         """
         assert isinstance(vertex, ir.Vertex)
         if vertex.unique_id in self.visited:
-            print(f"already visited {vertex}")
+            logging.debug(f"already visited {vertex}")
             return [Statement("bruv")]
         self.visited.add(vertex.unique_id)
 
