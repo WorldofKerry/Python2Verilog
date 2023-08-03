@@ -28,7 +28,6 @@ def convert_graph(func: ast.FunctionDef, optimization_level: int):
     """
     Wrapper for Python to Verilog conversion
     """
-
     ir, context = Generator2Graph(func).results
     OptimizeGraph(ir, threshold=optimization_level)
     return CodeGen.from_graph_ir(ir, context)

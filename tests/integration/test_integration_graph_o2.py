@@ -36,7 +36,7 @@ class TestMain(unittest.TestCase):
     @staticmethod
     def create_verilog_from_func(function: ast.FunctionDef):
         ir, context = Generator2Graph(function).results
-        OptimizeGraph(ir, threshold=0)
+        OptimizeGraph(ir, threshold=2)
         verilog = CodeGen.from_optimal_ir(ir, context)
         return verilog, ir
 
