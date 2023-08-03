@@ -234,7 +234,7 @@ class TestMain(unittest.TestCase):
                 for line in lines:
                     if ":" in line:
                         key, value = line.split(":")
-                        key = snake_case(key.split("number_of_")[-1])
+                        key = snake_case(key).split("number_of_")[-1]
                         value = int(value.strip())
                     else:
                         try:
