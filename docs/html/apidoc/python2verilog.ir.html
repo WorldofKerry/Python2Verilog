@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>python2verilog.ir package &#8212; Python2Verilog  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/sphinx_highlight.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="python2verilog.optimizer package" href="python2verilog.optimizer.html" />
+    <link rel="prev" title="python2verilog.frontend package" href="python2verilog.frontend.html" />
+
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+
+
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+
+
+          <div class="body" role="main">
+
+  <section id="python2verilog-ir-package">
+<h1>python2verilog.ir package<a class="headerlink" href="#python2verilog-ir-package" title="Permalink to this heading">¶</a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading">¶</a></h2>
+</section>
+<section id="module-python2verilog.ir.context">
+<span id="python2verilog-ir-context-module"></span><h2>python2verilog.ir.context module<a class="headerlink" href="#module-python2verilog.ir.context" title="Permalink to this heading">¶</a></h2>
+<p>Context for Intermediate Representation</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="python2verilog.ir.context.Context">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">python2verilog.ir.context.</span></span><span class="sig-name descname"><span class="pre">Context</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">global_vars</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_vars</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_vars</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state_vars</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.context.Context" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Context needed by the Intermediate Representation
+E.g. variables, I/O, parameters, localparam</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="python2verilog.ir.context.Context.is_declared">
+<span class="sig-name descname"><span class="pre">is_declared</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.context.Context.is_declared" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks if a variable has been already declared or not</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="python2verilog.ir.context.Context.to_string">
+<span class="sig-name descname"><span class="pre">to_string</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.context.Context.to_string" title="Permalink to this definition">¶</a></dt>
+<dd><p>To string</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-python2verilog.ir.expressions">
+<span id="python2verilog-ir-expressions-module"></span><h2>python2verilog.ir.expressions module<a class="headerlink" href="#module-python2verilog.ir.expressions" title="Permalink to this heading">¶</a></h2>
+<p>Intermediate Representation Expressions
+Based on Verilog Syntax</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="python2verilog.ir.expressions.Add">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">python2verilog.ir.expressions.</span></span><span class="sig-name descname"><span class="pre">Add</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">left</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#python2verilog.ir.expressions.Expression" title="python2verilog.ir.expressions.Expression"><span class="pre">Expression</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">right</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#python2verilog.ir.expressions.Expression" title="python2verilog.ir.expressions.Expression"><span class="pre">Expression</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.expressions.Add" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#python2verilog.ir.expressions.BinOp" title="python2verilog.ir.expressions.BinOp"><code class="xref py py-class docutils literal notranslate"><span class="pre">BinOp</span></code></a></p>
+<p>&lt;left&gt; + &lt;right&gt;</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="python2verilog.ir.expressions.BinOp">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">python2verilog.ir.expressions.</span></span><span class="sig-name descname"><span class="pre">BinOp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">left</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#python2verilog.ir.expressions.Expression" title="python2verilog.ir.expressions.Expression"><span class="pre">Expression</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">right</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#python2verilog.ir.expressions.Expression" title="python2verilog.ir.expressions.Expression"><span class="pre">Expression</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">oper</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.expressions.BinOp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#python2verilog.ir.expressions.Expression" title="python2verilog.ir.expressions.Expression"><code class="xref py py-class docutils literal notranslate"><span class="pre">Expression</span></code></a></p>
+<p>&lt;left&gt; &lt;op&gt; &lt;right&gt;</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="python2verilog.ir.expressions.BinOp.left">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">left</span></span><a class="headerlink" href="#python2verilog.ir.expressions.BinOp.left" title="Permalink to this definition">¶</a></dt>
+<dd><p>lvalue</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="python2verilog.ir.expressions.BinOp.right">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">right</span></span><a class="headerlink" href="#python2verilog.ir.expressions.BinOp.right" title="Permalink to this definition">¶</a></dt>
+<dd><p>rvalue</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="python2verilog.ir.expressions.BinOp.to_string">
+<span class="sig-name descname"><span class="pre">to_string</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.expressions.BinOp.to_string" title="Permalink to this definition">¶</a></dt>
+<dd><p>To String</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="python2verilog.ir.expressions.Div">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">python2verilog.ir.expressions.</span></span><span class="sig-name descname"><span class="pre">Div</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">left</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#python2verilog.ir.expressions.Expression" title="python2verilog.ir.expressions.Expression"><span class="pre">Expression</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">right</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#python2verilog.ir.expressions.Expression" title="python2verilog.ir.expressions.Expression"><span class="pre">Expression</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.expressions.Div" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#python2verilog.ir.expressions.BinOp" title="python2verilog.ir.expressions.BinOp"><code class="xref py py-class docutils literal notranslate"><span class="pre">BinOp</span></code></a></p>
+<p>&lt;left&gt; / &lt;right&gt;</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="python2verilog.ir.expressions.Expression">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">python2verilog.ir.expressions.</span></span><span class="sig-name descname"><span class="pre">Expression</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">string</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.expressions.Expression" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A String (that can be equated to something)</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="python2verilog.ir.expressions.Expression.to_string">
+<span class="sig-name descname"><span class="pre">to_string</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.expressions.Expression.to_string" title="Permalink to this definition">¶</a></dt>
+<dd><p>To String</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="python2verilog.ir.expressions.Int">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">python2verilog.ir.expressions.</span></span><span class="sig-name descname"><span class="pre">Int</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.expressions.Int" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#python2verilog.ir.expressions.Expression" title="python2verilog.ir.expressions.Expression"><code class="xref py py-class docutils literal notranslate"><span class="pre">Expression</span></code></a></p>
+<p>Integer literal</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="python2verilog.ir.expressions.LessThan">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">python2verilog.ir.expressions.</span></span><span class="sig-name descname"><span class="pre">LessThan</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">left</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#python2verilog.ir.expressions.Expression" title="python2verilog.ir.expressions.Expression"><span class="pre">Expression</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">right</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#python2verilog.ir.expressions.Expression" title="python2verilog.ir.expressions.Expression"><span class="pre">Expression</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.expressions.LessThan" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#python2verilog.ir.expressions.BinOp" title="python2verilog.ir.expressions.BinOp"><code class="xref py py-class docutils literal notranslate"><span class="pre">BinOp</span></code></a></p>
+<p>&lt;left&gt; &lt; &lt;right&gt;</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="python2verilog.ir.expressions.Mul">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">python2verilog.ir.expressions.</span></span><span class="sig-name descname"><span class="pre">Mul</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">left</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#python2verilog.ir.expressions.Expression" title="python2verilog.ir.expressions.Expression"><span class="pre">Expression</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">right</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#python2verilog.ir.expressions.Expression" title="python2verilog.ir.expressions.Expression"><span class="pre">Expression</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.expressions.Mul" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#python2verilog.ir.expressions.BinOp" title="python2verilog.ir.expressions.BinOp"><code class="xref py py-class docutils literal notranslate"><span class="pre">BinOp</span></code></a></p>
+<p>&lt;left&gt; * &lt;right&gt;</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="python2verilog.ir.expressions.State">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">python2verilog.ir.expressions.</span></span><span class="sig-name descname"><span class="pre">State</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.expressions.State" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#python2verilog.ir.expressions.Var" title="python2verilog.ir.expressions.Var"><code class="xref py py-class docutils literal notranslate"><span class="pre">Var</span></code></a></p>
+<p>State variable</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="python2verilog.ir.expressions.Sub">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">python2verilog.ir.expressions.</span></span><span class="sig-name descname"><span class="pre">Sub</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">left</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#python2verilog.ir.expressions.Expression" title="python2verilog.ir.expressions.Expression"><span class="pre">Expression</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">right</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#python2verilog.ir.expressions.Expression" title="python2verilog.ir.expressions.Expression"><span class="pre">Expression</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.expressions.Sub" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#python2verilog.ir.expressions.BinOp" title="python2verilog.ir.expressions.BinOp"><code class="xref py py-class docutils literal notranslate"><span class="pre">BinOp</span></code></a></p>
+<p>&lt;left&gt; - &lt;right&gt;</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="python2verilog.ir.expressions.Var">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">python2verilog.ir.expressions.</span></span><span class="sig-name descname"><span class="pre">Var</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.expressions.Var" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#python2verilog.ir.expressions.Expression" title="python2verilog.ir.expressions.Expression"><code class="xref py py-class docutils literal notranslate"><span class="pre">Expression</span></code></a></p>
+<p>Named-variable</p>
+</dd></dl>
+
+</section>
+<section id="module-python2verilog.ir.graph">
+<span id="python2verilog-ir-graph-module"></span><h2>python2verilog.ir.graph module<a class="headerlink" href="#module-python2verilog.ir.graph" title="Permalink to this heading">¶</a></h2>
+<p>Graph representation of the logic</p>
+<p>Naming convention:
+Vertex
+Edge
+Element := Vertex | Edge</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="python2verilog.ir.graph.AssignNode">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">python2verilog.ir.graph.</span></span><span class="sig-name descname"><span class="pre">AssignNode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">unique_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lvalue</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#python2verilog.ir.expressions.Expression" title="python2verilog.ir.expressions.Expression"><span class="pre">Expression</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">rvalue</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#python2verilog.ir.expressions.Expression" title="python2verilog.ir.expressions.Expression"><span class="pre">Expression</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">child</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#python2verilog.ir.graph.Edge" title="python2verilog.ir.graph.Edge"><span class="pre">Edge</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.graph.AssignNode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#python2verilog.ir.graph.Vertex" title="python2verilog.ir.graph.Vertex"><code class="xref py py-class docutils literal notranslate"><span class="pre">Vertex</span></code></a>, <a class="reference internal" href="#python2verilog.ir.graph.BasicElement" title="python2verilog.ir.graph.BasicElement"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasicElement</span></code></a></p>
+<p>Represents a non-blocking assignment,
+i.e. assignments that do not block the execution of
+the next statements, without a clock cycle having to pass</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="python2verilog.ir.graph.AssignNode.lvalue">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">lvalue</span></span><a class="headerlink" href="#python2verilog.ir.graph.AssignNode.lvalue" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="python2verilog.ir.graph.AssignNode.rvalue">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">rvalue</span></span><a class="headerlink" href="#python2verilog.ir.graph.AssignNode.rvalue" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="python2verilog.ir.graph.AssignNode.to_string">
+<span class="sig-name descname"><span class="pre">to_string</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.graph.AssignNode.to_string" title="Permalink to this definition">¶</a></dt>
+<dd><p>To string</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="python2verilog.ir.graph.BasicElement">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">python2verilog.ir.graph.</span></span><span class="sig-name descname"><span class="pre">BasicElement</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">unique_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">child</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#python2verilog.ir.graph.Element" title="python2verilog.ir.graph.Element"><span class="pre">Element</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.graph.BasicElement" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#python2verilog.ir.graph.Element" title="python2verilog.ir.graph.Element"><code class="xref py py-class docutils literal notranslate"><span class="pre">Element</span></code></a></p>
+<p>Basic element with a single child</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="python2verilog.ir.graph.BasicElement.child">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">child</span></span><a class="headerlink" href="#python2verilog.ir.graph.BasicElement.child" title="Permalink to this definition">¶</a></dt>
+<dd><p>child or optimal_child if no child</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="python2verilog.ir.graph.BasicElement.get_all_children">
+<span class="sig-name descname"><span class="pre">get_all_children</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.graph.BasicElement.get_all_children" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets edges</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="python2verilog.ir.graph.BasicElement.get_optimal_children">
+<span class="sig-name descname"><span class="pre">get_optimal_children</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.graph.BasicElement.get_optimal_children" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets optimal children</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="python2verilog.ir.graph.BasicElement.optimal_child">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">optimal_child</span></span><a class="headerlink" href="#python2verilog.ir.graph.BasicElement.optimal_child" title="Permalink to this definition">¶</a></dt>
+<dd><p>Optimal child or child otherwise</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="python2verilog.ir.graph.ClockedEdge">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">python2verilog.ir.graph.</span></span><span class="sig-name descname"><span class="pre">ClockedEdge</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">unique_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">child</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#python2verilog.ir.graph.Element" title="python2verilog.ir.graph.Element"><span class="pre">Element</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.graph.ClockedEdge" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#python2verilog.ir.graph.Edge" title="python2verilog.ir.graph.Edge"><code class="xref py py-class docutils literal notranslate"><span class="pre">Edge</span></code></a></p>
+<p>Represents a clocked edge,
+i.e. a clock cycle has to pass for the next node to be executed</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="python2verilog.ir.graph.DoneNode">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">python2verilog.ir.graph.</span></span><span class="sig-name descname"><span class="pre">DoneNode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">unique_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.graph.DoneNode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#python2verilog.ir.graph.Vertex" title="python2verilog.ir.graph.Vertex"><code class="xref py py-class docutils literal notranslate"><span class="pre">Vertex</span></code></a>, <a class="reference internal" href="#python2verilog.ir.graph.Element" title="python2verilog.ir.graph.Element"><code class="xref py py-class docutils literal notranslate"><span class="pre">Element</span></code></a></p>
+<p>Signals done</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="python2verilog.ir.graph.Edge">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">python2verilog.ir.graph.</span></span><span class="sig-name descname"><span class="pre">Edge</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">unique_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">child</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#python2verilog.ir.graph.Element" title="python2verilog.ir.graph.Element"><span class="pre">Element</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.graph.Edge" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#python2verilog.ir.graph.BasicElement" title="python2verilog.ir.graph.BasicElement"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasicElement</span></code></a></p>
+<p>Represents an edge between two vertices</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="python2verilog.ir.graph.Edge.get_name">
+<span class="sig-name descname"><span class="pre">get_name</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.graph.Edge.get_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets edge name</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="python2verilog.ir.graph.Edge.to_string">
+<span class="sig-name descname"><span class="pre">to_string</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.graph.Edge.to_string" title="Permalink to this definition">¶</a></dt>
+<dd><p>To string</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="python2verilog.ir.graph.Element">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">python2verilog.ir.graph.</span></span><span class="sig-name descname"><span class="pre">Element</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">unique_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.graph.Element" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Element, base class for vertex or edge</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="python2verilog.ir.graph.Element.children">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">children</span></span><a class="headerlink" href="#python2verilog.ir.graph.Element.children" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets children</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="python2verilog.ir.graph.Element.get_all_children">
+<span class="sig-name descname"><span class="pre">get_all_children</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.graph.Element.get_all_children" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets children</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="python2verilog.ir.graph.Element.get_optimal_children">
+<span class="sig-name descname"><span class="pre">get_optimal_children</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.graph.Element.get_optimal_children" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets optimal children</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="python2verilog.ir.graph.Element.name">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#python2verilog.ir.graph.Element.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets name</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="python2verilog.ir.graph.Element.to_string">
+<span class="sig-name descname"><span class="pre">to_string</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.graph.Element.to_string" title="Permalink to this definition">¶</a></dt>
+<dd><p>To string</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="python2verilog.ir.graph.Element.unique_id">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">unique_id</span></span><a class="headerlink" href="#python2verilog.ir.graph.Element.unique_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets node id</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="python2verilog.ir.graph.IfElseNode">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">python2verilog.ir.graph.</span></span><span class="sig-name descname"><span class="pre">IfElseNode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">unique_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">true_edge</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#python2verilog.ir.graph.Edge" title="python2verilog.ir.graph.Edge"><span class="pre">Edge</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">false_edge</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#python2verilog.ir.graph.Edge" title="python2verilog.ir.graph.Edge"><span class="pre">Edge</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">condition</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#python2verilog.ir.expressions.Expression" title="python2verilog.ir.expressions.Expression"><span class="pre">Expression</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.graph.IfElseNode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#python2verilog.ir.graph.Vertex" title="python2verilog.ir.graph.Vertex"><code class="xref py py-class docutils literal notranslate"><span class="pre">Vertex</span></code></a>, <a class="reference internal" href="#python2verilog.ir.graph.Element" title="python2verilog.ir.graph.Element"><code class="xref py py-class docutils literal notranslate"><span class="pre">Element</span></code></a></p>
+<p>Represents an if-else statement</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="python2verilog.ir.graph.IfElseNode.condition">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">condition</span></span><a class="headerlink" href="#python2verilog.ir.graph.IfElseNode.condition" title="Permalink to this definition">¶</a></dt>
+<dd><p>conditional</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="python2verilog.ir.graph.IfElseNode.false_edge">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">false_edge</span></span><a class="headerlink" href="#python2verilog.ir.graph.IfElseNode.false_edge" title="Permalink to this definition">¶</a></dt>
+<dd><p>false edge or optimal false edge if no false edge</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="python2verilog.ir.graph.IfElseNode.get_all_children">
+<span class="sig-name descname"><span class="pre">get_all_children</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.graph.IfElseNode.get_all_children" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets edges</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="python2verilog.ir.graph.IfElseNode.get_optimal_children">
+<span class="sig-name descname"><span class="pre">get_optimal_children</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.graph.IfElseNode.get_optimal_children" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets optimal children</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="python2verilog.ir.graph.IfElseNode.optimal_false_edge">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">optimal_false_edge</span></span><a class="headerlink" href="#python2verilog.ir.graph.IfElseNode.optimal_false_edge" title="Permalink to this definition">¶</a></dt>
+<dd><p>optimal false edge</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="python2verilog.ir.graph.IfElseNode.optimal_true_edge">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">optimal_true_edge</span></span><a class="headerlink" href="#python2verilog.ir.graph.IfElseNode.optimal_true_edge" title="Permalink to this definition">¶</a></dt>
+<dd><p>optimal true edge or edge otherwise</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="python2verilog.ir.graph.IfElseNode.to_string">
+<span class="sig-name descname"><span class="pre">to_string</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.graph.IfElseNode.to_string" title="Permalink to this definition">¶</a></dt>
+<dd><p>To string</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="python2verilog.ir.graph.IfElseNode.true_edge">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">true_edge</span></span><a class="headerlink" href="#python2verilog.ir.graph.IfElseNode.true_edge" title="Permalink to this definition">¶</a></dt>
+<dd><p>true edge or optimal if no edge</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="python2verilog.ir.graph.NonClockedEdge">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">python2verilog.ir.graph.</span></span><span class="sig-name descname"><span class="pre">NonClockedEdge</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">unique_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">child</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#python2verilog.ir.graph.Element" title="python2verilog.ir.graph.Element"><span class="pre">Element</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.graph.NonClockedEdge" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#python2verilog.ir.graph.Edge" title="python2verilog.ir.graph.Edge"><code class="xref py py-class docutils literal notranslate"><span class="pre">Edge</span></code></a></p>
+<p>Represents a non-clocked edge,
+i.e. no clock cycle has to pass for the next node to be executed</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="python2verilog.ir.graph.Vertex">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">python2verilog.ir.graph.</span></span><span class="sig-name descname"><span class="pre">Vertex</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">unique_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.graph.Vertex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#python2verilog.ir.graph.Element" title="python2verilog.ir.graph.Element"><code class="xref py py-class docutils literal notranslate"><span class="pre">Element</span></code></a></p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="python2verilog.ir.graph.YieldNode">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">python2verilog.ir.graph.</span></span><span class="sig-name descname"><span class="pre">YieldNode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">unique_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stmts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#python2verilog.ir.expressions.Expression" title="python2verilog.ir.expressions.Expression"><span class="pre">python2verilog.ir.expressions.Expression</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">edge</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#python2verilog.ir.graph.Edge" title="python2verilog.ir.graph.Edge"><span class="pre">Edge</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.graph.YieldNode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#python2verilog.ir.graph.Vertex" title="python2verilog.ir.graph.Vertex"><code class="xref py py-class docutils literal notranslate"><span class="pre">Vertex</span></code></a>, <a class="reference internal" href="#python2verilog.ir.graph.BasicElement" title="python2verilog.ir.graph.BasicElement"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasicElement</span></code></a></p>
+<p>Yield statement, represents output</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="python2verilog.ir.graph.YieldNode.stmts">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">stmts</span></span><a class="headerlink" href="#python2verilog.ir.graph.YieldNode.stmts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Yield statements</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="python2verilog.ir.graph.YieldNode.to_string">
+<span class="sig-name descname"><span class="pre">to_string</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.graph.YieldNode.to_string" title="Permalink to this definition">¶</a></dt>
+<dd><p>To string</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="python2verilog.ir.graph.create_cytoscape_elements">
+<span class="sig-prename descclassname"><span class="pre">python2verilog.ir.graph.</span></span><span class="sig-name descname"><span class="pre">create_cytoscape_elements</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#python2verilog.ir.graph.Element" title="python2verilog.ir.graph.Element"><span class="pre">Element</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.graph.create_cytoscape_elements" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates adjacency list from a node</p>
+<p>Assumes names are unique</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="python2verilog.ir.graph.create_networkx_adjacency_list">
+<span class="sig-prename descclassname"><span class="pre">python2verilog.ir.graph.</span></span><span class="sig-name descname"><span class="pre">create_networkx_adjacency_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#python2verilog.ir.graph.Element" title="python2verilog.ir.graph.Element"><span class="pre">Element</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.graph.create_networkx_adjacency_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates adjacency list from a node</p>
+<p>Assumes names are unique</p>
+</dd></dl>
+
+</section>
+<section id="module-python2verilog.ir.statements">
+<span id="python2verilog-ir-statements-module"></span><h2>python2verilog.ir.statements module<a class="headerlink" href="#module-python2verilog.ir.statements" title="Permalink to this heading">¶</a></h2>
+<p>An Intermediate Representation for HDL based on Verilog</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="python2verilog.ir.statements.BlockingSubsitution">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">python2verilog.ir.statements.</span></span><span class="sig-name descname"><span class="pre">BlockingSubsitution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lvalue</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#python2verilog.ir.expressions.Expression" title="python2verilog.ir.expressions.Expression"><span class="pre">Expression</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">rvalue</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#python2verilog.ir.expressions.Expression" title="python2verilog.ir.expressions.Expression"><span class="pre">Expression</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.statements.BlockingSubsitution" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#python2verilog.ir.statements.Subsitution" title="python2verilog.ir.statements.Subsitution"><code class="xref py py-class docutils literal notranslate"><span class="pre">Subsitution</span></code></a></p>
+<p>&lt;lvalue&gt; = &lt;rvalue&gt;</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="python2verilog.ir.statements.Case">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">python2verilog.ir.statements.</span></span><span class="sig-name descname"><span class="pre">Case</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">expression</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#python2verilog.ir.expressions.Expression" title="python2verilog.ir.expressions.Expression"><span class="pre">Expression</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">case_items</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#python2verilog.ir.statements.CaseItem" title="python2verilog.ir.statements.CaseItem"><span class="pre">python2verilog.ir.statements.CaseItem</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.statements.Case" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#python2verilog.ir.statements.Statement" title="python2verilog.ir.statements.Statement"><code class="xref py py-class docutils literal notranslate"><span class="pre">Statement</span></code></a></p>
+<dl class="simple">
+<dt>case (&lt;expression&gt;)</dt><dd><p>&lt;items[0]&gt;
+…
+&lt;items[n]&gt;</p>
+</dd>
+</dl>
+<p>endcase</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="python2verilog.ir.statements.Case.append_end_statements">
+<span class="sig-name descname"><span class="pre">append_end_statements</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">statements</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#python2verilog.ir.statements.Statement" title="python2verilog.ir.statements.Statement"><span class="pre">python2verilog.ir.statements.Statement</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.statements.Case.append_end_statements" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds statements to the last case item</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="python2verilog.ir.statements.Case.to_lines">
+<span class="sig-name descname"><span class="pre">to_lines</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.statements.Case.to_lines" title="Permalink to this definition">¶</a></dt>
+<dd><p>To Lines</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="python2verilog.ir.statements.CaseItem">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">python2verilog.ir.statements.</span></span><span class="sig-name descname"><span class="pre">CaseItem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">condition</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#python2verilog.ir.expressions.Expression" title="python2verilog.ir.expressions.Expression"><span class="pre">Expression</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">statements</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#python2verilog.ir.statements.Statement" title="python2verilog.ir.statements.Statement"><span class="pre">python2verilog.ir.statements.Statement</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.statements.CaseItem" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="python2verilog.utils.html#python2verilog.utils.string.ImplementsToLines" title="python2verilog.utils.string.ImplementsToLines"><code class="xref py py-class docutils literal notranslate"><span class="pre">ImplementsToLines</span></code></a></p>
+<p>case item, i.e.
+&lt;condition&gt;: begin</p>
+<blockquote>
+<div><p>&lt;statements&gt;</p>
+</div></blockquote>
+<p>end</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="python2verilog.ir.statements.CaseItem.append_end_statements">
+<span class="sig-name descname"><span class="pre">append_end_statements</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">statements</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#python2verilog.ir.statements.Statement" title="python2verilog.ir.statements.Statement"><span class="pre">python2verilog.ir.statements.Statement</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.statements.CaseItem.append_end_statements" title="Permalink to this definition">¶</a></dt>
+<dd><p>Append statements to case item</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="python2verilog.ir.statements.CaseItem.to_lines">
+<span class="sig-name descname"><span class="pre">to_lines</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.statements.CaseItem.to_lines" title="Permalink to this definition">¶</a></dt>
+<dd><p>To Lines</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="python2verilog.ir.statements.Declaration">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">python2verilog.ir.statements.</span></span><span class="sig-name descname"><span class="pre">Declaration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">32</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_reg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_signed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.statements.Declaration" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#python2verilog.ir.statements.Statement" title="python2verilog.ir.statements.Statement"><code class="xref py py-class docutils literal notranslate"><span class="pre">Statement</span></code></a></p>
+<p>&lt;reg or wire&gt; &lt;modifiers&gt; &lt;[size-1:0]&gt; &lt;name&gt;;</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="python2verilog.ir.statements.Declaration.to_lines">
+<span class="sig-name descname"><span class="pre">to_lines</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.statements.Declaration.to_lines" title="Permalink to this definition">¶</a></dt>
+<dd><p>To Verilog lines</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="python2verilog.ir.statements.IfElse">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">python2verilog.ir.statements.</span></span><span class="sig-name descname"><span class="pre">IfElse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">condition</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#python2verilog.ir.expressions.Expression" title="python2verilog.ir.expressions.Expression"><span class="pre">Expression</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">then_body</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#python2verilog.ir.statements.Statement" title="python2verilog.ir.statements.Statement"><span class="pre">python2verilog.ir.statements.Statement</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">else_body</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#python2verilog.ir.statements.Statement" title="python2verilog.ir.statements.Statement"><span class="pre">python2verilog.ir.statements.Statement</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.statements.IfElse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#python2verilog.ir.statements.Statement" title="python2verilog.ir.statements.Statement"><code class="xref py py-class docutils literal notranslate"><span class="pre">Statement</span></code></a></p>
+<p>If Else</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="python2verilog.ir.statements.IfElse.append_end_statements">
+<span class="sig-name descname"><span class="pre">append_end_statements</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">statements</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#python2verilog.ir.statements.Statement" title="python2verilog.ir.statements.Statement"><span class="pre">python2verilog.ir.statements.Statement</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.statements.IfElse.append_end_statements" title="Permalink to this definition">¶</a></dt>
+<dd><p>Appends statements to both branches</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="python2verilog.ir.statements.IfElse.to_lines">
+<span class="sig-name descname"><span class="pre">to_lines</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.statements.IfElse.to_lines" title="Permalink to this definition">¶</a></dt>
+<dd><p>To Lines</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="python2verilog.ir.statements.IfElseWrapper">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">python2verilog.ir.statements.</span></span><span class="sig-name descname"><span class="pre">IfElseWrapper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">expression</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#python2verilog.ir.expressions.Expression" title="python2verilog.ir.expressions.Expression"><span class="pre">Expression</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">case_items</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#python2verilog.ir.statements.CaseItem" title="python2verilog.ir.statements.CaseItem"><span class="pre">python2verilog.ir.statements.CaseItem</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.statements.IfElseWrapper" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#python2verilog.ir.statements.Case" title="python2verilog.ir.statements.Case"><code class="xref py py-class docutils literal notranslate"><span class="pre">Case</span></code></a></p>
+<p>A if-else case statement</p>
+<p>case (&lt;state_name&gt;)</p>
+<blockquote>
+<div><p>0: IfElse type (condition check)</p>
+<p>1: &lt;then body&gt;</p>
+<p>2: &lt;else body&gt;</p>
+</div></blockquote>
+<p>endcase</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="python2verilog.ir.statements.NonBlockingSubsitution">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">python2verilog.ir.statements.</span></span><span class="sig-name descname"><span class="pre">NonBlockingSubsitution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lvalue</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#python2verilog.ir.expressions.Expression" title="python2verilog.ir.expressions.Expression"><span class="pre">Expression</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">rvalue</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#python2verilog.ir.expressions.Expression" title="python2verilog.ir.expressions.Expression"><span class="pre">Expression</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.statements.NonBlockingSubsitution" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#python2verilog.ir.statements.Subsitution" title="python2verilog.ir.statements.Subsitution"><code class="xref py py-class docutils literal notranslate"><span class="pre">Subsitution</span></code></a></p>
+<p>&lt;lvalue&gt; &lt;= &lt;rvalue&gt;</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="python2verilog.ir.statements.StateSubsitution">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">python2verilog.ir.statements.</span></span><span class="sig-name descname"><span class="pre">StateSubsitution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lvalue</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#python2verilog.ir.expressions.Expression" title="python2verilog.ir.expressions.Expression"><span class="pre">Expression</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">rvalue</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#python2verilog.ir.expressions.Expression" title="python2verilog.ir.expressions.Expression"><span class="pre">Expression</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.statements.StateSubsitution" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#python2verilog.ir.statements.NonBlockingSubsitution" title="python2verilog.ir.statements.NonBlockingSubsitution"><code class="xref py py-class docutils literal notranslate"><span class="pre">NonBlockingSubsitution</span></code></a></p>
+<p>Special type to indicate this modifies the local-to-case-statement
+state varaible</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="python2verilog.ir.statements.Statement">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">python2verilog.ir.statements.</span></span><span class="sig-name descname"><span class="pre">Statement</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">literal</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.statements.Statement" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="python2verilog.utils.html#python2verilog.utils.string.ImplementsToLines" title="python2verilog.utils.string.ImplementsToLines"><code class="xref py py-class docutils literal notranslate"><span class="pre">ImplementsToLines</span></code></a></p>
+<p>Represents a statements (i.e. a line or a block)
+If used directly, it is treated as a string literal</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="python2verilog.ir.statements.Statement.to_lines">
+<span class="sig-name descname"><span class="pre">to_lines</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.statements.Statement.to_lines" title="Permalink to this definition">¶</a></dt>
+<dd><p>To Lines</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="python2verilog.ir.statements.Subsitution">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">python2verilog.ir.statements.</span></span><span class="sig-name descname"><span class="pre">Subsitution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lvalue</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#python2verilog.ir.expressions.Expression" title="python2verilog.ir.expressions.Expression"><span class="pre">Expression</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">rvalue</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#python2verilog.ir.expressions.Expression" title="python2verilog.ir.expressions.Expression"><span class="pre">Expression</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">oper</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.statements.Subsitution" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#python2verilog.ir.statements.Statement" title="python2verilog.ir.statements.Statement"><code class="xref py py-class docutils literal notranslate"><span class="pre">Statement</span></code></a></p>
+<p>Interface for
+&lt;lvalue&gt; &lt;blocking or nonblocking&gt; &lt;rvalue&gt;</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="python2verilog.ir.statements.Subsitution.to_lines">
+<span class="sig-name descname"><span class="pre">to_lines</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.statements.Subsitution.to_lines" title="Permalink to this definition">¶</a></dt>
+<dd><p>To Lines</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="python2verilog.ir.statements.ValidSubsitution">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">python2verilog.ir.statements.</span></span><span class="sig-name descname"><span class="pre">ValidSubsitution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lvalue</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#python2verilog.ir.expressions.Expression" title="python2verilog.ir.expressions.Expression"><span class="pre">Expression</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">rvalue</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#python2verilog.ir.expressions.Expression" title="python2verilog.ir.expressions.Expression"><span class="pre">Expression</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.statements.ValidSubsitution" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#python2verilog.ir.statements.NonBlockingSubsitution" title="python2verilog.ir.statements.NonBlockingSubsitution"><code class="xref py py-class docutils literal notranslate"><span class="pre">NonBlockingSubsitution</span></code></a></p>
+<p>Special type to indicate this modifies the valid signal</p>
+<p>More than one of these cannot be in the same block / clock cycle,
+otherwise output values may be overwriting each other</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="python2verilog.ir.statements.WhileWrapper">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">python2verilog.ir.statements.</span></span><span class="sig-name descname"><span class="pre">WhileWrapper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">expression</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#python2verilog.ir.expressions.Expression" title="python2verilog.ir.expressions.Expression"><span class="pre">Expression</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">case_items</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#python2verilog.ir.statements.CaseItem" title="python2verilog.ir.statements.CaseItem"><span class="pre">python2verilog.ir.statements.CaseItem</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.statements.WhileWrapper" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#python2verilog.ir.statements.Case" title="python2verilog.ir.statements.Case"><code class="xref py py-class docutils literal notranslate"><span class="pre">Case</span></code></a></p>
+<p>A while case statement</p>
+<dl>
+<dt>Case (WHILE)</dt><dd><dl>
+<dt>0: if (!&lt;conditional&gt;)</dt><dd><blockquote>
+<div><p>&lt;continue&gt;</p>
+</div></blockquote>
+<dl class="simple">
+<dt>else</dt><dd><p>&lt;loop body / go state 1&gt;</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>1: &lt;loop body&gt;</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="python2verilog.ir.statements.WhileWrapper.append_end_statements">
+<span class="sig-name descname"><span class="pre">append_end_statements</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">statements</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#python2verilog.ir.statements.Statement" title="python2verilog.ir.statements.Statement"><span class="pre">python2verilog.ir.statements.Statement</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.statements.WhileWrapper.append_end_statements" title="Permalink to this definition">¶</a></dt>
+<dd><p>While statements have a special case structure,
+where their first case always contains an if statement</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="python2verilog.ir.statements.is_valid_append_end_statements">
+<span class="sig-prename descclassname"><span class="pre">python2verilog.ir.statements.</span></span><span class="sig-name descname"><span class="pre">is_valid_append_end_statements</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stmt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#python2verilog.ir.statements.Statement" title="python2verilog.ir.statements.Statement"><span class="pre">Statement</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">statements</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#python2verilog.ir.statements.Statement" title="python2verilog.ir.statements.Statement"><span class="pre">python2verilog.ir.statements.Statement</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#python2verilog.ir.statements.is_valid_append_end_statements" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks if stmt encapsulates other Statements or not
+If it does, it handles the append, otherwise returns false
+# TODO: there should be a subclass/interface for ones that do encapsulate</p>
+</dd></dl>
+
+</section>
+<section id="module-python2verilog.ir">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-python2verilog.ir" title="Permalink to this heading">¶</a></h2>
+<p>Intermediate Representation</p>
+<p>Similar to Assembly</p>
+</section>
+</section>
+
+
+          </div>
+
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Python2Verilog</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">python2verilog</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="python2verilog.html">python2verilog package</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="modules.html">python2verilog</a><ul>
+  <li><a href="python2verilog.html">python2verilog package</a><ul>
+      <li>Previous: <a href="python2verilog.frontend.html" title="previous chapter">python2verilog.frontend package</a></li>
+      <li>Next: <a href="python2verilog.optimizer.html" title="next chapter">python2verilog.optimizer package</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2023, Kerry Wang.
+
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+
+      |
+      <a href="../_sources/apidoc/python2verilog.ir.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+
+
+
+  </body>
+</html>
