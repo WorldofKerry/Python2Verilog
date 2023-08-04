@@ -20,14 +20,6 @@ python2verilog.utils.string module
    :undoc-members:
    :show-inheritance:
 
-python2verilog.utils.visualization module
------------------------------------------
-
-.. automodule:: python2verilog.utils.visualization
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 Module contents
 ---------------
 
