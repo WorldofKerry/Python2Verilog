@@ -1,13 +1,14 @@
 # Runs Pylint
 # Locally run `pre-commit install` then commit
 
-name: Pylint Linting
+name: pylint linting
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
+    types: [ready_for_review]
 
 jobs:
   build:

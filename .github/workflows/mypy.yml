@@ -1,7 +1,7 @@
 # Runs MyPy
 # Locally run `pre-commit install` then commit
 
-name: MyPy Type Checking
+name: mypy type checking
 
 on:
   push:

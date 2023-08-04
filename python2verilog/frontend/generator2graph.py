@@ -4,11 +4,14 @@ from __future__ import annotations
 import copy
 import warnings
 import ast as pyast
+import sys
 from typing import Optional
 
 from .. import ir
 from ..utils.string import Lines, Indent
 from ..utils.assertions import assert_type, assert_list_type
+
+sys.setrecursionlimit(300)
 
 
 class Generator2Graph:
@@ -31,7 +34,7 @@ class Generator2Graph:
         self._root = self.__parse_statements(
             stmts=list(python_func.body),
             prefix="",
-            nextt=ir.Node(unique_id="_statelmaodone", name="done"),
+            nextt=ir.DoneNode(unique_id="_statelmaodone", name="done"),
         )
         for i, var in enumerate(self._context.state_vars):
             self.__add_global_var(str(i), var.to_string())
@@ -41,14 +44,14 @@ class Generator2Graph:
         """
         Returns the root of the IR Graph
         """
-        return copy.deepcopy(self._root)
+        return self._root
 
     @property
     def context(self):
         """
         Returns the context surrounding the Python generator function
         """
-        return copy.deepcopy(self._context)
+        return self._context
 
     @property
     def results(self):
@@ -124,7 +127,9 @@ class Generator2Graph:
             rvalue=self.__parse_expression(node.value),
         )
 
-    def __parse_statements(self, stmts: list[pyast.AST], prefix: str, nextt: ir.Node):
+    def __parse_statements(
+        self, stmts: list[pyast.AST], prefix: str, nextt: ir.Element
+    ):
         """
         Returns state of the first stmt in block
 
@@ -150,7 +155,7 @@ class Generator2Graph:
             )
         return previous
 
-    def __parse_statement(self, stmt: pyast.AST, nextt: ir.Node, prefix: str):
+    def __parse_statement(self, stmt: pyast.AST, nextt: ir.Element, prefix: str):
         """
         nextt represents the next operation in the control flow diagram.
 
@@ -162,16 +167,16 @@ class Generator2Graph:
 
         """
         assert_type(stmt, pyast.AST)
-        assert_type(nextt, ir.Node)
+        assert_type(nextt, ir.Element)
         cur_node = None
         if isinstance(stmt, pyast.Assign):
             cur_node = self.__parse_assign(stmt, prefix=prefix)
-            edge = ir.Edge(unique_id=f"{prefix}_e", next_node=nextt)
-            cur_node.set_edge(edge)
+            edge = ir.ClockedEdge(unique_id=f"{prefix}_e", child=nextt)
+            cur_node.child = edge
         elif isinstance(stmt, pyast.Yield):
             cur_node = self.__parse_yield(stmt, prefix=prefix)
-            edge = ir.Edge(unique_id=f"{prefix}_e", next_node=nextt)
-            cur_node.set_edge(edge)
+            edge = ir.ClockedEdge(unique_id=f"{prefix}_e", child=nextt)
+            cur_node.child = edge
         elif isinstance(stmt, pyast.While):
             cur_node = self.__parse_while(stmt, nextt=nextt, prefix=prefix)
         elif isinstance(stmt, pyast.If):
@@ -184,14 +189,14 @@ class Generator2Graph:
             assert isinstance(
                 stmt.target, pyast.Name
             ), "Error: only supports single target"
-            edge = ir.Edge(unique_id=f"{prefix}_e", next_node=nextt)
+            edge = ir.ClockedEdge(unique_id=f"{prefix}_e", child=nextt)
             cur_node = ir.AssignNode(
                 unique_id=prefix,
                 lvalue=self.__parse_expression(stmt.target),
                 rvalue=self.__parse_expression(
                     pyast.BinOp(stmt.target, stmt.op, stmt.value)
                 ),
-                edge=edge,
+                child=edge,
             )
         else:
             raise TypeError(
@@ -199,53 +204,47 @@ class Generator2Graph:
             )
         return cur_node
 
-    def __parse_ifelse(self, stmt: pyast.If, nextt: ir.Node, prefix: str):
+    def __parse_ifelse(self, stmt: pyast.If, nextt: ir.Element, prefix: str):
         """
         If statement
         """
         assert isinstance(stmt, pyast.If)
-        then_to = ir.Edge(unique_id=f"{prefix}_e0", next_node=nextt)
-        else_to = ir.Edge(unique_id=f"{prefix}_e1", next_node=nextt)
 
-        then_node = self.__parse_statements(list(stmt.body), f"{prefix}_t", then_to)
-        else_node = self.__parse_statements(list(stmt.orelse), f"{prefix}_f", else_to)
+        then_node = self.__parse_statements(list(stmt.body), f"{prefix}_t", nextt)
+        else_node = self.__parse_statements(list(stmt.orelse), f"{prefix}_f", nextt)
 
-        to_then = ir.Edge(
-            unique_id=f"{prefix}_true_edge", name="True", next_node=then_node
+        to_then = ir.ClockedEdge(
+            unique_id=f"{prefix}_true_edge", name="True", child=then_node
         )
-        to_else = ir.Edge(
-            unique_id=f"{prefix}_false_edge", name="False", next_node=else_node
+        to_else = ir.ClockedEdge(
+            unique_id=f"{prefix}_false_edge", name="False", child=else_node
         )
 
         ifelse = ir.IfElseNode(
             unique_id=prefix,
-            then_edge=to_then,
-            else_edge=to_else,
+            true_edge=to_then,
+            false_edge=to_else,
             condition=self.__parse_expression(stmt.test),
         )
         return ifelse
 
-    def __parse_while(self, stmt: pyast.While, nextt: ir.Node, prefix: str):
+    def __parse_while(self, stmt: pyast.While, nextt: ir.Element, prefix: str):
         """
         Converts while loop to a while-true-if-break loop
         """
         assert isinstance(stmt, pyast.While)
 
-        body_edge = ir.Edge(unique_id=f"{prefix}_edge", name="True")
-        final_edge = ir.Edge(unique_id=f"{prefix}_f", name="False", next_node=nextt)
-        recurse_edge = ir.Edge(unique_id=f"{prefix}_recur", name="Recurse")
-        body_node = self.__parse_statements(
-            list(stmt.body), f"{prefix}_while", recurse_edge
-        )
-        body_edge.set_next_node(body_node)
+        loop_edge = ir.ClockedEdge(unique_id=f"{prefix}_edge", name="True")
+        done_edge = ir.ClockedEdge(unique_id=f"{prefix}_f", name="False", child=nextt)
 
         ifelse = ir.IfElseNode(
             unique_id=f"{prefix}_while",
             condition=self.__parse_expression(stmt.test),
-            then_edge=body_edge,
-            else_edge=final_edge,
+            true_edge=loop_edge,
+            false_edge=done_edge,
         )
-        recurse_edge.set_next_node(ifelse)
+        body_node = self.__parse_statements(list(stmt.body), f"{prefix}_while", ifelse)
+        loop_edge.child = body_node
 
         return ifelse
 
@@ -355,8 +354,11 @@ class Generator2Graph:
         assert len(node.comparators) == 1
 
         if isinstance(node.ops[0], pyast.Lt):
-            operator = "<"
-        elif isinstance(node.ops[0], pyast.LtE):
+            return ir.LessThan(
+                self.__parse_expression(node.left),
+                self.__parse_expression(node.comparators[0]),
+            )
+        if isinstance(node.ops[0], pyast.LtE):
             operator = "<="
         elif isinstance(node.ops[0], pyast.Gt):
             operator = ">"

@@ -1,10 +1,5 @@
-from python2verilog.backend.verilog import (
-    Verilog,
-    Module,
-    PosedgeSyncAlways,
-    Instantiation,
-    Expression,
-)
+from python2verilog.backend.verilog.ast import *
+from python2verilog.backend.verilog import CodeGen
 from python2verilog.frontend import Generator2List, Generator2Graph
 import unittest
 import warnings
@@ -35,7 +30,7 @@ class TestVerilog(unittest.TestCase):
         assert_lines(
             self,
             lines.to_string(),
-            "module cool_name ( \n input wire [31:0] in0,\n input wire _start, \n input wire _clock, \n output reg [31:0] out0, \n output reg _done, \n output reg _valid  \n ); \n endmodule",
+            "module cool_name ( \n input wire signed [31:0] in0,\n input wire _start, \n input wire _clock, \n output reg signed [31:0] out0, \n output reg _done, \n output reg _valid  \n ); \n endmodule",
         )
 
     def test_always(self):
@@ -81,7 +76,7 @@ def circle_lines(s_x, s_y, height) -> tuple[int, int]:
         tree = ast.parse(code)
         function = tree.body[0]
         ir = Generator2List(function)
-        verilog = Verilog()
+        verilog = CodeGen()
         verilog.from_list_ir(ir.get_root(), ir.get_context())
         # warnings.warn(verilog.get_module())
         # warnings.warn(
@@ -119,7 +114,7 @@ def fib(n: int) -> tuple[int]:
         func = ast.parse(python).body[0]
         inst = Generator2Graph(func)
 
-        adjacency_list = ir.create_adjacency_list(inst._root)
+        adjacency_list = ir.create_networkx_adjacency_list(inst._root)
         g = nx.DiGraph(adjacency_list)
 
         plt.figure(figsize=(20, 20))
@@ -134,6 +129,10 @@ def fib(n: int) -> tuple[int]:
         )
         # plt.savefig("path.png")
 
-        verilog = Verilog.from_graph_ir(inst.root, inst.context)
+        verilog = CodeGen.from_graph_ir(inst.root, inst.context)
         # warnings.warn(verilog.get_module_lines())
         # warnings.warn(verilog.get_testbench([(10,)]).to_lines().to_string())
+
+        plt.clf()
+        plt.cla()
+        plt.close()

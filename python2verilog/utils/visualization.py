@@ -49,3 +49,4 @@ def make_visual(generator_inst, directory: str):
 
     plt.clf()
     plt.cla()
+    plt.close()
