@@ -17,8 +17,6 @@ build:
   jobs:
     pre_build:
     - sphinx-apidoc -o docs/apidoc/ python2verilog
-    - ls
-    - ls docs/
 
 # Build documentation in the "docs/" directory with Sphinx
 sphinx:
