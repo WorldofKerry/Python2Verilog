@@ -27,6 +27,7 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -42,6 +43,7 @@ jobs:
 
       - name: Build Sphinx
         run: |
+          python3 -m pip install sphinx
           sphinx-apidoc -o docs/ python2verilog/ -F
           printf "import os\nimport sys\nsys.path.insert(0, os.path.abspath(\"..\"))\n" | cat - docs/conf.py > temp && mv temp docs/conf.py
           make -C docs/ html
