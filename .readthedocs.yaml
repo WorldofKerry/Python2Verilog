@@ -16,6 +16,9 @@ build:
     # golang: "1.19"
   jobs:
     pre_build:
+    - ls
+    - ls ../
+    - ls ../../
     - sphinx-apidoc -o apidoc/ ../python2verilog
     - python -m pip install -r tests/requirements.txt
 
