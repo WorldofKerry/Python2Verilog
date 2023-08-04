@@ -86,8 +86,8 @@ def combine_cases(root: ir.Case):
         if isinstance(expr, ir.Var):
             variables.add(expr.string)
         if isinstance(expr, ir.BinOp):
-            grab_vars(expr._left, variables)
-            grab_vars(expr._right, variables)
+            grab_vars(expr.left, variables)
+            grab_vars(expr.right, variables)
 
     def one_iteration(cur_index: int, lvalues: set[str], valid_stmt_count: int = 0):
         """

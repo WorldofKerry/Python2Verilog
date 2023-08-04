@@ -202,14 +202,14 @@ class CodeGen:
         if isinstance(node, ir.IfElseNode):
             if node.unique_id not in visited:
                 visited.add(node.unique_id)
-                then_state = self.graph_build_node(node._true_edge, root_case, visited)
-                else_state = self.graph_build_node(node._false_edge, root_case, visited)
+                then_state = self.graph_build_node(node.true_edge, root_case, visited)
+                else_state = self.graph_build_node(node.false_edge, root_case, visited)
                 root_case.case_items.append(
                     ver.CaseItem(
                         condition=ver.Expression(node.unique_id),
                         statements=[
                             ver.IfElse(
-                                condition=ver.Expression(node._condition.to_string()),
+                                condition=ver.Expression(node.condition.to_string()),
                                 then_body=[
                                     ver.NonBlockingSubsitution(
                                         root_case.condition.to_string(), then_state
@@ -232,7 +232,7 @@ class CodeGen:
                 next_state = self.graph_build_node(node.child, root_case, visited)
                 stmts = [
                     ver.NonBlockingSubsitution(f"_out{i}", v.to_string())
-                    for i, v in enumerate(node._stmts)
+                    for i, v in enumerate(node.stmts)
                 ] + [ver.NonBlockingSubsitution("_valid", "1")]
                 root_case.case_items.append(
                     ver.CaseItem(
@@ -481,7 +481,7 @@ class CaseBuilder:
         elif isinstance(vertex, ir.YieldNode):
             outputs = [
                 ver.NonBlockingSubsitution(f"_out{i}", str(expr))
-                for i, expr in enumerate(vertex._stmts)
+                for i, expr in enumerate(vertex.stmts)
             ] + [ver.NonBlockingSubsitution("_valid", "1")]
             state_change = []
 

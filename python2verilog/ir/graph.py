@@ -324,6 +324,13 @@ class YieldNode(Vertex, BasicElement):
         super().__init__(unique_id, name=name, child=edge)
         self._stmts = assert_list_type(stmts, expr.Expression)
 
+    @property
+    def stmts(self):
+        """
+        Yield statements
+        """
+        return self._stmts
+
     def to_string(self):
         """
         To string

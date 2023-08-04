@@ -107,7 +107,6 @@ class OptimizeGraph:
 
         def should_i_be_clocked(
             regular: ir.Element,
-            mapping: dict[ir.Expression, ir.Expression],
             visited: dict[str, int],
             threshold: int,
         ):
@@ -116,8 +115,7 @@ class OptimizeGraph:
             return visited[regular.unique_id] > threshold
 
         def helper(
-            regular: ir.Element,
-            # optimal: ir.Node,
+            element: ir.Element,
             mapping: dict[ir.Expression, ir.Expression],
             visited: dict[str, int],
             threshold: int,
@@ -125,62 +123,58 @@ class OptimizeGraph:
             """
             Helper
             """
-            if threshold <= 0 and regular.unique_id in visited:
-                return regular
-            visited[regular.unique_id] = visited.get(regular.unique_id, 0) + 1
+            if threshold <= 0 and element.unique_id in visited:
+                return element
+            visited[element.unique_id] = visited.get(element.unique_id, 0) + 1
 
             edge: ir.Edge
-            if isinstance(regular, ir.Edge):
-                raise RuntimeError(f"no edges allowed {regular.child}")
-            if isinstance(regular, ir.AssignNode):
-                new_node = graph_apply_mapping(regular, mapping)
-                new_node.unique_id = f"{regular.unique_id}_{make_unique()}_optimal"
+            if isinstance(element, ir.Edge):
+                raise RuntimeError(f"no edges allowed {element.child}")
+            if isinstance(element, ir.AssignNode):
+                new_node = graph_apply_mapping(element, mapping)
+                new_node.unique_id = f"{element.unique_id}_{make_unique()}_optimal"
 
-                if should_i_be_clocked(
-                    regular.child.child, mapping, visited, threshold
-                ):
-                    new_node.optimal_child = regular.child
+                if should_i_be_clocked(element.child.child, visited, threshold):
+                    new_node.optimal_child = element.child
                     return new_node
 
                 updated_mapping = graph_update_mapping(new_node, mapping)
-                if isinstance(regular.child.child, ir.Edge):
-                    raise RuntimeError(f"unexpected edge, only nodes allowed {regular}")
+                if isinstance(element.child.child, ir.Edge):
+                    raise RuntimeError(f"unexpected edge, only nodes allowed {element}")
                 result = helper(
-                    regular=regular.child.child,
+                    element=element.child.child,
                     mapping=updated_mapping,
                     visited=visited,
                     threshold=threshold,
                 )
                 # print(f"got result {result} {result.unique_id}")
                 edge = ir.NonClockedEdge(
-                    unique_id=f"{regular.child.unique_id}_{make_unique()}_optimal",
+                    unique_id=f"{element.child.unique_id}_{make_unique()}_optimal",
                     child=result,
                 )
                 new_node.optimal_child = edge
                 return new_node
 
-            if isinstance(regular, ir.IfElseNode):
-                new_condition = backwards_replace(regular.condition, mapping)
-                new_ifelse = ir.IfElseNode(
-                    unique_id=f"{regular.unique_id}_{make_unique()}_optimal",
+            if isinstance(element, ir.IfElseNode):
+                new_condition = backwards_replace(element.condition, mapping)
+                new_node = ir.IfElseNode(
+                    unique_id=f"{element.unique_id}_{make_unique()}_optimal",
                     condition=new_condition,
-                    true_edge=regular.true_edge,
-                    false_edge=regular.false_edge,
+                    true_edge=element.true_edge,
+                    false_edge=element.false_edge,
                 )
                 # print(
                 #     f"created if with new_condition {new_condition} {new_ifelse.unique_id}"
                 # )
                 # print(f"created {str(ifelse)}")
 
-                if not should_i_be_clocked(
-                    regular.true_edge.child, mapping, visited, threshold
-                ):
+                if not should_i_be_clocked(element.true_edge.child, visited, threshold):
                     # print("optimzing true branch")
-                    true_mapping = graph_update_mapping(regular.true_edge, mapping)
-                    if isinstance(regular.true_edge.child, ir.Edge):
-                        raise RuntimeError(f"{regular}")
+                    true_mapping = graph_update_mapping(element.true_edge, mapping)
+                    if isinstance(element.true_edge.child, ir.Edge):
+                        raise RuntimeError(f"{element}")
                     optimal_true_node = helper(
-                        regular=regular.true_edge.child,
+                        element=element.true_edge.child,
                         mapping=true_mapping,
                         visited=copy.deepcopy(visited),
                         threshold=threshold,
@@ -188,46 +182,46 @@ class OptimizeGraph:
                     edge = ir.NonClockedEdge(
                         # TODO: reason about this,
                         # there are yield -> if -> yield with no clocks in-between
-                        unique_id=f"{regular.true_edge.unique_id}_{make_unique()}_optimal",
+                        unique_id=f"{element.true_edge.unique_id}_{make_unique()}_optimal",
                         name="True",
                         child=optimal_true_node,
                     )
-                    new_ifelse.optimal_true_edge = edge
+                    new_node.optimal_true_edge = edge
                 else:
                     # print("no optimize true branch")
                     pass
 
                 if not should_i_be_clocked(
-                    regular.false_edge.child, mapping, visited, threshold
+                    element.false_edge.child, visited, threshold
                 ):
                     # print("optimzing false branch")
-                    false_mapping = graph_update_mapping(regular.false_edge, mapping)
-                    if isinstance(regular.false_edge.child, ir.Edge):
-                        raise RuntimeError(f"{regular}")
+                    false_mapping = graph_update_mapping(element.false_edge, mapping)
+                    if isinstance(element.false_edge.child, ir.Edge):
+                        raise RuntimeError(f"{element}")
                     optimal_false_node = helper(
-                        regular=regular.false_edge.child,
+                        element=element.false_edge.child,
                         mapping=false_mapping,
                         visited=copy.deepcopy(visited),
                         threshold=threshold,
                     )
                     edge = ir.NonClockedEdge(
-                        unique_id=f"{regular.false_edge.unique_id}_{make_unique()}_optimal",
+                        unique_id=f"{element.false_edge.unique_id}_{make_unique()}_optimal",
                         name="False",
                         child=optimal_false_node,
                     )
-                    new_ifelse.optimal_false_edge = edge
+                    new_node.optimal_false_edge = edge
                 else:
                     # print("No optimize false branch")
                     pass
 
                 # print(f"returning {str(ifelse)} {mapping}")
-                return new_ifelse
-            if isinstance(regular, ir.YieldNode):
+                return new_node
+            if isinstance(element, ir.YieldNode):
                 updated = []
-                for stmt in regular._stmts:
+                for stmt in element.stmts:
                     updated.append(backwards_replace(stmt, mapping))
-                if isinstance(regular.child.child, ir.Edge):
-                    raise RuntimeError(f"{regular}")
+                if isinstance(element.child.child, ir.Edge):
+                    raise RuntimeError(f"{element}")
                 # TODO: currently a clock always happens after a yield,
                 # this results in inefficiencies when there is a yield followed by done
                 # more wave analysis can be done to potentially paramatize this
@@ -245,22 +239,22 @@ class OptimizeGraph:
                 # )
 
                 edge = ir.ClockedEdge(
-                    unique_id=f"{regular.child.unique_id}_{make_unique()}_optimal",
-                    child=regular.child.child,
+                    unique_id=f"{element.child.unique_id}_{make_unique()}_optimal",
+                    child=element.child.child,
                 )
                 new_node = ir.YieldNode(
-                    unique_id=f"{regular.unique_id}_{make_unique()}_optimal",
+                    unique_id=f"{element.unique_id}_{make_unique()}_optimal",
                     stmts=updated,
-                    name=regular.name,
+                    name=element.name,
                 )
                 new_node.optimal_child = edge
                 return new_node
 
-            if isinstance(regular, ir.DoneNode):
+            if isinstance(element, ir.DoneNode):
                 # logging.error("found done")
-                return regular
+                return element
 
-            raise RuntimeError(f"unexpected {type(regular)} {regular}")
+            raise RuntimeError(f"unexpected {type(element)} {element}")
 
         if root.unique_id in visited:
             return root
