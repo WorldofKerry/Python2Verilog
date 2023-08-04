@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>python2verilog.optimizer.basic &#8212; Python2Verilog  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b3523f8e" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=039e1c02" />
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js?v=b3ba4146"></script>
+    <script src="../../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=4825356b"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for python2verilog.optimizer.basic</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Optimizer algorithms that operate ontop of the list-based IR</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">typing</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">ir</span>
+
+
+<div class="viewcode-block" id="get_idx_with_state_name"><a class="viewcode-back" href="../../../python2verilog.optimizer.html#python2verilog.optimizer.basic.get_idx_with_state_name">[docs]</a><span class="k">def</span> <span class="nf">get_idx_with_state_name</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">Case</span><span class="p">,</span> <span class="n">state_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Gets the index of a case item with a state name</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Case</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">case_items</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">condition</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Var</span><span class="p">)</span> <span class="ow">and</span> <span class="n">item</span><span class="o">.</span><span class="n">condition</span><span class="o">.</span><span class="n">string</span> <span class="o">==</span> <span class="n">state_name</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">idx</span>
+    <span class="c1"># raise ValueError(f&quot;Could not find state name {state_name}&quot;)</span>
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="get_last_state_sub_name"><a class="viewcode-back" href="../../../python2verilog.optimizer.html#python2verilog.optimizer.basic.get_last_state_sub_name">[docs]</a><span class="k">def</span> <span class="nf">get_last_state_sub_name</span><span class="p">(</span><span class="n">stmts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ir</span><span class="o">.</span><span class="n">Statement</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Given a list of Statements, gets the state name of the last state subsitution</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">stmt</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">stmts</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stmt</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">StateSubsitution</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">stmt</span><span class="o">.</span><span class="n">rvalue</span><span class="o">.</span><span class="n">string</span>
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="optimize_if"><a class="viewcode-back" href="../../../python2verilog.optimizer.html#python2verilog.optimizer.basic.optimize_if">[docs]</a><span class="k">def</span> <span class="nf">optimize_if</span><span class="p">(</span><span class="n">root</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">Case</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Avoids a clock cycle waste on an if statement,</span>
+<span class="sd">    Appends the contents of the next block in the then/else blocks</span>
+
+<span class="sd">    Performance: a clock cycle is saved per if-else statement cycle</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">helper</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">Statement</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Helper</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">IfElse</span><span class="p">):</span>
+            <span class="n">then_state_name</span> <span class="o">=</span> <span class="n">get_last_state_sub_name</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">then_body</span><span class="p">)</span>
+            <span class="n">else_state_name</span> <span class="o">=</span> <span class="n">get_last_state_sub_name</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">else_body</span><span class="p">)</span>
+
+            <span class="n">then_state_index</span> <span class="o">=</span> <span class="n">get_idx_with_state_name</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">then_state_name</span><span class="p">)</span>
+            <span class="n">else_state_index</span> <span class="o">=</span> <span class="n">get_idx_with_state_name</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">else_state_name</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">then_state_index</span><span class="p">:</span>
+                <span class="n">node</span><span class="o">.</span><span class="n">then_body</span> <span class="o">+=</span> <span class="n">root</span><span class="o">.</span><span class="n">case_items</span><span class="p">[</span><span class="n">then_state_index</span><span class="p">]</span><span class="o">.</span><span class="n">statements</span>
+
+            <span class="k">if</span> <span class="n">else_state_index</span><span class="p">:</span>
+                <span class="n">node</span><span class="o">.</span><span class="n">else_body</span> <span class="o">+=</span> <span class="n">root</span><span class="o">.</span><span class="n">case_items</span><span class="p">[</span><span class="n">else_state_index</span><span class="p">]</span><span class="o">.</span><span class="n">statements</span>
+
+        <span class="c1"># Recurse</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Case</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">case_items</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">stmt</span> <span class="ow">in</span> <span class="n">item</span><span class="o">.</span><span class="n">statements</span><span class="p">:</span>
+                    <span class="n">helper</span><span class="p">(</span><span class="n">stmt</span><span class="p">)</span>
+
+    <span class="n">helper</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">root</span></div>
+
+
+<div class="viewcode-block" id="combine_cases"><a class="viewcode-back" href="../../../python2verilog.optimizer.html#python2verilog.optimizer.basic.combine_cases">[docs]</a><span class="k">def</span> <span class="nf">combine_cases</span><span class="p">(</span><span class="n">root</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">Case</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Looks at a case item.</span>
+
+<span class="sd">    Combines it with all subsequent case items if</span>
+<span class="sd">    subsequent case items&#39; rvalues do not depend on any lvalues of prior case items</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">grab_vars</span><span class="p">(</span><span class="n">expr</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">Expression</span><span class="p">,</span> <span class="n">variables</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Gets all vars referenced by expression</span>
+
+<span class="sd">        Unless they are a state sub</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Var</span><span class="p">):</span>
+            <span class="n">variables</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">string</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">BinOp</span><span class="p">):</span>
+            <span class="n">grab_vars</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">left</span><span class="p">,</span> <span class="n">variables</span><span class="p">)</span>
+            <span class="n">grab_vars</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">right</span><span class="p">,</span> <span class="n">variables</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">one_iteration</span><span class="p">(</span><span class="n">cur_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">lvalues</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">valid_stmt_count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Optimizes one case item with its descendants</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Case</span><span class="p">)</span>
+        <span class="c1"># warnings.warn(f&quot;{str([e.condition for e in node.case_items])}&quot;)</span>
+        <span class="n">rvalues</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">stmt</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">case_items</span><span class="p">[</span><span class="n">cur_index</span><span class="p">]</span><span class="o">.</span><span class="n">statements</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stmt</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">IfElse</span><span class="p">):</span>
+                <span class="k">return</span>
+        <span class="n">check_state_name</span> <span class="o">=</span> <span class="n">get_last_state_sub_name</span><span class="p">(</span>
+            <span class="n">root</span><span class="o">.</span><span class="n">case_items</span><span class="p">[</span><span class="n">cur_index</span><span class="p">]</span><span class="o">.</span><span class="n">statements</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">check_state_name</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">check_state_index</span> <span class="o">=</span> <span class="n">get_idx_with_state_name</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">check_state_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">check_state_index</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">check_state</span> <span class="o">=</span> <span class="n">root</span><span class="o">.</span><span class="n">case_items</span><span class="p">[</span><span class="n">check_state_index</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">stmt</span> <span class="ow">in</span> <span class="n">check_state</span><span class="o">.</span><span class="n">statements</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stmt</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">NonBlockingSubsitution</span><span class="p">):</span>
+                <span class="n">grab_vars</span><span class="p">(</span><span class="n">stmt</span><span class="o">.</span><span class="n">rvalue</span><span class="p">,</span> <span class="n">rvalues</span><span class="p">)</span>
+                <span class="n">grab_vars</span><span class="p">(</span><span class="n">stmt</span><span class="o">.</span><span class="n">lvalue</span><span class="p">,</span> <span class="n">lvalues</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stmt</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">ValidSubsitution</span><span class="p">):</span>
+                <span class="n">valid_stmt_count</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stmt</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">IfElse</span><span class="p">):</span>
+                <span class="n">valid_stmt_count</span> <span class="o">=</span> <span class="mi">9999999</span>  <span class="c1"># TODO: more elegant</span>
+
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">rvalues</span><span class="o">.</span><span class="n">isdisjoint</span><span class="p">(</span><span class="n">lvalues</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">lvalues</span>
+        <span class="p">)</span> <span class="ow">and</span> <span class="n">valid_stmt_count</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>  <span class="c1"># can&#39;t merge multiple _valid modifiers</span>
+            <span class="n">root</span><span class="o">.</span><span class="n">case_items</span><span class="p">[</span><span class="n">cur_index</span><span class="p">]</span><span class="o">.</span><span class="n">statements</span> <span class="o">+=</span> <span class="n">root</span><span class="o">.</span><span class="n">case_items</span><span class="p">[</span>
+                <span class="n">check_state_index</span>
+            <span class="p">]</span><span class="o">.</span><span class="n">statements</span>
+            <span class="n">one_iteration</span><span class="p">(</span><span class="n">cur_index</span><span class="p">,</span> <span class="n">lvalues</span><span class="p">,</span> <span class="n">valid_stmt_count</span><span class="p">)</span>
+
+    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Case</span><span class="p">)</span>
+    <span class="n">cur_index</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">while</span> <span class="n">cur_index</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">case_items</span><span class="p">):</span>
+        <span class="n">lvalues</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">valid_stmt_count</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">for</span> <span class="n">stmt</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">case_items</span><span class="p">[</span><span class="n">cur_index</span><span class="p">]</span><span class="o">.</span><span class="n">statements</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stmt</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">NonBlockingSubsitution</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span>
+                <span class="n">stmt</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">StateSubsitution</span>
+            <span class="p">):</span>
+                <span class="n">grab_vars</span><span class="p">(</span><span class="n">stmt</span><span class="o">.</span><span class="n">lvalue</span><span class="p">,</span> <span class="n">lvalues</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stmt</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">ValidSubsitution</span><span class="p">):</span>
+                <span class="n">valid_stmt_count</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stmt</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">IfElse</span><span class="p">):</span>
+                <span class="n">valid_stmt_count</span> <span class="o">=</span> <span class="mi">9999999</span>  <span class="c1"># TODO: more elegant</span>
+
+        <span class="n">one_iteration</span><span class="p">(</span><span class="n">cur_index</span><span class="p">,</span> <span class="n">lvalues</span><span class="p">,</span> <span class="n">valid_stmt_count</span><span class="p">)</span>
+        <span class="n">cur_index</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="k">return</span> <span class="n">root</span></div>
+
+
+<div class="viewcode-block" id="remove_unreferenced_states"><a class="viewcode-back" href="../../../python2verilog.optimizer.html#python2verilog.optimizer.basic.remove_unreferenced_states">[docs]</a><span class="k">def</span> <span class="nf">remove_unreferenced_states</span><span class="p">(</span><span class="n">root</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">Case</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Removes unreferenced states,</span>
+<span class="sd">    that is states that are not accessible by the state machine</span>
+
+<span class="sd">    Note: does not affect performance</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">cleanup_unused_items</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">Case</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Reference counts every case expression and removes a case if no one references it</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">referenced</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+        <span class="k">def</span> <span class="nf">helper</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">Statement</span><span class="p">):</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Helper</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">StateSubsitution</span><span class="p">):</span>
+                <span class="n">referenced</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">rvalue</span><span class="o">.</span><span class="n">string</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">IfElse</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">stmt</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">then_body</span><span class="p">:</span>
+                    <span class="n">helper</span><span class="p">(</span><span class="n">stmt</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">stmt</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">else_body</span><span class="p">:</span>
+                    <span class="n">helper</span><span class="p">(</span><span class="n">stmt</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">case_items</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">continue</span>  <span class="c1"># first case-item is entry</span>
+            <span class="k">for</span> <span class="n">stmt</span> <span class="ow">in</span> <span class="n">item</span><span class="o">.</span><span class="n">statements</span><span class="p">:</span>
+                <span class="n">helper</span><span class="p">(</span><span class="n">stmt</span><span class="p">)</span>
+
+        <span class="n">all_states</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">case_items</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">all_states</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">condition</span><span class="o">.</span><span class="n">string</span><span class="p">)</span>
+
+        <span class="n">diff</span> <span class="o">=</span> <span class="n">all_states</span> <span class="o">-</span> <span class="n">referenced</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">case_items</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">condition</span><span class="o">.</span><span class="n">string</span> <span class="ow">in</span> <span class="n">diff</span><span class="p">:</span>
+                <span class="k">del</span> <span class="n">node</span><span class="o">.</span><span class="n">case_items</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+        <span class="c1"># warnings.warn(</span>
+        <span class="c1">#     f&quot;{str(referenced)} {str(all_states)} {str(all_states - referenced)}&quot;</span>
+        <span class="c1"># )</span>
+
+    <span class="k">def</span> <span class="nf">remove_redundant_state_changes</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">Case</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        If there multiple state assignments, only last one is used</span>
+<span class="sd">        Therefore the earlier ones should be removed</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">def</span> <span class="nf">filterer</span><span class="p">(</span><span class="n">stmts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ir</span><span class="o">.</span><span class="n">Statement</span><span class="p">]):</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Helper</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="n">stmts</span><span class="o">.</span><span class="n">reverse</span><span class="p">()</span>
+            <span class="n">saw_state_sub</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="n">result</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ir</span><span class="o">.</span><span class="n">Statement</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">stmt</span> <span class="ow">in</span> <span class="n">stmts</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stmt</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">StateSubsitution</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">saw_state_sub</span><span class="p">:</span>
+                        <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">stmt</span><span class="p">)</span>
+                        <span class="n">saw_state_sub</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">stmt</span><span class="p">)</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">reverse</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">result</span>
+
+        <span class="k">def</span> <span class="nf">helper</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">Statement</span><span class="p">):</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Helper</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">IfElse</span><span class="p">):</span>
+                <span class="n">node</span><span class="o">.</span><span class="n">then_body</span> <span class="o">=</span> <span class="n">filterer</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">then_body</span><span class="p">)</span>
+                <span class="n">node</span><span class="o">.</span><span class="n">else_body</span> <span class="o">=</span> <span class="n">filterer</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">else_body</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">case_items</span><span class="p">:</span>
+            <span class="n">item</span><span class="o">.</span><span class="n">statements</span> <span class="o">=</span> <span class="n">filterer</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">statements</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">stmt</span> <span class="ow">in</span> <span class="n">item</span><span class="o">.</span><span class="n">statements</span><span class="p">:</span>
+                <span class="n">helper</span><span class="p">(</span><span class="n">stmt</span><span class="p">)</span>
+
+    <span class="n">remove_redundant_state_changes</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
+    <span class="n">cleanup_unused_items</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">root</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">Python2Verilog</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../python2verilog.html">python2verilog package</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2023, Kerry Wang.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.1.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

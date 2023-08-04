@@ -1,0 +1,29 @@
+python2verilog.optimizer package
+================================
+
+Submodules
+----------
+
+python2verilog.optimizer.basic module
+-------------------------------------
+
+.. automodule:: python2verilog.optimizer.basic
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+python2verilog.optimizer.graph module
+-------------------------------------
+
+.. automodule:: python2verilog.optimizer.graph
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: python2verilog.optimizer
+   :members:
+   :undoc-members:
+   :show-inheritance:
