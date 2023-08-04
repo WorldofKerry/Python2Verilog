@@ -10,7 +10,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Build HTML
-        uses: ammaraskar/sphinx-action@master
+        run: |
+          sphinx-apidoc -o docs/ python2verilog/ -F
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:

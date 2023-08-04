@@ -31,16 +31,26 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v3
+        with:
+          python-version: 3.11
+
       - name: Setup Pages
         uses: actions/configure-pages@v3
+
       - name: Build Sphinx
         run: |
-          sphinx-apidoc -o docs2/ python2verilog/ -F
+          sphinx-apidoc -o docs/ python2verilog/ -F
+          printf "import os\nimport sys\nsys.path.insert(0, os.path.abspath(\"..\"))\n" | cat - docs/conf.py > temp && mv temp docs/conf.py
+          make -C docs/ html
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2
         with:
-          # Upload entire repository
-          path: "docs/"
+          path: "docs/html"
+
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v2
