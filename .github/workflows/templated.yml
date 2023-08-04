@@ -9,8 +9,6 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v3
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
       - name: Build HTML
         run: |
           python3 -m pip install sphinx
