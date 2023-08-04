@@ -43,7 +43,7 @@ jobs:
 
       - name: Run Pytest
         run: |
-          python3 -m pytest -vs tests/ --cov=python2verilog/ --cov-report term-missing --write --synthesis
+          python3 -m pytest -vs tests/ --cov=python2verilog/ --cov-report term-missing --write --synthesis --log-cli-level=info
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
