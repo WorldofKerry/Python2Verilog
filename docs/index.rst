@@ -10,7 +10,7 @@ Welcome to Python2Verilog's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-   build/apidoc/modules
+   apidoc/modules
 
 Indices and tables
 ==================
