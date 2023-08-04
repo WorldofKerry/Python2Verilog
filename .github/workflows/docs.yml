@@ -1,3 +1,5 @@
+# Deploys Sphinx Docs to Github Pages
+
 name: docs
 
 on: push
