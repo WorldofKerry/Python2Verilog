@@ -1,8 +1,8 @@
-![PyPI](https://img.shields.io/pypi/v/python2verilog?label=pypi%20package)
-![python versions](https://img.shields.io/badge/dynamic/yaml?url=https%3A%2F%2Fraw.githubusercontent.com%2FWorldofKerry%2FPython2Verilog%2Fmain%2F.github%2Fworkflows%2Fpytest.yml&query=%24.jobs.build.strategy.matrix%5B%22python-version%22%5D&label=python%20versions)
-![PyPI - Downloads](https://img.shields.io/pypi/dm/python2verilog)
-![Tests](https://github.com/worldofkerry/python2verilog/actions/workflows/pytest.yml/badge.svg)
-[![Documentation Status](https://readthedocs.org/projects/python2verilog/badge/?version=latest)](https://python2verilog.readthedocs.io/en/latest/?badge=latest)
+[![pypi](https://img.shields.io/pypi/v/python2verilog?label=pypi%20package)](https://pypi.org/project/python2verilog/)
+![py versions](https://img.shields.io/badge/dynamic/yaml?url=https%3A%2F%2Fraw.githubusercontent.com%2FWorldofKerry%2FPython2Verilog%2Fmain%2F.github%2Fworkflows%2Fpytest.yml&query=%24.jobs.build.strategy.matrix%5B%22python-version%22%5D&label=python%20versions)
+[![pypi downloads](https://img.shields.io/pypi/dm/python2verilog)](https://pypi.org/project/python2verilog/)
+[![pytest](https://github.com/worldofkerry/python2verilog/actions/workflows/pytest.yml/badge.svg)](https://github.com/WorldofKerry/Python2Verilog/actions/workflows/pytest.yml)
+[![docs](https://github.com/worldofkerry/python2verilog/actions/workflows/docs.yml/badge.svg)](https://github.com/WorldofKerry/Python2Verilog/actions/workflows/sphinx.yml)
 
 # Python 2 Verilog
 
@@ -20,9 +20,11 @@ Supports Python [Generator functions](https://wiki.python.org/moin/Generators) a
 **Warning**: Variables are treated as global and therefore no variable shadowing.
 
 ## Sample Usage
+
 `pip install python2verilog`
 
 ### Basic Usage
+
 Create a python file containing a generator function with output type hints, named `<name>.py`.
 
 A sample can be found [here](https://github.com/WorldofKerry/Python2Verilog/blob/main/tests/integration/data/integration/circle_lines/python.py)
@@ -75,18 +77,19 @@ To setup pre-commit, run `pre-commit install`.
 ## Random Planning, Design, and Notes
 
 ## What needs to be duplicated in testbenches?
+
 declare I/O and other signals
 declare DUT
 start clock
 
 loop for each test case
+
 - start signal
 - while wait for done signal
   - clock
   - set start zero
   - display output
-endloop
-
+    endloop
 
 ### Potential API
 
