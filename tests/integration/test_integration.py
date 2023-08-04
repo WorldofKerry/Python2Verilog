@@ -21,7 +21,7 @@ from python2verilog.frontend import Generator2Graph
 from python2verilog.optimizer import basic, OptimizeGraph
 from python2verilog.convert import *
 from python2verilog import ir
-from python2verilog.utils.visualization import make_visual
+from tools.visualization import make_visual
 from .cases import test_cases
 
 
