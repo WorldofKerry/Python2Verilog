@@ -11,8 +11,8 @@ jobs:
         run: |
           python3 -m pip install -r tests/requirements.txt
           python3 -m pip install sphinx
-          sphinx-apidoc -o docs/ python2verilog/ -F
-          printf "import os\nimport sys\nsys.path.insert(0, os.path.abspath(\"..\"))\n" | cat - docs/conf.py > temp && mv temp docs/conf.py
+          sphinx-apidoc -o docs/ python2verilog/ -F -H "Python2Verilog" -A "Kerry Wang"
+          printf "import os\nimport sys\nsys.path.insert(0, os.path.abspath(\"..\"))\nadd_module_names = False\n" | cat - docs/conf.py > temp && mv temp docs/conf.py
           make -C docs/ html
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
@@ -21,7 +21,7 @@ jobs:
           path: docs/_build/html/
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
-        if: github.ref == 'refs/heads/main'
+        if: ${{github.ref == 'refs/heads/main' || github.ref == 'refs/heads/sphinx'}}
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: docs/_build/html
