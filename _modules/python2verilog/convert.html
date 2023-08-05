@@ -60,14 +60,9 @@
 <span class="sd">    Wrapper for Python to Verilog conversion</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">ir</span><span class="p">,</span> <span class="n">context</span> <span class="o">=</span> <span class="n">Generator2Graph</span><span class="p">(</span><span class="n">func</span><span class="p">)</span><span class="o">.</span><span class="n">results</span>
-    <span class="n">OptimizeGraph</span><span class="p">(</span><span class="n">ir</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="n">optimization_level</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">optimization_level</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">OptimizeGraph</span><span class="p">(</span><span class="n">ir</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="n">optimization_level</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">CodeGen</span><span class="o">.</span><span class="n">from_graph_ir</span><span class="p">(</span><span class="n">ir</span><span class="p">,</span> <span class="n">context</span><span class="p">)</span></div>
-
-
-<div class="viewcode-block" id="list_templates"><a class="viewcode-back" href="../../python2verilog.html#python2verilog.convert.list_templates">[docs]</a><span class="k">def</span> <span class="nf">list_templates</span><span class="p">():</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Lists the templates found</span>
-<span class="sd">    &quot;&quot;&quot;</span></div>
 
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
@@ -109,8 +104,7 @@
         <span class="s2">&quot;-O&quot;</span><span class="p">,</span>
         <span class="s2">&quot;--optimization-level&quot;</span><span class="p">,</span>
         <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Optimization level of output, between 0 and 3 inclusive, </span><span class="se">\</span>
-<span class="s2">            </span><span class="se">\n</span><span class="s2">higher means more optimized but may be more difficult to reason&quot;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Set to a value greater than 0 for optimizer, higher values will use more logic cells&quot;</span><span class="p">,</span>
         <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
     <span class="p">)</span>
 

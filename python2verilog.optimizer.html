@@ -84,6 +84,17 @@ that is states that are not accessible by the state machine</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">OptimizeGraph</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.graph.Element" title="python2verilog.ir.graph.Element"><span class="pre">Element</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/optimizer/graph.html#OptimizeGraph"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.optimizer.graph.OptimizeGraph" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>A closure for the graph optimizer</p>
+<p><cite>threshold</cite> (an integer &gt;= 0) tunes
+how much an algorithm can be unrolled and duplicated</p>
+<p>A larger <cite>threshold</cite> will result in a reduction in clock cycles,
+but an increase in hardware usage</p>
+<p>If a python generator function generates all of its outputs in O(n) time:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>hardware optimized with <cite>threshold=0</cite> completes in O(n) cycles</p></li>
+<li><p>hardware optimized with <cite>threshold=x</cite> for <cite>x &gt; 0</cite> completes in O(n/(x+1)) cycles</p></li>
+</ol>
+</div></blockquote>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="python2verilog.optimizer.graph.OptimizeGraph.unique_counter">
 <span class="sig-name descname"><span class="pre">unique_counter</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#python2verilog.optimizer.graph.OptimizeGraph.unique_counter" title="Permalink to this definition">¶</a></dt>
