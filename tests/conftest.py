@@ -9,16 +9,28 @@ CLI args for pytest
 Use dashes instead of underscores in CLI
 """
 params = [
-    Argument("first_test", False, action="store_true"),
-    Argument("write", False, action="store_true"),
-    Argument("synthesis", False, action="store_true"),
+    Argument(
+        "first_test",
+        False,
+        action="store_true",
+        help="Set to only run first case in each test",
+    ),
+    Argument(
+        "write",
+        False,
+        action="store_true",
+        help="Set to write test output files to disk (instead of only in memory)",
+    ),
+    Argument(
+        "synthesis", False, action="store_true", help="Set to query synthesis stats"
+    ),
 ]
 """
 Other useful flags
 -s for output print statements (otherwise they are captured)
 -v for verbose
 -k "filter" to filter tests
---log-cli-level=DEBUG to enable logging librarys' outputs
+--log-cli-level=DEBUG to set logging package
 """
 
 

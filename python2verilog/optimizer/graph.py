@@ -81,6 +81,19 @@ def graph_update_mapping(
 class OptimizeGraph:
     """
     A closure for the graph optimizer
+
+    `threshold` (an integer >= 0) tunes
+    how much an algorithm can be unrolled and duplicated
+
+    A larger `threshold` will result in a reduction in clock cycles,
+    but an increase in hardware usage
+
+    If a python generator function generates all of its outputs in O(n) time:
+
+        1) hardware optimized with `threshold=0` completes in O(n) cycles
+
+        2) hardware optimized with `threshold=x` for `x > 0` completes in O(n/(x+1)) cycles
+
     """
 
     def __init__(self, root: ir.Element, threshold: int = 0):

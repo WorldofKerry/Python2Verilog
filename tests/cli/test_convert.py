@@ -18,7 +18,7 @@ class TestConvert(unittest.TestCase):
 
     def test_module(self):
         CMD = "python3 -m python2verilog.convert tests/integration/data/happy_face/python.py \
-                -o tests/cli/module.sv"
+                -o tests/cli/module.sv -O5"
         result = subprocess.run(
             CMD,
             shell=True,
@@ -54,7 +54,6 @@ class TestConvert(unittest.TestCase):
                 capture_output=True,
             )
             if result.returncode:
-                # warnings.warn(result.stdout + result.stderr)
                 raise subprocess.CalledProcessError(
                     cmd=CMD, returncode=result.returncode, stderr="non-zero return code"
                 )

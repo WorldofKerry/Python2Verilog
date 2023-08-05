@@ -1,5 +1,8 @@
 """
-To run the basic conversion as a CLI script
+Converts Python generator functions to synthesizable Verilog.
+
+For sample Python inputs,
+visit https://github.com/WorldofKerry/Python2Verilog/tree/main/tests/integration/data
 """
 
 import argparse
@@ -29,7 +32,8 @@ def convert_graph(func: ast.FunctionDef, optimization_level: int):
     Wrapper for Python to Verilog conversion
     """
     ir, context = Generator2Graph(func).results
-    OptimizeGraph(ir, threshold=optimization_level)
+    if optimization_level > 0:
+        OptimizeGraph(ir, threshold=optimization_level - 1)
     return CodeGen.from_graph_ir(ir, context)
 
 
@@ -72,8 +76,8 @@ if __name__ == "__main__":
         "-O",
         "--optimization-level",
         type=int,
-        help="Optimization level of output, between 0 and 3 inclusive, \
-            \nhigher means more optimized but may be more difficult to reason",
+        help="Set to a value greater than 0 for optimizations, \
+            higher values will use more logic cells",
         default=0,
     )
 
@@ -102,7 +106,7 @@ if __name__ == "__main__":
         tree = ast.parse(python)
         function = tree.body[0]
         assert isinstance(function, ast.FunctionDef)
-        verilog = convert_list(function, args.optimization_level)
+        verilog = convert_graph(function, args.optimization_level)
 
         with open(
             os.path.abspath(args.output), mode="w+", encoding="utf8"
