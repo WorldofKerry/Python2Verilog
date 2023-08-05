@@ -29,14 +29,9 @@ def convert_graph(func: ast.FunctionDef, optimization_level: int):
     Wrapper for Python to Verilog conversion
     """
     ir, context = Generator2Graph(func).results
-    OptimizeGraph(ir, threshold=optimization_level)
+    if optimization_level > 0:
+        OptimizeGraph(ir, threshold=optimization_level - 1)
     return CodeGen.from_graph_ir(ir, context)
-
-
-def list_templates():
-    """
-    Lists the templates found
-    """
 
 
 if __name__ == "__main__":
@@ -78,8 +73,7 @@ if __name__ == "__main__":
         "-O",
         "--optimization-level",
         type=int,
-        help="Optimization level of output, between 0 and 3 inclusive, \
-            \nhigher means more optimized but may be more difficult to reason",
+        help="Set to a value greater than 0 for optimizer, higher values will use more logic cells",
         default=0,
     )
 

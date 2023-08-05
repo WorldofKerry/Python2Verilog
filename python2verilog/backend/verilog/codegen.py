@@ -14,33 +14,6 @@ class CodeGen:
     Code Generator for Verilog
     """
 
-    @staticmethod
-    def __new_module(root: ver.Statement, context: ir.Context):
-        """
-        Creates a module wrapper from the context
-
-        Requires context for I/O and declarations
-        """
-        assert isinstance(root, ver.Statement)
-        assert isinstance(context, ir.Context)
-        inputs = []
-        for var in context.input_vars:
-            inputs.append(var)
-        outputs = []
-        for i in range(len((context.output_vars))):
-            outputs.append(f"_out{str(i)}")
-        # TODO: make these extras optional
-        always = ver.PosedgeSyncAlways(
-            ver.Expression("_clock"),
-            valid="_valid",
-            body=[CodeGen.__get_start_ifelse(root, context.global_vars)],
-        )
-        body: list[ver.Statement] = [
-            ver.Declaration(v, is_reg=True, is_signed=True) for v in context.global_vars
-        ]
-        body.append(always)
-        return ver.Module(name=context.name, inputs=inputs, outputs=outputs, body=body)
-
     def __init__(self):
         self._context = None
         self._module = None
@@ -91,6 +64,33 @@ class CodeGen:
         inst._context.global_vars["_state"] = str(len(old_case.case_items))
         inst._module = CodeGen.__new_module(root_case, inst._context)
         return inst
+
+    @staticmethod
+    def __new_module(root: ver.Statement, context: ir.Context):
+        """
+        Creates a module wrapper from the context
+
+        Requires context for I/O and declarations
+        """
+        assert isinstance(root, ver.Statement)
+        assert isinstance(context, ir.Context)
+        inputs = []
+        for var in context.input_vars:
+            inputs.append(var)
+        outputs = []
+        for i in range(len((context.output_vars))):
+            outputs.append(f"_out{str(i)}")
+        # TODO: make these extras optional
+        always = ver.PosedgeSyncAlways(
+            ver.Expression("_clock"),
+            valid="_valid",
+            body=[CodeGen.__get_start_ifelse(root, context.global_vars)],
+        )
+        body: list[ver.Statement] = [
+            ver.Declaration(v, is_reg=True, is_signed=True) for v in context.global_vars
+        ]
+        body.append(always)
+        return ver.Module(name=context.name, inputs=inputs, outputs=outputs, body=body)
 
     @staticmethod
     def list_build_stmt(node: ir.Statement) -> ver.Statement:
