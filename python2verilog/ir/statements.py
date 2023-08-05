@@ -1,4 +1,6 @@
-"""An Intermediate Representation for HDL based on Verilog"""
+"""
+An Intermediate Representation for HDL based on Verilog
+"""
 
 from __future__ import annotations
 import warnings

@@ -1,4 +1,6 @@
-"""Verilog Abstract Syntax Tree Components"""
+"""
+Verilog Abstract Syntax Tree Components
+"""
 
 from __future__ import annotations
 import itertools
