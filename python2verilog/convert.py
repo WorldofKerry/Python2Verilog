@@ -33,6 +33,12 @@ def convert_graph(func: ast.FunctionDef, optimization_level: int):
     return CodeGen.from_graph_ir(ir, context)
 
 
+def list_templates():
+    """
+    Lists the templates found
+    """
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawTextHelpFormatter
@@ -102,7 +108,7 @@ if __name__ == "__main__":
         tree = ast.parse(python)
         function = tree.body[0]
         assert isinstance(function, ast.FunctionDef)
-        verilog = convert_list(function, args.optimization_level)
+        verilog = convert_graph(function, args.optimization_level)
 
         with open(
             os.path.abspath(args.output), mode="w+", encoding="utf8"

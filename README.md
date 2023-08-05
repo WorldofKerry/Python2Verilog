@@ -4,26 +4,24 @@
 [![pytest](https://github.com/worldofkerry/python2verilog/actions/workflows/pytest.yml/badge.svg)](https://github.com/WorldofKerry/Python2Verilog/actions/workflows/pytest.yml)
 [![docs](https://github.com/worldofkerry/python2verilog/actions/workflows/docs.yml/badge.svg)](https://github.com/WorldofKerry/Python2Verilog/actions/workflows/sphinx.yml)
 
-# Python 2 Verilog
+# python2verilog
 
 Converts a subset of python generator functions into synthesizable sequential SystemVerilog.
 
 A use case is for drawing shapes on grids (for VGA output), where the user may prototype the algorithm in python and then convert it to verilog for use in an FPGA.
 
-A testbench can also be generated and asserted against the Python outputs.
-
 Supports Python [Generator functions](https://wiki.python.org/moin/Generators) as well as the following block types:
 
 - `if`
 - `while`
+  A testbench can also be generated and asserted against the Python outputs.
 
-**Warning**: Variables are treated as global and therefore no variable shadowing.
+## Usage
 
-## Sample Usage
+`python3 -m pip install --upgrade pip`
+`python3 -m pip install python2verilog`
 
-`pip install python2verilog`
-
-### Basic Usage
+### Basics
 
 Create a python file containing a generator function with output type hints, named `<name>.py`.
 
@@ -52,31 +50,29 @@ Those files will be stored in `tests/integration/data/integration/<test-name>/`.
 
 ## Tested Generations
 
-Outputs of tests in repo can be found as a [github workflow artifact](https://nightly.link/WorldofKerry/Python2Verilog/workflows/python-package/main/tests-data.zip)
+The Github Actions run all the tests with writing enabled.
+You may find its output as a [Github Artifact](https://nightly.link/WorldofKerry/Python2Verilog/workflows/pytest/main/tests-data.zip).
 
 ## For Developers
 
-Based on my experimentation with a [C to Verilog converter](https://github.com/WorldofKerry/c2hdl).
-
-Architecture is based on [LLVM](https://llvm.org/).
-
 To setup pre-commit, run `pre-commit install`.
+
+[Github Issues](https://github.com/WorldofKerry/Python2Verilog/issues) is used for tracking.
 
 ### Epics
 
-- Support arrays
+- Support arrays (and their unrolling)
 - Mimic combinational logic with "regular" Python functions
-- Division approximations
+- Division approximations (and area/timing analysis)
 
 ## Docs
 
-- cd to `docs/`
-- `sphinx-apidoc -o . ../python2verilog/`
-- `make html`
+Uses sphinx.
+Run commands used by [Github Actions](.github/workflows/sphinx.yml).
 
 ## Random Planning, Design, and Notes
 
-## What needs to be duplicated in testbenches?
+### What needs to be duplicated in testbenches?
 
 declare I/O and other signals
 declare DUT
