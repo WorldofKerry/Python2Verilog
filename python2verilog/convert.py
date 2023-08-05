@@ -1,5 +1,8 @@
 """
-To run the basic conversion as a CLI script
+Converts Python generator functions to synthesizable Verilog.
+
+For sample Python inputs,
+visit https://github.com/WorldofKerry/Python2Verilog/tree/main/tests/integration/data
 """
 
 import argparse
@@ -73,7 +76,8 @@ if __name__ == "__main__":
         "-O",
         "--optimization-level",
         type=int,
-        help="Set to a value greater than 0 for optimizer, higher values will use more logic cells",
+        help="Set to a value greater than 0 for optimizations, \
+            higher values will use more logic cells",
         default=0,
     )
 
