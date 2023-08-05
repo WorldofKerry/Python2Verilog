@@ -1,9 +1,9 @@
-.. Python2Verilog documentation master file, created by
-   sphinx-quickstart on Fri Aug  4 23:55:23 2023.
+.. python2verilog documentation master file, created by
+   sphinx-quickstart on Sat Aug  5 00:02:44 2023.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Python2Verilog's documentation!
+Welcome to python2verilog's documentation!
 ==========================================
 
 .. toctree::
