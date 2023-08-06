@@ -1,1 +1,6 @@
-<class 'str'>
+<class 'numba.core.compiler.CompileResult'>
+<class 'numba.core.codegen.JITCodeLibrary'>
+<class 'llvmlite.binding.module.ModuleRef'>
+_ZN8__main__24reallyreallycoolfunction4nextE168UniTuple_28int64_20x_201_29_20generator_28func_3d_3cfunction_20reallyreallycoolfunction_20at_200x7f710531ab90_3e_2c_20args_3d_28int64_2c_29_2c_20has_finalizer_3dTrue_29
+
+<class 'llvmlite.binding.value.ValueRef'>
