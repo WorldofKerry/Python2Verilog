@@ -56,7 +56,18 @@ class CodeGen:
                 ver.NonBlockingSubsitution("_ready", "0"),
             ]
             + [ver.NonBlockingSubsitution(out, "0") for out in context.output_vars]
-            + [CodeGen.__get_start_ifelse(root, context.global_vars, context.entry)],
+            + [
+                ver.IfElse(
+                    ver.Expression("_reset"),
+                    then_body=[
+                        ver.NonBlockingSubsitution(
+                            lvalue="_state", rvalue=context.ready
+                        )
+                    ],
+                    else_body=[],
+                )
+            ]
+            + [CodeGen.__get_start_ifelse(root, context.entry)],
         )
         body: list[ver.Statement] = [
             ver.Declaration(v, is_reg=True, is_signed=True) for v in context.global_vars
@@ -73,7 +84,7 @@ class CodeGen:
         )
 
     @staticmethod
-    def __get_start_ifelse(root: ver.Case, global_vars: dict[str, str], entry: str):
+    def __get_start_ifelse(root: ver.Case, entry: str):
         """
         if (_start) begin
             <var> = <value>;
@@ -84,10 +95,7 @@ class CodeGen:
             endcase
         end
         """
-        init_body: list[ver.Statement] = [ver.NonBlockingSubsitution("_ready", "0")]
-        init_body += [
-            ver.NonBlockingSubsitution(key, val) for key, val in global_vars.items()
-        ]
+        init_body = []
         for item in root.case_items:
             # TODO: context.entry really should be a ver.Expression
             if str(item.condition) == entry:

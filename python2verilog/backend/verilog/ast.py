@@ -471,7 +471,7 @@ class IfElse(Statement):
         self,
         condition: Expression,
         then_body: list[Statement],
-        else_body: list[Statement],
+        else_body: Optional[list[Statement]],
         *args,
         **kwargs,
     ):
@@ -486,9 +486,10 @@ class IfElse(Statement):
         lines += f"if ({self.condition.to_string()}) begin"
         for stmt in self.then_body:
             lines.concat(stmt.to_lines(), indent=1)
-        lines += "end else begin"
-        for stmt in self.else_body:
-            lines.concat(stmt.to_lines(), indent=1)
+        if self.else_body:
+            lines += "end else begin"
+            for stmt in self.else_body:
+                lines.concat(stmt.to_lines(), indent=1)
         lines += "end"
         return lines
 
