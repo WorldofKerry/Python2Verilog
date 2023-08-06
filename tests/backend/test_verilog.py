@@ -114,25 +114,8 @@ def fib(n: int) -> tuple[int]:
         func = ast.parse(python).body[0]
         inst = Generator2Graph(func)
 
-        adjacency_list = ir.create_networkx_adjacency_list(inst._root)
-        g = nx.DiGraph(adjacency_list)
-
-        plt.figure(figsize=(20, 20))
-        nx.draw(
-            g,
-            with_labels=True,
-            font_weight="bold",
-            arrowsize=30,
-            node_size=4000,
-            node_shape="s",
-            node_color="#00b4d9",
-        )
-        # plt.savefig("path.png")
-
-        # verilog = CodeGen.(inst.root, inst.context)
-        # warnings.warn(verilog.get_module_lines())
-        # warnings.warn(verilog.get_testbench([(10,)]).to_lines().to_string())
-
-        plt.clf()
-        plt.cla()
-        plt.close()
+        verilog = CodeGen(inst.root, inst.context)
+        module = verilog.get_module_lines()
+        self.assertNotEqual(module, "")
+        testbench = verilog.new_testbench([(10,)]).to_lines().to_string()
+        self.assertNotEqual(testbench, "")

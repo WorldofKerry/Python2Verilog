@@ -96,6 +96,15 @@ class Statement(ImplementsToLines):
         return lines
 
 
+class LocalParam(Statement):
+    """
+    localparam <name> = <value>;
+    """
+
+    def __init__(self, name: str, value: str, *args, **kwargs):
+        super().__init__(f"localparam {name} = {value};", *args, **kwargs)
+
+
 class AtPosedgeStatement(Statement):
     """
     @(posedge <condition>);

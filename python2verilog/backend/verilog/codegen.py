@@ -24,9 +24,8 @@ class CodeGen:
         root_case = CaseBuilder(root).case
         counter = 0
         for item in root_case.case_items:
-            if item.condition.to_string() not in self._context.global_vars:
-                self._context.global_vars[item.condition.to_string()] = str(counter)
-                counter += 1
+            self._context.global_vars[item.condition.to_string()] = str(counter)
+            counter += 1
         self._context.global_vars["_statelmaodone"] = str(counter)
         self._context.global_vars["_state"] = str(counter - 1)
         self._module = CodeGen.__new_module(root_case, self._context)
