@@ -9,7 +9,7 @@ import warnings
 from typing import Optional
 from ..frontend import Generator2List, Generator2Graph
 from ..backend.verilog import CodeGen
-from ..optimizer import basic, OptimizeGraph
+from ..optimizer import OptimizeGraph
 
 
 def convert_graph(func: ast.FunctionDef, optimization_level: int):
