@@ -129,7 +129,7 @@ def fib(n: int) -> tuple[int]:
         )
         # plt.savefig("path.png")
 
-        # verilog = CodeGen.from_graph_ir(inst.root, inst.context)
+        # verilog = CodeGen.(inst.root, inst.context)
         # warnings.warn(verilog.get_module_lines())
         # warnings.warn(verilog.get_testbench([(10,)]).to_lines().to_string())
 

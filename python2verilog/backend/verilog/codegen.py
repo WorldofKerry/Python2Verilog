@@ -14,29 +14,22 @@ class CodeGen:
     Code Generator for Verilog
     """
 
-    def __init__(self):
-        self._context = ir.Context()
-        self._module = ver.Module("", [], [])
-
-    @classmethod
-    def from_graph_ir(cls, root: ir.Vertex, context: ir.Context):
+    def __init__(self, root: ir.Vertex, context: ir.Context):
         """ "
         Builds tree from Graph IR
         """
         assert_type(root, ir.Vertex)
         assert_type(context, ir.Context)
-        inst = CodeGen()
-        inst._context = context
-        old_case = inst.graph_build(root, set())
+        self._context = context
+        old_case = self.graph_build(root, set())
         root_case = CaseBuilder(root).case
         counter = len(old_case.case_items) + 1
         for item in root_case.case_items:
-            if item.condition.to_string() not in inst._context.global_vars:
-                inst._context.global_vars[item.condition.to_string()] = str(counter)
+            if item.condition.to_string() not in self._context.global_vars:
+                self._context.global_vars[item.condition.to_string()] = str(counter)
                 counter += 1
-        inst._context.global_vars["_state"] = str(len(old_case.case_items))
-        inst._module = CodeGen.__new_module(root_case, inst._context)
-        return inst
+        self._context.global_vars["_state"] = str(len(old_case.case_items))
+        self._module = CodeGen.__new_module(root_case, self._context)
 
     @staticmethod
     def __new_module(root: ver.Statement, context: ir.Context):
