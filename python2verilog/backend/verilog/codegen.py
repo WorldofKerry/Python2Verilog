@@ -56,7 +56,7 @@ class CodeGen:
         always = ver.PosedgeSyncAlways(
             ver.Expression("_clock"),
             valid="_valid",
-            body=[CodeGen.__get_start_ifelse(root, context.global_vars)],
+            body=[CodeGen.__get_start_ifelse(root, context.global_vars, context.entry)],
         )
         body: list[ver.Statement] = [
             ver.Declaration(v, is_reg=True, is_signed=True) for v in context.global_vars
@@ -73,7 +73,7 @@ class CodeGen:
         )
 
     @staticmethod
-    def __get_start_ifelse(root: ver.Case, global_vars: dict[str, str]):
+    def __get_start_ifelse(root: ver.Case, global_vars: dict[str, str], entry: str):
         """
         if (_start) begin
             <var> = <value>;
@@ -88,6 +88,13 @@ class CodeGen:
         init_body += [
             ver.NonBlockingSubsitution(key, val) for key, val in global_vars.items()
         ]
+        for item in root.case_items:
+            # TODO: context.entry really should be a ver.Expression
+            if str(item.condition) == entry:
+                init_body += item.statements
+                root.case_items.remove(item)
+                break
+
         block = ver.IfElse(
             ver.Expression("_start"),
             init_body,
