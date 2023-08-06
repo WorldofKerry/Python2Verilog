@@ -13,3 +13,6 @@ classifiers = [
 [project.urls]
 "Homepage" = "https://github.com/WorldofKerry/Python2Verilog/"
 "Bug Tracker" = "https://github.com/WorldofKerry/Python2Verilog/issues"
+
+[tool.setuptools]
+"py-modules" = ["python2verilog"]
