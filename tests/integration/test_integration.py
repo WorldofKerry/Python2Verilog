@@ -389,7 +389,7 @@ class GraphOpti8(BaseTestCases.BaseTest, OptimizedGraphBase):
 @pytest.mark.usefixtures("argparse")
 class GraphTesting(BaseTestCases.BaseTest, OptimizedGraphBase):
     def __init__(self, *args, **kwargs):
-        OptimizedGraphBase.__init__(self, optimization_level=0)
+        OptimizedGraphBase.__init__(self, optimization_level=1)
         BaseTestCases.BaseTest.__init__(
             self, {"testing": TEST_CASES["testing"]}, *args, **kwargs
         )

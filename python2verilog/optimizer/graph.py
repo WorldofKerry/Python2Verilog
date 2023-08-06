@@ -265,6 +265,7 @@ class OptimizeGraph:
 
             if isinstance(element, ir.DoneNode):
                 # logging.error("found done")
+                # print("found done node")
                 return element
 
             raise RuntimeError(f"unexpected {type(element)} {element}")

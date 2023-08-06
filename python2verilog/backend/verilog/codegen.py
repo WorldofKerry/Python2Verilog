@@ -4,6 +4,7 @@ Verilog Codegen
 
 import itertools
 import logging
+import warnings
 from . import ast as ver
 from ... import ir
 from ...utils.assertions import assert_type, assert_list_type, assert_dict_type
@@ -21,12 +22,17 @@ class CodeGen:
         assert_type(root, ir.Vertex)
         assert_type(context, ir.Context)
         self._context = context
-        root_case = CaseBuilder(root).case
+        root_case = CaseBuilder(root, context).case
         counter = 0
         for item in root_case.case_items:
             self._context.global_vars[item.condition.to_string()] = str(counter)
+            self._context.add_state(item.condition.to_string())
             counter += 1
+        # if "_statelmaodone" not in self._context.global_vars:
+        #     warnings.warn(context.name)
+        # print(context)
         self._context.global_vars["_statelmaodone"] = str(counter)
+        # self._context.add_state("_statelmaodone")
         self._context.global_vars["_state"] = str(counter - 1)
         self._module = CodeGen.__new_module(root_case, self._context)
 
@@ -207,9 +213,10 @@ class CaseBuilder:
     Creates a case statement for the IR Graph
     """
 
-    def __init__(self, root: ir.Vertex):
+    def __init__(self, root: ir.Vertex, context: ir.Context):
         # Member Vars
         self.visited: set[str] = set()
+        self.context = context
         self.case = ver.Case(expression=ver.Expression("_state"), case_items=[])
 
         # Member Funcs
@@ -234,9 +241,6 @@ class CaseBuilder:
         Processes a node
         """
         assert isinstance(vertex, ir.Vertex)
-        if vertex.unique_id in self.visited and not isinstance(vertex, ir.DoneNode):
-            logging.info(f"already visited {vertex}")
-            return [ver.Statement("bruv")]
         self.visited.add(vertex.unique_id)
 
         stmts: list[ver.Statement] = []
@@ -275,6 +279,7 @@ class CaseBuilder:
 
             if isinstance(vertex.optimal_child.optimal_child, ir.DoneNode):
                 outputs.append(ver.NonBlockingSubsitution("_done", "1"))
+
             state_change.append(
                 ver.NonBlockingSubsitution(
                     "_state", str(vertex.optimal_child.optimal_child.unique_id)
