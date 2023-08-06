@@ -57,7 +57,7 @@
     <span class="n">ir</span><span class="p">,</span> <span class="n">context</span> <span class="o">=</span> <span class="n">Generator2Graph</span><span class="p">(</span><span class="n">func</span><span class="p">)</span><span class="o">.</span><span class="n">results</span>
     <span class="k">if</span> <span class="n">optimization_level</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">OptimizeGraph</span><span class="p">(</span><span class="n">ir</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="n">optimization_level</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">CodeGen</span><span class="o">.</span><span class="n">from_optimal_ir</span><span class="p">(</span><span class="n">ir</span><span class="p">,</span> <span class="n">context</span><span class="p">),</span> <span class="n">ir</span></div>
+    <span class="k">return</span> <span class="n">CodeGen</span><span class="p">(</span><span class="n">ir</span><span class="p">,</span> <span class="n">context</span><span class="p">),</span> <span class="n">ir</span></div>
 </pre></div>
 
           </div>

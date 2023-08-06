@@ -41,10 +41,32 @@
 <p>Context for Intermediate Representation</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="python2verilog.ir.context.Context">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Context</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">global_vars:</span> <span class="pre">dict[str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">str]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_vars:</span> <span class="pre">list[str]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_vars:</span> <span class="pre">list[str]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state_vars:</span> <span class="pre">list[str]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/ir/context.html#Context"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.ir.context.Context" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Context</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">global_vars:</span> <span class="pre">dict[str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">str]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_vars:</span> <span class="pre">list[str]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_vars:</span> <span class="pre">list[str]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_state_vars:</span> <span class="pre">set[str]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entry:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exit:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/ir/context.html#Context"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.ir.context.Context" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Context needed by the Intermediate Representation
 E.g. variables, I/O, parameters, localparam</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="python2verilog.ir.context.Context.add_state">
+<span class="sig-name descname"><span class="pre">add_state</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/ir/context.html#Context.add_state"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.ir.context.Context.add_state" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a state, making sure no pre-existing state what that name exists</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="python2verilog.ir.context.Context.add_state_weak">
+<span class="sig-name descname"><span class="pre">add_state_weak</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/ir/context.html#Context.add_state_weak"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.ir.context.Context.add_state_weak" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a state</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="python2verilog.ir.context.Context.entry">
+<span class="sig-name descname"><span class="pre">entry</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">''</span></em><a class="headerlink" href="#python2verilog.ir.context.Context.entry" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="python2verilog.ir.context.Context.exit">
+<span class="sig-name descname"><span class="pre">exit</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">''</span></em><a class="headerlink" href="#python2verilog.ir.context.Context.exit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 <dl class="py attribute">
 <dt class="sig sig-object py" id="python2verilog.ir.context.Context.global_vars">
 <span class="sig-name descname"><span class="pre">global_vars</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#python2verilog.ir.context.Context.global_vars" title="Permalink to this definition">¶</a></dt>
@@ -71,10 +93,11 @@ E.g. variables, I/O, parameters, localparam</p>
 <span class="sig-name descname"><span class="pre">output_vars</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#python2verilog.ir.context.Context.output_vars" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="py attribute">
+<dl class="py property">
 <dt class="sig sig-object py" id="python2verilog.ir.context.Context.state_vars">
-<span class="sig-name descname"><span class="pre">state_vars</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#python2verilog.ir.context.Context.state_vars" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">state_vars</span></span><a class="headerlink" href="#python2verilog.ir.context.Context.state_vars" title="Permalink to this definition">¶</a></dt>
+<dd><p>State vars</p>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="python2verilog.ir.context.Context.to_string">
@@ -449,12 +472,6 @@ i.e. no clock cycle has to pass for the next node to be executed</p>
 </dl>
 <p>endcase</p>
 <dl class="py method">
-<dt class="sig sig-object py" id="python2verilog.ir.statements.Case.append_end_statements">
-<span class="sig-name descname"><span class="pre">append_end_statements</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">statements</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#python2verilog.ir.statements.Statement" title="python2verilog.ir.statements.Statement"><span class="pre">python2verilog.ir.statements.Statement</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/ir/statements.html#Case.append_end_statements"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.ir.statements.Case.append_end_statements" title="Permalink to this definition">¶</a></dt>
-<dd><p>Adds statements to the last case item</p>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="python2verilog.ir.statements.Case.to_lines">
 <span class="sig-name descname"><span class="pre">to_lines</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/ir/statements.html#Case.to_lines"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.ir.statements.Case.to_lines" title="Permalink to this definition">¶</a></dt>
 <dd><p>To Lines</p>
@@ -472,12 +489,6 @@ i.e. no clock cycle has to pass for the next node to be executed</p>
 <div><p>&lt;statements&gt;</p>
 </div></blockquote>
 <p>end</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="python2verilog.ir.statements.CaseItem.append_end_statements">
-<span class="sig-name descname"><span class="pre">append_end_statements</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">statements</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#python2verilog.ir.statements.Statement" title="python2verilog.ir.statements.Statement"><span class="pre">python2verilog.ir.statements.Statement</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/ir/statements.html#CaseItem.append_end_statements"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.ir.statements.CaseItem.append_end_statements" title="Permalink to this definition">¶</a></dt>
-<dd><p>Append statements to case item</p>
-</dd></dl>
-
 <dl class="py method">
 <dt class="sig sig-object py" id="python2verilog.ir.statements.CaseItem.to_lines">
 <span class="sig-name descname"><span class="pre">to_lines</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/ir/statements.html#CaseItem.to_lines"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.ir.statements.CaseItem.to_lines" title="Permalink to this definition">¶</a></dt>
@@ -497,39 +508,6 @@ i.e. no clock cycle has to pass for the next node to be executed</p>
 <dd><p>To Verilog lines</p>
 </dd></dl>
 
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="python2verilog.ir.statements.IfElse">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">IfElse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">condition</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#python2verilog.ir.expressions.Expression" title="python2verilog.ir.expressions.Expression"><span class="pre">Expression</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">then_body</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#python2verilog.ir.statements.Statement" title="python2verilog.ir.statements.Statement"><span class="pre">python2verilog.ir.statements.Statement</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">else_body</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#python2verilog.ir.statements.Statement" title="python2verilog.ir.statements.Statement"><span class="pre">python2verilog.ir.statements.Statement</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/ir/statements.html#IfElse"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.ir.statements.IfElse" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#python2verilog.ir.statements.Statement" title="python2verilog.ir.statements.Statement"><code class="xref py py-class docutils literal notranslate"><span class="pre">Statement</span></code></a></p>
-<p>If Else</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="python2verilog.ir.statements.IfElse.append_end_statements">
-<span class="sig-name descname"><span class="pre">append_end_statements</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">statements</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#python2verilog.ir.statements.Statement" title="python2verilog.ir.statements.Statement"><span class="pre">python2verilog.ir.statements.Statement</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/ir/statements.html#IfElse.append_end_statements"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.ir.statements.IfElse.append_end_statements" title="Permalink to this definition">¶</a></dt>
-<dd><p>Appends statements to both branches</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="python2verilog.ir.statements.IfElse.to_lines">
-<span class="sig-name descname"><span class="pre">to_lines</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/ir/statements.html#IfElse.to_lines"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.ir.statements.IfElse.to_lines" title="Permalink to this definition">¶</a></dt>
-<dd><p>To Lines</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="python2verilog.ir.statements.IfElseWrapper">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">IfElseWrapper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">expression</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#python2verilog.ir.expressions.Expression" title="python2verilog.ir.expressions.Expression"><span class="pre">Expression</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">case_items</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#python2verilog.ir.statements.CaseItem" title="python2verilog.ir.statements.CaseItem"><span class="pre">python2verilog.ir.statements.CaseItem</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/ir/statements.html#IfElseWrapper"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.ir.statements.IfElseWrapper" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#python2verilog.ir.statements.Case" title="python2verilog.ir.statements.Case"><code class="xref py py-class docutils literal notranslate"><span class="pre">Case</span></code></a></p>
-<p>A if-else case statement</p>
-<p>case (&lt;state_name&gt;)</p>
-<blockquote>
-<div><p>0: IfElse type (condition check)</p>
-<p>1: &lt;then body&gt;</p>
-<p>2: &lt;else body&gt;</p>
-</div></blockquote>
-<p>endcase</p>
 </dd></dl>
 
 <dl class="py class">
@@ -582,42 +560,6 @@ If used directly, it is treated as a string literal</p>
 <p>Special type to indicate this modifies the valid signal</p>
 <p>More than one of these cannot be in the same block / clock cycle,
 otherwise output values may be overwriting each other</p>
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="python2verilog.ir.statements.WhileWrapper">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">WhileWrapper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">expression</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#python2verilog.ir.expressions.Expression" title="python2verilog.ir.expressions.Expression"><span class="pre">Expression</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">case_items</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#python2verilog.ir.statements.CaseItem" title="python2verilog.ir.statements.CaseItem"><span class="pre">python2verilog.ir.statements.CaseItem</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/ir/statements.html#WhileWrapper"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.ir.statements.WhileWrapper" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#python2verilog.ir.statements.Case" title="python2verilog.ir.statements.Case"><code class="xref py py-class docutils literal notranslate"><span class="pre">Case</span></code></a></p>
-<p>A while case statement</p>
-<dl>
-<dt>Case (WHILE)</dt><dd><dl>
-<dt>0: if (!&lt;conditional&gt;)</dt><dd><blockquote>
-<div><p>&lt;continue&gt;</p>
-</div></blockquote>
-<dl class="simple">
-<dt>else</dt><dd><p>&lt;loop body / go state 1&gt;</p>
-</dd>
-</dl>
-</dd>
-</dl>
-<p>1: &lt;loop body&gt;</p>
-</dd>
-</dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="python2verilog.ir.statements.WhileWrapper.append_end_statements">
-<span class="sig-name descname"><span class="pre">append_end_statements</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">statements</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#python2verilog.ir.statements.Statement" title="python2verilog.ir.statements.Statement"><span class="pre">python2verilog.ir.statements.Statement</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/ir/statements.html#WhileWrapper.append_end_statements"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.ir.statements.WhileWrapper.append_end_statements" title="Permalink to this definition">¶</a></dt>
-<dd><p>While statements have a special case structure,
-where their first case always contains an if statement</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="python2verilog.ir.statements.is_valid_append_end_statements">
-<span class="sig-name descname"><span class="pre">is_valid_append_end_statements</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stmt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#python2verilog.ir.statements.Statement" title="python2verilog.ir.statements.Statement"><span class="pre">Statement</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">statements</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#python2verilog.ir.statements.Statement" title="python2verilog.ir.statements.Statement"><span class="pre">python2verilog.ir.statements.Statement</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/ir/statements.html#is_valid_append_end_statements"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.ir.statements.is_valid_append_end_statements" title="Permalink to this definition">¶</a></dt>
-<dd><p>Checks if stmt encapsulates other Statements or not
-If it does, it handles the append, otherwise returns false
-# TODO: there should be a subclass/interface for ones that do encapsulate</p>
 </dd></dl>
 
 </section>

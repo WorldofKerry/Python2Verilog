@@ -79,6 +79,10 @@
 <li class="toctree-l2"><a class="reference internal" href="python2verilog.ir.html#submodules">Submodules</a></li>
 <li class="toctree-l2"><a class="reference internal" href="python2verilog.ir.html#module-python2verilog.ir.context">python2verilog.ir.context module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.context.Context"><code class="docutils literal notranslate"><span class="pre">Context</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.context.Context.add_state"><code class="docutils literal notranslate"><span class="pre">Context.add_state()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.context.Context.add_state_weak"><code class="docutils literal notranslate"><span class="pre">Context.add_state_weak()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.context.Context.entry"><code class="docutils literal notranslate"><span class="pre">Context.entry</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.context.Context.exit"><code class="docutils literal notranslate"><span class="pre">Context.exit</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.context.Context.global_vars"><code class="docutils literal notranslate"><span class="pre">Context.global_vars</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.context.Context.input_vars"><code class="docutils literal notranslate"><span class="pre">Context.input_vars</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.context.Context.is_declared"><code class="docutils literal notranslate"><span class="pre">Context.is_declared()</span></code></a></li>
@@ -166,12 +170,10 @@
 <li class="toctree-l2"><a class="reference internal" href="python2verilog.ir.html#module-python2verilog.ir.statements">python2verilog.ir.statements module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.statements.BlockingSubsitution"><code class="docutils literal notranslate"><span class="pre">BlockingSubsitution</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.statements.Case"><code class="docutils literal notranslate"><span class="pre">Case</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.statements.Case.append_end_statements"><code class="docutils literal notranslate"><span class="pre">Case.append_end_statements()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.statements.Case.to_lines"><code class="docutils literal notranslate"><span class="pre">Case.to_lines()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.statements.CaseItem"><code class="docutils literal notranslate"><span class="pre">CaseItem</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.statements.CaseItem.append_end_statements"><code class="docutils literal notranslate"><span class="pre">CaseItem.append_end_statements()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.statements.CaseItem.to_lines"><code class="docutils literal notranslate"><span class="pre">CaseItem.to_lines()</span></code></a></li>
 </ul>
 </li>
@@ -179,12 +181,6 @@
 <li class="toctree-l4"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.statements.Declaration.to_lines"><code class="docutils literal notranslate"><span class="pre">Declaration.to_lines()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.statements.IfElse"><code class="docutils literal notranslate"><span class="pre">IfElse</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.statements.IfElse.append_end_statements"><code class="docutils literal notranslate"><span class="pre">IfElse.append_end_statements()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.statements.IfElse.to_lines"><code class="docutils literal notranslate"><span class="pre">IfElse.to_lines()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.statements.IfElseWrapper"><code class="docutils literal notranslate"><span class="pre">IfElseWrapper</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.statements.NonBlockingSubsitution"><code class="docutils literal notranslate"><span class="pre">NonBlockingSubsitution</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.statements.StateSubsitution"><code class="docutils literal notranslate"><span class="pre">StateSubsitution</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.statements.Statement"><code class="docutils literal notranslate"><span class="pre">Statement</span></code></a><ul>
@@ -196,11 +192,6 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.statements.ValidSubsitution"><code class="docutils literal notranslate"><span class="pre">ValidSubsitution</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.statements.WhileWrapper"><code class="docutils literal notranslate"><span class="pre">WhileWrapper</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.statements.WhileWrapper.append_end_statements"><code class="docutils literal notranslate"><span class="pre">WhileWrapper.append_end_statements()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.statements.is_valid_append_end_statements"><code class="docutils literal notranslate"><span class="pre">is_valid_append_end_statements()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="python2verilog.ir.html#module-python2verilog.ir">Module contents</a></li>

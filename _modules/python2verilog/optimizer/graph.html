@@ -102,7 +102,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">new_mapping</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">old_mapping</span><span class="p">)</span>
     <span class="k">assert</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span>
-        <span class="n">stmt</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">IfElse</span>
+        <span class="n">stmt</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">IfElseNode</span>
     <span class="p">),</span> <span class="s2">&quot;Should have been handled, call this method twice on the two branches&quot;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stmt</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">AssignNode</span><span class="p">):</span>
         <span class="n">new_mapping</span><span class="p">[</span><span class="n">stmt</span><span class="o">.</span><span class="n">lvalue</span><span class="p">]</span> <span class="o">=</span> <span class="n">stmt</span><span class="o">.</span><span class="n">rvalue</span>
@@ -296,6 +296,7 @@
 
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">DoneNode</span><span class="p">):</span>
                 <span class="c1"># logging.error(&quot;found done&quot;)</span>
+                <span class="c1"># print(&quot;found done node&quot;)</span>
                 <span class="k">return</span> <span class="n">element</span>
 
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;unexpected </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">element</span><span class="p">)</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">element</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>

@@ -64,18 +64,6 @@
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">(</span><span class="si">{</span><span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">items</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span></div>
 
 
-<div class="viewcode-block" id="is_valid_append_end_statements"><a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.statements.is_valid_append_end_statements">[docs]</a><span class="k">def</span> <span class="nf">is_valid_append_end_statements</span><span class="p">(</span><span class="n">stmt</span><span class="p">:</span> <span class="n">Statement</span><span class="p">,</span> <span class="n">statements</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Statement</span><span class="p">]):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Checks if stmt encapsulates other Statements or not</span>
-<span class="sd">    If it does, it handles the append, otherwise returns false</span>
-<span class="sd">    # TODO: there should be a subclass/interface for ones that do encapsulate</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stmt</span><span class="p">,</span> <span class="p">(</span><span class="n">Case</span><span class="p">,</span> <span class="n">IfElse</span><span class="p">)):</span>
-        <span class="n">stmt</span><span class="o">.</span><span class="n">append_end_statements</span><span class="p">(</span><span class="n">assert_list_type</span><span class="p">(</span><span class="n">statements</span><span class="p">,</span> <span class="n">Statement</span><span class="p">))</span>
-        <span class="k">return</span> <span class="kc">True</span>
-    <span class="k">return</span> <span class="kc">False</span></div>
-
-
 <div class="viewcode-block" id="Subsitution"><a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.statements.Subsitution">[docs]</a><span class="k">class</span> <span class="nc">Subsitution</span><span class="p">(</span><span class="n">Statement</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Interface for</span>
@@ -199,15 +187,7 @@
         <span class="k">for</span> <span class="n">stmt</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">statements</span><span class="p">:</span>
             <span class="n">lines</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">stmt</span><span class="o">.</span><span class="n">to_lines</span><span class="p">(),</span> <span class="n">indent</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">lines</span> <span class="o">+=</span> <span class="s2">&quot;end&quot;</span>
-        <span class="k">return</span> <span class="n">lines</span></div>
-
-<div class="viewcode-block" id="CaseItem.append_end_statements"><a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.statements.CaseItem.append_end_statements">[docs]</a>    <span class="k">def</span> <span class="nf">append_end_statements</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">statements</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Statement</span><span class="p">]):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Append statements to case item</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">is_valid_append_end_statements</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">statements</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">statements</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">statements</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">statements</span> <span class="o">+</span> <span class="n">assert_list_type</span><span class="p">(</span><span class="n">statements</span><span class="p">,</span> <span class="n">Statement</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span></div></div>
+        <span class="k">return</span> <span class="n">lines</span></div></div>
 
 
 <div class="viewcode-block" id="Case"><a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.statements.Case">[docs]</a><span class="k">class</span> <span class="nc">Case</span><span class="p">(</span><span class="n">Statement</span><span class="p">):</span>
@@ -241,111 +221,7 @@
         <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">case_items</span><span class="p">:</span>
             <span class="n">lines</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">to_lines</span><span class="p">(),</span> <span class="n">indent</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">lines</span> <span class="o">+=</span> <span class="s2">&quot;endcase&quot;</span>
-        <span class="k">return</span> <span class="n">lines</span></div>
-
-<div class="viewcode-block" id="Case.append_end_statements"><a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.statements.Case.append_end_statements">[docs]</a>    <span class="k">def</span> <span class="nf">append_end_statements</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">statements</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Statement</span><span class="p">]):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Adds statements to the last case item</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">case_items</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">append_end_statements</span><span class="p">(</span>
-            <span class="n">assert_list_type</span><span class="p">(</span><span class="n">statements</span><span class="p">,</span> <span class="n">Statement</span><span class="p">)</span>
-        <span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span></div></div>
-
-
-<div class="viewcode-block" id="IfElse"><a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.statements.IfElse">[docs]</a><span class="k">class</span> <span class="nc">IfElse</span><span class="p">(</span><span class="n">Statement</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    If Else</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">condition</span><span class="p">:</span> <span class="n">Expression</span><span class="p">,</span>
-        <span class="n">then_body</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Statement</span><span class="p">],</span>
-        <span class="n">else_body</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Statement</span><span class="p">],</span>
-        <span class="o">*</span><span class="n">args</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
-    <span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">condition</span><span class="p">,</span> <span class="n">Expression</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">condition</span> <span class="o">=</span> <span class="n">condition</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">then_body</span> <span class="o">=</span> <span class="n">assert_list_type</span><span class="p">(</span><span class="n">then_body</span><span class="p">,</span> <span class="n">Statement</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">else_body</span> <span class="o">=</span> <span class="n">assert_list_type</span><span class="p">(</span><span class="n">else_body</span><span class="p">,</span> <span class="n">Statement</span><span class="p">)</span>
-
-<div class="viewcode-block" id="IfElse.to_lines"><a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.statements.IfElse.to_lines">[docs]</a>    <span class="k">def</span> <span class="nf">to_lines</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">lines</span> <span class="o">=</span> <span class="n">Lines</span><span class="p">()</span>
-        <span class="n">lines</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;if (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">condition</span><span class="o">.</span><span class="n">to_string</span><span class="p">()</span><span class="si">}</span><span class="s2">) begin&quot;</span>
-        <span class="k">for</span> <span class="n">stmt</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">then_body</span><span class="p">:</span>
-            <span class="n">lines</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">stmt</span><span class="o">.</span><span class="n">to_lines</span><span class="p">(),</span> <span class="n">indent</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">lines</span> <span class="o">+=</span> <span class="s2">&quot;end else begin&quot;</span>
-        <span class="k">for</span> <span class="n">stmt</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">else_body</span><span class="p">:</span>
-            <span class="n">lines</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">stmt</span><span class="o">.</span><span class="n">to_lines</span><span class="p">(),</span> <span class="n">indent</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">lines</span> <span class="o">+=</span> <span class="s2">&quot;end&quot;</span>
-        <span class="k">return</span> <span class="n">lines</span></div>
-
-<div class="viewcode-block" id="IfElse.append_end_statements"><a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.statements.IfElse.append_end_statements">[docs]</a>    <span class="k">def</span> <span class="nf">append_end_statements</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">statements</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Statement</span><span class="p">]):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Appends statements to both branches</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">statements</span> <span class="o">=</span> <span class="n">assert_list_type</span><span class="p">(</span><span class="n">statements</span><span class="p">,</span> <span class="n">Statement</span><span class="p">)</span>
-        <span class="c1"># warnings.warn(&quot;appending &quot; + statements[0].to_string())</span>
-        <span class="c1"># if len(statements) &gt; 1:</span>
-        <span class="c1">#     warnings.warn(statements[1].to_string())</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">is_valid_append_end_statements</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">then_body</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">statements</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">then_body</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">then_body</span> <span class="o">+</span> <span class="n">statements</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">is_valid_append_end_statements</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">else_body</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">statements</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">else_body</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">else_body</span> <span class="o">+</span> <span class="n">statements</span>
-        <span class="k">return</span> <span class="bp">self</span></div></div>
-
-
-<div class="viewcode-block" id="WhileWrapper"><a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.statements.WhileWrapper">[docs]</a><span class="k">class</span> <span class="nc">WhileWrapper</span><span class="p">(</span><span class="n">Case</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    A while case statement</span>
-
-<span class="sd">    Case (WHILE)</span>
-<span class="sd">        0: if (!&lt;conditional&gt;)</span>
-<span class="sd">                &lt;continue&gt;</span>
-<span class="sd">            else</span>
-<span class="sd">                &lt;loop body / go state 1&gt;</span>
-<span class="sd">        1: &lt;loop body&gt;</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-<div class="viewcode-block" id="WhileWrapper.append_end_statements"><a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.statements.WhileWrapper.append_end_statements">[docs]</a>    <span class="k">def</span> <span class="nf">append_end_statements</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">statements</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Statement</span><span class="p">]):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        While statements have a special case structure,</span>
-<span class="sd">        where their first case always contains an if statement</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">statements</span> <span class="o">=</span> <span class="n">assert_list_type</span><span class="p">(</span><span class="n">statements</span><span class="p">,</span> <span class="n">Statement</span><span class="p">)</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">case_items</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">CaseItem</span><span class="p">)</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">case_items</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">statements</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">IfElse</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">case_items</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">statements</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">then_body</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">case_items</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">statements</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">then_body</span> <span class="o">+</span> <span class="n">statements</span>
-        <span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span></div></div>
-
-
-<div class="viewcode-block" id="IfElseWrapper"><a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.statements.IfElseWrapper">[docs]</a><span class="k">class</span> <span class="nc">IfElseWrapper</span><span class="p">(</span><span class="n">Case</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    A if-else case statement</span>
-
-<span class="sd">    case (&lt;state_name&gt;)</span>
-
-<span class="sd">        0: IfElse type (condition check)</span>
-
-<span class="sd">        1: &lt;then body&gt;</span>
-
-<span class="sd">        2: &lt;else body&gt;</span>
-
-<span class="sd">    endcase</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">expression</span><span class="p">:</span> <span class="n">Expression</span><span class="p">,</span> <span class="n">case_items</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">CaseItem</span><span class="p">],</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
-    <span class="p">):</span>
-        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">case_items</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span>
-        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">case_items</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">statements</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">case_items</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">statements</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">IfElse</span><span class="p">)</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">expression</span><span class="p">,</span> <span class="n">case_items</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">lines</span></div></div>
 </pre></div>
 
           </div>
