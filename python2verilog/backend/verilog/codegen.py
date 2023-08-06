@@ -147,6 +147,7 @@ class CodeGen:
         decl: list[ver.Declaration] = []
         decl.append(ver.Declaration("_clock", size=1, is_reg=True))
         decl.append(ver.Declaration("_start", size=1, is_reg=True))
+        decl.append(ver.Declaration("_reset", size=1, is_reg=True))
         decl += [
             ver.Declaration(var, is_signed=True, is_reg=True)
             for var in self._context.input_vars
@@ -172,7 +173,9 @@ class CodeGen:
         ] = []  # TODO: replace with Sequence
         initial_body.append(ver.BlockingSubsitution("_clock", "0"))
         initial_body.append(ver.BlockingSubsitution("_start", "0"))
+        initial_body.append(ver.BlockingSubsitution("_reset", "1"))
         initial_body.append(ver.AtNegedgeStatement(ver.Expression("_clock")))
+        initial_body.append(ver.BlockingSubsitution("_reset", "0"))
         initial_body.append(ver.Statement())
 
         for i, test_case in enumerate(test_cases):

@@ -191,6 +191,7 @@ class Module(ImplementsToLines):
         if add_default_ports:
             input_lines += "input wire _start"
             input_lines += "input wire _clock"
+            input_lines += "input wire _reset"
         self.input = input_lines
 
         output_lines = Lines()
