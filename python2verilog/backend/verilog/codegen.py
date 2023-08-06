@@ -21,14 +21,15 @@ class CodeGen:
         assert_type(root, ir.Vertex)
         assert_type(context, ir.Context)
         self._context = context
-        old_case = self.graph_build(root, set())
+        # old_case = self.graph_build(root, set())
         root_case = CaseBuilder(root).case
-        counter = len(old_case.case_items) + 1
+        # counter = len(old_case.case_items) + 1
+        counter = 0
         for item in root_case.case_items:
             if item.condition.to_string() not in self._context.global_vars:
                 self._context.global_vars[item.condition.to_string()] = str(counter)
                 counter += 1
-        self._context.global_vars["_state"] = str(len(old_case.case_items))
+        self._context.global_vars["_state"] = str(counter - 1)
         self._module = CodeGen.__new_module(root_case, self._context)
 
     @staticmethod
