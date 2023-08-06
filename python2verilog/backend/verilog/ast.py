@@ -177,6 +177,7 @@ class Module(ImplementsToLines):
         outputs: list[str],
         body: Optional[list[Statement]] = None,
         add_default_ports=True,
+        localparams: Optional[dict[str, str]] = None,
     ):
         self.name = name  # TODO: assert invalid names
 
@@ -205,6 +206,14 @@ class Module(ImplementsToLines):
         else:
             self.body = []
 
+        if localparams:
+            assert_dict_type(localparams, str, str)
+            self.local_params = Lines()
+            for key, value in localparams.items():
+                self.local_params.concat(LocalParam(key, value).to_lines())
+        else:
+            self.local_params = Lines()
+
     def to_lines(self):
         """
         To Verilog
@@ -218,6 +227,7 @@ class Module(ImplementsToLines):
         if len(lines) > 1:  # This means there are ports
             lines[-1] = lines[-1][0:-1]  # removes last comma
         lines += ");"
+        lines.concat(self.local_params, 1)
         for stmt in self.body:
             if stmt.to_lines() is None:
                 warnings.warn(type(stmt))

@@ -24,16 +24,17 @@ class CodeGen:
         self._context = context
         root_case = CaseBuilder(root, context).case
         counter = 0
+
         for item in root_case.case_items:
-            self._context.global_vars[item.condition.to_string()] = str(counter)
+            # self._context.global_vars[item.condition.to_string()] = str(counter)
             self._context.add_state(item.condition.to_string())
             counter += 1
-        # if "_statelmaodone" not in self._context.global_vars:
-        #     warnings.warn(context.name)
-        # print(context)
-        self._context.global_vars["_statelmaodone"] = str(counter)
-        # self._context.add_state("_statelmaodone")
-        self._context.global_vars["_state"] = str(counter - 1)
+
+        # self._context.global_vars["_statelmaodone"] = str(counter)
+        self._context.add_state_weak("_statelmaodone")
+
+        self._context.global_vars["_state"] = self._context.entry
+
         self._module = CodeGen.__new_module(root_case, self._context)
 
     @staticmethod
@@ -61,7 +62,15 @@ class CodeGen:
             ver.Declaration(v, is_reg=True, is_signed=True) for v in context.global_vars
         ]
         body.append(always)
-        return ver.Module(name=context.name, inputs=inputs, outputs=outputs, body=body)
+
+        state_vars = {key: str(index) for index, key in enumerate(context.state_vars)}
+        return ver.Module(
+            name=context.name,
+            inputs=inputs,
+            outputs=outputs,
+            body=body,
+            localparams=state_vars,
+        )
 
     @staticmethod
     def __get_start_ifelse(root: ver.Statement, global_vars: dict[str, str]):
