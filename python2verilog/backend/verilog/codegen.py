@@ -51,8 +51,12 @@ class CodeGen:
         # TODO: make these extras optional
         always = ver.PosedgeSyncAlways(
             ver.Expression("_clock"),
-            valid="_valid",
-            body=[CodeGen.__get_start_ifelse(root, context.global_vars, context.entry)],
+            body=[
+                ver.NonBlockingSubsitution("_valid", "0"),
+                ver.NonBlockingSubsitution("_ready", "0"),
+            ]
+            + [ver.NonBlockingSubsitution(out, "0") for out in context.output_vars]
+            + [CodeGen.__get_start_ifelse(root, context.global_vars, context.entry)],
         )
         body: list[ver.Statement] = [
             ver.Declaration(v, is_reg=True, is_signed=True) for v in context.global_vars

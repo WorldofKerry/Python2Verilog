@@ -273,17 +273,10 @@ class Always(Statement):
         trigger: Expression,
         *args,
         body: Optional[list[Statement]] = None,
-        valid: Optional[str] = None,
         **kwargs,
     ):
         assert isinstance(trigger, Expression)
         self.trigger = trigger
-        if valid:
-            self.valid: Optional[NonBlockingSubsitution] = NonBlockingSubsitution(
-                valid, "0"
-            )
-        else:
-            self.valid = None
         if body:
             for stmt in body:
                 assert isinstance(stmt, Statement)
@@ -297,9 +290,6 @@ class Always(Statement):
         To Verilog
         """
         lines = Lines(f"always {self.trigger.to_string()} begin")
-        if self.valid:
-            lines.concat(self.valid.to_lines(), 1)
-        lines.concat(NonBlockingSubsitution("_ready", "0").to_lines(), 1)
         for stmt in self.body:
             lines.concat(stmt.to_lines(), 1)
         lines += "end"
