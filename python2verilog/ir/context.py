@@ -1,28 +1,22 @@
 """Context for Intermediate Representation"""
 from __future__ import annotations
+from dataclasses import dataclass, field
 from typing import Optional
 from ..utils.assertions import assert_list_type, assert_type, assert_dict_type
 
 
+@dataclass
 class Context:
     """
     Context needed by the Intermediate Representation
     E.g. variables, I/O, parameters, localparam
     """
 
-    def __init__(
-        self,
-        name: str = "",
-        global_vars: Optional[dict[str, str]] = None,
-        input_vars: Optional[list[str]] = None,
-        output_vars: Optional[list[str]] = None,
-        state_vars: Optional[list[str]] = None,
-    ):
-        self.name = assert_type(name, str)
-        self.global_vars = assert_dict_type(global_vars, str, str)
-        self.input_vars = assert_list_type(input_vars, str)
-        self.output_vars = assert_list_type(output_vars, str)
-        self.state_vars = assert_list_type(state_vars, str)
+    name: str = ""
+    global_vars: dict[str, str] = field(default_factory=dict)
+    input_vars: list[str] = field(default_factory=list)
+    output_vars: list[str] = field(default_factory=list)
+    state_vars: list[str] = field(default_factory=list)
 
     def is_declared(self, name: str):
         """
