@@ -11,8 +11,6 @@ from .. import ir
 from ..utils.string import Lines, Indent
 from ..utils.assertions import assert_type, assert_list_type
 
-sys.setrecursionlimit(300)
-
 
 class Generator2Graph:
     """
