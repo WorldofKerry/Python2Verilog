@@ -15,8 +15,8 @@ class CodeGen:
     """
 
     def __init__(self):
-        self._context = None
-        self._module = None
+        self._context = ir.Context()
+        self._module = ver.Module("", [], [])
 
     @classmethod
     def from_graph_ir(cls, root: ir.Element, context: ir.Context):
@@ -46,7 +46,7 @@ class CodeGen:
         counter = len(old_case.case_items) + 1
         for item in root_case.case_items:
             if item.condition.to_string() not in inst._context.global_vars:
-                inst._context.global_vars[item.condition.to_string()] = counter
+                inst._context.global_vars[item.condition.to_string()] = str(counter)
                 counter += 1
         inst._context.global_vars["_state"] = str(len(old_case.case_items))
         inst._module = CodeGen.__new_module(root_case, inst._context)
@@ -78,59 +78,6 @@ class CodeGen:
         ]
         body.append(always)
         return ver.Module(name=context.name, inputs=inputs, outputs=outputs, body=body)
-
-    @staticmethod
-    def list_build_stmt(node: ir.Statement) -> ver.Statement:
-        """
-        Builds the Verilog AST
-        """
-        assert isinstance(node, (ir.Statement, ir.CaseItem))
-        if not node:
-            return ver.Statement("")
-        if isinstance(node, ir.Case):
-            return CodeGen.list_build_case(node)
-        if isinstance(node, ir.IfElse):
-            then_body = []
-            for stmt in node.then_body:
-                then_body.append(CodeGen.list_build_stmt(stmt))
-            else_body = []
-            for stmt in node.else_body:
-                else_body.append(CodeGen.list_build_stmt(stmt))
-            return ver.IfElse(
-                CodeGen.list_build_expr(node.condition), then_body, else_body
-            )
-        if isinstance(node, ir.Statement):
-            return ver.Statement(node.to_string().replace("\n", " "))
-        raise NotImplementedError(f"Unexpected type {type(node)}")
-
-    @staticmethod
-    def list_build_expr(node: ir.Expression) -> ver.Expression:
-        """
-        Handles expressions
-        """
-        assert isinstance(node, ir.Expression)
-        return ver.Expression(node.to_string())
-
-    @staticmethod
-    def list_build_case(node: ir.Case) -> ver.Case:
-        """
-        Handles case statements
-        """
-        assert isinstance(node, ir.Case)
-        case_items = []
-        for item in node.case_items:
-            case_items.append(CodeGen.list_build_case_item(item))
-        return ver.Case(CodeGen.list_build_expr(node.condition), case_items)
-
-    @staticmethod
-    def list_build_case_item(node: ir.CaseItem) -> ver.CaseItem:
-        """
-        Handles case item
-        """
-        case_items = []
-        for item in node.statements:
-            case_items.append(CodeGen.list_build_stmt(item))
-        return ver.CaseItem(CodeGen.list_build_expr(node.condition), case_items)
 
     def graph_build(self, root: ir.Element, visited: set[str]):
         """
@@ -168,23 +115,9 @@ class CodeGen:
                         ],
                     )
                 )
-                self._context.global_vars[node.unique_id] = len(root_case.case_items)
-                # if node.optimal_child:
-                #     next_state = self.graph_build_node(
-                #         node.optimal_child, root_case, visited
-                #     )
-                #     root_case.case_items.append(
-                #         CaseItem(
-                #             condition=Expression(node.unique_id),
-                #             statements=[
-                #                 Statement(f"{node.to_string()};"),
-                #                 NonBlockingSubsitution(
-                #                     lvalue=root_case.condition.to_string(),
-                #                     rvalue=next_state,
-                #                 ),
-                #             ],
-                #         )
-                #     )
+                self._context.global_vars[node.unique_id] = str(
+                    len(root_case.case_items)
+                )
             return node.unique_id
         if isinstance(node, ir.IfElseNode):
             if node.unique_id not in visited:
@@ -211,7 +144,9 @@ class CodeGen:
                         ],
                     )
                 )
-                self._context.global_vars[node.unique_id] = len(root_case.case_items)
+                self._context.global_vars[node.unique_id] = str(
+                    len(root_case.case_items)
+                )
             return node.unique_id
         if isinstance(node, ir.YieldNode):
             if node.unique_id not in visited:
@@ -233,7 +168,9 @@ class CodeGen:
                         ],
                     )
                 )
-                self._context.global_vars[node.unique_id] = len(root_case.case_items)
+                self._context.global_vars[node.unique_id] = str(
+                    len(root_case.case_items)
+                )
             return node.unique_id
         if isinstance(node, ir.Edge):
             if node.unique_id not in visited:
@@ -251,7 +188,9 @@ class CodeGen:
                         ],
                     )
                 )
-                self._context.global_vars[node.unique_id] = len(root_case.case_items)
+                self._context.global_vars[node.unique_id] = str(
+                    len(root_case.case_items)
+                )
             return node.unique_id
         raise RuntimeError(f"Unexpected type {type(node)} {node}")
 
@@ -267,8 +206,7 @@ class CodeGen:
         """
         then_body: list[ver.Statement] = [ver.NonBlockingSubsitution("_done", "0")]
         then_body += [
-            ver.NonBlockingSubsitution(key, str(val))
-            for key, val in global_vars.items()
+            ver.NonBlockingSubsitution(key, val) for key, val in global_vars.items()
         ]
         block = ver.IfElse(
             ver.Expression("_start"),
