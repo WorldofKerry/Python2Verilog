@@ -498,18 +498,6 @@ class IfElse(Statement):
         lines += "end"
         return lines
 
-    def append_end_statements(self, statements: list[Statement]):
-        """
-        Appends statements to both branches
-        """
-        statements = assert_list_type(statements, Statement)
-        # warnings.warn("appending " + statements[0].to_string())
-        # if len(statements) > 1:
-        #     warnings.warn(statements[1].to_string())
-        self.then_body[-1].append_end_statements(statements)
-        self.else_body[-1].append_end_statements(statements)
-        return self
-
 
 class While(Statement):
     """
