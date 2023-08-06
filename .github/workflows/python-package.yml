@@ -1,7 +1,7 @@
 # Runs flake8
 # Locally run `pre-commit install` then commit (Pylint should include flake8)
 
-name: Python Package
+name: python package
 
 on:
   push:

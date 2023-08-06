@@ -16,6 +16,7 @@ python3 tests/integration/new_testcase.py -o -v circle_lines
 """
 
 import argparse
+import json
 import sys
 import subprocess
 import logging
@@ -48,39 +49,39 @@ def script(args: argparse.Namespace, logger: logging.Logger, shell: callable) ->
             "ast_dump": args.ast_dump,
             "filtered_actual": args.filtered_actual,
             "ir_dump": args.ir_dump,
+            "cytoscape": args.cytoscape,
         }
         config.write(config_file)
 
     PYTHON_FILE_PATH = os.path.join(PATH_TO_NEW_TEST, args.python)
-    if not args.overwrite:
-        try:
-            with open(PYTHON_FILE_PATH, mode="x") as python_file:
-                python_file.write(args.template)
-        except FileExistsError:
-            logger.warning(
-                f"Skipping python file generation, as {PYTHON_FILE_PATH} already exists"
-            )
+    try:
+        with open(PYTHON_FILE_PATH, mode="x") as python_file:
+            python_file.write(args.template)
+        logger.warning(f"Update {PYTHON_FILE_PATH} with your generator function")
+    except FileExistsError:
+        logger.warning(
+            f"Skipping python file generation, as {PYTHON_FILE_PATH} already exists"
+        )
 
-    TEST_FILE_PATH = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), args.test_file
+    TEST_CASES_FILE_PATH = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), args.test_cases
     )
-    logger.info(f"Appending to {TEST_FILE_PATH} with pytest function")
 
-    need_to_add_run_cmd = True
-    with open(TEST_FILE_PATH, mode="r") as test_file:
-        if f"def test_{args.test_name}(self):" in test_file.read():
-            need_to_add_run_cmd = False  # Already exists
+    with open(TEST_CASES_FILE_PATH, mode="r+") as file:
+        data = file.read()
+        _locals = dict()
+        exec(data, None, _locals)
+        if not args.test_name in _locals["test_cases"]:
+            _locals["test_cases"][args.test_name] = "[(,)]"
+            logger.warn(f"Add your test cases to {TEST_CASES_FILE_PATH}")
 
-    if need_to_add_run_cmd:
-        with open(TEST_FILE_PATH, mode="a") as test_file:
-            test_file.write(
-                f'\n    def test_{args.test_name}(self):\n        test_cases = [(,)]\n        self.run_test("{args.test_name}", test_cases, self.args)\n'
-            )
-
-    logger.warning(
-        f"Setup complete, update content of {PYTHON_FILE_PATH} with your python generator function,\
-            \n then add your test case to {TEST_FILE_PATH}"
-    )
+        text = "test_cases = {\n"
+        for key, value in _locals["test_cases"].items():
+            text += f'    "{key}": {str(value)},\n'
+        text += "}\n"
+        file.seek(0)
+        file.write(text)
+        file.truncate()
 
 
 if __name__ == "__main__":
@@ -130,7 +131,7 @@ if __name__ == "__main__":
         "--directory",
         type=str,
         help="Directory to make test in",
-        default="data/integration/",
+        default="data",
     )
     parser.add_argument(
         "--python",
@@ -154,10 +155,10 @@ if __name__ == "__main__":
         "--config", type=str, help="Config filename", default="config.ini"
     )
     parser.add_argument(
-        "--test_file",
+        "--test-cases",
         type=str,
-        help="Filename of pytest",
-        default="test_integration.py",
+        help="Filename that holds test case names and their test cases",
+        default="cases.py",
     )
     parser.add_argument(
         "--ast-dump",
@@ -168,8 +169,14 @@ if __name__ == "__main__":
     parser.add_argument(
         "--ir-dump",
         type=str,
-        help="File to dump intermediate representation",
+        help="File to put intermediate representation for networkx",
         default="ir_dump.png",
+    )
+    parser.add_argument(
+        "--cytoscape",
+        type=str,
+        help="File to put cytoscape elements array",
+        default="cytoscape.log",
     )
     parser.add_argument(
         "--expected-visual",
@@ -222,6 +229,6 @@ if __name__ == "__main__":
             **kwargs,
         )
 
-    logger.info(f"Running script: {sys.argv[0]} with args: {vars(parser_args)}")
+    logger.debug(f"Running script: {sys.argv[0]} with args: {vars(parser_args)}")
 
     sys.exit(script(parser_args, logger, shell))

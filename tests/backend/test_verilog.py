@@ -1,11 +1,6 @@
-from python2verilog.backend.verilog import (
-    Verilog,
-    Module,
-    PosedgeSyncAlways,
-    Instantiation,
-    Expression,
-)
-from python2verilog.frontend import Generator2List, Generator2Graph
+from python2verilog.backend.verilog.ast import *
+from python2verilog.backend.verilog import CodeGen
+from python2verilog.frontend import Generator2Graph
 import unittest
 import warnings
 import ast
@@ -35,7 +30,7 @@ class TestVerilog(unittest.TestCase):
         assert_lines(
             self,
             lines.to_string(),
-            "module cool_name ( \n input wire [31:0] in0,\n input wire _start, \n input wire _clock, \n output reg [31:0] out0, \n output reg _done, \n output reg _valid  \n ); \n endmodule",
+            "module cool_name ( \n input wire signed [31:0] in0,\n input wire _start, \n input wire _clock, \n output reg signed [31:0] out0, \n output reg _done, \n output reg _valid  \n ); \n endmodule",
         )
 
     def test_always(self):
@@ -80,9 +75,9 @@ def circle_lines(s_x, s_y, height) -> tuple[int, int]:
 """
         tree = ast.parse(code)
         function = tree.body[0]
-        ir = Generator2List(function)
-        verilog = Verilog()
-        verilog.from_list_ir(ir.get_root(), ir.get_context())
+        # ir = Generator2List(function)
+        # verilog = CodeGen()
+        # verilog.from_list_ir(ir.get_root(), ir.get_context())
         # warnings.warn(verilog.get_module())
         # warnings.warn(
         #     verilog.get_testbench_improved([(17, 23, 15), (4, 5, 6), (1, 2, 3)])
@@ -119,21 +114,8 @@ def fib(n: int) -> tuple[int]:
         func = ast.parse(python).body[0]
         inst = Generator2Graph(func)
 
-        adjacency_list = ir.create_adjacency_list(inst._root)
-        g = nx.DiGraph(adjacency_list)
-
-        plt.figure(figsize=(20, 20))
-        nx.draw(
-            g,
-            with_labels=True,
-            font_weight="bold",
-            arrowsize=30,
-            node_size=4000,
-            node_shape="s",
-            node_color="#00b4d9",
-        )
-        # plt.savefig("path.png")
-
-        verilog = Verilog.from_graph_ir(inst.root, inst.context)
-        # warnings.warn(verilog.get_module_lines())
-        # warnings.warn(verilog.get_testbench([(10,)]).to_lines().to_string())
+        verilog = CodeGen(inst.root, inst.context)
+        module = verilog.get_module_lines()
+        self.assertNotEqual(module, "")
+        testbench = verilog.new_testbench([(10,)]).to_lines().to_string()
+        self.assertNotEqual(testbench, "")

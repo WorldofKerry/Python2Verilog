@@ -1,11 +1,12 @@
 # Publishes to PyPi
 # Remember to update version in `.pyproject.toml`
 
-name: Publish to PyPi
+name: publish to PyPI
 
 on:
   release:
     types: [published]
+  workflow_dispatch:
 
 permissions:
   contents: read

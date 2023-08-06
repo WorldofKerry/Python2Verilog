@@ -1,10 +1,67 @@
-# import unittest
-# import ast
-# import warnings
+import unittest
+import ast
+import warnings
 
-# from python2verilog.optimizer import *
-# from python2verilog.frontend import GeneratorParser
-# from python2verilog.backend import Verilog
+from python2verilog.optimizer import *
+from python2verilog import ir
+from python2verilog.backend.verilog import CodeGen
+
+
+class TestGraphApplyMapping(unittest.TestCase):
+    def test_dependent(self):
+        """
+        i <= f(i)
+        """
+        mapping = {ir.Var("i"): ir.Int(1)}
+        node = ir.AssignNode(
+            unique_id="", lvalue=ir.Var("i"), rvalue=ir.Add(ir.Var("i"), ir.Int(1))
+        )
+        self.assertTrue(is_dependent(node.rvalue, str(node.lvalue)))
+        updated = graph_apply_mapping(node, mapping)
+        self.assertEqual("i <= (1 + 1)", str(updated))
+
+        mapping = {ir.Var("i"): ir.Add(ir.Var("i"), ir.Int(1))}
+        node = ir.AssignNode(
+            unique_id="", lvalue=ir.Var("i"), rvalue=ir.Add(ir.Var("i"), ir.Int(1))
+        )
+        self.assertTrue(is_dependent(node.rvalue, str(node.lvalue)))
+        updated = graph_apply_mapping(node, mapping)
+        self.assertEqual("i <= ((i + 1) + 1)", str(updated))
+
+        mapping = {ir.Var("i"): ir.Int(1)}
+        node = ir.AssignNode(unique_id="", lvalue=ir.Var("a"), rvalue=ir.Var("i"))
+        self.assertFalse(is_dependent(node.rvalue, str(node.lvalue)))
+        self.assertTrue(is_dependent(node.rvalue, "i"))
+        updated = graph_apply_mapping(node, mapping)
+        self.assertEqual("a <= 1", str(updated))
+
+    def test_independent(self):
+        """
+        i <= constant
+        """
+        mapping = {ir.Var("i"): ir.Add(ir.Var("i"), ir.Int(1))}
+        node = ir.AssignNode(
+            unique_id="abc", lvalue=ir.Var("i"), rvalue=ir.Add(ir.Int(0), ir.Int(1))
+        )
+        self.assertFalse(is_dependent(node.rvalue, str(node.lvalue)))
+        updated = graph_apply_mapping(node, mapping)
+        self.assertEqual("i <= (0 + 1)", str(updated))
+
+        mapping = {ir.Var("i"): ir.Add(ir.Var("i"), ir.Var("i"))}
+        node = ir.AssignNode(
+            unique_id="abc", lvalue=ir.Var("i"), rvalue=ir.Add(ir.Int(0), ir.Int(1))
+        )
+        self.assertFalse(is_dependent(node.rvalue, str(node.lvalue)))
+        updated = graph_apply_mapping(node, mapping)
+        self.assertEqual("i <= (0 + 1)", str(updated))
+
+        mapping = {ir.Var("i"): ir.Add(ir.Int(0), ir.Int(1))}
+        node = ir.AssignNode(
+            unique_id="abc", lvalue=ir.Var("i"), rvalue=ir.Add(ir.Int(0), ir.Int(1))
+        )
+        self.assertFalse(is_dependent(node.rvalue, str(node.lvalue)))
+        updated = graph_apply_mapping(node, mapping)
+        self.assertEqual("i <= (0 + 1)", str(updated))
 
 
 # class TestOptimizer(unittest.TestCase):

@@ -5,40 +5,48 @@
 ![Tests](https://github.com/worldofkerry/python2verilog/actions/workflows/pytest.yml/badge.svg)
 [![Documentation Status](https://readthedocs.org/projects/python2verilog/badge/?version=latest)](https://python2verilog.readthedocs.io/en/latest/?badge=latest)
 
-# Python 2 Verilog
+# python2verilog
 
 Converts a subset of python generator functions into synthesizable sequential SystemVerilog.
 
 A use case is for drawing shapes on grids (for VGA output), where the user may prototype the algorithm in python and then convert it to verilog for use in an FPGA.
-
-A testbench can also be generated and asserted against the Python outputs.
 
 Supports Python [Generator functions](https://wiki.python.org/moin/Generators) as well as the following block types:
 
 - `if`
 - `while`
 
-**Warning**: Variables are treated as global and therefore no variable shadowing.
+A testbench can also be generated and asserted against the Python outputs.
 
-## Sample Usage
-`pip install python2verilog`
+## Usage
 
-### Basic Usage
-Create a python file containing a generator function with output type hints, named `<name>.py`.
+`python3 -m pip install --upgrade pip`
+`python3 -m pip install python2verilog`
 
-A sample can be found [here](https://github.com/WorldofKerry/Python2Verilog/blob/main/tests/integration/data/integration/circle_lines/python.py)
+### Basics
 
-`python3 -m python2verilog.convert <name>.py`. Use `--help` for additional options, including outputting a testbench.
+Create a python file containing a generator function with output type hints, named `python.py`.
+
+You can find a sample [here](https://github.com/WorldofKerry/Python2Verilog/blob/main/tests/integration/data/happy_face/python.py), and a directory of samples [here](https://github.com/WorldofKerry/Python2Verilog/tree/main/tests/integration/data)
+
+Run `python3 -m python2verilog python.py` to generate a testbench file at `python.sv`.
+
+Use the arg `--help` for additional options, including outputting a testbench and running optimizers.
 
 ## Testing
 
 ### Requirements
 
-Warning: may be outdated, refer to [github workflow](.github/workflows/python-package.yml) for most update-to-date information for Ubuntu.
+A Ubuntu environment (WSL2 works too, make sure to have the repo on the Ubuntu partition, as [`os.mkfifo`](https://docs.python.org/3/library/os.html#os.mkfifo) is used for speed)
 
-Verilog simulation: `sudo apt-get install iverilog expected` (uses the `unbuffer` app in `expected`). The online simulator [EDA Playground](https://edaplayground.com/) can be used as a subsitute, given that you paste the output into the "actual file" specified in the `config.ini` of the test.
+Install required python libraries with `python3 -m pip install -r tests/requirements.txt`
 
-Python Libraries: `python3 -m pip install -r tests/requirements.txt`
+For automatic Verilog simulation and testing, install [Icarus Verilog](https://github.com/steveicarus/iverilog) and its dependencies with
+`sudo apt-get install iverilog expected` (uses the `unbuffer` in `expected`).
+
+The online simulator [EDA Playground](https://edaplayground.com/) can be used as a subsitute if you manually copy-paste the module and testbench files to it.
+
+For most up-to-date information, refer to the pytest [github workflow](.github/workflows/python-package.yml).
 
 ### Creating New Test
 
@@ -46,48 +54,48 @@ To create a new test case and set up configs, run `python3 tests/integration/new
 
 ### Running Tests
 
-To run tests, use `python3 -m pytest --verbose` to generate the module, testbench, visualizations, dumps, and expected/actual outputs.
-Those files will be stored in `tests/integration/data/integration/<test-name>/`.
+To run tests, use `python3 -m pytest -sv`.
+
+Additional CLI flags can be found in [tests/conftest.py](tests/conftest.py).
 
 ## Tested Generations
 
-Outputs of tests in repo can be found as a [github workflow artifact](https://nightly.link/WorldofKerry/Python2Verilog/workflows/python-package/main/tests-data.zip)
+The Github Actions run all the tests with writing enabled.
+You may find its output as a [Github Artifact](https://nightly.link/WorldofKerry/Python2Verilog/workflows/pytest/main/tests-data.zip).
 
 ## For Developers
 
-Based on my experimentation with a [C to Verilog converter](https://github.com/WorldofKerry/c2hdl).
-
-Architecture is based on [LLVM](https://llvm.org/).
-
 To setup pre-commit, run `pre-commit install`.
+
+[Github Issues](https://github.com/WorldofKerry/Python2Verilog/issues) is used for tracking.
 
 ### Epics
 
-- Support arrays
+- Support arrays (and their unrolling)
 - Mimic combinational logic with "regular" Python functions
-- Division approximations
+- Division approximations (and area/timing analysis)
 
 ## Docs
 
-- cd to `docs/`
-- `sphinx-apidoc -o . ../python2verilog/`
-- `make html`
+Uses sphinx.
+Run commands used by [Github Actions](.github/workflows/sphinx.yml).
 
 ## Random Planning, Design, and Notes
 
-## What needs to be duplicated in testbenches?
+### What needs to be duplicated in testbenches?
+
 declare I/O and other signals
 declare DUT
 start clock
 
 loop for each test case
+
 - start signal
 - while wait for done signal
   - clock
   - set start zero
   - display output
-endloop
-
+    endloop
 
 ### Potential API
 

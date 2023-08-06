@@ -1,18 +1,23 @@
 """
 Graph representation of the logic
+
+Naming convention:
+Vertex
+Edge
+Element := Vertex | Edge
 """
 
 from __future__ import annotations
 import copy
+from typing import Optional
 
-from .statements import *
-from .expressions import *
+from . import expressions as expr
 from ..utils.assertions import assert_list_type, assert_type
 
 
-class Node:
+class Element:
     """
-    Represents logic
+    Element, base class for vertex or edge
     """
 
     def __init__(self, unique_id: str, name: str = ""):
@@ -29,13 +34,14 @@ class Node:
         return self.to_string()
 
     def __repr__(self):
-        return f"{self.__class__.__name__}(unique_id={self._id}, name={self._name})"
+        items = [f"{key}=({value})" for key, value in self.__dict__.items()]
+        return f"{self.__class__.__name__}({','.join(items)})"
 
     def __hash__(self) -> int:
         return hash(self._id)
 
     def __eq__(self, __value: object) -> bool:
-        if isinstance(__value, Node):
+        if isinstance(__value, Element):
             return self._id == __value._id
         return False
 
@@ -53,9 +59,15 @@ class Node:
         """
         self._id = assert_type(value, str)
 
-    def get_children(self):
+    def get_all_children(self):
         """
         Gets children
+        """
+        return []
+
+    def get_optimal_children(self):
+        """
+        Gets optimal children
         """
         return []
 
@@ -64,7 +76,7 @@ class Node:
         """
         Gets children
         """
-        return self.get_children()
+        return self.get_all_children()
 
     @property
     def name(self):
@@ -74,7 +86,75 @@ class Node:
         return self._name
 
 
-class IfElseNode(Node):
+class BasicElement(Element):
+    """
+    Basic element with a single child
+    """
+
+    def __init__(
+        self,
+        unique_id: str,
+        *args,
+        child: Optional[Element] = None,
+        **kwargs,
+    ):
+        super().__init__(unique_id, *args, **kwargs)
+        self._child = assert_type(child, Element)
+        self._optimal_child = None
+
+    @property
+    def child(self):
+        """
+        child or optimal_child if no child
+        """
+        return self._child
+
+    @child.setter
+    def child(self, other: Element):
+        self._child = assert_type(other, Element)
+
+    def get_all_children(self):
+        """
+        Gets edges
+        """
+        # if self.optimal_child:
+        #     return [self.optimal_child]
+        # print(f"getting children basicnode {self._optimal_child}")
+        # return [self.child]
+
+        children = []
+        if self._child:
+            children.append(self._child)
+        if self._optimal_child:
+            children.append(self._optimal_child)
+        return children
+
+    def get_optimal_children(self):
+        """
+        Gets optimal children
+        """
+        assert self._optimal_child
+        return [self._optimal_child]
+
+    @property
+    def optimal_child(self):
+        """
+        Optimal child or child otherwise
+        """
+        return self._optimal_child if self._optimal_child else self._child
+
+    @optimal_child.setter
+    def optimal_child(self, other: Element):
+        self._optimal_child = assert_type(other, Element)
+
+
+class Vertex(Element):
+    """
+    Vertex
+    """
+
+
+class IfElseNode(Vertex, Element):
     """
     Represents an if-else statement
     """
@@ -83,15 +163,17 @@ class IfElseNode(Node):
         self,
         unique_id: str,
         *args,
-        then_edge: Optional[Edge] = None,
-        else_edge: Optional[Edge] = None,
-        condition: Optional[Expression],
+        true_edge: Optional[Edge] = None,
+        false_edge: Optional[Edge] = None,
+        condition: Optional[expr.Expression],
         **kwargs,
     ):
         super().__init__(unique_id, *args, **kwargs)
-        self._then_edge = assert_type(then_edge, Edge)
-        self._else_edge = assert_type(else_edge, Edge)
-        self._condition = assert_type(condition, Expression)
+        self._true_edge = assert_type(true_edge, Edge)
+        self._false_edge = assert_type(false_edge, Edge)
+        self._condition = assert_type(condition, expr.Expression)
+        self._optimal_true_edge = None
+        self._optimal_false_edge = None
 
     def to_string(self):
         """
@@ -99,47 +181,90 @@ class IfElseNode(Node):
         """
         return f"if ({self._condition.to_string()})"
 
-    def __repr__(self):
-        return super().__repr__() + f", condition: ({self._condition})"
+    @property
+    def condition(self):
+        """
+        conditional
+        """
+        return self._condition
 
-    def get_children(self):
+    @property
+    def true_edge(self):
+        """
+        true edge or optimal if no edge
+        """
+        return self._true_edge
+
+    @true_edge.setter
+    def true_edge(self, other: Element):
+        self._true_edge = assert_type(other, Element)
+
+    @property
+    def false_edge(self):
+        """
+        false edge or optimal false edge if no false edge
+        """
+        return self._false_edge
+
+    @false_edge.setter
+    def false_edge(self, other: Element):
+        self._false_edge = assert_type(other, Element)
+
+    @property
+    def optimal_true_edge(self):
+        """
+        optimal true edge or edge otherwise
+        """
+        return self._optimal_true_edge if self._optimal_true_edge else self._true_edge
+
+    @optimal_true_edge.setter
+    def optimal_true_edge(self, other: Element):
+        self._optimal_true_edge = assert_type(other, Element)
+
+    @property
+    def optimal_false_edge(self):
+        """
+        optimal false edge
+        """
+        return (
+            self._optimal_false_edge if self._optimal_false_edge else self._false_edge
+        )
+
+    @optimal_false_edge.setter
+    def optimal_false_edge(self, other: Element):
+        self._optimal_false_edge = assert_type(other, Element)
+
+    def get_all_children(self):
         """
         Gets edges
         """
-        return [copy.deepcopy(self._then_edge), copy.deepcopy(self._else_edge)]
+        # if self._optimal_false_edge and self._optimal_true_edge:
+        #     return [self.optimal_true_edge, self.optimal_false_edge]
+        # print(
+        #     f"returning unoptimized {self._optimal_true_edge} {self._optimal_false_edge}"
+        # )
+        # return [self.then_edge, self.else_edge]
 
+        children = []
+        if self._true_edge:
+            children.append(self._true_edge)
+        if self._false_edge:
+            children.append(self._false_edge)
+        if self._optimal_true_edge:
+            children.append(self._optimal_true_edge)
+        if self._optimal_false_edge:
+            children.append(self._optimal_false_edge)
+        return children
 
-class BasicNode(Node):
-    """
-    Basic node with a single edge
-    """
-
-    def __init__(
-        self,
-        unique_id: str,
-        *args,
-        edge: Optional[Edge] = None,
-        **kwargs,
-    ):
-        super().__init__(unique_id, *args, **kwargs)
-        self._edge = assert_type(edge, Edge)
-
-    def get_children(self):
+    def get_optimal_children(self):
         """
-        Gets edges
+        Gets optimal children
         """
-        return [copy.deepcopy(self._edge)]
-
-    def set_edge(self, edge: Edge):
-        """
-        Adds an edge
-        """
-        if self._edge:
-            raise ValueError(f"reassigning edge {self._edge} to {edge}")
-        self._edge = assert_type(edge, Edge)
+        assert self._optimal_true_edge and self._optimal_false_edge
+        return [self._optimal_true_edge, self._optimal_false_edge]
 
 
-class AssignNode(BasicNode):
+class AssignNode(Vertex, BasicElement):
     """
     Represents a non-blocking assignment,
     i.e. assignments that do not block the execution of
@@ -150,14 +275,32 @@ class AssignNode(BasicNode):
         self,
         unique_id: str,
         *args,
-        lvalue: Expression,
-        rvalue: Expression,
-        edge: Optional[Edge] = None,
+        lvalue: expr.Expression,
+        rvalue: expr.Expression,
+        child: Optional[Edge] = None,
         **kwargs,
     ):
-        super().__init__(unique_id, *args, edge=edge, **kwargs)
-        self._lvalue = assert_type(lvalue, Expression)
-        self._rvalue = assert_type(rvalue, Expression)
+        super().__init__(unique_id, *args, child=child, **kwargs)
+        self._lvalue = assert_type(lvalue, expr.Expression)
+        self._rvalue = assert_type(rvalue, expr.Expression)
+
+    @property
+    def lvalue(self):
+        """
+        lvalue
+        """
+        return self._lvalue
+
+    @property
+    def rvalue(self):
+        """
+        rvalue
+        """
+        return self._rvalue
+
+    @rvalue.setter
+    def rvalue(self, rvalue: expr.Expression):
+        self._rvalue = assert_type(rvalue, expr.Expression)
 
     def to_string(self):
         """
@@ -165,13 +308,8 @@ class AssignNode(BasicNode):
         """
         return f"{self._lvalue.to_string()} <= {self._rvalue.to_string()}"
 
-    def __repr__(self):
-        return (
-            super().__repr__() + f", lvalue: ({self._lvalue}) rvalue: ({self._rvalue})"
-        )
 
-
-class YieldNode(BasicNode):
+class YieldNode(Vertex, BasicElement):
     """
     Yield statement, represents output
     """
@@ -180,51 +318,59 @@ class YieldNode(BasicNode):
         self,
         unique_id: str,
         name: str = "",
-        stmts: Optional[list[Expression]] = None,
+        stmts: Optional[list[expr.Expression]] = None,
         edge: Optional[Edge] = None,
     ):
-        super().__init__(unique_id, name=name, edge=edge)
-        self._stmts = assert_list_type(stmts, Expression)
+        super().__init__(unique_id, name=name, child=edge)
+        self._stmts = assert_list_type(stmts, expr.Expression)
+
+    @property
+    def stmts(self):
+        """
+        Yield statements
+        """
+        return self._stmts
 
     def to_string(self):
         """
         To string
         """
-        return f"yield {self._stmts}"
+        return f"yield {str(self._stmts)}"
+
+    def __str__(self):
+        """
+        to string
+        """
+        return "\n".join([f"out{i} <= {str(v)}" for i, v in enumerate(self._stmts)])
 
 
-class Edge(Node):
+class DoneNode(Vertex, Element):
     """
-    Represents an edge between two nodes
+    Signals done
     """
 
-    def __init__(
-        self, unique_id: str, *args, next_node: Optional[Node] = None, **kwargs
-    ):
-        self._node = assert_type(next_node, Node)
-        super().__init__(unique_id, *args, **kwargs)
+
+class Edge(BasicElement):
+    """
+    Represents an edge between two vertices
+    """
+
+    def __init__(self, unique_id: str, *args, child: Element | None = None, **kwargs):
+        assert not isinstance(
+            child, Edge
+        )  # TODO: add these checks to verticies as well
+        super().__init__(unique_id, *args, child=child, **kwargs)
 
     def to_string(self):
         """
         To string
         """
         if self._name:
-            return self._name
+            return f"{self._name}"
         return "Next"
 
     def __str__(self):
         return self.to_string()
-
-    def __repr__(self):
-        return f"{self.__class__.__name__} name: ({self._name}), node: ({self._node})"
-
-    def set_next_node(self, node: Node):
-        """
-        Sets next node
-        """
-        if self._node:
-            raise ValueError(f"reassigning node {self._node} to {node}")
-        self._node = assert_type(node, Node)
 
     def get_name(self):
         """
@@ -232,30 +378,12 @@ class Edge(Node):
         """
         return self._name
 
-    def get_next_node(self):
-        """
-        Gets next node
-        """
-        return copy.deepcopy(self._node)
 
-    def get_children(self):
-        """
-        Gets children
-        """
-        return [self.get_next_node()]
-
-
-class NonclockedEdge(Edge):
+class NonClockedEdge(Edge):
     """
     Represents a non-clocked edge,
     i.e. no clock cycle has to pass for the next node to be executed
     """
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    def to_string(self):
-        return super().to_string() + ", nonclocked"
 
 
 class ClockedEdge(Edge):
@@ -264,14 +392,8 @@ class ClockedEdge(Edge):
     i.e. a clock cycle has to pass for the next node to be executed
     """
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
 
-    def to_string(self):
-        return super().to_string() + ", clocked"
-
-
-def create_adjacency_list(node: Node):
+def create_networkx_adjacency_list(node: Element):
     """
     Creates adjacency list from a node
 
@@ -279,7 +401,7 @@ def create_adjacency_list(node: Node):
     """
     adjacency_list = {}
 
-    def traverse_graph(curr_node: Node, visited: set[Node]):
+    def traverse_graph(curr_node: Element, visited: set[Element]):
         if not curr_node:
             return
 
@@ -288,9 +410,7 @@ def create_adjacency_list(node: Node):
             return
 
         visited.add(curr_node)
-        children = curr_node.get_children()
-        # if children[0] == None:
-        #     warnings.warn(f"{str(list(children))} {curr_node}")
+        children = curr_node.get_all_children()
         adjacency_list[curr_node] = list(children)
 
         for child in children:
@@ -298,3 +418,53 @@ def create_adjacency_list(node: Node):
 
     traverse_graph(node, set())
     return adjacency_list
+
+
+def create_cytoscape_elements(node: Element):
+    """
+    Creates adjacency list from a node
+
+    Assumes names are unique
+    """
+    nodes = []
+    edges = []
+
+    def traverse_graph(curr_node: Element, visited: set[str]):
+        if not curr_node:
+            return
+
+        nonlocal nodes
+        if curr_node.unique_id in visited:
+            return
+
+        visited.add(curr_node.unique_id)
+        children = curr_node.get_all_children()
+        # optimal_children = curr_node.get_optimal_children()
+
+        if not isinstance(curr_node, Edge):
+            nodes.append(
+                {
+                    "data": {
+                        "id": curr_node.unique_id,
+                        "label": str(curr_node),
+                        "class": str(curr_node.__class__.__name__),
+                    }
+                }
+            )
+            for child in curr_node.children:
+                edges.append(
+                    {
+                        "data": {
+                            "source": curr_node.unique_id,
+                            "target": child.child.unique_id,
+                            "class": str(child.__class__.__name__),
+                            "label": str(child),
+                        }
+                    }
+                )
+
+            for child in children:
+                traverse_graph(child.child, visited)
+
+    traverse_graph(node, set())
+    return {"nodes": nodes, "edges": edges}

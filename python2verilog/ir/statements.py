@@ -1,4 +1,6 @@
-"""An Intermediate Representation for HDL based on Verilog"""
+"""
+An Intermediate Representation for HDL based on Verilog
+"""
 
 from __future__ import annotations
 import warnings
@@ -27,19 +29,8 @@ class Statement(ImplementsToLines):
         return Lines(self.literal)
 
     def __repr__(self):
-        return self.to_string()
-
-
-def is_valid_append_end_statements(stmt: Statement, statements: list[Statement]):
-    """
-    Checks if stmt encapsulates other Statements or not
-    If it does, it handles the append, otherwise returns false
-    # TODO: there should be a subclass/interface for ones that do encapsulate
-    """
-    if isinstance(stmt, (Case, IfElse)):
-        stmt.append_end_statements(assert_list_type(statements, Statement))
-        return True
-    return False
+        items = [f"{key}=({value})" for key, value in self.__dict__.items()]
+        return f"{self.__class__.__name__}({','.join(items)})"
 
 
 class Subsitution(Statement):
@@ -167,14 +158,6 @@ class CaseItem(ImplementsToLines):
         lines += "end"
         return lines
 
-    def append_end_statements(self, statements: list[Statement]):
-        """
-        Append statements to case item
-        """
-        if not is_valid_append_end_statements(self.statements[-1], statements):
-            self.statements = self.statements + assert_list_type(statements, Statement)
-        return self
-
 
 class Case(Statement):
     """
@@ -208,107 +191,3 @@ class Case(Statement):
             lines.concat(item.to_lines(), indent=1)
         lines += "endcase"
         return lines
-
-    def append_end_statements(self, statements: list[Statement]):
-        """
-        Adds statements to the last case item
-        """
-        self.case_items[-1].append_end_statements(
-            assert_list_type(statements, Statement)
-        )
-        return self
-
-
-class IfElse(Statement):
-    """
-    If Else
-    """
-
-    def __init__(
-        self,
-        condition: Expression,
-        then_body: list[Statement],
-        else_body: list[Statement],
-        *args,
-        **kwargs,
-    ):
-        super().__init__(*args, **kwargs)
-        assert isinstance(condition, Expression)
-        self.condition = condition
-        self.then_body = assert_list_type(then_body, Statement)
-        self.else_body = assert_list_type(else_body, Statement)
-
-    def to_lines(self):
-        lines = Lines()
-        lines += f"if ({self.condition.to_string()}) begin"
-        for stmt in self.then_body:
-            lines.concat(stmt.to_lines(), indent=1)
-        lines += "end else begin"
-        for stmt in self.else_body:
-            lines.concat(stmt.to_lines(), indent=1)
-        lines += "end"
-        return lines
-
-    def append_end_statements(self, statements: list[Statement]):
-        """
-        Appends statements to both branches
-        """
-        statements = assert_list_type(statements, Statement)
-        # warnings.warn("appending " + statements[0].to_string())
-        # if len(statements) > 1:
-        #     warnings.warn(statements[1].to_string())
-        if not is_valid_append_end_statements(self.then_body[-1], statements):
-            self.then_body = self.then_body + statements
-        if not is_valid_append_end_statements(self.else_body[-1], statements):
-            self.else_body = self.else_body + statements
-        return self
-
-
-class WhileWrapper(Case):
-    """
-    A while case statement
-
-    Case (WHILE)
-        0: if (!<conditional>)
-                <continue>
-            else
-                <loop body / go state 1>
-        1: <loop body>
-    """
-
-    def append_end_statements(self, statements: list[Statement]):
-        """
-        While statements have a special case structure,
-        where their first case always contains an if statement
-        """
-        statements = assert_list_type(statements, Statement)
-        assert isinstance(self.case_items[0], CaseItem)
-        assert isinstance(self.case_items[0].statements[0], IfElse)
-        self.case_items[0].statements[0].then_body = (
-            self.case_items[0].statements[0].then_body + statements
-        )
-        return self
-
-
-class IfElseWrapper(Case):
-    """
-    A if-else case statement
-
-    case (<state_name>)
-
-        0: IfElse type (condition check)
-
-        1: <then body>
-
-        2: <else body>
-
-    endcase
-    """
-
-    def __init__(
-        self, expression: Expression, case_items: list[CaseItem], *args, **kwargs
-    ):
-        assert len(case_items) == 3
-        assert len(case_items[0].statements) == 1
-        assert isinstance(case_items[0].statements[0], IfElse)
-        super().__init__(expression, case_items, *args, **kwargs)

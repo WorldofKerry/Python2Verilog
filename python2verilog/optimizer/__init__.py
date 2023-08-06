@@ -1,4 +1,4 @@
 """Optimizer"""
 
 # flake8: noqa
-from .optimizer import *
+from .graph import *

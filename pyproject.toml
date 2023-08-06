@@ -1,6 +1,6 @@
 [project]
 name = "python2verilog"
-version = "0.0.4"
+version = "0.1.2"
 authors = [{ name = "Kerry Wang", email = "kerrywang369@gmail.com" }]
 description = "Converts a subset of python generator functions into synthesizable sequential SystemVerilog"
 readme = "README.md"
@@ -14,6 +14,5 @@ classifiers = [
 "Homepage" = "https://github.com/WorldofKerry/Python2Verilog/"
 "Bug Tracker" = "https://github.com/WorldofKerry/Python2Verilog/issues"
 
-[[tool.mypy.overrides]]
-module = ["matplotlib", "matplotlib.pyplot"]
-ignore_missing_imports = true
+[tool.setuptools]
+"py-modules" = ["python2verilog"]
