@@ -19,21 +19,7 @@ class CodeGen:
         self._module = ver.Module("", [], [])
 
     @classmethod
-    def from_graph_ir(cls, root: ir.Element, context: ir.Context):
-        """ "
-        Builds tree from Graph IR
-        """
-        assert_type(root, ir.Element)
-        assert_type(context, ir.Context)
-        inst = CodeGen()
-        inst._context = context
-        root_case = inst.graph_build(root, set())
-        inst._context.global_vars["_state"] = str(len(root_case.case_items))
-        inst._module = CodeGen.__new_module(root_case, context)
-        return inst
-
-    @classmethod
-    def from_optimal_ir(cls, root: ir.Vertex, context: ir.Context):
+    def from_graph_ir(cls, root: ir.Vertex, context: ir.Context):
         """ "
         Builds tree from Graph IR
         """
