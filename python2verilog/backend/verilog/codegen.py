@@ -33,7 +33,7 @@ class CodeGen:
         # self._context.global_vars["_statelmaodone"] = str(counter)
         self._context.add_state_weak("_statelmaodone")
 
-        self._context.global_vars["_state"] = self._context.entry
+        self._context.global_vars["_state"] = self._context.exit
 
         self._module = CodeGen.__new_module(root_case, self._context)
 
