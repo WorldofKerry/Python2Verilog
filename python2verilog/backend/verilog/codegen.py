@@ -26,14 +26,12 @@ class CodeGen:
         counter = 0
 
         for item in root_case.case_items:
-            # self._context.global_vars[item.condition.to_string()] = str(counter)
             self._context.add_state(item.condition.to_string())
             counter += 1
 
-        # self._context.global_vars["_statelmaodone"] = str(counter)
-        self._context.add_state_weak("_statelmaodone")
+        self._context.add_state_weak(context.ready)
 
-        self._context.global_vars["_state"] = self._context.exit
+        self._context.global_vars["_state"] = self._context.ready
 
         self._module = CodeGen.__new_module(root_case, self._context)
 
@@ -270,7 +268,7 @@ class CaseBuilder:
             stmts += [
                 ver.NonBlockingSubsitution("_ready", "1"),
                 ver.NonBlockingSubsitution(
-                    self.case.condition.to_string(), "_statelmaodone"
+                    self.case.condition.to_string(), self.context.ready
                 ),
             ]
 

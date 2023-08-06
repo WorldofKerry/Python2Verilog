@@ -19,7 +19,7 @@ class Context:
     output_vars: list[str] = field(default_factory=list)
     _state_vars: set[str] = field(default_factory=set)
     entry: str = ""
-    exit: str = ""
+    ready: str = ""
 
     @property
     def state_vars(self):
