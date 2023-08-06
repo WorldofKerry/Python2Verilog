@@ -30,7 +30,7 @@ class TestVerilog(unittest.TestCase):
         assert_lines(
             self,
             lines.to_string(),
-            "module cool_name ( \n input wire signed [31:0] in0,\n input wire _start, \n input wire _clock, \n output reg signed [31:0] out0, \n output reg _done, \n output reg _valid  \n ); \n endmodule",
+            "module cool_name ( \n input wire signed [31:0] in0,\n input wire _start, \n input wire _clock, \n output reg signed [31:0] out0, \n output reg _ready, \n output reg _valid  \n ); \n endmodule",
         )
 
     def test_always(self):

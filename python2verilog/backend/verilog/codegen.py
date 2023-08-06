@@ -84,7 +84,7 @@ class CodeGen:
             endcase
         end
         """
-        init_body: list[ver.Statement] = [ver.NonBlockingSubsitution("_done", "0")]
+        init_body: list[ver.Statement] = [ver.NonBlockingSubsitution("_ready", "0")]
         init_body += [
             ver.NonBlockingSubsitution(key, val) for key, val in global_vars.items()
         ]
@@ -155,7 +155,7 @@ class CodeGen:
             ver.Declaration(var, is_signed=True) for var in self._context.output_vars
         ]
 
-        decl.append(ver.Declaration("_done", size=1))
+        decl.append(ver.Declaration("_ready", size=1))
         decl.append(ver.Declaration("_valid", size=1))
 
         ports = {
@@ -193,7 +193,7 @@ class CodeGen:
             while_body.append(ver.AtNegedgeStatement(ver.Expression("_clock")))
 
             initial_body.append(
-                ver.While(condition=ver.Expression("!_done"), body=while_body)
+                ver.While(condition=ver.Expression("!_ready"), body=while_body)
             )
             initial_body.append(make_display_stmt())
             initial_body.append(ver.Statement())
@@ -265,7 +265,7 @@ class CaseBuilder:
 
         if isinstance(vertex, ir.DoneNode):
             stmts += [
-                ver.NonBlockingSubsitution("_done", "1"),
+                ver.NonBlockingSubsitution("_ready", "1"),
                 ver.NonBlockingSubsitution(
                     self.case.condition.to_string(), "_statelmaodone"
                 ),
@@ -296,7 +296,7 @@ class CaseBuilder:
             state_change = []
 
             if isinstance(vertex.optimal_child.optimal_child, ir.DoneNode):
-                outputs.append(ver.NonBlockingSubsitution("_done", "1"))
+                outputs.append(ver.NonBlockingSubsitution("_ready", "1"))
 
             state_change.append(
                 ver.NonBlockingSubsitution(

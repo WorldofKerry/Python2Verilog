@@ -198,7 +198,7 @@ class Module(ImplementsToLines):
             assert isinstance(output, str)
             output_lines += f"output reg signed [31:0] {output}"
         if add_default_ports:
-            output_lines += "output reg _done"
+            output_lines += "output reg _ready"
             output_lines += "output reg _valid"
         self.output = output_lines
 
@@ -298,7 +298,7 @@ class Always(Statement):
         lines = Lines(f"always {self.trigger.to_string()} begin")
         if self.valid:
             lines.concat(self.valid.to_lines(), 1)
-        lines.concat(NonBlockingSubsitution("_done", "0").to_lines(), 1)
+        lines.concat(NonBlockingSubsitution("_ready", "0").to_lines(), 1)
         for stmt in self.body:
             lines.concat(stmt.to_lines(), 1)
         lines += "end"
