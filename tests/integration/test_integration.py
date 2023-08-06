@@ -19,7 +19,7 @@ from abc import abstractmethod
 from python2verilog.backend.verilog import CodeGen, CaseBuilder
 from python2verilog.frontend import Generator2Graph
 from python2verilog.optimizer import basic, OptimizeGraph
-from python2verilog.convert import *
+from python2verilog.__main__ import *
 from python2verilog import ir
 from tools.visualization import make_visual
 from .cases import test_cases

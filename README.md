@@ -18,24 +18,26 @@ Supports Python [Generator functions](https://wiki.python.org/moin/Generators) a
 
 ## Usage
 
-`python3 -m pip install --upgrade pip`
+## Download Package
+
+`python3 -m pip install --upgrade pip`  
 `python3 -m pip install python2verilog`
 
-### Basics
+### Run Basic Converter
 
-Create a python file containing a generator function with output type hints, named `<name>.py`.
+Create a python file containing a generator function with output type hints, named `python.py`.
 
-A sample can be found [here](https://github.com/WorldofKerry/Python2Verilog/blob/main/tests/integration/data/integration/circle_lines/python.py)
+If you want a sample, get one with `wget https://github.com/worldofkerry/python2verilog/raw/main/tests/integration/data/circle_lines/python.py`. More samples can be found [here](https://github.com/WorldofKerry/Python2Verilog/blob/main/tests/integration/data/).
 
-`python3 -m python2verilog.convert <name>.py`. Use `--help` for additional options, including outputting a testbench.
+Run `python3 -m python2verilog python.py` to write a Verilog module to `python.sv`. Use `--help` to see additional options, including outputting a testbench and using optimizations.
 
 ## Testing
 
 ### Requirements
 
-Warning: may be outdated, refer to [github workflow](.github/workflows/python-package.yml) for most update-to-date information for Ubuntu.
+Ubuntu (no WSL). Refer to [pytest workflow](.github/workflows/pytest.yml) for most update-to-date information.
 
-Verilog simulation: `sudo apt-get install iverilog expected` (uses the `unbuffer` app in `expected`). The online simulator [EDA Playground](https://edaplayground.com/) can be used as a subsitute, given that you paste the output into the "actual file" specified in the `config.ini` of the test.
+Verilog simulation: `sudo apt-get install iverilog expected` (uses the `unbuffer` app in `expected`). Alternatively [EDA Playground](https://edaplayground.com/) can be used as a subsitute, by copy-pasting the module and testbench files to the simulator.
 
 Python Libraries: `python3 -m pip install -r tests/requirements.txt`
 
