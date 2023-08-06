@@ -38,7 +38,7 @@ class CodeGen:
         self._module = CodeGen.__new_module(root_case, self._context)
 
     @staticmethod
-    def __new_module(root: ver.Statement, context: ir.Context):
+    def __new_module(root: ver.Case, context: ir.Context):
         """
         Creates a module wrapper from the context
 
@@ -73,22 +73,24 @@ class CodeGen:
         )
 
     @staticmethod
-    def __get_start_ifelse(root: ver.Statement, global_vars: dict[str, str]):
+    def __get_start_ifelse(root: ver.Case, global_vars: dict[str, str]):
         """
         if (_start) begin
             <var> = <value>;
             ...
         end else begin
-        ...
+            case(...)
+            ...
+            endcase
         end
         """
-        then_body: list[ver.Statement] = [ver.NonBlockingSubsitution("_done", "0")]
-        then_body += [
+        init_body: list[ver.Statement] = [ver.NonBlockingSubsitution("_done", "0")]
+        init_body += [
             ver.NonBlockingSubsitution(key, val) for key, val in global_vars.items()
         ]
         block = ver.IfElse(
             ver.Expression("_start"),
-            then_body,
+            init_body,
             [root],
         )
         return block
