@@ -120,8 +120,8 @@ class OptimizedGraphBase:
             for key, value in config["file_names"].items()
         }
         fifos = {
-            "module_fifo": "module_fifo.sv",
-            "testbench_fifo": "tb_fifo.sv",
+            "module_fifo": f"{prefix}_module_fifo.sv",
+            "testbench_fifo": f"{prefix}_tb_fifo.sv",
         }  # named pipe in memory
         FILES_IN_ABS_DIR.update(
             {key: os.path.join(ABS_DIR, value) for key, value in fifos.items()}
@@ -203,23 +203,23 @@ class OptimizedGraphBase:
                 with open(FILES_IN_ABS_DIR["cytoscape"], mode="w") as cyto_file:
                     cyto_file.write(str(ir.create_cytoscape_elements(root)))
 
-                adjacency_list = ir.create_networkx_adjacency_list(root)
-                g = nx.DiGraph(adjacency_list)
+                # adjacency_list = ir.create_networkx_adjacency_list(root)
+                # g = nx.DiGraph(adjacency_list)
 
-                plt.figure(figsize=(40, 40))
-                nx.draw(
-                    g,
-                    with_labels=True,
-                    font_weight="bold",
-                    arrowsize=30,
-                    node_size=4000,
-                    node_shape="s",
-                    node_color="#00b4d9",  # Light Blue
-                )
-                plt.savefig(FILES_IN_ABS_DIR["ir_dump"])
-                plt.clf()
-                plt.cla()
-                plt.close()
+                # plt.figure(figsize=(40, 40))
+                # nx.draw(
+                #     g,
+                #     with_labels=True,
+                #     font_weight="bold",
+                #     arrowsize=30,
+                #     node_size=4000,
+                #     node_shape="s",
+                #     node_color="#00b4d9",  # Light Blue
+                # )
+                # plt.savefig(FILES_IN_ABS_DIR["ir_dump"])
+                # plt.clf()
+                # plt.cla()
+                # plt.close()
 
             module_str = verilog.get_module_lines().to_string()
             statistics["module_nchars"] = len(

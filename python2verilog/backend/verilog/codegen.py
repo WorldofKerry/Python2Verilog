@@ -21,14 +21,13 @@ class CodeGen:
         assert_type(root, ir.Vertex)
         assert_type(context, ir.Context)
         self._context = context
-        # old_case = self.graph_build(root, set())
         root_case = CaseBuilder(root).case
-        # counter = len(old_case.case_items) + 1
         counter = 0
         for item in root_case.case_items:
             if item.condition.to_string() not in self._context.global_vars:
                 self._context.global_vars[item.condition.to_string()] = str(counter)
                 counter += 1
+        self._context.global_vars["_statelmaodone"] = str(counter)
         self._context.global_vars["_state"] = str(counter - 1)
         self._module = CodeGen.__new_module(root_case, self._context)
 
@@ -58,121 +57,6 @@ class CodeGen:
         ]
         body.append(always)
         return ver.Module(name=context.name, inputs=inputs, outputs=outputs, body=body)
-
-    def graph_build(self, root: ir.Element, visited: set[str]):
-        """
-        Builds from graph
-        """
-        assert_type(root, ir.Element)
-        root_case = ver.Case(expression=ver.Expression("_state"), case_items=[])
-        self.graph_build_node(node=root, root_case=root_case, visited=visited)
-        return root_case
-
-    def graph_build_node(
-        self, node: ir.Element, root_case: ver.Case, visited: set[str]
-    ):
-        """
-        Builds from node
-        """
-        assert_type(node, ir.Element)
-        assert isinstance(self._context, ir.Context)
-        if node.unique_id in visited:
-            return node.unique_id
-
-        if isinstance(node, ir.AssignNode):
-            if node.unique_id not in visited:
-                visited.add(node.unique_id)
-                next_state = self.graph_build_node(node.child, root_case, visited)
-                root_case.case_items.append(
-                    ver.CaseItem(
-                        condition=ver.Expression(node.unique_id),
-                        statements=[
-                            ver.Statement(f"{node.to_string()};"),
-                            ver.NonBlockingSubsitution(
-                                lvalue=root_case.condition.to_string(),
-                                rvalue=next_state,
-                            ),
-                        ],
-                    )
-                )
-                self._context.global_vars[node.unique_id] = str(
-                    len(root_case.case_items)
-                )
-            return node.unique_id
-        if isinstance(node, ir.IfElseNode):
-            if node.unique_id not in visited:
-                visited.add(node.unique_id)
-                then_state = self.graph_build_node(node.true_edge, root_case, visited)
-                else_state = self.graph_build_node(node.false_edge, root_case, visited)
-                root_case.case_items.append(
-                    ver.CaseItem(
-                        condition=ver.Expression(node.unique_id),
-                        statements=[
-                            ver.IfElse(
-                                condition=ver.Expression(node.condition.to_string()),
-                                then_body=[
-                                    ver.NonBlockingSubsitution(
-                                        root_case.condition.to_string(), then_state
-                                    )
-                                ],
-                                else_body=[
-                                    ver.NonBlockingSubsitution(
-                                        root_case.condition.to_string(), else_state
-                                    )
-                                ],
-                            )
-                        ],
-                    )
-                )
-                self._context.global_vars[node.unique_id] = str(
-                    len(root_case.case_items)
-                )
-            return node.unique_id
-        if isinstance(node, ir.YieldNode):
-            if node.unique_id not in visited:
-                visited.add(node.unique_id)
-                next_state = self.graph_build_node(node.child, root_case, visited)
-                stmts = [
-                    ver.NonBlockingSubsitution(f"_out{i}", v.to_string())
-                    for i, v in enumerate(node.stmts)
-                ] + [ver.NonBlockingSubsitution("_valid", "1")]
-                root_case.case_items.append(
-                    ver.CaseItem(
-                        condition=ver.Expression(node.unique_id),
-                        statements=[
-                            *stmts,
-                            ver.NonBlockingSubsitution(
-                                lvalue=root_case.condition.to_string(),
-                                rvalue=next_state,
-                            ),
-                        ],
-                    )
-                )
-                self._context.global_vars[node.unique_id] = str(
-                    len(root_case.case_items)
-                )
-            return node.unique_id
-        if isinstance(node, ir.Edge):
-            if node.unique_id not in visited:
-                visited.add(node.unique_id)
-                return self.graph_build_node(node.child, root_case, visited)
-            return "bruvlmao"
-        if isinstance(node, ir.DoneNode):
-            if node.unique_id not in visited:
-                visited.add(node.unique_id)
-                root_case.case_items.append(
-                    ver.CaseItem(
-                        condition=ver.Expression(node.unique_id),
-                        statements=[
-                            ver.NonBlockingSubsitution("_done", "1"),
-                        ],
-                    )
-                )
-                self._context.global_vars[node.unique_id] = str(
-                    len(root_case.case_items)
-                )
-            return node.unique_id
-        raise RuntimeError(f"Unexpected type {type(node)} {node}")
 
     @staticmethod
     def __get_start_ifelse(root: ver.Statement, global_vars: dict[str, str]):
