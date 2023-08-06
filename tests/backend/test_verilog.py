@@ -77,7 +77,7 @@ def circle_lines(s_x, s_y, height) -> tuple[int, int]:
         function = tree.body[0]
         ir = Generator2List(function)
         verilog = CodeGen()
-        verilog.from_list_ir(ir.get_root(), ir.get_context())
+        # verilog.from_list_ir(ir.get_root(), ir.get_context())
         # warnings.warn(verilog.get_module())
         # warnings.warn(
         #     verilog.get_testbench_improved([(17, 23, 15), (4, 5, 6), (1, 2, 3)])

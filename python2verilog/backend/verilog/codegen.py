@@ -19,19 +19,6 @@ class CodeGen:
         self._module = None
 
     @classmethod
-    def from_list_ir(cls, root: ir.Statement, context: ir.Context):
-        """
-        Builds tree from list IR
-        Warning: being depricated
-        """
-        assert isinstance(root, ir.Statement), f"got {type(root)} instead"
-        assert isinstance(context, ir.Context)
-        inst = CodeGen()
-        inst._context = context
-        inst._module = CodeGen.__new_module(CodeGen.list_build_stmt(root), context)
-        return inst
-
-    @classmethod
     def from_graph_ir(cls, root: ir.Element, context: ir.Context):
         """ "
         Builds tree from Graph IR

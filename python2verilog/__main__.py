@@ -10,31 +10,7 @@ import os
 import ast
 import warnings
 from typing import Optional
-from .frontend import Generator2List, Generator2Graph
-from .backend.verilog import CodeGen
-from .optimizer import basic, OptimizeGraph
-
-
-def convert_list(func: ast.FunctionDef, optimization_level: int):
-    """
-    Wrapper for common Python to Verilog conversion
-    """
-    ir_root, context = Generator2List(func).get_results()
-    if optimization_level > 0:
-        ir_root = basic.optimize_if(ir_root)
-        # ir_root = basic.combine_cases(ir_root) # can cause infnite recursion
-        # ir_root = basic.remove_unreferenced_states(ir_root) # buggy
-    return CodeGen.from_list_ir(ir_root, context)
-
-
-def convert_graph(func: ast.FunctionDef, optimization_level: int):
-    """
-    Wrapper for Python to Verilog conversion
-    """
-    ir, context = Generator2Graph(func).results
-    if optimization_level > 0:
-        OptimizeGraph(ir, threshold=optimization_level - 1)
-    return CodeGen.from_graph_ir(ir, context)
+from .api import convert_graph
 
 
 if __name__ == "__main__":
