@@ -1,6 +1,93 @@
 <class 'numba.core.compiler.CompileResult'>
 <class 'numba.core.codegen.JITCodeLibrary'>
 <class 'llvmlite.binding.module.ModuleRef'>
-_ZN8__main__24reallyreallycoolfunction4nextE168UniTuple_28int64_20x_201_29_20generator_28func_3d_3cfunction_20reallyreallycoolfunction_20at_200x7f710531ab90_3e_2c_20args_3d_28int64_2c_29_2c_20has_finalizer_3dTrue_29
+_ZN8__main__16nolongercoolfunc4nextE187UniTuple_28int64_20x_202_29_20generator_28func_3d_3cfunction_20nolongercoolfunc_20at_200x7f5554c12b90_3e_2c_20args_3d_28int64_2c_20omitted_28default_3d0_29_29_2c_20has_finalizer_3dTrue_29
 
-<class 'llvmlite.binding.value.ValueRef'>
+; Function Attrs: mustprogress nofree norecurse nosync nounwind willreturn
+define i32 @_ZN8__main__16nolongercoolfunc4nextE187UniTuple_28int64_20x_202_29_20generator_28func_3d_3cfunction_20nolongercoolfunc_20at_200x7f5554c12b90_3e_2c_20args_3d_28int64_2c_20omitted_28default_3d0_29_29_2c_20has_finalizer_3dTrue_29([2 x i64]* noalias nocapture writeonly %retptr, { i8*, i32, i8*, i8*, i32 }** noalias nocapture readnone %excinfo, { i32, { i64 }, { { i64, i64 }, { i64, i64 }, i8, i64, i64, i64, i64, i64 } }* nocapture %arg.gen) local_unnamed_addr #1 {
+entry:
+  %gen.resume_index5 = bitcast { i32, { i64 }, { { i64, i64 }, { i64, i64 }, i8, i64, i64, i64, i64, i64 } }* %arg.gen to i32*
+  %.317 = load i32, i32* %gen.resume_index5, align 4
+  switch i32 %.317, label %common.ret [
+    i32 1, label %generator_resume1
+    i32 2, label %generator_resume2.endif
+    i32 0, label %B0
+  ]
+
+common.ret:                                       ; preds = %entry, %B92, %B88, %B38, %B0
+  %common.ret.op = phi i32 [ 0, %B0 ], [ 0, %B38 ], [ -3, %B88 ], [ -3, %B92 ], [ -3, %entry ]
+  ret i32 %common.ret.op
+
+B0:                                               ; preds = %entry
+  %0 = bitcast { i32, { i64 }, { { i64, i64 }, { i64, i64 }, i8, i64, i64, i64, i64, i64 } }* %arg.gen to i32*
+  %.6 = getelementptr inbounds { i32, { i64 }, { { i64, i64 }, { i64, i64 }, i8, i64, i64, i64, i64, i64 } }, { i32, { i64 }, { { i64, i64 }, { i64, i64 }, i8, i64, i64, i64, i64, i64 } }* %arg.gen, i64 0, i32 1, i32 0
+  %.7 = load i64, i64* %.6, align 8
+  %.40 = getelementptr inbounds { i32, { i64 }, { { i64, i64 }, { i64, i64 }, i8, i64, i64, i64, i64, i64 } }, { i32, { i64 }, { { i64, i64 }, { i64, i64 }, i8, i64, i64, i64, i64, i64 } }* %arg.gen, i64 0, i32 2, i32 3
+  store i64 123456789, i64* %.40, align 8
+  %.43 = getelementptr inbounds { i32, { i64 }, { { i64, i64 }, { i64, i64 }, i8, i64, i64, i64, i64, i64 } }, { i32, { i64 }, { { i64, i64 }, { i64, i64 }, i8, i64, i64, i64, i64, i64 } }* %arg.gen, i64 0, i32 2, i32 7
+  store i64 %.7, i64* %.43, align 8
+  store i32 1, i32* %0, align 4
+  %retptr.repack6 = bitcast [2 x i64]* %retptr to i64*
+  store i64 123456789, i64* %retptr.repack6, align 8
+  %retptr.repack1 = getelementptr inbounds [2 x i64], [2 x i64]* %retptr, i64 0, i64 1
+  store i64 56, i64* %retptr.repack1, align 8
+  br label %common.ret
+
+B38:                                              ; preds = %generator_resume2.endif, %generator_resume1
+  %n.0 = phi i64 [ %.236, %generator_resume2.endif ], [ %.59, %generator_resume1 ]
+  %catt.2.0 = phi i64 [ %.244, %generator_resume2.endif ], [ 0, %generator_resume1 ]
+  %countt.2.0 = phi i64 [ %.228, %generator_resume2.endif ], [ 1, %generator_resume1 ]
+  %"$86pred.0" = phi i8 [ 1, %generator_resume2.endif ], [ 0, %generator_resume1 ]
+  %1 = bitcast { i32, { i64 }, { { i64, i64 }, { i64, i64 }, i8, i64, i64, i64, i64, i64 } }* %arg.gen to i32*
+  %betaa.2.0.in = getelementptr inbounds { i32, { i64 }, { { i64, i64 }, { i64, i64 }, i8, i64, i64, i64, i64, i64 } }, { i32, { i64 }, { { i64, i64 }, { i64, i64 }, i8, i64, i64, i64, i64, i64 } }* %arg.gen, i64 0, i32 2, i32 3
+  %betaa.2.0 = load i64, i64* %betaa.2.0.in, align 8
+  %.113 = add nsw i64 %countt.2.0, 1
+  %.148 = add i64 %catt.2.0, 1641
+  %.161 = add i64 %.148, %betaa.2.0
+  %.186 = getelementptr inbounds { i32, { i64 }, { { i64, i64 }, { i64, i64 }, i8, i64, i64, i64, i64, i64 } }, { i32, { i64 }, { { i64, i64 }, { i64, i64 }, i8, i64, i64, i64, i64, i64 } }* %arg.gen, i64 0, i32 2, i32 2
+  store i8 %"$86pred.0", i8* %.186, align 1
+  %.191 = getelementptr inbounds { i32, { i64 }, { { i64, i64 }, { i64, i64 }, i8, i64, i64, i64, i64, i64 } }, { i32, { i64 }, { { i64, i64 }, { i64, i64 }, i8, i64, i64, i64, i64, i64 } }* %arg.gen, i64 0, i32 2, i32 6
+  store i64 %.113, i64* %.191, align 8
+  store i64 %catt.2.0, i64* %betaa.2.0.in, align 8
+  %.197 = getelementptr inbounds { i32, { i64 }, { { i64, i64 }, { i64, i64 }, i8, i64, i64, i64, i64, i64 } }, { i32, { i64 }, { { i64, i64 }, { i64, i64 }, i8, i64, i64, i64, i64, i64 } }* %arg.gen, i64 0, i32 2, i32 7
+  store i64 %n.0, i64* %.197, align 8
+  %.200 = getelementptr inbounds { i32, { i64 }, { { i64, i64 }, { i64, i64 }, i8, i64, i64, i64, i64, i64 } }, { i32, { i64 }, { { i64, i64 }, { i64, i64 }, i8, i64, i64, i64, i64, i64 } }* %arg.gen, i64 0, i32 2, i32 5
+  store i64 %.113, i64* %.200, align 8
+  %.203 = getelementptr inbounds { i32, { i64 }, { { i64, i64 }, { i64, i64 }, i8, i64, i64, i64, i64, i64 } }, { i32, { i64 }, { { i64, i64 }, { i64, i64 }, i8, i64, i64, i64, i64, i64 } }* %arg.gen, i64 0, i32 2, i32 4
+  store i64 %.161, i64* %.203, align 8
+  store i32 2, i32* %1, align 4
+  %retptr.repack27 = bitcast [2 x i64]* %retptr to i64*
+  store i64 894, i64* %retptr.repack27, align 8
+  %retptr.repack3 = getelementptr inbounds [2 x i64], [2 x i64]* %retptr, i64 0, i64 1
+  store i64 %.161, i64* %retptr.repack3, align 8
+  br label %common.ret
+
+B88:                                              ; preds = %generator_resume2.endif
+  %2 = bitcast { i32, { i64 }, { { i64, i64 }, { i64, i64 }, i8, i64, i64, i64, i64, i64 } }* %arg.gen to i32*
+  store i32 -1, i32* %2, align 4
+  br label %common.ret
+
+B92:                                              ; preds = %generator_resume1
+  %3 = bitcast { i32, { i64 }, { { i64, i64 }, { i64, i64 }, i8, i64, i64, i64, i64, i64 } }* %arg.gen to i32*
+  store i32 -1, i32* %3, align 4
+  br label %common.ret
+
+generator_resume1:                                ; preds = %entry
+  %.58 = getelementptr inbounds { i32, { i64 }, { { i64, i64 }, { i64, i64 }, i8, i64, i64, i64, i64, i64 } }, { i32, { i64 }, { { i64, i64 }, { i64, i64 }, i8, i64, i64, i64, i64, i64 } }* %arg.gen, i64 0, i32 2, i32 7
+  %.59 = load i64, i64* %.58, align 8
+  %.87 = icmp sgt i64 %.59, 1
+  br i1 %.87, label %B38, label %B92
+
+generator_resume2.endif:                          ; preds = %entry
+  %.227 = getelementptr inbounds { i32, { i64 }, { { i64, i64 }, { i64, i64 }, i8, i64, i64, i64, i64, i64 } }, { i32, { i64 }, { { i64, i64 }, { i64, i64 }, i8, i64, i64, i64, i64, i64 } }* %arg.gen, i64 0, i32 2, i32 6
+  %.228 = load i64, i64* %.227, align 8
+  %.235 = getelementptr inbounds { i32, { i64 }, { { i64, i64 }, { i64, i64 }, i8, i64, i64, i64, i64, i64 } }, { i32, { i64 }, { { i64, i64 }, { i64, i64 }, i8, i64, i64, i64, i64, i64 } }* %arg.gen, i64 0, i32 2, i32 7
+  %.236 = load i64, i64* %.235, align 8
+  %.239 = getelementptr inbounds { i32, { i64 }, { { i64, i64 }, { i64, i64 }, i8, i64, i64, i64, i64, i64 } }, { i32, { i64 }, { { i64, i64 }, { i64, i64 }, i8, i64, i64, i64, i64, i64 } }* %arg.gen, i64 0, i32 2, i32 5
+  %.240 = load i64, i64* %.239, align 8
+  %.243 = getelementptr inbounds { i32, { i64 }, { { i64, i64 }, { i64, i64 }, i8, i64, i64, i64, i64, i64 } }, { i32, { i64 }, { { i64, i64 }, { i64, i64 }, i8, i64, i64, i64, i64, i64 } }* %arg.gen, i64 0, i32 2, i32 4
+  %.244 = load i64, i64* %.243, align 8
+  %.256 = icmp slt i64 %.240, %.236
+  br i1 %.256, label %B38, label %B88
+}
+

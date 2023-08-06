@@ -2,10 +2,10 @@ from numba import njit
 
 
 @njit(nogil=True)
-def reallyreallycoolfunction(n: int) -> tuple[int]:
+def nolongercoolfunc(n: int, m: int = 0): 
     alphaa = 0
     betaa = 123456789
-    yield (betaa,)
+    yield (betaa, 56)
     catt = 0
     countt = 1
     while countt < n:
@@ -13,10 +13,10 @@ def reallyreallycoolfunction(n: int) -> tuple[int]:
         alphaa = betaa + 987
         betaa = catt
         catt = alphaa + betaa + 654
-        yield (catt,)
+        yield (894, catt)
 
 
-reallyreallycoolfunction(123)
+nolongercoolfunc(123)
 
 # for key, value in fib.inspect_cfg().items():
 # print(key, value)
@@ -32,18 +32,18 @@ reallyreallycoolfunction(123)
 #     print(type(value))
 
 # print(reallyreallycoolfunction.signatures)
-print(type(reallyreallycoolfunction.overloads[reallyreallycoolfunction.signatures[0]]))
+print(type(nolongercoolfunc.overloads[nolongercoolfunc.signatures[0]]))
 print(
     type(
-        reallyreallycoolfunction.overloads[
-            reallyreallycoolfunction.signatures[0]
+        nolongercoolfunc.overloads[
+            nolongercoolfunc.signatures[0]
         ].library
     )
 )
 print(
     type(
-        reallyreallycoolfunction.overloads[
-            reallyreallycoolfunction.signatures[0]
+        nolongercoolfunc.overloads[
+            nolongercoolfunc.signatures[0]
         ].library._final_module
     )
 )
@@ -55,8 +55,8 @@ print(
     
 # print("\n\n")
 
-for func in reallyreallycoolfunction.overloads[
-    reallyreallycoolfunction.signatures[0]
+for func in nolongercoolfunc.overloads[
+    nolongercoolfunc.signatures[0]
 ].library._final_module.functions:
     name = func.name
     if (True 
@@ -69,8 +69,8 @@ for func in reallyreallycoolfunction.overloads[
         print(func.name + "\n")
         break
 
-print(type(reallyreallycoolfunction.overloads[
-    reallyreallycoolfunction.signatures[0]
+print(str(nolongercoolfunc.overloads[
+    nolongercoolfunc.signatures[0]
 ].library._final_module.get_function(name)))
 
 
