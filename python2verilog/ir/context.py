@@ -17,7 +17,7 @@ class Context:
     global_vars: dict[str, str] = field(default_factory=dict)
     input_vars: list[str] = field(default_factory=list)
     output_vars: list[str] = field(default_factory=list)
-    _state_vars: set[str] = field(default_factory=set)
+    _states: set[str] = field(default_factory=set)
     entry: str = ""
     ready: str = ""
 
@@ -26,7 +26,7 @@ class Context:
         """
         State vars
         """
-        return copy.deepcopy(self._state_vars)
+        return copy.deepcopy(self._states)
 
     def is_declared(self, name: str):
         """
@@ -44,7 +44,7 @@ class Context:
         """
         Add a state, making sure no pre-existing state what that name exists
         """
-        if name in self._state_vars:
+        if name in self._states:
             raise RuntimeError(f"Attempting to add {name} when it already exists")
         self.add_state_weak(name)
 
@@ -53,4 +53,4 @@ class Context:
         Add a state
         """
         assert isinstance(name, str)
-        self._state_vars.add(name)
+        self._states.add(name)

@@ -23,11 +23,9 @@ class CodeGen:
         assert_type(context, ir.Context)
         self._context = context
         root_case = CaseBuilder(root, context).case
-        counter = 0
 
         for item in root_case.case_items:
             self._context.add_state(item.condition.to_string())
-            counter += 1
 
         self._context.add_state_weak(context.ready)
 
@@ -237,6 +235,7 @@ class CaseBuilder:
         self.visited: set[str] = set()
         self.context = context
         self.case = ver.Case(expression=ver.Expression("_state"), case_items=[])
+        self.added_ready_node = False
 
         # Member Funcs
         instance = itertools.count()
@@ -244,7 +243,15 @@ class CaseBuilder:
 
         # Work
         self.case.case_items.append(self.new_caseitem(root))
-        # logging.info(self.case.to_string())
+        if not self.added_ready_node:
+            self.case.case_items.append(
+                ver.CaseItem(
+                    ver.Expression(context.ready),
+                    statements=[
+                        ver.NonBlockingSubsitution(lvalue="_ready", rvalue="1")
+                    ],
+                )
+            )
 
     def new_caseitem(self, root: ir.Vertex):
         """
@@ -271,6 +278,7 @@ class CaseBuilder:
                     self.case.condition.to_string(), self.context.ready
                 ),
             ]
+            self.added_ready_node = True
 
         elif isinstance(vertex, ir.AssignNode):
             stmts.append(
