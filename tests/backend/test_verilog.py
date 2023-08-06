@@ -34,7 +34,7 @@ class TestVerilog(unittest.TestCase):
         )
 
     def test_always(self):
-        always = PosedgeSyncAlways(Expression("_clock"), valid="_valid")
+        always = PosedgeSyncAlways(Expression("_clock"))
         lines = always.to_lines()
         # assert_lines(
         #     self,
