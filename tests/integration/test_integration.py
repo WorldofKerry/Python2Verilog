@@ -617,7 +617,7 @@ class GraphBase:
 @pytest.mark.usefixtures("argparse")
 class Graph(BaseTestCases.BaseTest, GraphBase):
     def __init__(self, *args, **kwargs):
-        OptimizedGraphBase.__init__(self)
+        GraphBase.__init__(self)
         BaseTestCases.BaseTest.__init__(self, *args, **kwargs)
 
 
