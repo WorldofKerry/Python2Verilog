@@ -79,59 +79,6 @@ class CodeGen:
         body.append(always)
         return ver.Module(name=context.name, inputs=inputs, outputs=outputs, body=body)
 
-    @staticmethod
-    def list_build_stmt(node: ir.Statement) -> ver.Statement:
-        """
-        Builds the Verilog AST
-        """
-        assert isinstance(node, (ir.Statement, ir.CaseItem))
-        if not node:
-            return ver.Statement("")
-        if isinstance(node, ir.Case):
-            return CodeGen.list_build_case(node)
-        if isinstance(node, ir.IfElse):
-            then_body = []
-            for stmt in node.then_body:
-                then_body.append(CodeGen.list_build_stmt(stmt))
-            else_body = []
-            for stmt in node.else_body:
-                else_body.append(CodeGen.list_build_stmt(stmt))
-            return ver.IfElse(
-                CodeGen.list_build_expr(node.condition), then_body, else_body
-            )
-        if isinstance(node, ir.Statement):
-            return ver.Statement(node.to_string().replace("\n", " "))
-        raise NotImplementedError(f"Unexpected type {type(node)}")
-
-    @staticmethod
-    def list_build_expr(node: ir.Expression) -> ver.Expression:
-        """
-        Handles expressions
-        """
-        assert isinstance(node, ir.Expression)
-        return ver.Expression(node.to_string())
-
-    @staticmethod
-    def list_build_case(node: ir.Case) -> ver.Case:
-        """
-        Handles case statements
-        """
-        assert isinstance(node, ir.Case)
-        case_items = []
-        for item in node.case_items:
-            case_items.append(CodeGen.list_build_case_item(item))
-        return ver.Case(CodeGen.list_build_expr(node.condition), case_items)
-
-    @staticmethod
-    def list_build_case_item(node: ir.CaseItem) -> ver.CaseItem:
-        """
-        Handles case item
-        """
-        case_items = []
-        for item in node.statements:
-            case_items.append(CodeGen.list_build_stmt(item))
-        return ver.CaseItem(CodeGen.list_build_expr(node.condition), case_items)
-
     def graph_build(self, root: ir.Element, visited: set[str]):
         """
         Builds from graph
@@ -171,22 +118,6 @@ class CodeGen:
                 self._context.global_vars[node.unique_id] = str(
                     len(root_case.case_items)
                 )
-                # if node.optimal_child:
-                #     next_state = self.graph_build_node(
-                #         node.optimal_child, root_case, visited
-                #     )
-                #     root_case.case_items.append(
-                #         CaseItem(
-                #             condition=Expression(node.unique_id),
-                #             statements=[
-                #                 Statement(f"{node.to_string()};"),
-                #                 NonBlockingSubsitution(
-                #                     lvalue=root_case.condition.to_string(),
-                #                     rvalue=next_state,
-                #                 ),
-                #             ],
-                #         )
-                #     )
             return node.unique_id
         if isinstance(node, ir.IfElseNode):
             if node.unique_id not in visited:
