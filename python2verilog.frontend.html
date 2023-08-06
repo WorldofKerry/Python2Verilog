@@ -65,46 +65,6 @@
 </dd></dl>
 
 </section>
-<section id="module-python2verilog.frontend.generator_parser">
-<span id="python2verilog-frontend-generator-parser-module"></span><h2>python2verilog.frontend.generator_parser module<a class="headerlink" href="#module-python2verilog.frontend.generator_parser" title="Permalink to this heading">¶</a></h2>
-<p>Parses Python Generator Functions to Intermediate Representation</p>
-<dl class="py class">
-<dt class="sig sig-object py" id="python2verilog.frontend.generator_parser.Generator2List">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Generator2List</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">python_func</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">FunctionDef</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/frontend/generator_parser.html#Generator2List"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.frontend.generator_parser.Generator2List" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Parses python generator functions to Verilog AST</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="python2verilog.frontend.generator_parser.Generator2List.generate_verilog">
-<span class="sig-name descname"><span class="pre">generate_verilog</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">indent</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/frontend/generator_parser.html#Generator2List.generate_verilog"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.frontend.generator_parser.Generator2List.generate_verilog" title="Permalink to this definition">¶</a></dt>
-<dd><p>Generates the verilog (does the most work, calls other functions)</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="python2verilog.frontend.generator_parser.Generator2List.get_context">
-<span class="sig-name descname"><span class="pre">get_context</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/frontend/generator_parser.html#Generator2List.get_context"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.frontend.generator_parser.Generator2List.get_context" title="Permalink to this definition">¶</a></dt>
-<dd><p>Gets the context of the Python function</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="python2verilog.frontend.generator_parser.Generator2List.get_results">
-<span class="sig-name descname"><span class="pre">get_results</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/frontend/generator_parser.html#Generator2List.get_results"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.frontend.generator_parser.Generator2List.get_results" title="Permalink to this definition">¶</a></dt>
-<dd><p>Gets root of IR and Context</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="python2verilog.frontend.generator_parser.Generator2List.get_root">
-<span class="sig-name descname"><span class="pre">get_root</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/frontend/generator_parser.html#Generator2List.get_root"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.frontend.generator_parser.Generator2List.get_root" title="Permalink to this definition">¶</a></dt>
-<dd><p>Gets the root of the IR tree</p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="python2verilog.frontend.generator_parser.Generator2List.wow_counter">
-<span class="sig-name descname"><span class="pre">wow_counter</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#python2verilog.frontend.generator_parser.Generator2List.wow_counter" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-</section>
 <section id="module-python2verilog.frontend">
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-python2verilog.frontend" title="Permalink to this heading">¶</a></h2>
 <p>Python Parsers</p>
@@ -137,7 +97,6 @@
 <li class="toctree-l3 current"><a class="current reference internal" href="#">python2verilog.frontend package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#submodules">Submodules</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#module-python2verilog.frontend.generator2graph">python2verilog.frontend.generator2graph module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#module-python2verilog.frontend.generator_parser">python2verilog.frontend.generator_parser module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#module-python2verilog.frontend">Module contents</a></li>
 </ul>
 </li>

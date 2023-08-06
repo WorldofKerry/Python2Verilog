@@ -12,14 +12,6 @@ python2verilog.frontend.generator2graph module
    :undoc-members:
    :show-inheritance:
 
-python2verilog.frontend.generator\_parser module
-------------------------------------------------
-
-.. automodule:: python2verilog.frontend.generator_parser
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 Module contents
 ---------------
 

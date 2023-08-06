@@ -42,8 +42,6 @@
 <span class="kn">from</span> <span class="nn">..utils.string</span> <span class="kn">import</span> <span class="n">Lines</span><span class="p">,</span> <span class="n">Indent</span>
 <span class="kn">from</span> <span class="nn">..utils.assertions</span> <span class="kn">import</span> <span class="n">assert_type</span><span class="p">,</span> <span class="n">assert_list_type</span>
 
-<span class="n">sys</span><span class="o">.</span><span class="n">setrecursionlimit</span><span class="p">(</span><span class="mi">300</span><span class="p">)</span>
-
 
 <div class="viewcode-block" id="Generator2Graph"><a class="viewcode-back" href="../../../python2verilog.frontend.html#python2verilog.frontend.generator2graph.Generator2Graph">[docs]</a><span class="k">class</span> <span class="nc">Generator2Graph</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -67,8 +65,8 @@
             <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
             <span class="n">nextt</span><span class="o">=</span><span class="n">ir</span><span class="o">.</span><span class="n">DoneNode</span><span class="p">(</span><span class="n">unique_id</span><span class="o">=</span><span class="s2">&quot;_statelmaodone&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;done&quot;</span><span class="p">),</span>
         <span class="p">)</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">var</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="o">.</span><span class="n">state_vars</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">__add_global_var</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">),</span> <span class="n">var</span><span class="o">.</span><span class="n">to_string</span><span class="p">())</span>
+        <span class="c1"># for i, var in enumerate(self._context.state_vars):</span>
+        <span class="c1">#     self.__add_global_var(str(i), var.to_string())</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">root</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
