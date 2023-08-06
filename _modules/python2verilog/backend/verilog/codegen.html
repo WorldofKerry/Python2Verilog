@@ -49,19 +49,6 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_context</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_module</span> <span class="o">=</span> <span class="kc">None</span>
 
-<div class="viewcode-block" id="CodeGen.from_list_ir"><a class="viewcode-back" href="../../../../python2verilog.backend.verilog.html#python2verilog.backend.verilog.codegen.CodeGen.from_list_ir">[docs]</a>    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">from_list_ir</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">root</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">Statement</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">Context</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Builds tree from list IR</span>
-<span class="sd">        Warning: being depricated</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Statement</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">root</span><span class="p">)</span><span class="si">}</span><span class="s2"> instead&quot;</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Context</span><span class="p">)</span>
-        <span class="n">inst</span> <span class="o">=</span> <span class="n">CodeGen</span><span class="p">()</span>
-        <span class="n">inst</span><span class="o">.</span><span class="n">_context</span> <span class="o">=</span> <span class="n">context</span>
-        <span class="n">inst</span><span class="o">.</span><span class="n">_module</span> <span class="o">=</span> <span class="n">CodeGen</span><span class="o">.</span><span class="n">__new_module</span><span class="p">(</span><span class="n">CodeGen</span><span class="o">.</span><span class="n">list_build_stmt</span><span class="p">(</span><span class="n">root</span><span class="p">),</span> <span class="n">context</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">inst</span></div>
-
 <div class="viewcode-block" id="CodeGen.from_graph_ir"><a class="viewcode-back" href="../../../../python2verilog.backend.verilog.html#python2verilog.backend.verilog.codegen.CodeGen.from_graph_ir">[docs]</a>    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">from_graph_ir</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">root</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">Element</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">Context</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot; &quot;</span>

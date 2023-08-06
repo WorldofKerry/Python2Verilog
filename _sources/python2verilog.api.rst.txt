@@ -1,0 +1,21 @@
+python2verilog.api package
+==========================
+
+Submodules
+----------
+
+python2verilog.api.api module
+-----------------------------
+
+.. automodule:: python2verilog.api.api
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: python2verilog.api
+   :members:
+   :undoc-members:
+   :show-inheritance:

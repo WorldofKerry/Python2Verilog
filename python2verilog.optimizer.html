@@ -36,46 +36,6 @@
 <section id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading">¶</a></h2>
 </section>
-<section id="module-python2verilog.optimizer.basic">
-<span id="python2verilog-optimizer-basic-module"></span><h2>python2verilog.optimizer.basic module<a class="headerlink" href="#module-python2verilog.optimizer.basic" title="Permalink to this heading">¶</a></h2>
-<p>Optimizer algorithms that operate ontop of the list-based IR</p>
-<dl class="py function">
-<dt class="sig sig-object py" id="python2verilog.optimizer.basic.combine_cases">
-<span class="sig-name descname"><span class="pre">combine_cases</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.statements.Case" title="python2verilog.ir.statements.Case"><span class="pre">Case</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/optimizer/basic.html#combine_cases"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.optimizer.basic.combine_cases" title="Permalink to this definition">¶</a></dt>
-<dd><p>Looks at a case item.</p>
-<p>Combines it with all subsequent case items if
-subsequent case items’ rvalues do not depend on any lvalues of prior case items</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="python2verilog.optimizer.basic.get_idx_with_state_name">
-<span class="sig-name descname"><span class="pre">get_idx_with_state_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.statements.Case" title="python2verilog.ir.statements.Case"><span class="pre">Case</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">state_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/optimizer/basic.html#get_idx_with_state_name"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.optimizer.basic.get_idx_with_state_name" title="Permalink to this definition">¶</a></dt>
-<dd><p>Gets the index of a case item with a state name</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="python2verilog.optimizer.basic.get_last_state_sub_name">
-<span class="sig-name descname"><span class="pre">get_last_state_sub_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stmts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.statements.Statement" title="python2verilog.ir.statements.Statement"><span class="pre">python2verilog.ir.statements.Statement</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/optimizer/basic.html#get_last_state_sub_name"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.optimizer.basic.get_last_state_sub_name" title="Permalink to this definition">¶</a></dt>
-<dd><p>Given a list of Statements, gets the state name of the last state subsitution</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="python2verilog.optimizer.basic.optimize_if">
-<span class="sig-name descname"><span class="pre">optimize_if</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.statements.Case" title="python2verilog.ir.statements.Case"><span class="pre">Case</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/optimizer/basic.html#optimize_if"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.optimizer.basic.optimize_if" title="Permalink to this definition">¶</a></dt>
-<dd><p>Avoids a clock cycle waste on an if statement,
-Appends the contents of the next block in the then/else blocks</p>
-<p>Performance: a clock cycle is saved per if-else statement cycle</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="python2verilog.optimizer.basic.remove_unreferenced_states">
-<span class="sig-name descname"><span class="pre">remove_unreferenced_states</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.statements.Case" title="python2verilog.ir.statements.Case"><span class="pre">Case</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/optimizer/basic.html#remove_unreferenced_states"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.optimizer.basic.remove_unreferenced_states" title="Permalink to this definition">¶</a></dt>
-<dd><p>Removes unreferenced states,
-that is states that are not accessible by the state machine</p>
-<p>Note: does not affect performance</p>
-</dd></dl>
-
-</section>
 <section id="module-python2verilog.optimizer.graph">
 <span id="python2verilog-optimizer-graph-module"></span><h2>python2verilog.optimizer.graph module<a class="headerlink" href="#module-python2verilog.optimizer.graph" title="Permalink to this heading">¶</a></h2>
 <p>Optimizer for the Graph IR</p>
@@ -154,12 +114,12 @@ but an increase in hardware usage</p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="python2verilog.html">python2verilog package</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="python2verilog.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="python2verilog.api.html">python2verilog.api package</a></li>
 <li class="toctree-l3"><a class="reference internal" href="python2verilog.backend.html">python2verilog.backend package</a></li>
 <li class="toctree-l3"><a class="reference internal" href="python2verilog.frontend.html">python2verilog.frontend package</a></li>
 <li class="toctree-l3"><a class="reference internal" href="python2verilog.ir.html">python2verilog.ir package</a></li>
 <li class="toctree-l3 current"><a class="current reference internal" href="#">python2verilog.optimizer package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#submodules">Submodules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#module-python2verilog.optimizer.basic">python2verilog.optimizer.basic module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#module-python2verilog.optimizer.graph">python2verilog.optimizer.graph module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#module-python2verilog.optimizer">Module contents</a></li>
 </ul>
@@ -167,8 +127,6 @@ but an increase in hardware usage</p>
 <li class="toctree-l3"><a class="reference internal" href="python2verilog.utils.html">python2verilog.utils package</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="python2verilog.html#submodules">Submodules</a></li>
-<li class="toctree-l2"><a class="reference internal" href="python2verilog.html#module-python2verilog.convert">python2verilog.convert module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="python2verilog.html#module-python2verilog">Module contents</a></li>
 </ul>
 </li>
