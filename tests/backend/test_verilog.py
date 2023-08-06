@@ -1,6 +1,6 @@
 from python2verilog.backend.verilog.ast import *
 from python2verilog.backend.verilog import CodeGen
-from python2verilog.frontend import Generator2List, Generator2Graph
+from python2verilog.frontend import Generator2Graph
 import unittest
 import warnings
 import ast
@@ -75,8 +75,8 @@ def circle_lines(s_x, s_y, height) -> tuple[int, int]:
 """
         tree = ast.parse(code)
         function = tree.body[0]
-        ir = Generator2List(function)
-        verilog = CodeGen()
+        # ir = Generator2List(function)
+        # verilog = CodeGen()
         # verilog.from_list_ir(ir.get_root(), ir.get_context())
         # warnings.warn(verilog.get_module())
         # warnings.warn(

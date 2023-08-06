@@ -36,8 +36,8 @@ class Generator2Graph:
             prefix="",
             nextt=ir.DoneNode(unique_id="_statelmaodone", name="done"),
         )
-        for i, var in enumerate(self._context.state_vars):
-            self.__add_global_var(str(i), var.to_string())
+        # for i, var in enumerate(self._context.state_vars):
+        #     self.__add_global_var(str(i), var.to_string())
 
     @property
     def root(self):

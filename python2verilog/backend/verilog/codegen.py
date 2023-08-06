@@ -15,8 +15,8 @@ class CodeGen:
     """
 
     def __init__(self):
-        self._context = None
-        self._module = None
+        self._context = ir.Context()
+        self._module = ver.Module("", [], [])
 
     @classmethod
     def from_graph_ir(cls, root: ir.Element, context: ir.Context):
@@ -46,7 +46,7 @@ class CodeGen:
         counter = len(old_case.case_items) + 1
         for item in root_case.case_items:
             if item.condition.to_string() not in inst._context.global_vars:
-                inst._context.global_vars[item.condition.to_string()] = counter
+                inst._context.global_vars[item.condition.to_string()] = str(counter)
                 counter += 1
         inst._context.global_vars["_state"] = str(len(old_case.case_items))
         inst._module = CodeGen.__new_module(root_case, inst._context)
@@ -168,7 +168,9 @@ class CodeGen:
                         ],
                     )
                 )
-                self._context.global_vars[node.unique_id] = len(root_case.case_items)
+                self._context.global_vars[node.unique_id] = str(
+                    len(root_case.case_items)
+                )
                 # if node.optimal_child:
                 #     next_state = self.graph_build_node(
                 #         node.optimal_child, root_case, visited
@@ -211,7 +213,9 @@ class CodeGen:
                         ],
                     )
                 )
-                self._context.global_vars[node.unique_id] = len(root_case.case_items)
+                self._context.global_vars[node.unique_id] = str(
+                    len(root_case.case_items)
+                )
             return node.unique_id
         if isinstance(node, ir.YieldNode):
             if node.unique_id not in visited:
@@ -233,7 +237,9 @@ class CodeGen:
                         ],
                     )
                 )
-                self._context.global_vars[node.unique_id] = len(root_case.case_items)
+                self._context.global_vars[node.unique_id] = str(
+                    len(root_case.case_items)
+                )
             return node.unique_id
         if isinstance(node, ir.Edge):
             if node.unique_id not in visited:
@@ -251,7 +257,9 @@ class CodeGen:
                         ],
                     )
                 )
-                self._context.global_vars[node.unique_id] = len(root_case.case_items)
+                self._context.global_vars[node.unique_id] = str(
+                    len(root_case.case_items)
+                )
             return node.unique_id
         raise RuntimeError(f"Unexpected type {type(node)} {node}")
 
@@ -267,8 +275,7 @@ class CodeGen:
         """
         then_body: list[ver.Statement] = [ver.NonBlockingSubsitution("_done", "0")]
         then_body += [
-            ver.NonBlockingSubsitution(key, str(val))
-            for key, val in global_vars.items()
+            ver.NonBlockingSubsitution(key, val) for key, val in global_vars.items()
         ]
         block = ver.IfElse(
             ver.Expression("_start"),
