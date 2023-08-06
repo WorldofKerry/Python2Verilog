@@ -19,8 +19,8 @@ from abc import abstractmethod
 from python2verilog.backend.verilog import CodeGen, CaseBuilder
 from python2verilog.frontend import Generator2Graph
 from python2verilog.optimizer import basic, OptimizeGraph
-from python2verilog.__main__ import *
 from python2verilog import ir
+from python2verilog.api import convert_graph_debug
 from tools.visualization import make_visual
 from .cases import test_cases
 
@@ -67,19 +67,15 @@ class OptimizedGraphBase:
     Base class for graph IR tests
     """
 
-    def __init__(self, threshold: int):
+    def __init__(self, optimization_level: int):
         self.create_verilog_from_func = self.create_create_verilog_from_func(
-            threshold=threshold
+            optimization_level=optimization_level
         )
 
     @staticmethod
-    def create_create_verilog_from_func(threshold: int):
+    def create_create_verilog_from_func(optimization_level: int):
         def create_verilog_from_func(function: ast.FunctionDef):
-            ir, context = Generator2Graph(function).results
-            logging.debug(f"running optimizer with threshold {threshold}")
-            OptimizeGraph(ir, threshold=threshold)
-            verilog = CodeGen.from_optimal_ir(ir, context)
-            return verilog, ir
+            return convert_graph_debug(function, optimization_level)
 
         return create_verilog_from_func
 
@@ -622,28 +618,45 @@ class Graph(BaseTestCases.BaseTest, GraphBase):
 
 
 @pytest.mark.usefixtures("argparse")
-class GraphThreshold0(BaseTestCases.BaseTest, OptimizedGraphBase):
+class GraphOpti0(BaseTestCases.BaseTest, OptimizedGraphBase):
     def __init__(self, *args, **kwargs):
-        OptimizedGraphBase.__init__(self, threshold=int(self.__class__.__name__[-1]))
+        OptimizedGraphBase.__init__(
+            self, optimization_level=int(self.__class__.__name__[-1])
+        )
         BaseTestCases.BaseTest.__init__(self, *args, **kwargs)
 
 
 @pytest.mark.usefixtures("argparse")
-class GraphThreshold1(BaseTestCases.BaseTest, OptimizedGraphBase):
+class GraphOpti1(BaseTestCases.BaseTest, OptimizedGraphBase):
     def __init__(self, *args, **kwargs):
-        OptimizedGraphBase.__init__(self, threshold=int(self.__class__.__name__[-1]))
+        OptimizedGraphBase.__init__(
+            self, optimization_level=int(self.__class__.__name__[-1])
+        )
         BaseTestCases.BaseTest.__init__(self, *args, **kwargs)
 
 
 @pytest.mark.usefixtures("argparse")
-class GraphThreshold2(BaseTestCases.BaseTest, OptimizedGraphBase):
+class GraphOpti2(BaseTestCases.BaseTest, OptimizedGraphBase):
     def __init__(self, *args, **kwargs):
-        OptimizedGraphBase.__init__(self, threshold=int(self.__class__.__name__[-1]))
+        OptimizedGraphBase.__init__(
+            self, optimization_level=int(self.__class__.__name__[-1])
+        )
         BaseTestCases.BaseTest.__init__(self, *args, **kwargs)
 
 
 @pytest.mark.usefixtures("argparse")
-class Opti3(BaseTestCases.BaseTest, OptimizedGraphBase):
+class GraphOpti3(BaseTestCases.BaseTest, OptimizedGraphBase):
     def __init__(self, *args, **kwargs):
-        OptimizedGraphBase.__init__(self, threshold=int(self.__class__.__name__[-1]))
+        OptimizedGraphBase.__init__(
+            self, optimization_level=int(self.__class__.__name__[-1])
+        )
+        BaseTestCases.BaseTest.__init__(self, *args, **kwargs)
+
+
+@pytest.mark.usefixtures("argparse")
+class GraphOpti4(BaseTestCases.BaseTest, OptimizedGraphBase):
+    def __init__(self, *args, **kwargs):
+        OptimizedGraphBase.__init__(
+            self, optimization_level=int(self.__class__.__name__[-1])
+        )
         BaseTestCases.BaseTest.__init__(self, *args, **kwargs)
