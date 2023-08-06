@@ -11,6 +11,8 @@ from .. import ir
 from ..utils.string import Lines, Indent
 from ..utils.assertions import assert_type, assert_list_type
 
+DONE_STATE_NAME = "_statelmaodone"
+
 
 class Generator2Graph:
     """
@@ -32,10 +34,10 @@ class Generator2Graph:
         self._root = self.__parse_statements(
             stmts=list(python_func.body),
             prefix="",
-            nextt=ir.DoneNode(unique_id="_statelmaodone", name="done"),
+            nextt=ir.DoneNode(unique_id=DONE_STATE_NAME, name="done"),
         )
-        # for i, var in enumerate(self._context.state_vars):
-        #     self.__add_global_var(str(i), var.to_string())
+        self._context.entry = self._root.unique_id
+        self._context.exit = DONE_STATE_NAME
 
     @property
     def root(self):

@@ -4,6 +4,7 @@ Verilog Codegen
 
 import itertools
 import logging
+import warnings
 from . import ast as ver
 from ... import ir
 from ...utils.assertions import assert_type, assert_list_type, assert_dict_type
@@ -14,46 +15,30 @@ class CodeGen:
     Code Generator for Verilog
     """
 
-    def __init__(self):
-        self._context = ir.Context()
-        self._module = ver.Module("", [], [])
-
-    @classmethod
-    def from_graph_ir(cls, root: ir.Element, context: ir.Context):
-        """ "
-        Builds tree from Graph IR
-        """
-        assert_type(root, ir.Element)
-        assert_type(context, ir.Context)
-        inst = CodeGen()
-        inst._context = context
-        root_case = inst.graph_build(root, set())
-        inst._context.global_vars["_state"] = str(len(root_case.case_items))
-        inst._module = CodeGen.__new_module(root_case, context)
-        return inst
-
-    @classmethod
-    def from_optimal_ir(cls, root: ir.Vertex, context: ir.Context):
+    def __init__(self, root: ir.Vertex, context: ir.Context):
         """ "
         Builds tree from Graph IR
         """
         assert_type(root, ir.Vertex)
         assert_type(context, ir.Context)
-        inst = CodeGen()
-        inst._context = context
-        old_case = inst.graph_build(root, set())
-        root_case = CaseBuilder(root).case
-        counter = len(old_case.case_items) + 1
+        self._context = context
+        root_case = CaseBuilder(root, context).case
+        counter = 0
+
         for item in root_case.case_items:
-            if item.condition.to_string() not in inst._context.global_vars:
-                inst._context.global_vars[item.condition.to_string()] = str(counter)
-                counter += 1
-        inst._context.global_vars["_state"] = str(len(old_case.case_items))
-        inst._module = CodeGen.__new_module(root_case, inst._context)
-        return inst
+            # self._context.global_vars[item.condition.to_string()] = str(counter)
+            self._context.add_state(item.condition.to_string())
+            counter += 1
+
+        # self._context.global_vars["_statelmaodone"] = str(counter)
+        self._context.add_state_weak("_statelmaodone")
+
+        self._context.global_vars["_state"] = self._context.entry
+
+        self._module = CodeGen.__new_module(root_case, self._context)
 
     @staticmethod
-    def __new_module(root: ver.Statement, context: ir.Context):
+    def __new_module(root: ver.Case, context: ir.Context):
         """
         Creates a module wrapper from the context
 
@@ -71,146 +56,48 @@ class CodeGen:
         always = ver.PosedgeSyncAlways(
             ver.Expression("_clock"),
             valid="_valid",
-            body=[CodeGen.__get_start_ifelse(root, context.global_vars)],
+            body=[CodeGen.__get_start_ifelse(root, context.global_vars, context.entry)],
         )
         body: list[ver.Statement] = [
             ver.Declaration(v, is_reg=True, is_signed=True) for v in context.global_vars
         ]
         body.append(always)
-        return ver.Module(name=context.name, inputs=inputs, outputs=outputs, body=body)
 
-    def graph_build(self, root: ir.Element, visited: set[str]):
-        """
-        Builds from graph
-        """
-        assert_type(root, ir.Element)
-        root_case = ver.Case(expression=ver.Expression("_state"), case_items=[])
-        self.graph_build_node(node=root, root_case=root_case, visited=visited)
-        return root_case
-
-    def graph_build_node(
-        self, node: ir.Element, root_case: ver.Case, visited: set[str]
-    ):
-        """
-        Builds from node
-        """
-        assert_type(node, ir.Element)
-        assert isinstance(self._context, ir.Context)
-        if node.unique_id in visited:
-            return node.unique_id
-
-        if isinstance(node, ir.AssignNode):
-            if node.unique_id not in visited:
-                visited.add(node.unique_id)
-                next_state = self.graph_build_node(node.child, root_case, visited)
-                root_case.case_items.append(
-                    ver.CaseItem(
-                        condition=ver.Expression(node.unique_id),
-                        statements=[
-                            ver.Statement(f"{node.to_string()};"),
-                            ver.NonBlockingSubsitution(
-                                lvalue=root_case.condition.to_string(),
-                                rvalue=next_state,
-                            ),
-                        ],
-                    )
-                )
-                self._context.global_vars[node.unique_id] = str(
-                    len(root_case.case_items)
-                )
-            return node.unique_id
-        if isinstance(node, ir.IfElseNode):
-            if node.unique_id not in visited:
-                visited.add(node.unique_id)
-                then_state = self.graph_build_node(node.true_edge, root_case, visited)
-                else_state = self.graph_build_node(node.false_edge, root_case, visited)
-                root_case.case_items.append(
-                    ver.CaseItem(
-                        condition=ver.Expression(node.unique_id),
-                        statements=[
-                            ver.IfElse(
-                                condition=ver.Expression(node.condition.to_string()),
-                                then_body=[
-                                    ver.NonBlockingSubsitution(
-                                        root_case.condition.to_string(), then_state
-                                    )
-                                ],
-                                else_body=[
-                                    ver.NonBlockingSubsitution(
-                                        root_case.condition.to_string(), else_state
-                                    )
-                                ],
-                            )
-                        ],
-                    )
-                )
-                self._context.global_vars[node.unique_id] = str(
-                    len(root_case.case_items)
-                )
-            return node.unique_id
-        if isinstance(node, ir.YieldNode):
-            if node.unique_id not in visited:
-                visited.add(node.unique_id)
-                next_state = self.graph_build_node(node.child, root_case, visited)
-                stmts = [
-                    ver.NonBlockingSubsitution(f"_out{i}", v.to_string())
-                    for i, v in enumerate(node.stmts)
-                ] + [ver.NonBlockingSubsitution("_valid", "1")]
-                root_case.case_items.append(
-                    ver.CaseItem(
-                        condition=ver.Expression(node.unique_id),
-                        statements=[
-                            *stmts,
-                            ver.NonBlockingSubsitution(
-                                lvalue=root_case.condition.to_string(),
-                                rvalue=next_state,
-                            ),
-                        ],
-                    )
-                )
-                self._context.global_vars[node.unique_id] = str(
-                    len(root_case.case_items)
-                )
-            return node.unique_id
-        if isinstance(node, ir.Edge):
-            if node.unique_id not in visited:
-                visited.add(node.unique_id)
-                return self.graph_build_node(node.child, root_case, visited)
-            return "bruvlmao"
-        if isinstance(node, ir.DoneNode):
-            if node.unique_id not in visited:
-                visited.add(node.unique_id)
-                root_case.case_items.append(
-                    ver.CaseItem(
-                        condition=ver.Expression(node.unique_id),
-                        statements=[
-                            ver.NonBlockingSubsitution("_done", "1"),
-                        ],
-                    )
-                )
-                self._context.global_vars[node.unique_id] = str(
-                    len(root_case.case_items)
-                )
-            return node.unique_id
-        raise RuntimeError(f"Unexpected type {type(node)} {node}")
+        state_vars = {key: str(index) for index, key in enumerate(context.state_vars)}
+        return ver.Module(
+            name=context.name,
+            inputs=inputs,
+            outputs=outputs,
+            body=body,
+            localparams=state_vars,
+        )
 
     @staticmethod
-    def __get_start_ifelse(root: ver.Statement, global_vars: dict[str, str]):
+    def __get_start_ifelse(root: ver.Case, global_vars: dict[str, str], entry: str):
         """
         if (_start) begin
             <var> = <value>;
             ...
         end else begin
-        ...
+            case(...)
+            ...
+            endcase
         end
         """
-        then_body: list[ver.Statement] = [ver.NonBlockingSubsitution("_done", "0")]
-        then_body += [
+        init_body: list[ver.Statement] = [ver.NonBlockingSubsitution("_done", "0")]
+        init_body += [
             ver.NonBlockingSubsitution(key, val) for key, val in global_vars.items()
         ]
+        for item in root.case_items:
+            # TODO: context.entry really should be a ver.Expression
+            if str(item.condition) == entry:
+                init_body += item.statements
+                root.case_items.remove(item)
+                break
+
         block = ver.IfElse(
             ver.Expression("_start"),
-            then_body,
+            init_body,
             [root],
         )
         return block
@@ -344,9 +231,10 @@ class CaseBuilder:
     Creates a case statement for the IR Graph
     """
 
-    def __init__(self, root: ir.Vertex):
+    def __init__(self, root: ir.Vertex, context: ir.Context):
         # Member Vars
         self.visited: set[str] = set()
+        self.context = context
         self.case = ver.Case(expression=ver.Expression("_state"), case_items=[])
 
         # Member Funcs
@@ -371,9 +259,6 @@ class CaseBuilder:
         Processes a node
         """
         assert isinstance(vertex, ir.Vertex)
-        if vertex.unique_id in self.visited and not isinstance(vertex, ir.DoneNode):
-            logging.info(f"already visited {vertex}")
-            return [ver.Statement("bruv")]
         self.visited.add(vertex.unique_id)
 
         stmts: list[ver.Statement] = []
@@ -412,6 +297,7 @@ class CaseBuilder:
 
             if isinstance(vertex.optimal_child.optimal_child, ir.DoneNode):
                 outputs.append(ver.NonBlockingSubsitution("_done", "1"))
+
             state_change.append(
                 ver.NonBlockingSubsitution(
                     "_state", str(vertex.optimal_child.optimal_child.unique_id)

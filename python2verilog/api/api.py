@@ -26,4 +26,4 @@ def convert_graph_debug(func: ast.FunctionDef, optimization_level: int):
     ir, context = Generator2Graph(func).results
     if optimization_level > 0:
         OptimizeGraph(ir, threshold=optimization_level - 1)
-    return CodeGen.from_optimal_ir(ir, context), ir
+    return CodeGen(ir, context), ir

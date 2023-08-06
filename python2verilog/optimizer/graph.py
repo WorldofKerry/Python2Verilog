@@ -71,7 +71,7 @@ def graph_update_mapping(
     """
     new_mapping = copy.deepcopy(old_mapping)
     assert not isinstance(
-        stmt, ir.IfElse
+        stmt, ir.IfElseNode
     ), "Should have been handled, call this method twice on the two branches"
     if isinstance(stmt, ir.AssignNode):
         new_mapping[stmt.lvalue] = stmt.rvalue
@@ -265,6 +265,7 @@ class OptimizeGraph:
 
             if isinstance(element, ir.DoneNode):
                 # logging.error("found done")
+                # print("found done node")
                 return element
 
             raise RuntimeError(f"unexpected {type(element)} {element}")

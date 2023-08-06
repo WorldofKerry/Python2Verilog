@@ -25,6 +25,9 @@ class Expression:
         assert isinstance(expr, str)
         self.expr = expr
 
+    def __str__(self):
+        return self.to_string()
+
     def to_string(self):
         """
         To Verilog
@@ -94,6 +97,15 @@ class Statement(ImplementsToLines):
         for line in actual_lines:
             lines += f"// {line}"
         return lines
+
+
+class LocalParam(Statement):
+    """
+    localparam <name> = <value>;
+    """
+
+    def __init__(self, name: str, value: str, *args, **kwargs):
+        super().__init__(f"localparam {name} = {value};", *args, **kwargs)
 
 
 class AtPosedgeStatement(Statement):
@@ -168,6 +180,7 @@ class Module(ImplementsToLines):
         outputs: list[str],
         body: Optional[list[Statement]] = None,
         add_default_ports=True,
+        localparams: Optional[dict[str, str]] = None,
     ):
         self.name = name  # TODO: assert invalid names
 
@@ -196,6 +209,14 @@ class Module(ImplementsToLines):
         else:
             self.body = []
 
+        if localparams:
+            assert_dict_type(localparams, str, str)
+            self.local_params = Lines()
+            for key, value in localparams.items():
+                self.local_params.concat(LocalParam(key, value).to_lines())
+        else:
+            self.local_params = Lines()
+
     def to_lines(self):
         """
         To Verilog
@@ -209,6 +230,7 @@ class Module(ImplementsToLines):
         if len(lines) > 1:  # This means there are ports
             lines[-1] = lines[-1][0:-1]  # removes last comma
         lines += ");"
+        lines.concat(self.local_params, 1)
         for stmt in self.body:
             if stmt.to_lines() is None:
                 warnings.warn(type(stmt))
@@ -478,18 +500,6 @@ class IfElse(Statement):
             lines.concat(stmt.to_lines(), indent=1)
         lines += "end"
         return lines
-
-    def append_end_statements(self, statements: list[Statement]):
-        """
-        Appends statements to both branches
-        """
-        statements = assert_list_type(statements, Statement)
-        # warnings.warn("appending " + statements[0].to_string())
-        # if len(statements) > 1:
-        #     warnings.warn(statements[1].to_string())
-        self.then_body[-1].append_end_statements(statements)
-        self.else_body[-1].append_end_statements(statements)
-        return self
 
 
 class While(Statement):
