@@ -4,7 +4,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>python2verilog.optimizer.graph &#8212; python2verilog  documentation</title>
+    <title>python2verilog.optimizer.optimizer &#8212; python2verilog  documentation</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=4f649999" />
     <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=039e1c02" />
     <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js?v=b3ba4146"></script>
@@ -28,7 +28,7 @@
 
           <div class="body" role="main">
             
-  <h1>Source code for python2verilog.optimizer.graph</h1><div class="highlight"><pre>
+  <h1>Source code for python2verilog.optimizer.optimizer</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">Optimizer for the Graph IR</span>
 <span class="sd">&quot;&quot;&quot;</span>
@@ -42,7 +42,7 @@
 <span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">ir</span>
 
 
-<div class="viewcode-block" id="is_dependent"><a class="viewcode-back" href="../../../python2verilog.optimizer.html#python2verilog.optimizer.graph.is_dependent">[docs]</a><span class="k">def</span> <span class="nf">is_dependent</span><span class="p">(</span><span class="n">expr</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">Expression</span><span class="p">,</span> <span class="n">var</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<div class="viewcode-block" id="is_dependent"><a class="viewcode-back" href="../../../python2verilog.optimizer.html#python2verilog.optimizer.optimizer.is_dependent">[docs]</a><span class="k">def</span> <span class="nf">is_dependent</span><span class="p">(</span><span class="n">expr</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">Expression</span><span class="p">,</span> <span class="n">var</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Returns whether or not expr is dependent on var</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -55,7 +55,7 @@
     <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;unexpected </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="backwards_replace"><a class="viewcode-back" href="../../../python2verilog.optimizer.html#python2verilog.optimizer.graph.backwards_replace">[docs]</a><span class="k">def</span> <span class="nf">backwards_replace</span><span class="p">(</span><span class="n">expr</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">Expression</span><span class="p">,</span> <span class="n">mapping</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">ir</span><span class="o">.</span><span class="n">Expression</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Expression</span><span class="p">]):</span>
+<div class="viewcode-block" id="backwards_replace"><a class="viewcode-back" href="../../../python2verilog.optimizer.html#python2verilog.optimizer.optimizer.backwards_replace">[docs]</a><span class="k">def</span> <span class="nf">backwards_replace</span><span class="p">(</span><span class="n">expr</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">Expression</span><span class="p">,</span> <span class="n">mapping</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">ir</span><span class="o">.</span><span class="n">Expression</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Expression</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Replaces instances of variables with the mapped value</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -76,7 +76,7 @@
     <span class="k">return</span> <span class="n">expr</span></div>
 
 
-<div class="viewcode-block" id="graph_apply_mapping"><a class="viewcode-back" href="../../../python2verilog.optimizer.html#python2verilog.optimizer.graph.graph_apply_mapping">[docs]</a><span class="k">def</span> <span class="nf">graph_apply_mapping</span><span class="p">(</span>
+<div class="viewcode-block" id="graph_apply_mapping"><a class="viewcode-back" href="../../../python2verilog.optimizer.html#python2verilog.optimizer.optimizer.graph_apply_mapping">[docs]</a><span class="k">def</span> <span class="nf">graph_apply_mapping</span><span class="p">(</span>
     <span class="n">node</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">AssignNode</span><span class="p">,</span> <span class="n">mapping</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">ir</span><span class="o">.</span><span class="n">Expression</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Expression</span><span class="p">]</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -94,7 +94,7 @@
     <span class="k">return</span> <span class="n">node</span></div>
 
 
-<div class="viewcode-block" id="graph_update_mapping"><a class="viewcode-back" href="../../../python2verilog.optimizer.html#python2verilog.optimizer.graph.graph_update_mapping">[docs]</a><span class="k">def</span> <span class="nf">graph_update_mapping</span><span class="p">(</span>
+<div class="viewcode-block" id="graph_update_mapping"><a class="viewcode-back" href="../../../python2verilog.optimizer.html#python2verilog.optimizer.optimizer.graph_update_mapping">[docs]</a><span class="k">def</span> <span class="nf">graph_update_mapping</span><span class="p">(</span>
     <span class="n">stmt</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">Statement</span><span class="p">,</span> <span class="n">old_mapping</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">ir</span><span class="o">.</span><span class="n">Expression</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Expression</span><span class="p">]</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -109,7 +109,7 @@
     <span class="k">return</span> <span class="n">new_mapping</span></div>
 
 
-<div class="viewcode-block" id="OptimizeGraph"><a class="viewcode-back" href="../../../python2verilog.optimizer.html#python2verilog.optimizer.graph.OptimizeGraph">[docs]</a><span class="k">class</span> <span class="nc">OptimizeGraph</span><span class="p">:</span>
+<div class="viewcode-block" id="OptimizeGraph"><a class="viewcode-back" href="../../../python2verilog.optimizer.html#python2verilog.optimizer.optimizer.OptimizeGraph">[docs]</a><span class="k">class</span> <span class="nc">OptimizeGraph</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A closure for the graph optimizer</span>
 

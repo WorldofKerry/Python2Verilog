@@ -4,10 +4,10 @@ python2verilog.optimizer package
 Submodules
 ----------
 
-python2verilog.optimizer.graph module
--------------------------------------
+python2verilog.optimizer.optimizer module
+-----------------------------------------
 
-.. automodule:: python2verilog.optimizer.graph
+.. automodule:: python2verilog.optimizer.optimizer
    :members:
    :undoc-members:
    :show-inheritance:
