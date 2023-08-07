@@ -4,6 +4,6 @@ TEST_CASES = {
     "rectangle_filled": [(32, 84, 5, 7), (64, 78, 34, 48)],
     "rectangle_lines": [(32, 84, 5, 7), (84, 96, 46, 89)],
     "fib": [(10,), (35,)],
-    "testing": [(15,)],
+    "testing": [(7,), (11,)],
     "dumb_loop": [(8,), (512,)],
 }

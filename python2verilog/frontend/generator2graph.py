@@ -109,10 +109,10 @@ class Generator2Graph:
                         )
                     )
                 )
-                self.__add_global_var(str(0), node.value.id)
+                self.__add_global_var(str(0), "_" + node.value.id)
         elif isinstance(node, pyast.Name):
             if not self._context.is_declared(node.id):
-                self.__add_global_var(str(0), node.id)
+                self.__add_global_var(str(0), "_" + node.id)
         else:
             raise TypeError(f"Unsupported lvalue type {type(node)} {pyast.dump(node)}")
         return self.__parse_expression(node)
@@ -296,7 +296,7 @@ class Generator2Graph:
         if isinstance(expr, pyast.Constant):
             return ir.Int(expr.value)
         if isinstance(expr, pyast.Name):
-            return ir.Var(expr.id)
+            return ir.Var("_" + expr.id)
         if isinstance(expr, pyast.Subscript):
             return self.__parse_subscript(expr)
         if isinstance(expr, pyast.BinOp):

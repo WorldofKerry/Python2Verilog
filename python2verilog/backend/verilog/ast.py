@@ -391,7 +391,7 @@ class Declaration(Statement):
         return Lines(string)
 
 
-class CaseItem:
+class CaseItem(ImplementsToLines):
     """
     Verilog case item, i.e.
     <condition>: begin
@@ -419,12 +419,6 @@ class CaseItem:
             lines.concat(stmt.to_lines(), indent=1)
         lines += "end"
         return lines
-
-    def to_string(self):
-        """
-        To Verilog
-        """
-        return self.to_lines().to_string()
 
 
 class Case(Statement):

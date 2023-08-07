@@ -255,6 +255,10 @@ class CaseBuilder:
 
         # Work
         self.case.case_items.append(self.new_caseitem(root))
+        for item in self.case.case_items:
+            if str(item.condition) == context.entry:
+                warnings.warn(str(item))
+                warnings.warn(type(item.statements[0].lvalue))
         if not self.added_ready_node:
             self.case.case_items.append(
                 ver.CaseItem(
