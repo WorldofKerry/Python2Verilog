@@ -11,7 +11,7 @@ from .. import ir
 from ..utils.string import Lines, Indent
 from ..utils.assertions import assert_type, assert_list_type
 
-DONE_STATE_NAME = "_statelmaodone"
+DONE_STATE_NAME = "_statelmaoready"
 
 
 class Generator2Graph:
@@ -37,7 +37,7 @@ class Generator2Graph:
             nextt=ir.DoneNode(unique_id=DONE_STATE_NAME, name="done"),
         )
         self._context.entry = self._root.unique_id
-        self._context.exit = DONE_STATE_NAME
+        self._context.ready = DONE_STATE_NAME
 
     @property
     def root(self):

@@ -23,17 +23,13 @@ class CodeGen:
         assert_type(context, ir.Context)
         self._context = context
         root_case = CaseBuilder(root, context).case
-        counter = 0
 
         for item in root_case.case_items:
-            # self._context.global_vars[item.condition.to_string()] = str(counter)
             self._context.add_state(item.condition.to_string())
-            counter += 1
 
-        # self._context.global_vars["_statelmaodone"] = str(counter)
-        self._context.add_state_weak("_statelmaodone")
+        self._context.add_state_weak(context.ready)
 
-        self._context.global_vars["_state"] = self._context.entry
+        self._context.global_vars["_state"] = self._context.ready
 
         self._module = CodeGen.__new_module(root_case, self._context)
 
@@ -55,8 +51,23 @@ class CodeGen:
         # TODO: make these extras optional
         always = ver.PosedgeSyncAlways(
             ver.Expression("_clock"),
-            valid="_valid",
-            body=[CodeGen.__get_start_ifelse(root, context.global_vars, context.entry)],
+            body=[
+                ver.NonBlockingSubsitution("_valid", "0"),
+                ver.NonBlockingSubsitution("_ready", "0"),
+            ]
+            + [ver.NonBlockingSubsitution(out, "0") for out in context.output_vars]
+            + [
+                ver.IfElse(
+                    ver.Expression("_reset"),
+                    then_body=[
+                        ver.NonBlockingSubsitution(
+                            lvalue="_state", rvalue=context.ready
+                        )
+                    ],
+                    else_body=[],
+                )
+            ]
+            + [CodeGen.__get_start_ifelse(root, context.entry)],
         )
         body: list[ver.Statement] = [
             ver.Declaration(v, is_reg=True, is_signed=True) for v in context.global_vars
@@ -73,7 +84,7 @@ class CodeGen:
         )
 
     @staticmethod
-    def __get_start_ifelse(root: ver.Case, global_vars: dict[str, str], entry: str):
+    def __get_start_ifelse(root: ver.Case, entry: str):
         """
         if (_start) begin
             <var> = <value>;
@@ -84,10 +95,7 @@ class CodeGen:
             endcase
         end
         """
-        init_body: list[ver.Statement] = [ver.NonBlockingSubsitution("_done", "0")]
-        init_body += [
-            ver.NonBlockingSubsitution(key, val) for key, val in global_vars.items()
-        ]
+        init_body = []
         for item in root.case_items:
             # TODO: context.entry really should be a ver.Expression
             if str(item.condition) == entry:
@@ -147,6 +155,7 @@ class CodeGen:
         decl: list[ver.Declaration] = []
         decl.append(ver.Declaration("_clock", size=1, is_reg=True))
         decl.append(ver.Declaration("_start", size=1, is_reg=True))
+        decl.append(ver.Declaration("_reset", size=1, is_reg=True))
         decl += [
             ver.Declaration(var, is_signed=True, is_reg=True)
             for var in self._context.input_vars
@@ -155,7 +164,7 @@ class CodeGen:
             ver.Declaration(var, is_signed=True) for var in self._context.output_vars
         ]
 
-        decl.append(ver.Declaration("_done", size=1))
+        decl.append(ver.Declaration("_ready", size=1))
         decl.append(ver.Declaration("_valid", size=1))
 
         ports = {
@@ -172,7 +181,9 @@ class CodeGen:
         ] = []  # TODO: replace with Sequence
         initial_body.append(ver.BlockingSubsitution("_clock", "0"))
         initial_body.append(ver.BlockingSubsitution("_start", "0"))
+        initial_body.append(ver.BlockingSubsitution("_reset", "1"))
         initial_body.append(ver.AtNegedgeStatement(ver.Expression("_clock")))
+        initial_body.append(ver.BlockingSubsitution("_reset", "0"))
         initial_body.append(ver.Statement())
 
         for i, test_case in enumerate(test_cases):
@@ -193,7 +204,7 @@ class CodeGen:
             while_body.append(ver.AtNegedgeStatement(ver.Expression("_clock")))
 
             initial_body.append(
-                ver.While(condition=ver.Expression("!_done"), body=while_body)
+                ver.While(condition=ver.Expression("!_ready"), body=while_body)
             )
             initial_body.append(make_display_stmt())
             initial_body.append(ver.Statement())
@@ -236,6 +247,7 @@ class CaseBuilder:
         self.visited: set[str] = set()
         self.context = context
         self.case = ver.Case(expression=ver.Expression("_state"), case_items=[])
+        self.added_ready_node = False
 
         # Member Funcs
         instance = itertools.count()
@@ -243,7 +255,15 @@ class CaseBuilder:
 
         # Work
         self.case.case_items.append(self.new_caseitem(root))
-        # logging.info(self.case.to_string())
+        if not self.added_ready_node:
+            self.case.case_items.append(
+                ver.CaseItem(
+                    ver.Expression(context.ready),
+                    statements=[
+                        ver.NonBlockingSubsitution(lvalue="_ready", rvalue="1")
+                    ],
+                )
+            )
 
     def new_caseitem(self, root: ir.Vertex):
         """
@@ -265,11 +285,12 @@ class CaseBuilder:
 
         if isinstance(vertex, ir.DoneNode):
             stmts += [
-                ver.NonBlockingSubsitution("_done", "1"),
+                ver.NonBlockingSubsitution("_ready", "1"),
                 ver.NonBlockingSubsitution(
-                    self.case.condition.to_string(), "_statelmaodone"
+                    self.case.condition.to_string(), self.context.ready
                 ),
             ]
+            self.added_ready_node = True
 
         elif isinstance(vertex, ir.AssignNode):
             stmts.append(
@@ -296,7 +317,7 @@ class CaseBuilder:
             state_change = []
 
             if isinstance(vertex.optimal_child.optimal_child, ir.DoneNode):
-                outputs.append(ver.NonBlockingSubsitution("_done", "1"))
+                outputs.append(ver.NonBlockingSubsitution("_ready", "1"))
 
             state_change.append(
                 ver.NonBlockingSubsitution(

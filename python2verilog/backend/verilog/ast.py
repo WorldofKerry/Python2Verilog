@@ -191,6 +191,7 @@ class Module(ImplementsToLines):
         if add_default_ports:
             input_lines += "input wire _start"
             input_lines += "input wire _clock"
+            input_lines += "input wire _reset"
         self.input = input_lines
 
         output_lines = Lines()
@@ -198,7 +199,7 @@ class Module(ImplementsToLines):
             assert isinstance(output, str)
             output_lines += f"output reg signed [31:0] {output}"
         if add_default_ports:
-            output_lines += "output reg _done"
+            output_lines += "output reg _ready"
             output_lines += "output reg _valid"
         self.output = output_lines
 
@@ -272,17 +273,10 @@ class Always(Statement):
         trigger: Expression,
         *args,
         body: Optional[list[Statement]] = None,
-        valid: Optional[str] = None,
         **kwargs,
     ):
         assert isinstance(trigger, Expression)
         self.trigger = trigger
-        if valid:
-            self.valid: Optional[NonBlockingSubsitution] = NonBlockingSubsitution(
-                valid, "0"
-            )
-        else:
-            self.valid = None
         if body:
             for stmt in body:
                 assert isinstance(stmt, Statement)
@@ -296,9 +290,6 @@ class Always(Statement):
         To Verilog
         """
         lines = Lines(f"always {self.trigger.to_string()} begin")
-        if self.valid:
-            lines.concat(self.valid.to_lines(), 1)
-        lines.concat(NonBlockingSubsitution("_done", "0").to_lines(), 1)
         for stmt in self.body:
             lines.concat(stmt.to_lines(), 1)
         lines += "end"
@@ -480,7 +471,7 @@ class IfElse(Statement):
         self,
         condition: Expression,
         then_body: list[Statement],
-        else_body: list[Statement],
+        else_body: Optional[list[Statement]],
         *args,
         **kwargs,
     ):
@@ -495,9 +486,10 @@ class IfElse(Statement):
         lines += f"if ({self.condition.to_string()}) begin"
         for stmt in self.then_body:
             lines.concat(stmt.to_lines(), indent=1)
-        lines += "end else begin"
-        for stmt in self.else_body:
-            lines.concat(stmt.to_lines(), indent=1)
+        if self.else_body:
+            lines += "end else begin"
+            for stmt in self.else_body:
+                lines.concat(stmt.to_lines(), indent=1)
         lines += "end"
         return lines
 

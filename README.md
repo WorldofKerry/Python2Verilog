@@ -81,6 +81,14 @@ Run commands used by [Github Actions](.github/workflows/sphinx.yml).
 
 ## Random Planning, Design, and Notes
 
+### Start, Ready, Reset
+
+How should these signals be handled while minimizing unnecessary clock cycles?
+
+- If module sees high `reset`, module resets and holds `ready` high one cycle later
+- If module sees high `start`, module captures inputs in the same cycle, then holds `ready` low until done
+- If user sees high `ready`, they can assert `start` in the same clock cycle (e.g. connect `ready` to `start` is valid)
+
 ### What needs to be duplicated in testbenches?
 
 declare I/O and other signals

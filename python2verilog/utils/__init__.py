@@ -1,3 +1,5 @@
-"""Visualization Tools"""
+"""
+Utilities
+"""
 
 # flake8: noqa

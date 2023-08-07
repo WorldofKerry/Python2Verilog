@@ -1,7 +1,7 @@
 """
 Intermediate Representation
 
-Similar to Assembly
+A Control Flow Graph represented as a Directed Graph
 
 """
 

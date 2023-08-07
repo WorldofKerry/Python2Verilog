@@ -14,7 +14,7 @@ def circle_lines(s_x, s_y, height) -> tuple[int, int, int, int, int, int]:
         x = x + 1
         if d > 0:
             y = y - 1
-            # d = d + 4 * (x - y) + 10
+            d = d + 4 * (x - y) + 10
         else:
             d = d + 4 * x + 6
         yield (s_x + x, s_y + y, height, x, y, d)
