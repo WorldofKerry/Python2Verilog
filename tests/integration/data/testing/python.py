@@ -21,7 +21,7 @@ def testing(n) -> tuple[int]:
     while i < n:
         if 1:
             i += 1
-            yield (i,)
+            yield (i)
         else:
             i += 2
 

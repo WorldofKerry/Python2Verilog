@@ -256,12 +256,19 @@ class Generator2Graph:
 
         yield <value>;
         """
-        assert isinstance(node.value, pyast.Tuple)
-        return ir.YieldNode(
-            unique_id=prefix,
-            name="Yield",
-            stmts=[self.__parse_expression(c) for c in node.value.elts],
-        )
+        if isinstance(node.value, pyast.Tuple):
+            return ir.YieldNode(
+                unique_id=prefix,
+                name="Yield",
+                stmts=[self.__parse_expression(c) for c in node.value.elts],
+            )
+        if isinstance(node.value, pyast.Name):
+            return ir.YieldNode(
+                unique_id=prefix,
+                name="Yield",
+                stmts=[self.__parse_expression(c) for c in [node.value]],
+            )
+        raise TypeError(f"Expected tuple {type(node.value)}")
 
     def __parse_binop_improved(self, expr: pyast.BinOp):
         """

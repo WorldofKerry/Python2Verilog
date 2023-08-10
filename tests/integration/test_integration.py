@@ -146,22 +146,22 @@ class OptimizedGraphBase:
             for test_case in test_cases:
                 generator_inst = _locals[function_name](*test_case)
                 size = None
-                for tupl in generator_inst:
-                    assert isinstance(
-                        tupl, tuple
-                    ), "Yield tuples only, use (x,) for single-width tuples"
+                for output in generator_inst:
+                    if isinstance(output, int):
+                        output = (output,)
+                    assert isinstance(output, tuple)
 
                     if size is None:
-                        size = len(tupl)
+                        size = len(output)
                     else:
                         assert (
-                            len(tupl) == size
-                        ), f"All generator yields must be same length tuple, but got {tupl} of length {len(tupl)} when previous yields had length {size}"
+                            len(output) == size
+                        ), f"All generator yields must be same length tuple, but got {output} of length {len(output)} when previous yields had length {size}"
 
-                    for e in tupl:
+                    for e in output:
                         assert isinstance(e, int)
 
-                    expected.append(tupl)
+                    expected.append(output)
 
             statistics = {
                 "function_name": function_name,
@@ -172,12 +172,12 @@ class OptimizedGraphBase:
 
             if args.write:
                 with open(FILES_IN_ABS_DIR["expected"], mode="w") as expected_file:
-                    for tupl in expected:
-                        if len(tupl) > 1:
-                            expected_file.write(f"{str(tupl)[1:-1]}\n")
+                    for output in expected:
+                        if len(output) > 1:
+                            expected_file.write(f"{str(output)[1:-1]}\n")
                         else:
                             expected_file.write(
-                                f"{str(tupl)[1:-2]}\n"
+                                f"{str(output)[1:-2]}\n"
                             )  # remove trailing comma
                 make_visual(
                     _locals[function_name](*test_cases[0]),
@@ -314,12 +314,12 @@ class OptimizedGraphBase:
 
             if args.write:
                 with open(FILES_IN_ABS_DIR["filtered_actual"], mode="w") as filtered_f:
-                    for tupl in filtered_actual:
-                        filtered_f.write(str(tupl)[1:-1] + "\n")
+                    for output in filtered_actual:
+                        filtered_f.write(str(output)[1:-1] + "\n")
 
                 with open(FILES_IN_ABS_DIR["actual"], mode="w") as filtered_f:
-                    for tupl in actual_raw:
-                        filtered_f.write(str(tupl)[1:-1] + "\n")
+                    for output in actual_raw:
+                        filtered_f.write(str(output)[1:-1] + "\n")
 
                 make_visual(filtered_actual, FILES_IN_ABS_DIR["actual_visual"])
 
