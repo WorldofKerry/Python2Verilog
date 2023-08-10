@@ -3,7 +3,6 @@ def floor_div(n) -> tuple[int]:
     while i < n:
         j = 1
         while j < n:
-            result = i // j
-            yield result
+            yield i // j
             j += 1
         i += 1

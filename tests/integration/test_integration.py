@@ -20,6 +20,7 @@ from python2verilog.backend.verilog import CodeGen, CaseBuilder
 from python2verilog.frontend import Generator2Graph
 from python2verilog import ir
 from python2verilog.api import convert_graph_debug
+from python2verilog.utils.assertions import assert_type
 from tools.visualization import make_visual
 from .cases import TEST_CASES
 
@@ -149,7 +150,7 @@ class OptimizedGraphBase:
                 for output in generator_inst:
                     if isinstance(output, int):
                         output = (output,)
-                    assert isinstance(output, tuple)
+                    assert_type(output, tuple)
 
                     if size is None:
                         size = len(output)

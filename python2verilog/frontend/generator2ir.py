@@ -262,7 +262,9 @@ class Generator2Graph:
                 name="Yield",
                 stmts=[self.__parse_expression(c) for c in node.value.elts],
             )
-        if isinstance(node.value, pyast.Name):
+        if isinstance(
+            node.value, (pyast.Name, pyast.BinOp, pyast.Compare, pyast.UnaryOp)
+        ):
             return ir.YieldNode(
                 unique_id=prefix,
                 name="Yield",
@@ -270,7 +272,7 @@ class Generator2Graph:
             )
         raise TypeError(f"Expected tuple {type(node.value)}")
 
-    def __parse_binop_improved(self, expr: pyast.BinOp):
+    def __parse_binop(self, expr: pyast.BinOp):
         """
         <left> <op> <right>
         """
@@ -288,8 +290,16 @@ class Generator2Graph:
                 self.__parse_expression(expr.left), self.__parse_expression(expr.right)
             )
 
-        if isinstance(expr.op, (pyast.Div, pyast.FloorDiv)):
-            return ir.Div(
+        if isinstance(expr.op, pyast.FloorDiv):
+            return ir.FloorDiv(
+                self.__parse_expression(expr.left), self.__parse_expression(expr.right)
+            )
+        if isinstance(expr.op, pyast.Pow):
+            return ir.Pow(
+                self.__parse_expression(expr.left), self.__parse_expression(expr.right)
+            )
+        if isinstance(expr.op, pyast.Mod):
+            return ir.Mod(
                 self.__parse_expression(expr.left), self.__parse_expression(expr.right)
             )
         raise TypeError(
@@ -322,7 +332,7 @@ class Generator2Graph:
                 return ir.Expression(
                     f"({a_var} > 0) ? ({a_var} / {b_var}) : ({a_var} / {b_var} - 1)"
                 )
-            return self.__parse_binop_improved(expr)
+            return self.__parse_binop(expr)
         if isinstance(expr, pyast.UnaryOp):
             if isinstance(expr.op, pyast.USub):
                 return ir.Expression(
@@ -371,6 +381,10 @@ class Generator2Graph:
             operator = ">"
         elif isinstance(node.ops[0], pyast.GtE):
             operator = ">="
+        elif isinstance(node.ops[0], pyast.NotEq):
+            operator = "!=="
+        elif isinstance(node.ops[0], pyast.Eq):
+            operator = "==="
         else:
             raise TypeError(
                 "Error: unknown operator", type(node.ops[0]), pyast.dump(node.ops[0])

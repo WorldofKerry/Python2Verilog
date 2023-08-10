@@ -145,13 +145,32 @@ class Mul(BinOp):
         super().__init__(left, right, "*")
 
 
-class Div(BinOp):
+class FloorDiv(BinOp):
     """
     <left> / <right>
     """
 
     def __init__(self, left: Expression, right: Expression):
         super().__init__(left, right, "/")
+
+
+class Pow(BinOp):
+    """
+    <left> ** <right>
+    <left> to the power of <right>
+    """
+
+    def __init__(self, left: Expression, right: Expression):
+        super().__init__(left, right, "**")
+
+
+class Mod(BinOp):
+    """
+    <left> % <right>
+    """
+
+    def __init__(self, left: Expression, right: Expression):
+        super().__init__(left, right, "%")
 
 
 class LessThan(BinOp):

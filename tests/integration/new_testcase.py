@@ -77,7 +77,7 @@ def script(args: argparse.Namespace, logger: logging.Logger, shell: callable) ->
 
         if not args.test_name in _locals[TEST_CASES_VAR_NAME]:
             _locals[TEST_CASES_VAR_NAME][args.test_name] = "[(,)]"
-            logger.warn(f"Add your test cases to {TEST_CASES_FILE_PATH}")
+            logger.warning(f"Add your test cases to {TEST_CASES_FILE_PATH}")
 
         text = f"{TEST_CASES_VAR_NAME} = {{\n"
         for key, value in _locals["TEST_CASES"].items():
