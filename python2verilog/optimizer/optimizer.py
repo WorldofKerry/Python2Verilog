@@ -33,15 +33,17 @@ def backwards_replace(expr: ir.Expression, mapping: dict[ir.Expression, ir.Expre
         for key in mapping:
             if key.to_string() == expr.to_string():
                 return mapping[key]
+    elif isinstance(expr, ir.Int):
+        return expr
     elif isinstance(expr, ir.BinOp):
         expr.left = backwards_replace(expr.left, mapping)
         expr.right = backwards_replace(expr.right, mapping)
-    elif isinstance(expr, ir.Expression):
-        # TODO: add BinOp for comparison
-        for key, value in mapping.items():
-            expr = ir.Expression(
-                expr.to_string().replace(key.to_string(), value.to_string())
-            )
+    elif isinstance(expr, ir.Ternary):
+        expr.condition = backwards_replace(expr.condition, mapping)
+        expr.left = backwards_replace(expr.left, mapping)
+        expr.right = backwards_replace(expr.right, mapping)
+    else:
+        raise TypeError(type(expr))
     return expr
 
 

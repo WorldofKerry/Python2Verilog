@@ -3,6 +3,7 @@ Visualization Tools
 """
 
 # TODO: remove from core directory, no need for this dependency outside of testing
+import logging
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -32,7 +33,12 @@ def make_visual(generator_inst, directory: str):
     width = max(data_triple[:, 1])
     grid = np.zeros((int(height) + 1, int(width) + 1))
     for x_coord, y_coord, colour in data_triple:
-        grid[x_coord, y_coord] = colour
+        try:
+            grid[x_coord, y_coord] = colour
+        except IndexError as e:
+            logging.info(
+                f"Skipping make_visual for {str(generator_inst)} due to negative outputs {e}"
+            )
 
     # Create the pixel-like plot
     plt.imshow(grid)

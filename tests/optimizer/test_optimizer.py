@@ -18,7 +18,7 @@ class TestGraphApplyMapping(unittest.TestCase):
         )
         self.assertTrue(is_dependent(node.rvalue, str(node.lvalue)))
         updated = graph_apply_mapping(node, mapping)
-        self.assertEqual("i <= (1 + 1)", str(updated))
+        self.assertEqual("i <= ($signed(1) + $signed(1))", str(updated))
 
         mapping = {ir.Var("i"): ir.Add(ir.Var("i"), ir.Int(1))}
         node = ir.AssignNode(
@@ -26,14 +26,14 @@ class TestGraphApplyMapping(unittest.TestCase):
         )
         self.assertTrue(is_dependent(node.rvalue, str(node.lvalue)))
         updated = graph_apply_mapping(node, mapping)
-        self.assertEqual("i <= ((i + 1) + 1)", str(updated))
+        self.assertEqual("i <= ((i + $signed(1)) + $signed(1))", str(updated))
 
         mapping = {ir.Var("i"): ir.Int(1)}
         node = ir.AssignNode(unique_id="", lvalue=ir.Var("a"), rvalue=ir.Var("i"))
         self.assertFalse(is_dependent(node.rvalue, str(node.lvalue)))
         self.assertTrue(is_dependent(node.rvalue, "i"))
         updated = graph_apply_mapping(node, mapping)
-        self.assertEqual("a <= 1", str(updated))
+        self.assertEqual("a <= $signed(1)", str(updated))
 
     def test_independent(self):
         """
@@ -45,7 +45,7 @@ class TestGraphApplyMapping(unittest.TestCase):
         )
         self.assertFalse(is_dependent(node.rvalue, str(node.lvalue)))
         updated = graph_apply_mapping(node, mapping)
-        self.assertEqual("i <= (0 + 1)", str(updated))
+        self.assertEqual("i <= ($signed(0) + $signed(1))", str(updated))
 
         mapping = {ir.Var("i"): ir.Add(ir.Var("i"), ir.Var("i"))}
         node = ir.AssignNode(
@@ -53,7 +53,7 @@ class TestGraphApplyMapping(unittest.TestCase):
         )
         self.assertFalse(is_dependent(node.rvalue, str(node.lvalue)))
         updated = graph_apply_mapping(node, mapping)
-        self.assertEqual("i <= (0 + 1)", str(updated))
+        self.assertEqual("i <= ($signed(0) + $signed(1))", str(updated))
 
         mapping = {ir.Var("i"): ir.Add(ir.Int(0), ir.Int(1))}
         node = ir.AssignNode(
@@ -61,7 +61,7 @@ class TestGraphApplyMapping(unittest.TestCase):
         )
         self.assertFalse(is_dependent(node.rvalue, str(node.lvalue)))
         updated = graph_apply_mapping(node, mapping)
-        self.assertEqual("i <= (0 + 1)", str(updated))
+        self.assertEqual("i <= ($signed(0) + $signed(1))", str(updated))
 
 
 # class TestOptimizer(unittest.TestCase):

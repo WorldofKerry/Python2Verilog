@@ -7,5 +7,5 @@ TEST_CASES = {
     "testing": [(7,), (11,)],
     "dumb_loop": [(8,), (512,)],
     "floor_div": [(10,), (50,)],
-    "operators": [(3, 7)],
+    "operators": [(-3, 7)],
 }

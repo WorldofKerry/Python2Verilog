@@ -6,15 +6,21 @@ def operators(x, y) -> tuple[int]:
     # yield x / y
     yield x // y
     yield x % y
-    yield x**y
+    if x >= 0:
+        if y >= 0:
+            yield x**y
+        else:
+            i = 0
+    else:
+        i = 0
 
     # # Comparison operators
-    yield x == y
-    yield x != y
-    yield x < y
-    yield x > y
-    yield x <= y
-    yield x >= y
+    # yield x == y
+    # yield x != y
+    # yield x < y
+    # yield x > y
+    # yield x <= y
+    # yield x >= y
 
     # # Logical operators
     # yield x and y

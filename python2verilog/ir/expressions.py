@@ -47,7 +47,7 @@ class Int(Expression):
 
     def __init__(self, value: int):
         assert isinstance(value, int)
-        super().__init__(str(value))
+        super().__init__(f"$signed({str(value)})")
 
 
 class Var(Expression):
@@ -81,16 +81,31 @@ class State(Var):
     """
 
 
+class Ternary(Expression):
+    """
+    <condition> ? <left> : <right>
+    """
+
+    def __init__(self, condition: Expression, left: Expression, right: Expression):
+        self.condition = condition
+        self.left = left
+        self.right = right
+        super().__init__(str(self))
+
+    def to_string(self):
+        return f"{str(self.condition)} ? {str(self.left)} : {str(self.right)}"
+
+
 class BinOp(Expression):
     """
     <left> <op> <right>
     """
 
     def __init__(self, left: Expression, right: Expression, oper: str):
-        self._left = left
-        self._right = right
-        self._oper = oper
-        super().__init__(f"({left.to_string()} {self._oper} {right.to_string()})")
+        self._left = assert_type(left, Expression)
+        self._right = assert_type(right, Expression)
+        self._oper = assert_type(oper, str)
+        super().__init__(str(self))
 
     @property
     def left(self):

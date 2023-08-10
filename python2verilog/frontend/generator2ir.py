@@ -321,16 +321,27 @@ class Generator2Graph:
             # Due to Verilog handling negative division "rounding"
             # differently than Python floor division
             # e.g. Verilog: -5 / 2 == -2, Python: -5 // 2 == -3
-            if (
-                isinstance(expr.op, pyast.FloorDiv)
-                and isinstance(expr.right, pyast.Constant)
-                and expr.right.value > 0
-                and expr.right.value % 2 == 0
-            ):
-                a_var = self.__parse_expression(expr.left).to_string()
-                b_var = expr.right.value
-                return ir.Expression(
-                    f"({a_var} > 0) ? ({a_var} / {b_var}) : ({a_var} / {b_var} - 1)"
+            # if (
+            #     isinstance(expr.op, pyast.FloorDiv)
+            #     and isinstance(expr.right, pyast.Constant)
+            #     and expr.right.value > 0
+            #     and expr.right.value % 2 == 0
+            # ):
+            #     a_var = self.__parse_expression(expr.left).to_string()
+            #     b_var = expr.right.value
+            #     return ir.Ternary(
+            #         condition=ir.BinOp(left=a_var, right=ir.Int(0), oper=">="),
+            #         left=ir.FloorDiv(a_var, b_var),
+            #         right=ir.FloorDiv(a_var, ir.Sub(b_var, ir.Int(-1))),
+            #     )
+
+            if isinstance(expr.op, pyast.FloorDiv):
+                a_var = self.__parse_expression(expr.left)
+                b_var = self.__parse_expression(expr.right)
+                return ir.Ternary(
+                    condition=ir.BinOp(left=a_var, right=ir.Int(0), oper=">="),
+                    left=ir.FloorDiv(a_var, b_var),
+                    right=ir.FloorDiv(a_var, ir.Sub(b_var, ir.Int(-1))),
                 )
             return self.__parse_binop(expr)
         if isinstance(expr, pyast.UnaryOp):
@@ -389,7 +400,8 @@ class Generator2Graph:
             raise TypeError(
                 "Error: unknown operator", type(node.ops[0]), pyast.dump(node.ops[0])
             )
-        return ir.Expression(
-            f"{self.__parse_expression(node.left).to_string()} {operator}"
-            f" {self.__parse_expression(node.comparators[0]).to_string()}"
+        return ir.BinOp(
+            left=self.__parse_expression(node.left),
+            oper=operator,
+            right=self.__parse_expression(node.comparators[0]),
         )
