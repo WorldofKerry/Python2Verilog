@@ -356,9 +356,7 @@ class Edge(BasicElement):
     """
 
     def __init__(self, unique_id: str, *args, child: Element | None = None, **kwargs):
-        assert not isinstance(
-            child, Edge
-        )  # TODO: add these checks to verticies as well
+        assert not isinstance(child, Edge)
         super().__init__(unique_id, *args, child=child, **kwargs)
 
     def to_string(self):

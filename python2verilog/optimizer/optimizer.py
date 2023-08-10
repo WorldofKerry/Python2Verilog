@@ -195,8 +195,7 @@ class OptimizeGraph:
                         threshold=threshold,
                     )
                     edge = ir.NonClockedEdge(
-                        # TODO: reason about this,
-                        # there are yield -> if -> yield with no clocks in-between
+                        # There may be yield -> if -> yield with no clocks in-between
                         unique_id=f"{element.true_edge.unique_id}_{make_unique()}_optimal",
                         name="True",
                         child=optimal_true_node,
@@ -240,7 +239,7 @@ class OptimizeGraph:
                     updated.append(backwards_replace(stmt, mapping))
                 if isinstance(element.child.child, ir.Edge):
                     raise RuntimeError(f"{element}")
-                # TODO: currently a clock always happens after a yield,
+                # Currently a clock always happens after a yield,
                 # this results in inefficiencies when there is a yield followed by done
                 # more wave analysis can be done to potentially paramatize this
                 # e.g. can valid and done both be 1 in the same clock cycle?

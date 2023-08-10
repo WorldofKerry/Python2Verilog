@@ -6,7 +6,6 @@ good-names=i, j, k, ir, e
 
 [MESSAGES CONTROL]
 disable =
-    fixme,
     too-few-public-methods,
     too-many-statements,
     too-many-return-statements,

@@ -2,7 +2,6 @@
 Visualization Tools
 """
 
-# TODO: remove from core directory, no need for this dependency outside of testing
 import logging
 import numpy as np
 import matplotlib.pyplot as plt

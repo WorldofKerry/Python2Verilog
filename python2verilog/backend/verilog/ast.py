@@ -182,7 +182,7 @@ class Module(ImplementsToLines):
         add_default_ports=True,
         localparams: Optional[dict[str, str]] = None,
     ):
-        self.name = name  # TODO: assert invalid names
+        self.name = name
 
         input_lines = Lines()
         for inputt in inputs:
@@ -316,9 +316,7 @@ class Subsitution(Statement):
     """
 
     def __init__(self, lvalue: str, rvalue: str, oper: str, *args, **kwargs):
-        assert isinstance(
-            rvalue, str
-        ), f"got {type(rvalue)} instead"  # TODO: should eventually take an expression
+        assert isinstance(rvalue, str), f"got {type(rvalue)} instead"
         assert isinstance(lvalue, str)
         self.lvalue = lvalue
         self.rvalue = rvalue

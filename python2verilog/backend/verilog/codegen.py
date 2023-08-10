@@ -50,7 +50,6 @@ class CodeGen:
         outputs = []
         for i in range(len((context.output_vars))):
             outputs.append(f"_out{str(i)}")
-        # TODO: make these extras optional
         always = ver.PosedgeSyncAlways(
             ver.Expression("_clock"),
             body=[
@@ -99,7 +98,6 @@ class CodeGen:
         """
         init_body = []
         for item in root.case_items:
-            # TODO: context.entry really should be a ver.Expression
             if str(item.condition) == entry:
                 init_body += item.statements
                 root.case_items.remove(item)
@@ -178,9 +176,7 @@ class CodeGen:
 
         setups.append(ver.Statement(literal="always #5 _clock = !_clock;"))
 
-        initial_body: list[
-            ver.Statement | ver.While
-        ] = []  # TODO: replace with Sequence
+        initial_body: list[ver.Statement | ver.While] = []
         initial_body.append(ver.BlockingSubsitution("_clock", "0"))
         initial_body.append(ver.BlockingSubsitution("_start", "0"))
         initial_body.append(ver.BlockingSubsitution("_reset", "1"))
