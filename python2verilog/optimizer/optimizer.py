@@ -290,10 +290,7 @@ class OptimizeGraph:
                 root, {}, {}, threshold=threshold
             ).optimal_false_edge
             self.__graph_optimize(root.true_edge.child, visited, threshold=threshold)
-            if root.false_edge:
-                self.__graph_optimize(
-                    root.false_edge.child, visited, threshold=threshold
-                )
+            self.__graph_optimize(root.false_edge.child, visited, threshold=threshold)
         elif isinstance(root, ir.DoneNode):
             pass
         elif isinstance(root, ir.Edge):

@@ -7,5 +7,8 @@ TEST_CASES = {
     "testing": [(7,), (11,)],
     "dumb_loop": [(8,), (512,)],
     "floor_div": [(10,), (50,)],
-    "operators": [(10,)],
+    "operators": [
+        (0, 9),
+        (10, 19),
+    ],  # weird bug with high - low > 10, presumably too many lines to display
 }

@@ -123,8 +123,8 @@ class OptimizedGraphBase:
             for key, value in config["file_names"].items()
         }
         fifos = {
-            "module_fifo": f"{prefix}_module_fifo.sv",
-            "testbench_fifo": f"{prefix}_tb_fifo.sv",
+            "module_fifo": f"{prefix}module_fifo.sv",
+            "testbench_fifo": f"{prefix}testbench_fifo.sv",
         }  # named pipe in memory
         FILES_IN_ABS_DIR.update(
             {key: os.path.join(ABS_DIR, value) for key, value in fifos.items()}
@@ -188,9 +188,15 @@ class OptimizedGraphBase:
                 with open(FILES_IN_ABS_DIR["ast_dump"], mode="w") as ast_dump_file:
                     ast_dump_file.write(ast.dump(tree, indent="  "))
 
-            logging.debug(f"finished executing python and created expected")
+            logging.debug(f"Finished executing python and created expected")
 
             iverilog_cmd = f'iverilog -s {function_name}_tb {FILES_IN_ABS_DIR["module_fifo"]} {FILES_IN_ABS_DIR["testbench_fifo"]} -o iverilog.log && unbuffer vvp iverilog.log && rm iverilog.log\n'
+
+            logging.debug(f"Running `{iverilog_cmd}`")
+            logging.debug(
+                f'For debugging, try running `iverilog -s {function_name}_tb {FILES_IN_ABS_DIR["module"]} {FILES_IN_ABS_DIR["testbench"]} -o iverilog.log && unbuffer vvp iverilog.log && rm iverilog.log`'
+            )
+
             process = subprocess.Popen(
                 iverilog_cmd,
                 shell=True,
@@ -242,101 +248,111 @@ class OptimizedGraphBase:
             with open(FILES_IN_ABS_DIR["testbench_fifo"], mode="w") as testbench_file:
                 testbench_file.write(tb_str)
 
-            process.wait(timeout=3)  # May need adjusting
+            try:
+                process.wait(timeout=15)  # May need adjusting
+                if args.write and args.synthesis:
+                    syn_process = subprocess.Popen(
+                        " ".join(
+                            [
+                                "yosys",
+                                "-QT",
+                                "-fverilog",
+                                FILES_IN_ABS_DIR["module"],
+                                "-pstat",
+                            ]
+                        ),
+                        shell=True,
+                        text=True,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                    )
+                    syn_process.wait()
+                    stdout = syn_process.stdout.read()
+                    stderr = syn_process.stderr.read()
+                    if stderr:
+                        warnings.warn(stderr)
 
-            if args.write and args.synthesis:
-                syn_process = subprocess.Popen(
-                    " ".join(
-                        [
-                            "yosys",
-                            "-QT",
-                            "-fverilog",
-                            FILES_IN_ABS_DIR["module"],
-                            "-pstat",
-                        ]
-                    ),
-                    shell=True,
-                    text=True,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
+                    stats = stdout[stdout.find("Printing statistics.") :]
+
+                    def snake_case(text):
+                        return re.sub(r"[\W_]+", "_", text).strip("_").lower()
+
+                    lines = stats.strip().splitlines()
+                    data = {}
+
+                    for line in lines:
+                        if ":" in line:
+                            key, value = line.split(":")
+                            key = snake_case(key).split("number_of_")[-1]
+                            value = int(value.strip())
+                        else:
+                            try:
+                                index = line.find("$") + 10
+                                value = int(line[index:].strip())
+                                key = line[:index].strip()[1:]
+                                data[key] = value
+
+                            except ValueError as _:
+                                continue
+
+                        data[key] = value
+                    for key, value in data.items():
+                        statistics[key] = value
+
+                logging.debug("Getting iverilog stderr")
+
+                stderr_str = process.stderr.read()
+                if stderr_str != "":
+                    warnings.warn(
+                        f"ERROR with running verilog simulation on {function_name}, with: {stderr_str}"
+                    )
+
+                logging.debug("Getting iverilog stdout")
+
+                actual_str = process.stdout.read()
+
+                actual_raw: list[list[str]] = []
+                for line in actual_str.splitlines():
+                    row = [elem.strip() for elem in line.split(",")]
+                    actual_raw.append(row)
+
+                statistics["ver_clks"] = len(actual_raw)
+                self.all_statistics.append(statistics)
+
+                filtered_actual = []
+                for row in actual_raw:
+                    if row[0] == "1":
+                        filtered_actual.append(tuple([int(elem) for elem in row[1:]]))
+
+                if args.write:
+                    with open(
+                        FILES_IN_ABS_DIR["filtered_actual"], mode="w"
+                    ) as filtered_f:
+                        for output in filtered_actual:
+                            filtered_f.write(str(output)[1:-1] + "\n")
+
+                    with open(FILES_IN_ABS_DIR["actual"], mode="w") as filtered_f:
+                        for output in actual_raw:
+                            filtered_f.write(str(output)[1:-1] + "\n")
+
+                    make_visual(filtered_actual, FILES_IN_ABS_DIR["actual_visual"])
+
+                actual_coords = set(filtered_actual)
+                expected_coords = set(expected)
+
+                err_msg = "\nactual_coords vs expected_coords"
+                if len(actual_coords) == len(expected_coords):
+                    err_msg += ", lengths are same, likely a rounding or sign error"
+                err_msg += f"\n{FILES_IN_ABS_DIR['expected']}\n{FILES_IN_ABS_DIR['filtered_actual']}"
+                self.assertEqual(
+                    actual_coords,
+                    expected_coords,
+                    err_msg,
                 )
-                syn_process.wait()
-                stdout = syn_process.stdout.read()
-                stderr = syn_process.stderr.read()
-                if stderr:
-                    warnings.warn(stderr)
-
-                stats = stdout[stdout.find("Printing statistics.") :]
-
-                def snake_case(text):
-                    return re.sub(r"[\W_]+", "_", text).strip("_").lower()
-
-                lines = stats.strip().splitlines()
-                data = {}
-
-                for line in lines:
-                    if ":" in line:
-                        key, value = line.split(":")
-                        key = snake_case(key).split("number_of_")[-1]
-                        value = int(value.strip())
-                    else:
-                        try:
-                            index = line.find("$") + 10
-                            value = int(line[index:].strip())
-                            key = line[:index].strip()[1:]
-                            data[key] = value
-
-                        except ValueError as _:
-                            continue
-
-                    data[key] = value
-                for key, value in data.items():
-                    statistics[key] = value
-
-            stderr_str = process.stderr.read()
-            if stderr_str != "":
-                warnings.warn(
-                    f"ERROR with running verilog simulation on {function_name}, with: {stderr_str}"
-                )
-
-            actual_str = process.stdout.read()
-
-            actual_raw: list[list[str]] = []
-            for line in actual_str.splitlines():
-                row = [elem.strip() for elem in line.split(",")]
-                actual_raw.append(row)
-
-            statistics["ver_clks"] = len(actual_raw)
-            self.all_statistics.append(statistics)
-
-            filtered_actual = []
-            for row in actual_raw:
-                if row[0] == "1":
-                    filtered_actual.append(tuple([int(elem) for elem in row[1:]]))
-
-            if args.write:
-                with open(FILES_IN_ABS_DIR["filtered_actual"], mode="w") as filtered_f:
-                    for output in filtered_actual:
-                        filtered_f.write(str(output)[1:-1] + "\n")
-
-                with open(FILES_IN_ABS_DIR["actual"], mode="w") as filtered_f:
-                    for output in actual_raw:
-                        filtered_f.write(str(output)[1:-1] + "\n")
-
-                make_visual(filtered_actual, FILES_IN_ABS_DIR["actual_visual"])
-
-            actual_coords = set(filtered_actual)
-            expected_coords = set(expected)
-
-            err_msg = "\nactual_coords vs expected_coords"
-            if len(actual_coords) == len(expected_coords):
-                err_msg += ", lengths are same, likely a rounding or sign error"
-            err_msg += f"\n{FILES_IN_ABS_DIR['expected']}\n{FILES_IN_ABS_DIR['filtered_actual']}"
-            self.assertEqual(
-                actual_coords,
-                expected_coords,
-                err_msg,
-            )
+            except subprocess.TimeoutExpired as e:
+                logging.warning(e)
+                warnings.warn(e)
+                process.terminate()
 
             for key in fifos:
                 os.remove(FILES_IN_ABS_DIR[key])

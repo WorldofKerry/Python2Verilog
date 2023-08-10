@@ -1,8 +1,8 @@
-def operators(n) -> tuple[int, int, int]:
-    x = 0
-    while x < n:
-        y = 0
-        while y < n:
+def operators(low, high) -> tuple[int, int, int]:
+    x = low
+    while x < high:
+        y = low
+        while y < high:
             # Arithmetic operators
             yield (x, y, x + y)
             yield (x, y, x - y)
@@ -11,7 +11,7 @@ def operators(n) -> tuple[int, int, int]:
             if y != 0:
                 yield (x, y, x // y)
                 yield (x, y, x % y)
-                # yield x, y, x**y
+            # yield x, y, x**y
             y += 1
         x += 1
 

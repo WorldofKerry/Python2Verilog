@@ -306,10 +306,7 @@ class CaseBuilder:
 
         elif isinstance(vertex, ir.IfElseNode):
             then_body = self.do_edge(vertex.optimal_true_edge)
-            if vertex.optimal_false_edge:
-                else_body = self.do_edge(vertex.optimal_false_edge)
-            else:
-                else_body = None
+            else_body = self.do_edge(vertex.optimal_false_edge)
             stmts.append(
                 ver.IfElse(
                     condition=ver.Expression(str(vertex.condition)),
