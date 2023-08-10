@@ -81,6 +81,9 @@ Run commands used by [Github Actions](.github/workflows/sphinx.yml).
 
 ## Random Planning, Design, and Notes
 
+### More Variable Data
+How to convert a Python `ast.Name`? We want to be able to map those variables to
+
 ### Start, Ready, Reset
 
 How should these signals be handled while minimizing unnecessary clock cycles?

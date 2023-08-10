@@ -74,12 +74,12 @@ class Generator2Graph:
             f"Unexpected function return type hint {type(node.slice)}, {pyast.dump(node.slice)}"
         )
 
-    def __add_global_var(self, initial_value: str, name: str):
+    def __add_global_var(self, var: ir.Var):
         """
         Adds global variables
         """
-        self._context.global_vars[name] = initial_value
-        return name
+        self._context.global_vars.append(assert_type(var, ir.Var))
+        return var.ver_name
 
     def __parse_targets(self, nodes: list[pyast.AST]):
         """
@@ -109,10 +109,10 @@ class Generator2Graph:
                         )
                     )
                 )
-                self.__add_global_var(str(0), "_" + node.value.id)
+                self.__add_global_var(ir.Var(py_name=node.value.id))
         elif isinstance(node, pyast.Name):
             if not self._context.is_declared(node.id):
-                self.__add_global_var(str(0), "_" + node.id)
+                self.__add_global_var(ir.Var(py_name=node.id))
         else:
             raise TypeError(f"Unsupported lvalue type {type(node)} {pyast.dump(node)}")
         return self.__parse_expression(node)
@@ -296,7 +296,7 @@ class Generator2Graph:
         if isinstance(expr, pyast.Constant):
             return ir.Int(expr.value)
         if isinstance(expr, pyast.Name):
-            return ir.Var("_" + expr.id)
+            return ir.Var(py_name=expr.id)
         if isinstance(expr, pyast.Subscript):
             return self.__parse_subscript(expr)
         if isinstance(expr, pyast.BinOp):

@@ -4,6 +4,7 @@ Based on Verilog Syntax
 """
 from __future__ import annotations
 import copy
+from dataclasses import dataclass
 from typing import Optional
 from ..utils.assertions import assert_type, assert_list_type
 
@@ -54,9 +55,24 @@ class Var(Expression):
     Named-variable
     """
 
-    def __init__(self, name: str):
-        assert isinstance(name, str)
-        super().__init__(name)
+    def __init__(
+        self,
+        py_name: str,
+        ver_name: str = "",
+        width: int = 32,
+        isSigned: bool = True,
+        initial_value: str = "0",
+    ):
+        if ver_name == "":
+            ver_name = "_" + py_name
+
+        self.ver_name = assert_type(ver_name, str)
+        self.py_name = assert_type(py_name, str)
+        self.width = assert_type(width, int)
+        self.is_signed = assert_type(isSigned, bool)
+        self.initial_value = initial_value
+
+        super().__init__(py_name)
 
 
 class State(Var):

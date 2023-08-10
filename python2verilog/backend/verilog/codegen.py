@@ -29,7 +29,9 @@ class CodeGen:
 
         self._context.add_state_weak(context.ready)
 
-        self._context.global_vars["_state"] = self._context.ready
+        self._context.global_vars.append(
+            ir.Var("_state", initial_value=self._context.ready)
+        )
 
         self._module = CodeGen.__new_module(root_case, self._context)
 
@@ -255,10 +257,10 @@ class CaseBuilder:
 
         # Work
         self.case.case_items.append(self.new_caseitem(root))
-        for item in self.case.case_items:
-            if str(item.condition) == context.entry:
-                warnings.warn(str(item))
-                warnings.warn(type(item.statements[0].lvalue))
+        # for item in self.case.case_items:
+        #     if str(item.condition) == context.entry:
+        #         warnings.warn(str(item))
+        #         warnings.warn(type(item.statements[0].lvalue))
         if not self.added_ready_node:
             self.case.case_items.append(
                 ver.CaseItem(
