@@ -316,6 +316,11 @@ class OptimizedGraphBase:
                     row = [elem.strip() for elem in line.split(",")]
                     actual_raw.append(row)
 
+                if args.write:
+                    with open(FILES_IN_ABS_DIR["actual"], mode="w") as filtered_f:
+                        for output in actual_raw:
+                            filtered_f.write(str(output)[1:-1] + "\n")
+
                 statistics["ver_clks"] = len(actual_raw)
                 self.all_statistics.append(statistics)
 
@@ -329,10 +334,6 @@ class OptimizedGraphBase:
                         FILES_IN_ABS_DIR["filtered_actual"], mode="w"
                     ) as filtered_f:
                         for output in filtered_actual:
-                            filtered_f.write(str(output)[1:-1] + "\n")
-
-                    with open(FILES_IN_ABS_DIR["actual"], mode="w") as filtered_f:
-                        for output in actual_raw:
                             filtered_f.write(str(output)[1:-1] + "\n")
 
                     make_visual(filtered_actual, FILES_IN_ABS_DIR["actual_visual"])

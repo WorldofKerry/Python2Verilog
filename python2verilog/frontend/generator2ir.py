@@ -346,12 +346,19 @@ class Generator2Graph:
             #     )
 
             if isinstance(expr.op, pyast.FloorDiv):
-                a_var = self.__parse_expression(expr.left)
-                b_var = self.__parse_expression(expr.right)
+                var_a = self.__parse_expression(expr.left)
+                var_b = self.__parse_expression(expr.right)
                 return ir.Ternary(
-                    condition=ir.BinOp(left=a_var, right=ir.Int(0), oper=">="),
-                    left=ir.Div(a_var, b_var),
-                    right=ir.Sub(ir.Div(a_var, b_var), ir.Int(1)),
+                    condition=ir.BinOp(left=var_a, right=ir.Int(0), oper=">="),
+                    left=ir.Div(var_a, var_b),
+                    right=ir.Div(var_a, ir.Sub(var_b, ir.Int(1))),
+                    # right=ir.Ternary(
+                    #     condition=ir.BinOp(
+                    #         left=ir.Sub(var_b, ir.Int(1)), right=ir.Int(0), oper="=="
+                    #     ),
+                    #     left=var_a,
+                    #     right=ir.Sub(var_b, ir.Int(1)),
+                    # ),
                 )
             return self.__parse_binop(expr)
         if isinstance(expr, pyast.UnaryOp):
