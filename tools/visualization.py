@@ -15,6 +15,8 @@ def make_visual(generator_inst, directory: str):
     data_triple_list = []
 
     for idx, yields in enumerate(generator_inst):
+        if isinstance(yields, int):
+            yields = (yields,)
         if len(yields) >= 3:
             data_triple_list.append(yields[:3])
         elif len(yields) >= 2:
