@@ -211,21 +211,31 @@ class Generator2Graph:
         assert isinstance(stmt, pyast.If)
 
         then_node = self.__parse_statements(list(stmt.body), f"{prefix}_t", nextt)
-        else_node = self.__parse_statements(list(stmt.orelse), f"{prefix}_f", nextt)
-
         to_then = ir.ClockedEdge(
             unique_id=f"{prefix}_true_edge", name="True", child=then_node
         )
-        to_else = ir.ClockedEdge(
-            unique_id=f"{prefix}_false_edge", name="False", child=else_node
-        )
+        if stmt.orelse:
+            else_node = self.__parse_statements(list(stmt.orelse), f"{prefix}_f", nextt)
+            to_else = ir.ClockedEdge(
+                unique_id=f"{prefix}_false_edge", name="False", child=else_node
+            )
+            ifelse = ir.IfElseNode(
+                unique_id=prefix,
+                true_edge=to_then,
+                false_edge=to_else,
+                condition=self.__parse_expression(stmt.test),
+            )
+        else:
+            to_else = ir.ClockedEdge(
+                unique_id=f"{prefix}_false_edge", name="False", child=nextt
+            )
+            ifelse = ir.IfElseNode(
+                unique_id=prefix,
+                true_edge=to_then,
+                false_edge=to_else,
+                condition=self.__parse_expression(stmt.test),
+            )
 
-        ifelse = ir.IfElseNode(
-            unique_id=prefix,
-            true_edge=to_then,
-            false_edge=to_else,
-            condition=self.__parse_expression(stmt.test),
-        )
         return ifelse
 
     def __parse_while(self, stmt: pyast.While, nextt: ir.Element, prefix: str):
@@ -291,7 +301,7 @@ class Generator2Graph:
             )
 
         if isinstance(expr.op, pyast.FloorDiv):
-            return ir.FloorDiv(
+            return ir.Div(
                 self.__parse_expression(expr.left), self.__parse_expression(expr.right)
             )
         if isinstance(expr.op, pyast.Pow):
@@ -340,8 +350,8 @@ class Generator2Graph:
                 b_var = self.__parse_expression(expr.right)
                 return ir.Ternary(
                     condition=ir.BinOp(left=a_var, right=ir.Int(0), oper=">="),
-                    left=ir.FloorDiv(a_var, b_var),
-                    right=ir.FloorDiv(a_var, ir.Sub(b_var, ir.Int(-1))),
+                    left=ir.Div(a_var, b_var),
+                    right=ir.Sub(ir.Div(a_var, b_var), ir.Int(1)),
                 )
             return self.__parse_binop(expr)
         if isinstance(expr, pyast.UnaryOp):

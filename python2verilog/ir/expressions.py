@@ -160,9 +160,10 @@ class Mul(BinOp):
         super().__init__(left, right, "*")
 
 
-class FloorDiv(BinOp):
+class Div(BinOp):
     """
     <left> / <right>
+    Truncates decimals
     """
 
     def __init__(self, left: Expression, right: Expression):

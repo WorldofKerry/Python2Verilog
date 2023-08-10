@@ -241,7 +241,8 @@ class OptimizedGraphBase:
 
             with open(FILES_IN_ABS_DIR["testbench_fifo"], mode="w") as testbench_file:
                 testbench_file.write(tb_str)
-            process.wait()
+
+            process.wait(timeout=3)  # May need adjusting
 
             if args.write and args.synthesis:
                 syn_process = subprocess.Popen(

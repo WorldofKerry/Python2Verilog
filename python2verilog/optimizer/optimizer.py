@@ -206,28 +206,31 @@ class OptimizeGraph:
                     # print("no optimize true branch")
                     pass
 
-                if not should_i_be_clocked(
-                    element.false_edge.child, visited, threshold
-                ):
-                    # print("optimzing false branch")
-                    false_mapping = graph_update_mapping(element.false_edge, mapping)
-                    if isinstance(element.false_edge.child, ir.Edge):
-                        raise RuntimeError(f"{element}")
-                    optimal_false_node = helper(
-                        element=element.false_edge.child,
-                        mapping=false_mapping,
-                        visited=copy.deepcopy(visited),
-                        threshold=threshold,
-                    )
-                    edge = ir.NonClockedEdge(
-                        unique_id=f"{element.false_edge.unique_id}_{make_unique()}_optimal",
-                        name="False",
-                        child=optimal_false_node,
-                    )
-                    new_node.optimal_false_edge = edge
-                else:
-                    # print("No optimize false branch")
-                    pass
+                if element.false_edge:
+                    if not should_i_be_clocked(
+                        element.false_edge.child, visited, threshold
+                    ):
+                        # print("optimzing false branch")
+                        false_mapping = graph_update_mapping(
+                            element.false_edge, mapping
+                        )
+                        if isinstance(element.false_edge.child, ir.Edge):
+                            raise RuntimeError(f"{element}")
+                        optimal_false_node = helper(
+                            element=element.false_edge.child,
+                            mapping=false_mapping,
+                            visited=copy.deepcopy(visited),
+                            threshold=threshold,
+                        )
+                        edge = ir.NonClockedEdge(
+                            unique_id=f"{element.false_edge.unique_id}_{make_unique()}_optimal",
+                            name="False",
+                            child=optimal_false_node,
+                        )
+                        new_node.optimal_false_edge = edge
+                    else:
+                        # print("No optimize false branch")
+                        pass
 
                 # print(f"returning {str(ifelse)} {mapping}")
                 return new_node
@@ -287,7 +290,10 @@ class OptimizeGraph:
                 root, {}, {}, threshold=threshold
             ).optimal_false_edge
             self.__graph_optimize(root.true_edge.child, visited, threshold=threshold)
-            self.__graph_optimize(root.false_edge.child, visited, threshold=threshold)
+            if root.false_edge:
+                self.__graph_optimize(
+                    root.false_edge.child, visited, threshold=threshold
+                )
         elif isinstance(root, ir.DoneNode):
             pass
         elif isinstance(root, ir.Edge):

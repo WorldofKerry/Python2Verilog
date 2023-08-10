@@ -1,70 +1,71 @@
-def operators(x, y) -> tuple[int]:
-    # Arithmetic operators
-    yield x + y
-    yield x - y
-    yield x * y
-    # yield x / y
-    yield x // y
-    yield x % y
-    if x >= 0:
-        if y >= 0:
-            yield x**y
-        else:
-            i = 0
-    else:
-        i = 0
+def operators(n) -> tuple[int, int, int]:
+    x = 0
+    while x < n:
+        y = 0
+        while y < n:
+            # Arithmetic operators
+            yield (x, y, x + y)
+            yield (x, y, x - y)
+            yield (x, y, x * y)
+            # yield x, y, x / y
+            if y != 0:
+                yield (x, y, x // y)
+                yield (x, y, x % y)
+                # yield x, y, x**y
+            y += 1
+        x += 1
 
-    # # Comparison operators
-    # yield x == y
-    # yield x != y
-    # yield x < y
-    # yield x > y
-    # yield x <= y
-    # yield x >= y
+        # # Comparison operators
+        # yield x, y, x == y
+        # yield x, y, x != y
+        # yield x, y, x < y
+        # yield x, y, x > y
+        # yield x, y, x <= y
+        # yield x, y, x >= y
 
-    # # Logical operators
-    # yield x and y
-    # yield x or y
-    # yield not x
+        # # Logical operators
+        # yield x, y, x and y
+        # yield x, y, x or y
+        # yield x, y, not x
 
-    # # Bitwise operators
-    # yield x & y
-    # yield x | y
-    # yield x ^ y
-    # yield ~x
-    # yield x << y
-    # yield x >> y
+        # # Bitwise operators
+        # yield x, y, x & y
+        # yield x, y, x | y
+        # yield x, y, x ^ y
+        # yield x, y, ~x
+        # yield x, y, x << y
+        # yield x, y, x >> y
 
-    # # Assignment operators
-    # z = x
-    # yield z
-    # z += y
-    # yield z
-    # z -= y
-    # yield z
-    # z *= y
-    # yield z
-    # z /= y
-    # yield z
-    # z //= y
-    # yield z
-    # z %= y
-    # yield z
-    # z **= y
-    # yield z
-    # z &= y
-    # yield z
-    # z |= y
-    # yield z
-    # z ^= y
-    # yield z
-    # z <<= y
-    # yield z
-    # z >>= y
-    # yield z
+        # # Assignment operators
+        # z = x
+        # yield x, y, z
+        # z += y
+        # yield x, y, z
+        # z -= y
+        # yield x, y, z
+        # z *= y
+        # yield x, y, z
+        # z /= y
+        # yield x, y, z
+        # z //= y
+        # yield x, y, z
+        # z %= y
+        # yield x, y, z
+        # z **= y
+        # yield x, y, z
+        # z &= y
+        # yield x, y, z
+        # z |= y
+        # yield x, y, z
+        # z ^= y
+        # yield x, y, z
+        # z <<= y
+        # yield x, y, z
+        # z >>= y
+        # yield x, y, z
 
-    # # Identity and membership operators
-    # yield x is y
-    # yield x is not y
-    # yield x in [y, z]
-    # yield x not in [y, z]
+        # # Identity and membership operators
+        # yield x, y, x is y
+        # yield x, y, x is not y
+        # yield x, y, x in [y, z]
+        # yield x, y, x not in [y, z]
