@@ -1,4 +1,6 @@
-"""Visualization Tools"""
+"""
+Visualization Tools
+"""
 
 # TODO: remove from core directory, no need for this dependency outside of testing
 import numpy as np
