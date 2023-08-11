@@ -246,7 +246,7 @@ class BaseTestCases:
                     testbench_file.write(tb_str)
 
                 try:
-                    process.wait(timeout=len(expected))  # May need adjusting
+                    process.wait(timeout=max(1, len(expected)))  # May need adjusting
 
                     logging.debug("Getting iverilog stderr")
 
