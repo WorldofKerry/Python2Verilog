@@ -33,7 +33,6 @@ class Argument:
         self.dashed_name = self.name.replace("_", "-")
 
     def add_to_parser(self, parser: pytest.Parser):
-        print(self.__dict__)
         if self.short:
             parser.addoption(f"-{self.short}", f"--{self.dashed_name}", **self.kwargs)
         else:

@@ -301,9 +301,48 @@ class Generator2Graph:
             )
 
         if isinstance(expr.op, pyast.FloorDiv):
-            return ir.Div(
-                self.__parse_expression(expr.left), self.__parse_expression(expr.right)
-            )
+            # Special case for floor division with  2 on right-hand-side
+            # Due to Verilog handling negative division "rounding"
+            # differently than Python floor division
+            # e.g. Verilog: -5 / 2 == -2, Python: -5 // 2 == -3
+
+            if isinstance(expr.op, pyast.FloorDiv):
+                var_a = self.__parse_expression(expr.left)
+                var_b = self.__parse_expression(expr.right)
+                return ir.Ternary(
+                    condition=ir.BinOp(
+                        left=ir.BinOp(left=var_a, right=var_b, oper="%"),
+                        right=ir.Int(0),
+                        oper="===",
+                    ),
+                    left=ir.BinOp(var_a, "/", var_b),
+                    # right=ir.Add(ir.Div(var_a, var_b), ir.Int(1000)),
+                    right=ir.BinOp(
+                        ir.BinOp(var_a, "/", var_b),
+                        "-",
+                        ir.BinOp(
+                            ir.UBinOp(
+                                ir.BinOp(var_a, "<", ir.Int(0)),
+                                "^",
+                                ir.BinOp(var_b, "<", ir.Int(0)),
+                            ),
+                            "&",
+                            ir.Int(1),
+                        ),
+                    ),
+                )
+                # return ir.Ternary(
+                #     condition=ir.BinOp(left=var_a, right=ir.Int(0), oper=">="),
+                #     left=ir.Div(var_a, var_b),
+                #     right=ir.Div(var_a, ir.Sub(var_b, ir.Int(1))),
+                #     # right=ir.Ternary(
+                #     #     condition=ir.BinOp(
+                #     #         left=ir.Sub(var_b, ir.Int(1)), right=ir.Int(0), oper="=="
+                #     #     ),
+                #     #     left=var_a,
+                #     #     right=ir.Sub(var_b, ir.Int(1)),
+                #     # ),
+                # )
         if isinstance(expr.op, pyast.Pow):
             return ir.Pow(
                 self.__parse_expression(expr.left), self.__parse_expression(expr.right)
@@ -327,39 +366,6 @@ class Generator2Graph:
         if isinstance(expr, pyast.Subscript):
             return self.__parse_subscript(expr)
         if isinstance(expr, pyast.BinOp):
-            # Special case for floor division with  2 on right-hand-side
-            # Due to Verilog handling negative division "rounding"
-            # differently than Python floor division
-            # e.g. Verilog: -5 / 2 == -2, Python: -5 // 2 == -3
-            # if (
-            #     isinstance(expr.op, pyast.FloorDiv)
-            #     and isinstance(expr.right, pyast.Constant)
-            #     and expr.right.value > 0
-            #     and expr.right.value % 2 == 0
-            # ):
-            #     a_var = self.__parse_expression(expr.left).to_string()
-            #     b_var = expr.right.value
-            #     return ir.Ternary(
-            #         condition=ir.BinOp(left=a_var, right=ir.Int(0), oper=">="),
-            #         left=ir.FloorDiv(a_var, b_var),
-            #         right=ir.FloorDiv(a_var, ir.Sub(b_var, ir.Int(-1))),
-            #     )
-
-            if isinstance(expr.op, pyast.FloorDiv):
-                var_a = self.__parse_expression(expr.left)
-                var_b = self.__parse_expression(expr.right)
-                return ir.Ternary(
-                    condition=ir.BinOp(left=var_a, right=ir.Int(0), oper=">="),
-                    left=ir.Div(var_a, var_b),
-                    right=ir.Div(var_a, ir.Sub(var_b, ir.Int(1))),
-                    # right=ir.Ternary(
-                    #     condition=ir.BinOp(
-                    #         left=ir.Sub(var_b, ir.Int(1)), right=ir.Int(0), oper="=="
-                    #     ),
-                    #     left=var_a,
-                    #     right=ir.Sub(var_b, ir.Int(1)),
-                    # ),
-                )
             return self.__parse_binop(expr)
         if isinstance(expr, pyast.UnaryOp):
             if isinstance(expr.op, pyast.USub):

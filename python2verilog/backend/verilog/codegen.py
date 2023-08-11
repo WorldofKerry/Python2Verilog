@@ -71,7 +71,8 @@ class CodeGen:
             + [CodeGen.__get_start_ifelse(root, context.entry)],
         )
         body: list[ver.Statement] = [
-            ver.Declaration(v, is_reg=True, is_signed=True) for v in context.global_vars
+            ver.Declaration(str(v), is_reg=True, is_signed=True)
+            for v in context.global_vars
         ]
         body.append(always)
 

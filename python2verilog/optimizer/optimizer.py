@@ -35,7 +35,7 @@ def backwards_replace(expr: ir.Expression, mapping: dict[ir.Expression, ir.Expre
                 return mapping[key]
     elif isinstance(expr, ir.Int):
         return expr
-    elif isinstance(expr, ir.BinOp):
+    elif isinstance(expr, (ir.BinOp, ir.UBinOp)):
         expr.left = backwards_replace(expr.left, mapping)
         expr.right = backwards_replace(expr.right, mapping)
     elif isinstance(expr, ir.Ternary):

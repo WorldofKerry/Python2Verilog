@@ -8,7 +8,7 @@ def operators(x, y) -> tuple[int, int, int]:
     # yield x, y, x / y
     if y != 0:
         yield (x, y, x // y)
-        yield (x, y, x % y)
+        # yield (x, y, x % y)
     # yield x, y, x**y  #
 
     # Comparison operators

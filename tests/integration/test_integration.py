@@ -62,7 +62,7 @@ class BaseTestCases:
                             cases,
                             self.args,
                             "data",
-                            f"_{self.__class__.__name__}_",
+                            f"_{name}_O{level}_",
                             optimization_level=level,
                         )
             self.all_statistics.sort(key=lambda e: e["function_name"])
@@ -285,16 +285,13 @@ class BaseTestCases:
 
                         make_visual(filtered_actual, FILES_IN_ABS_DIR["actual_visual"])
 
-                    actual_coords = set(filtered_actual)
-                    expected_coords = set(expected)
-
                     err_msg = "\nactual_coords vs expected_coords"
-                    if len(actual_coords) == len(expected_coords):
+                    if len(filtered_actual) == len(expected):
                         err_msg += ", lengths are same, likely a rounding or sign error"
-                    err_msg += f"\n{FILES_IN_ABS_DIR['expected']}\n{FILES_IN_ABS_DIR['filtered_actual']}"
+                    err_msg += f"\n{FILES_IN_ABS_DIR['filtered_actual']}\n{FILES_IN_ABS_DIR['expected']}"
                     self.assertEqual(
-                        actual_coords,
-                        expected_coords,
+                        filtered_actual,
+                        expected,
                         err_msg,
                     )
 

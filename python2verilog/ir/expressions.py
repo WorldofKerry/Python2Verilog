@@ -96,12 +96,13 @@ class Ternary(Expression):
         return f"{str(self.condition)} ? {str(self.left)} : {str(self.right)}"
 
 
-class BinOp(Expression):
+class UBinOp(Expression):
     """
-    <left> <op> <right>
+    Unsigned BinOp
+    Is usually better for comparators
     """
 
-    def __init__(self, left: Expression, right: Expression, oper: str):
+    def __init__(self, left: Expression, oper: str, right: Expression):
         self._left = assert_type(left, Expression)
         self._right = assert_type(right, Expression)
         self._oper = assert_type(oper, str)
@@ -133,13 +134,22 @@ class BinOp(Expression):
         return f"({self._left.to_string()} {self._oper} {self._right.to_string()})"
 
 
+class BinOp(UBinOp):
+    """
+    $signed(<left> <op> <right>)
+    """
+
+    def to_string(self):
+        return "$signed" + super().to_string()
+
+
 class Add(BinOp):
     """
     <left> + <right>
     """
 
     def __init__(self, left: Expression, right: Expression):
-        super().__init__(left, right, "+")
+        super().__init__(left, "+", right)
 
 
 class Sub(BinOp):
@@ -148,7 +158,7 @@ class Sub(BinOp):
     """
 
     def __init__(self, left: Expression, right: Expression):
-        super().__init__(left, right, "-")
+        super().__init__(left, "-", right)
 
 
 class Mul(BinOp):
@@ -157,42 +167,40 @@ class Mul(BinOp):
     """
 
     def __init__(self, left: Expression, right: Expression):
-        super().__init__(left, right, "*")
+        super().__init__(left, "*", right)
 
 
 class Div(BinOp):
     """
     <left> / <right>
-    Truncates decimals
     """
 
     def __init__(self, left: Expression, right: Expression):
-        super().__init__(left, right, "/")
+        super().__init__(left, "/", right)
 
 
-class Pow(BinOp):
-    """
-    <left> ** <right>
-    <left> to the power of <right>
-    """
-
-    def __init__(self, left: Expression, right: Expression):
-        super().__init__(left, right, "**")
-
-
-class Mod(BinOp):
-    """
-    <left> % <right>
-    """
-
-    def __init__(self, left: Expression, right: Expression):
-        super().__init__(left, right, "%")
-
-
-class LessThan(BinOp):
+class LessThan(UBinOp):
     """
     <left> < <right>
     """
 
     def __init__(self, left: Expression, right: Expression):
-        super().__init__(left, right, "<")
+        super().__init__(left, "<", right)
+
+
+class Pow(UBinOp):
+    """
+    <left> ** <right>
+    """
+
+    def __init__(self, left: Expression, right: Expression):
+        super().__init__(left, "**", right)
+
+
+class Mod(UBinOp):
+    """
+    <left> % <right>
+    """
+
+    def __init__(self, left: Expression, right: Expression):
+        super().__init__(left, "%", right)

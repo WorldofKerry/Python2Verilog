@@ -1,5 +1,5 @@
 # Runs all pytest tests
-# Locally run `python3 -m pytest -v`
+# Locally run `python3 -m pytest`
 
 name: pytest testing
 

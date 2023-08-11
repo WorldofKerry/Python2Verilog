@@ -57,6 +57,8 @@ To run tests, use `python3 -m pytest -sv`.
 
 Additional CLI flags can be found in [tests/conftest.py](tests/conftest.py).
 
+Use `git clean -dxf` to remove gitignored files.
+
 ## Tested Generations
 
 The Github Actions run all the tests with writing enabled.
