@@ -6,7 +6,7 @@ TEST_CASES = {
     "rectangle_lines": [(32, 84, 5, 7), (84, 96, 46, 89)],
     "fib": [(10,), (35,)],
     "dumb_loop": [(8,), (512,)],
-    "floor_div": [(10,), (50,)],
+    "floor_div": [(7,), (25,)],
     "operators": [
         (0, 0),
         (0, 1),
