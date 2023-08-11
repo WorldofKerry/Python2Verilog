@@ -11,7 +11,6 @@ import copy
 
 from ...utils.string import Lines, Indent, ImplementsToLines
 from ...utils.assertions import assert_list_type, assert_type, assert_dict_type
-from ... import ir
 
 
 class Expression:

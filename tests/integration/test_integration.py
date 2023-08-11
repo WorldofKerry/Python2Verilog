@@ -223,12 +223,15 @@ class BaseTestCases:
                     # plt.cla()
                     # plt.close()
 
+                logging.debug("Generating module and tb")
+
                 module_str = verilog.get_module_lines().to_string()
                 statistics["module_nchars"] = len(
                     module_str.replace("\n", "").replace(" ", "")
                 )
                 tb_str = verilog.new_testbench(test_cases).to_string()
 
+                logging.debug("Writing module and tb")
                 if args.write:
                     with open(FILES_IN_ABS_DIR["module"], mode="w") as module_file:
                         module_file.write(module_str)
@@ -237,6 +240,7 @@ class BaseTestCases:
                         FILES_IN_ABS_DIR["testbench"], mode="w"
                     ) as testbench_file:
                         testbench_file.write(tb_str)
+
                 with open(FILES_IN_ABS_DIR["module_fifo"], mode="w") as module_file:
                     module_file.write(module_str)
 

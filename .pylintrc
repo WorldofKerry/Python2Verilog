@@ -12,6 +12,7 @@ disable =
     too-many-arguments,
     too-many-branches,
     duplicate-code,
+    cyclic-import,
     unused-import,
     exec-used,
     logging-fstring-interpolation

@@ -4,7 +4,7 @@ import copy
 from dataclasses import dataclass, field
 from typing import Optional
 from ..utils.assertions import assert_list_type, assert_type, assert_dict_type
-from .. import ir
+from ..ir import Var
 
 
 @dataclass
@@ -15,7 +15,7 @@ class Context:
     """
 
     name: str = ""
-    global_vars: list[ir.Var] = field(default_factory=list)
+    global_vars: list[Var] = field(default_factory=list)
     input_vars: list[str] = field(default_factory=list)
     output_vars: list[str] = field(default_factory=list)
     _states: set[str] = field(default_factory=set)
