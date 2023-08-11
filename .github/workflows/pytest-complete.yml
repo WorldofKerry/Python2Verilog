@@ -1,0 +1,48 @@
+# Runs all pytest tests at more optimization levels
+
+name: pytest complete testing
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.10", "3.11"]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r tests/requirements.txt
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Download Icarus Verilog and Utilities
+        run: |
+          sudo apt-get install iverilog expect
+
+      - name: Download OSS CAD Suite for yosys
+        run: |
+          wget -nv https://github.com/YosysHQ/oss-cad-suite-build/releases/download/2023-08-02/oss-cad-suite-linux-x64-20230802.tgz
+          tar -xzf oss-cad-suite-linux-x64-20230802.tgz
+          echo "$GITHUB_WORKSPACE/oss-cad-suite/bin" >> $GITHUB_PATH
+
+      - name: Run Pytest
+        run: |
+          python3 -m pytest -vs tests/ --cov=python2verilog/ --cov-report term-missing --log-cli-level=info \
+          --write --synthesis --optimization-levels 0 1 2 4 8 16 32
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: tests-data
+          path: tests/
