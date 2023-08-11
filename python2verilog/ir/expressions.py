@@ -106,7 +106,7 @@ class UBinOp(Expression):
         self._left = assert_type(left, Expression)
         self._right = assert_type(right, Expression)
         self._oper = assert_type(oper, str)
-        super().__init__(str(self))
+        super().__init__(self.__class__.__name__)
 
     @property
     def left(self):
@@ -204,3 +204,20 @@ class Mod(UBinOp):
 
     def __init__(self, left: Expression, right: Expression):
         super().__init__(left, "%", right)
+
+
+class UnaryOp(Expression):
+    """
+    <op>(<expr>)
+    """
+
+    def __init__(self, oper: str, expr: Expression):
+        self.oper = assert_type(oper, str)
+        self.expr = assert_type(expr, Expression)
+        super().__init__(self.__class__.__name__)
+
+    def to_string(self):
+        """
+        string
+        """
+        return f"{self.oper}({self.expr})"

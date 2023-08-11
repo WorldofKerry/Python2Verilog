@@ -301,55 +301,44 @@ class Generator2Graph:
             )
 
         if isinstance(expr.op, pyast.FloorDiv):
-            # Special case for floor division with  2 on right-hand-side
-            # Due to Verilog handling negative division "rounding"
-            # differently than Python floor division
-            # e.g. Verilog: -5 / 2 == -2, Python: -5 // 2 == -3
-
-            if isinstance(expr.op, pyast.FloorDiv):
-                var_a = self.__parse_expression(expr.left)
-                var_b = self.__parse_expression(expr.right)
-                return ir.Ternary(
-                    condition=ir.BinOp(
-                        left=ir.BinOp(left=var_a, right=var_b, oper="%"),
-                        right=ir.Int(0),
-                        oper="===",
-                    ),
-                    left=ir.BinOp(var_a, "/", var_b),
-                    # right=ir.Add(ir.Div(var_a, var_b), ir.Int(1000)),
-                    right=ir.BinOp(
-                        ir.BinOp(var_a, "/", var_b),
-                        "-",
-                        ir.BinOp(
-                            ir.UBinOp(
-                                ir.BinOp(var_a, "<", ir.Int(0)),
-                                "^",
-                                ir.BinOp(var_b, "<", ir.Int(0)),
-                            ),
-                            "&",
-                            ir.Int(1),
+            var_a = self.__parse_expression(expr.left)
+            var_b = self.__parse_expression(expr.right)
+            return ir.Ternary(
+                condition=ir.BinOp(
+                    left=ir.BinOp(left=var_a, right=var_b, oper="%"),
+                    right=ir.Int(0),
+                    oper="===",
+                ),
+                left=ir.BinOp(var_a, "/", var_b),
+                right=ir.BinOp(
+                    ir.BinOp(var_a, "/", var_b),
+                    "-",
+                    ir.BinOp(
+                        ir.UBinOp(
+                            ir.BinOp(var_a, "<", ir.Int(0)),
+                            "^",
+                            ir.BinOp(var_b, "<", ir.Int(0)),
                         ),
+                        "&",
+                        ir.Int(1),
                     ),
-                )
-                # return ir.Ternary(
-                #     condition=ir.BinOp(left=var_a, right=ir.Int(0), oper=">="),
-                #     left=ir.Div(var_a, var_b),
-                #     right=ir.Div(var_a, ir.Sub(var_b, ir.Int(1))),
-                #     # right=ir.Ternary(
-                #     #     condition=ir.BinOp(
-                #     #         left=ir.Sub(var_b, ir.Int(1)), right=ir.Int(0), oper="=="
-                #     #     ),
-                #     #     left=var_a,
-                #     #     right=ir.Sub(var_b, ir.Int(1)),
-                #     # ),
-                # )
-        if isinstance(expr.op, pyast.Pow):
-            return ir.Pow(
-                self.__parse_expression(expr.left), self.__parse_expression(expr.right)
+                ),
             )
         if isinstance(expr.op, pyast.Mod):
-            return ir.Mod(
-                self.__parse_expression(expr.left), self.__parse_expression(expr.right)
+            var_a = self.__parse_expression(expr.left)
+            var_b = self.__parse_expression(expr.right)
+            return ir.Ternary(
+                ir.UBinOp(var_a, "<", ir.Int(0)),
+                ir.Ternary(
+                    ir.UBinOp(var_b, ">=", ir.Int(0)),
+                    ir.UnaryOp("-", ir.Mod(var_a, var_b)),
+                    ir.Mod(var_a, var_b),
+                ),
+                ir.Ternary(
+                    ir.UBinOp(var_b, "<", ir.Int(0)),
+                    ir.UnaryOp("-", ir.Mod(var_a, var_b)),
+                    ir.Mod(var_a, var_b),
+                ),
             )
         raise TypeError(
             "Error: unexpected binop type", type(expr.op), pyast.dump(expr.op)
@@ -369,9 +358,7 @@ class Generator2Graph:
             return self.__parse_binop(expr)
         if isinstance(expr, pyast.UnaryOp):
             if isinstance(expr.op, pyast.USub):
-                return ir.Expression(
-                    f"-({self.__parse_expression(expr.operand).to_string()})"
-                )
+                return ir.UnaryOp("-", self.__parse_expression(expr.operand))
             raise TypeError(
                 "Error: unexpected unaryop type", type(expr.op), pyast.dump(expr.op)
             )

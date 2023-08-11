@@ -42,6 +42,8 @@ def backwards_replace(expr: ir.Expression, mapping: dict[ir.Expression, ir.Expre
         expr.condition = backwards_replace(expr.condition, mapping)
         expr.left = backwards_replace(expr.left, mapping)
         expr.right = backwards_replace(expr.right, mapping)
+    elif isinstance(expr, ir.UnaryOp):
+        expr.expr = backwards_replace(expr.expr, mapping)
     else:
         raise TypeError(type(expr))
     return expr

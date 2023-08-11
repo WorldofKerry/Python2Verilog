@@ -66,10 +66,14 @@ class BaseTestCases:
                             optimization_level=level,
                         )
             self.all_statistics.sort(key=lambda e: e["function_name"])
-            df = pd.DataFrame(
-                self.all_statistics, columns=self.all_statistics[0].keys()
-            )
-            logging.info("\n" + df.to_markdown(index=False))
+            if self.all_statistics:
+                df = pd.DataFrame(
+                    self.all_statistics, columns=self.all_statistics[0].keys()
+                )
+                logging.info("\n" + df.to_markdown(index=False))
+            else:
+                logging.warning("No stats collected")
+                warnings.warn("No stats collected")
 
         def run_test(
             self,
@@ -288,7 +292,7 @@ class BaseTestCases:
                     err_msg = "\nactual_coords vs expected_coords"
                     if len(filtered_actual) == len(expected):
                         err_msg += ", lengths are same, likely a rounding or sign error"
-                    err_msg += f"\n{FILES_IN_ABS_DIR['filtered_actual']}\n{FILES_IN_ABS_DIR['expected']}"
+                    err_msg += f"\n{FILES_IN_ABS_DIR['filtered_actual']}\n{FILES_IN_ABS_DIR['expected']}\n{FILES_IN_ABS_DIR['module']}"
                     self.assertEqual(
                         filtered_actual,
                         expected,

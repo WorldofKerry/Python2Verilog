@@ -28,35 +28,35 @@ def make_visual(generator_inst, directory: str):
 
     data_triple = np.array(data_triple_list)
 
-    height = max(data_triple[:, 0])
-    width = max(data_triple[:, 1])
-    grid = np.zeros((int(height) + 1, int(width) + 1))
-    for x_coord, y_coord, colour in data_triple:
-        try:
+    try:
+        height = max(data_triple[:, 0])
+        width = max(data_triple[:, 1])
+        grid = np.zeros((int(height) + 1, int(width) + 1))
+        for x_coord, y_coord, colour in data_triple:
             grid[x_coord, y_coord] = colour
-        except IndexError as e:
-            logging.info(
-                f"Skipping make_visual for {str(generator_inst)} due to negative outputs {e}"
-            )
 
-    # Create the pixel-like plot
-    plt.imshow(grid)
+        # Create the pixel-like plot
+        plt.imshow(grid)
 
-    # Set labels and title
-    plt.xlabel("X")
-    plt.ylabel("Y")
-    plt.title("Pixel-like Plot")
+        # Set labels and title
+        plt.xlabel("X")
+        plt.ylabel("Y")
+        plt.title("Pixel-like Plot")
 
-    # Add color bar
-    cbar = plt.colorbar()
-    cbar.set_label("Z")
+        # Add color bar
+        cbar = plt.colorbar()
+        cbar.set_label("Z")
 
-    plt.gca().invert_yaxis()
+        plt.gca().invert_yaxis()
 
-    # Show the plot
-    # plt.show()
-    plt.savefig(directory)
+        # Show the plot
+        # plt.show()
+        plt.savefig(directory)
 
-    plt.clf()
-    plt.cla()
-    plt.close()
+        plt.clf()
+        plt.cla()
+        plt.close()
+    except IndexError as e:
+        logging.info(
+            f"Skipping make_visual for {str(generator_inst)} due to negative outputs {e}"
+        )

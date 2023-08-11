@@ -2,13 +2,13 @@ def operators(x, y) -> tuple[int, int, int]:
     # yield 0, 0, 0
 
     # Arithmetic operators
-    yield x, y, x + y
-    yield x, y, x - y
-    yield x, y, x * y
+    # yield x, y, x + y
+    # yield x, y, x - y
+    # yield x, y, x * y
     # yield x, y, x / y
     if y != 0:
-        yield (x, y, x // y)
-        # yield (x, y, x % y)
+        # yield (x, y, x // y)
+        yield (x, y, x % y)
     # yield x, y, x**y  #
 
     # Comparison operators
