@@ -249,7 +249,7 @@ class OptimizedGraphBase:
                 testbench_file.write(tb_str)
 
             try:
-                process.wait(timeout=15)  # May need adjusting
+                process.wait(timeout=len(expected))  # May need adjusting
                 if args.write and args.synthesis:
                     syn_process = subprocess.Popen(
                         " ".join(
