@@ -367,47 +367,10 @@ class Graph(BaseTestCases.BaseTest):
         BaseTestCases.BaseTest.__init__(self, TEST_CASES, *args, **kwargs)
 
 
-# @pytest.mark.usefixtures("argparse")
-# class GraphOpti1(BaseTestCases.BaseTest, OptimizedGraphBase):
-#     def __init__(self, *args, **kwargs):
-#         OptimizedGraphBase.__init__(
-#             self, optimization_levels=int(self.__class__.__name__[-1])
-#         )
-#         BaseTestCases.BaseTest.__init__(self, TEST_CASES, *args, **kwargs)
-
-
-# @pytest.mark.usefixtures("argparse")
-# class GraphOpti2(BaseTestCases.BaseTest, OptimizedGraphBase):
-#     def __init__(self, *args, **kwargs):
-#         OptimizedGraphBase.__init__(
-#             self, optimization_levels=int(self.__class__.__name__[-1])
-#         )
-#         BaseTestCases.BaseTest.__init__(self, TEST_CASES, *args, **kwargs)
-
-
-# @pytest.mark.usefixtures("argparse")
-# class GraphOpti3(BaseTestCases.BaseTest, OptimizedGraphBase):
-#     def __init__(self, *args, **kwargs):
-#         OptimizedGraphBase.__init__(
-#             self, optimization_levels=int(self.__class__.__name__[-1])
-#         )
-#         BaseTestCases.BaseTest.__init__(self, TEST_CASES, *args, **kwargs)
-
-
-# @pytest.mark.usefixtures("argparse")
-# class GraphOpti8(BaseTestCases.BaseTest, OptimizedGraphBase):
-#     def __init__(self, *args, **kwargs):
-#         OptimizedGraphBase.__init__(
-#             self, optimization_levels=int(self.__class__.__name__[-1])
-#         )
-#         BaseTestCases.BaseTest.__init__(self, TEST_CASES, *args, **kwargs)
-
-
-# # For easier testing
-# @pytest.mark.usefixtures("argparse")
-# class GraphTesting(BaseTestCases.BaseTest, OptimizedGraphBase):
-#     def __init__(self, *args, **kwargs):
-#         OptimizedGraphBase.__init__(self, optimization_levels=1)
-#         BaseTestCases.BaseTest.__init__(
-#             self, {"testing": TEST_CASES["testing"]}, *args, **kwargs
-#         )
+# For easier testing
+@pytest.mark.usefixtures("argparse")
+class GraphTesting(BaseTestCases.BaseTest):
+    def __init__(self, *args, **kwargs):
+        BaseTestCases.BaseTest.__init__(
+            self, {"testing": TEST_CASES["testing"]}, *args, **kwargs
+        )

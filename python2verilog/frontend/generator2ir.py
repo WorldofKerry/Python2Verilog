@@ -29,7 +29,7 @@ class Generator2Graph:
         self._context.output_vars = self.__generate_output_vars(
             node=python_func.returns, prefix=""
         )
-        self._context.input_vars = [var.arg for var in python_func.args.args]
+        self._context.input_vars = [ir.Var(var.arg) for var in python_func.args.args]
 
         self._root = self.__parse_statements(
             stmts=list(python_func.body),
@@ -67,9 +67,11 @@ class Generator2Graph:
         """
         assert isinstance(node, pyast.Subscript)
         if isinstance(node.slice, pyast.Tuple):
-            return [f"{prefix}_out{str(i)}" for i in range(len(node.slice.elts))]
+            return [
+                ir.Var(f"{prefix}_out{str(i)}") for i in range(len(node.slice.elts))
+            ]
         if isinstance(node.slice, pyast.Name):
-            return [f"{prefix}_out0"]
+            return [ir.Var(f"{prefix}_out0")]
         raise NotImplementedError(
             f"Unexpected function return type hint {type(node.slice)}, {pyast.dump(node.slice)}"
         )
@@ -91,24 +93,7 @@ class Generator2Graph:
         node = nodes[0]
         if isinstance(node, pyast.Subscript):
             assert isinstance(node.value, pyast.Name)
-            if node.value.id not in set(
-                [
-                    *self._context.global_vars,
-                    *self._context.output_vars,
-                    *self._context.input_vars,
-                ]
-            ):
-                warnings.warn(
-                    str(
-                        set(
-                            [
-                                *self._context.global_vars,
-                                *self._context.output_vars,
-                                *self._context.input_vars,
-                            ]
-                        )
-                    )
-                )
+            if self._context.is_declared(node.value.id):
                 self.__add_global_var(ir.Var(py_name=node.value.id))
         elif isinstance(node, pyast.Name):
             if not self._context.is_declared(node.id):

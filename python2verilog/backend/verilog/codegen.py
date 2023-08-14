@@ -46,7 +46,7 @@ class CodeGen:
         assert isinstance(context, ir.Context)
         inputs = []
         for var in context.input_vars:
-            inputs.append(var)
+            inputs.append(var.ver_name)
         outputs = []
         for i in range(len((context.output_vars))):
             outputs.append(f"_out{str(i)}")
@@ -56,7 +56,10 @@ class CodeGen:
                 ver.NonBlockingSubsitution("_valid", "0"),
                 ver.NonBlockingSubsitution("_ready", "0"),
             ]
-            + [ver.NonBlockingSubsitution(out, "0") for out in context.output_vars]
+            + [
+                ver.NonBlockingSubsitution(out.ver_name, "0")
+                for out in context.output_vars
+            ]
             + [
                 ver.IfElse(
                     ver.Expression("_reset"),
@@ -71,9 +74,10 @@ class CodeGen:
             + [CodeGen.__get_start_ifelse(root, context.entry)],
         )
         body: list[ver.Statement] = [
-            ver.Declaration(str(v), is_reg=True, is_signed=True)
+            ver.Declaration(v.ver_name, is_reg=True, is_signed=True)
             for v in context.global_vars
         ]
+        warnings.warn(str(context.global_vars))
         body.append(always)
 
         state_vars = {key: str(index) for index, key in enumerate(context.state_vars)}
@@ -158,11 +162,12 @@ class CodeGen:
         decl.append(ver.Declaration("_start", size=1, is_reg=True))
         decl.append(ver.Declaration("_reset", size=1, is_reg=True))
         decl += [
-            ver.Declaration(var, is_signed=True, is_reg=True)
+            ver.Declaration(var.ver_name, is_signed=True, is_reg=True)
             for var in self._context.input_vars
         ]
         decl += [
-            ver.Declaration(var, is_signed=True) for var in self._context.output_vars
+            ver.Declaration(var.ver_name, is_signed=True)
+            for var in self._context.output_vars
         ]
 
         decl.append(ver.Declaration("_ready", size=1))
@@ -191,7 +196,9 @@ class CodeGen:
                 ver.Statement(comment=f"Test case {i}: {str(test_case)}")
             )
             for i, var in enumerate(self._context.input_vars):
-                initial_body.append(ver.BlockingSubsitution(var, str(test_case[i])))
+                initial_body.append(
+                    ver.BlockingSubsitution(var.ver_name, str(test_case[i]))
+                )
             initial_body.append(ver.BlockingSubsitution("_start", "1"))
 
             initial_body.append(ver.AtNegedgeStatement(ver.Expression("_clock")))

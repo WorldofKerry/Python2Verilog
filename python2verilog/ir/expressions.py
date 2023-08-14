@@ -72,7 +72,7 @@ class Var(Expression):
         self.is_signed = assert_type(isSigned, bool)
         self.initial_value = initial_value
 
-        super().__init__(py_name)
+        super().__init__(ver_name)
 
 
 class State(Var):
