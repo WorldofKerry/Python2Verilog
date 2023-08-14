@@ -37,7 +37,7 @@ class Generator2Graph:
             nextt=ir.DoneNode(unique_id=DONE_STATE_NAME, name="done"),
         )
         self._context.entry = self._root.unique_id
-        self._context.ready = DONE_STATE_NAME
+        self._context.ready_state = DONE_STATE_NAME
 
     @property
     def root(self):
@@ -92,7 +92,6 @@ class Generator2Graph:
             if not self._context.is_declared(node.value.id):
                 self._context.add_global_var(ir.Var(py_name=node.value.id))
         elif isinstance(node, pyast.Name):
-            warnings.warn(f"parsing {node.id} {self._context.is_declared(node.id)}")
             if not self._context.is_declared(node.id):
                 self._context.add_global_var(ir.Var(py_name=node.id))
         else:

@@ -9,6 +9,7 @@ A Control Flow Graph represented as a Directed Graph
 from .expressions import (
     Expression,
     Int,
+    UInt,
     Var,
     State,
     Ternary,

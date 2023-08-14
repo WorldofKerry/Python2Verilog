@@ -42,12 +42,22 @@ class Expression:
 
 class Int(Expression):
     """
-    Integer literal
+    Signed integer literal
     """
 
     def __init__(self, value: int):
         assert isinstance(value, int)
         super().__init__(f"$signed({str(value)})")
+
+
+class UInt(Expression):
+    """
+    Unsigned integer literal
+    """
+
+    def __init__(self, value: int):
+        assert isinstance(value, int)
+        super().__init__(str(value))
 
 
 class Var(Expression):
@@ -67,7 +77,7 @@ class Var(Expression):
             ver_name = "_" + py_name
 
         self.ver_name = assert_type(ver_name, str)
-        self.py_name = assert_type(py_name, str)
+        self.py_name = assert_type(py_name, str)  # Matches I/O of Verilog
         self.width = assert_type(width, int)
         self.is_signed = assert_type(isSigned, bool)
         self.initial_value = initial_value
@@ -79,6 +89,11 @@ class State(Var):
     """
     State variable
     """
+
+    def __init__(
+        self, name, width: int = 32, isSigned: bool = True, initial_value: str = "0"
+    ):
+        super().__init__(name, name, width, isSigned, initial_value)
 
 
 class Ternary(Expression):

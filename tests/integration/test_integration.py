@@ -366,7 +366,6 @@ class Graph(BaseTestCases.BaseTest):
     def __init__(self, *args, **kwargs):
         BaseTestCases.BaseTest.__init__(self, TEST_CASES, *args, **kwargs)
 
-
 # For easier testing
 @pytest.mark.usefixtures("argparse")
 class GraphTesting(BaseTestCases.BaseTest):

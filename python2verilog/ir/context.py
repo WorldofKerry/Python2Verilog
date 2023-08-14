@@ -20,8 +20,16 @@ class Context:
     _input_vars: list[Var] = field(default_factory=list)
     _output_vars: list[Var] = field(default_factory=list)
     _states: set[str] = field(default_factory=set)
+
+    valid_signal: Var = Var("valid")
+    ready_signal: Var = Var("ready")
+    clock_signal: Var = Var("clock")
+    start_signal: Var = Var("start")
+    reset_signal: Var = Var("reset")
+
+    state_var: Var = Var("state")
     entry: str = ""
-    ready: str = ""
+    ready_state: str = ""
 
     @property
     def input_vars(self):
@@ -63,7 +71,7 @@ class Context:
         self._global_vars.append(assert_type(var, Var))
 
     @property
-    def state_vars(self):
+    def states(self):
         """
         State variables
         """
@@ -87,8 +95,6 @@ class Context:
             *list(get_strs(self._input_vars)),
             *list(get_strs(self._output_vars)),
         ]
-        warnings.warn(str(vars))
-        return name in vars
 
     def to_string(self):
         """
