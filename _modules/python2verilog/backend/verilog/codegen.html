@@ -60,7 +60,9 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="o">.</span><span class="n">add_state_weak</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">ready</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="o">.</span><span class="n">global_vars</span><span class="p">[</span><span class="s2">&quot;_state&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="o">.</span><span class="n">ready</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="o">.</span><span class="n">global_vars</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">ir</span><span class="o">.</span><span class="n">Var</span><span class="p">(</span><span class="s2">&quot;_state&quot;</span><span class="p">,</span> <span class="n">initial_value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="o">.</span><span class="n">ready</span><span class="p">)</span>
+        <span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_module</span> <span class="o">=</span> <span class="n">CodeGen</span><span class="o">.</span><span class="n">__new_module</span><span class="p">(</span><span class="n">root_case</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="p">)</span>
 
@@ -79,7 +81,6 @@
         <span class="n">outputs</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">((</span><span class="n">context</span><span class="o">.</span><span class="n">output_vars</span><span class="p">))):</span>
             <span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;_out</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="c1"># TODO: make these extras optional</span>
         <span class="n">always</span> <span class="o">=</span> <span class="n">ver</span><span class="o">.</span><span class="n">PosedgeSyncAlways</span><span class="p">(</span>
             <span class="n">ver</span><span class="o">.</span><span class="n">Expression</span><span class="p">(</span><span class="s2">&quot;_clock&quot;</span><span class="p">),</span>
             <span class="n">body</span><span class="o">=</span><span class="p">[</span>
@@ -101,7 +102,8 @@
             <span class="o">+</span> <span class="p">[</span><span class="n">CodeGen</span><span class="o">.</span><span class="n">__get_start_ifelse</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">entry</span><span class="p">)],</span>
         <span class="p">)</span>
         <span class="n">body</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ver</span><span class="o">.</span><span class="n">Statement</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">ver</span><span class="o">.</span><span class="n">Declaration</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">is_reg</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">is_signed</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">context</span><span class="o">.</span><span class="n">global_vars</span>
+            <span class="n">ver</span><span class="o">.</span><span class="n">Declaration</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">),</span> <span class="n">is_reg</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">is_signed</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">context</span><span class="o">.</span><span class="n">global_vars</span>
         <span class="p">]</span>
         <span class="n">body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">always</span><span class="p">)</span>
 
@@ -128,7 +130,6 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">init_body</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">case_items</span><span class="p">:</span>
-            <span class="c1"># TODO: context.entry really should be a ver.Expression</span>
             <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">condition</span><span class="p">)</span> <span class="o">==</span> <span class="n">entry</span><span class="p">:</span>
                 <span class="n">init_body</span> <span class="o">+=</span> <span class="n">item</span><span class="o">.</span><span class="n">statements</span>
                 <span class="n">root</span><span class="o">.</span><span class="n">case_items</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
@@ -207,9 +208,7 @@
 
         <span class="n">setups</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ver</span><span class="o">.</span><span class="n">Statement</span><span class="p">(</span><span class="n">literal</span><span class="o">=</span><span class="s2">&quot;always #5 _clock = !_clock;&quot;</span><span class="p">))</span>
 
-        <span class="n">initial_body</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span>
-            <span class="n">ver</span><span class="o">.</span><span class="n">Statement</span> <span class="o">|</span> <span class="n">ver</span><span class="o">.</span><span class="n">While</span>
-        <span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># TODO: replace with Sequence</span>
+        <span class="n">initial_body</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ver</span><span class="o">.</span><span class="n">Statement</span> <span class="o">|</span> <span class="n">ver</span><span class="o">.</span><span class="n">While</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">initial_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ver</span><span class="o">.</span><span class="n">BlockingSubsitution</span><span class="p">(</span><span class="s2">&quot;_clock&quot;</span><span class="p">,</span> <span class="s2">&quot;0&quot;</span><span class="p">))</span>
         <span class="n">initial_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ver</span><span class="o">.</span><span class="n">BlockingSubsitution</span><span class="p">(</span><span class="s2">&quot;_start&quot;</span><span class="p">,</span> <span class="s2">&quot;0&quot;</span><span class="p">))</span>
         <span class="n">initial_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ver</span><span class="o">.</span><span class="n">BlockingSubsitution</span><span class="p">(</span><span class="s2">&quot;_reset&quot;</span><span class="p">,</span> <span class="s2">&quot;1&quot;</span><span class="p">))</span>
@@ -286,6 +285,10 @@
 
         <span class="c1"># Work</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">case</span><span class="o">.</span><span class="n">case_items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">new_caseitem</span><span class="p">(</span><span class="n">root</span><span class="p">))</span>
+        <span class="c1"># for item in self.case.case_items:</span>
+        <span class="c1">#     if str(item.condition) == context.entry:</span>
+        <span class="c1">#         warnings.warn(str(item))</span>
+        <span class="c1">#         warnings.warn(type(item.statements[0].lvalue))</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">added_ready_node</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">case</span><span class="o">.</span><span class="n">case_items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="n">ver</span><span class="o">.</span><span class="n">CaseItem</span><span class="p">(</span>

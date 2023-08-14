@@ -63,11 +63,11 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="python2verilog.frontend.html">python2verilog.frontend package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="python2verilog.frontend.html#submodules">Submodules</a></li>
-<li class="toctree-l2"><a class="reference internal" href="python2verilog.frontend.html#module-python2verilog.frontend.generator2graph">python2verilog.frontend.generator2graph module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="python2verilog.frontend.html#python2verilog.frontend.generator2graph.Generator2Graph"><code class="docutils literal notranslate"><span class="pre">Generator2Graph</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="python2verilog.frontend.html#python2verilog.frontend.generator2graph.Generator2Graph.context"><code class="docutils literal notranslate"><span class="pre">Generator2Graph.context</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="python2verilog.frontend.html#python2verilog.frontend.generator2graph.Generator2Graph.results"><code class="docutils literal notranslate"><span class="pre">Generator2Graph.results</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="python2verilog.frontend.html#python2verilog.frontend.generator2graph.Generator2Graph.root"><code class="docutils literal notranslate"><span class="pre">Generator2Graph.root</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="python2verilog.frontend.html#module-python2verilog.frontend.generator2ir">python2verilog.frontend.generator2ir module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="python2verilog.frontend.html#python2verilog.frontend.generator2ir.Generator2Graph"><code class="docutils literal notranslate"><span class="pre">Generator2Graph</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="python2verilog.frontend.html#python2verilog.frontend.generator2ir.Generator2Graph.context"><code class="docutils literal notranslate"><span class="pre">Generator2Graph.context</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="python2verilog.frontend.html#python2verilog.frontend.generator2ir.Generator2Graph.results"><code class="docutils literal notranslate"><span class="pre">Generator2Graph.results</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="python2verilog.frontend.html#python2verilog.frontend.generator2ir.Generator2Graph.root"><code class="docutils literal notranslate"><span class="pre">Generator2Graph.root</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -97,8 +97,6 @@
 <li class="toctree-l2"><a class="reference internal" href="python2verilog.ir.html#module-python2verilog.ir.expressions">python2verilog.ir.expressions module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.expressions.Add"><code class="docutils literal notranslate"><span class="pre">Add</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.expressions.BinOp"><code class="docutils literal notranslate"><span class="pre">BinOp</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.expressions.BinOp.left"><code class="docutils literal notranslate"><span class="pre">BinOp.left</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.expressions.BinOp.right"><code class="docutils literal notranslate"><span class="pre">BinOp.right</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.expressions.BinOp.to_string"><code class="docutils literal notranslate"><span class="pre">BinOp.to_string()</span></code></a></li>
 </ul>
 </li>
@@ -109,9 +107,25 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.expressions.Int"><code class="docutils literal notranslate"><span class="pre">Int</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.expressions.LessThan"><code class="docutils literal notranslate"><span class="pre">LessThan</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.expressions.Mod"><code class="docutils literal notranslate"><span class="pre">Mod</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.expressions.Mul"><code class="docutils literal notranslate"><span class="pre">Mul</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.expressions.Pow"><code class="docutils literal notranslate"><span class="pre">Pow</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.expressions.State"><code class="docutils literal notranslate"><span class="pre">State</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.expressions.Sub"><code class="docutils literal notranslate"><span class="pre">Sub</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.expressions.Ternary"><code class="docutils literal notranslate"><span class="pre">Ternary</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.expressions.Ternary.to_string"><code class="docutils literal notranslate"><span class="pre">Ternary.to_string()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.expressions.UBinOp"><code class="docutils literal notranslate"><span class="pre">UBinOp</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.expressions.UBinOp.left"><code class="docutils literal notranslate"><span class="pre">UBinOp.left</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.expressions.UBinOp.right"><code class="docutils literal notranslate"><span class="pre">UBinOp.right</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.expressions.UBinOp.to_string"><code class="docutils literal notranslate"><span class="pre">UBinOp.to_string()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.expressions.UnaryOp"><code class="docutils literal notranslate"><span class="pre">UnaryOp</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.expressions.UnaryOp.to_string"><code class="docutils literal notranslate"><span class="pre">UnaryOp.to_string()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.expressions.Var"><code class="docutils literal notranslate"><span class="pre">Var</span></code></a></li>
 </ul>
 </li>

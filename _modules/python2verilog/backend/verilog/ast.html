@@ -42,7 +42,6 @@
 
 <span class="kn">from</span> <span class="nn">...utils.string</span> <span class="kn">import</span> <span class="n">Lines</span><span class="p">,</span> <span class="n">Indent</span><span class="p">,</span> <span class="n">ImplementsToLines</span>
 <span class="kn">from</span> <span class="nn">...utils.assertions</span> <span class="kn">import</span> <span class="n">assert_list_type</span><span class="p">,</span> <span class="n">assert_type</span><span class="p">,</span> <span class="n">assert_dict_type</span>
-<span class="kn">from</span> <span class="nn">...</span> <span class="kn">import</span> <span class="n">ir</span>
 
 
 <div class="viewcode-block" id="Expression"><a class="viewcode-back" href="../../../../python2verilog.backend.verilog.html#python2verilog.backend.verilog.ast.Expression">[docs]</a><span class="k">class</span> <span class="nc">Expression</span><span class="p">:</span>
@@ -213,7 +212,7 @@
         <span class="n">add_default_ports</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">localparams</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>  <span class="c1"># TODO: assert invalid names</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
 
         <span class="n">input_lines</span> <span class="o">=</span> <span class="n">Lines</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">inputt</span> <span class="ow">in</span> <span class="n">inputs</span><span class="p">:</span>
@@ -347,9 +346,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lvalue</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">rvalue</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">oper</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
-            <span class="n">rvalue</span><span class="p">,</span> <span class="nb">str</span>
-        <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">rvalue</span><span class="p">)</span><span class="si">}</span><span class="s2"> instead&quot;</span>  <span class="c1"># TODO: should eventually take an expression</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">rvalue</span><span class="p">,</span> <span class="nb">str</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">rvalue</span><span class="p">)</span><span class="si">}</span><span class="s2"> instead&quot;</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">lvalue</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">lvalue</span> <span class="o">=</span> <span class="n">lvalue</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">rvalue</span> <span class="o">=</span> <span class="n">rvalue</span>
@@ -422,7 +419,7 @@
         <span class="k">return</span> <span class="n">Lines</span><span class="p">(</span><span class="n">string</span><span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="CaseItem"><a class="viewcode-back" href="../../../../python2verilog.backend.verilog.html#python2verilog.backend.verilog.ast.CaseItem">[docs]</a><span class="k">class</span> <span class="nc">CaseItem</span><span class="p">:</span>
+<div class="viewcode-block" id="CaseItem"><a class="viewcode-back" href="../../../../python2verilog.backend.verilog.html#python2verilog.backend.verilog.ast.CaseItem">[docs]</a><span class="k">class</span> <span class="nc">CaseItem</span><span class="p">(</span><span class="n">ImplementsToLines</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Verilog case item, i.e.</span>
 <span class="sd">    &lt;condition&gt;: begin</span>
@@ -449,13 +446,7 @@
         <span class="k">for</span> <span class="n">stmt</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">statements</span><span class="p">:</span>
             <span class="n">lines</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">stmt</span><span class="o">.</span><span class="n">to_lines</span><span class="p">(),</span> <span class="n">indent</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">lines</span> <span class="o">+=</span> <span class="s2">&quot;end&quot;</span>
-        <span class="k">return</span> <span class="n">lines</span></div>
-
-<div class="viewcode-block" id="CaseItem.to_string"><a class="viewcode-back" href="../../../../python2verilog.backend.verilog.html#python2verilog.backend.verilog.ast.CaseItem.to_string">[docs]</a>    <span class="k">def</span> <span class="nf">to_string</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        To Verilog</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_lines</span><span class="p">()</span><span class="o">.</span><span class="n">to_string</span><span class="p">()</span></div></div>
+        <span class="k">return</span> <span class="n">lines</span></div></div>
 
 
 <div class="viewcode-block" id="Case"><a class="viewcode-back" href="../../../../python2verilog.backend.verilog.html#python2verilog.backend.verilog.ast.Case">[docs]</a><span class="k">class</span> <span class="nc">Case</span><span class="p">(</span><span class="n">Statement</span><span class="p">):</span>

@@ -4,10 +4,10 @@ python2verilog.frontend package
 Submodules
 ----------
 
-python2verilog.frontend.generator2graph module
-----------------------------------------------
+python2verilog.frontend.generator2ir module
+-------------------------------------------
 
-.. automodule:: python2verilog.frontend.generator2graph
+.. automodule:: python2verilog.frontend.generator2ir
    :members:
    :undoc-members:
    :show-inheritance:

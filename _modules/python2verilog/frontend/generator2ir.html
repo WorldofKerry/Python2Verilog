@@ -4,7 +4,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>python2verilog.frontend.generator2graph &#8212; python2verilog  documentation</title>
+    <title>python2verilog.frontend.generator2ir &#8212; python2verilog  documentation</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=4f649999" />
     <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=039e1c02" />
     <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js?v=b3ba4146"></script>
@@ -28,7 +28,7 @@
 
           <div class="body" role="main">
             
-  <h1>Source code for python2verilog.frontend.generator2graph</h1><div class="highlight"><pre>
+  <h1>Source code for python2verilog.frontend.generator2ir</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Parses Python Generator Functions to Intermediate Representation&quot;&quot;&quot;</span>
 
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
@@ -45,7 +45,7 @@
 <span class="n">DONE_STATE_NAME</span> <span class="o">=</span> <span class="s2">&quot;_statelmaoready&quot;</span>
 
 
-<div class="viewcode-block" id="Generator2Graph"><a class="viewcode-back" href="../../../python2verilog.frontend.html#python2verilog.frontend.generator2graph.Generator2Graph">[docs]</a><span class="k">class</span> <span class="nc">Generator2Graph</span><span class="p">:</span>
+<div class="viewcode-block" id="Generator2Graph"><a class="viewcode-back" href="../../../python2verilog.frontend.html#python2verilog.frontend.generator2ir.Generator2Graph">[docs]</a><span class="k">class</span> <span class="nc">Generator2Graph</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Parses python generator functions to Verilog AST</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -105,12 +105,12 @@
             <span class="sa">f</span><span class="s2">&quot;Unexpected function return type hint </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">slice</span><span class="p">)</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">pyast</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">slice</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
         <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">__add_global_var</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">initial_value</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__add_global_var</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">Var</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Adds global variables</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="o">.</span><span class="n">global_vars</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">initial_value</span>
-        <span class="k">return</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="o">.</span><span class="n">global_vars</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">assert_type</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Var</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">var</span><span class="o">.</span><span class="n">ver_name</span>
 
     <span class="k">def</span> <span class="nf">__parse_targets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nodes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">pyast</span><span class="o">.</span><span class="n">AST</span><span class="p">]):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -140,10 +140,10 @@
                         <span class="p">)</span>
                     <span class="p">)</span>
                 <span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">__add_global_var</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__add_global_var</span><span class="p">(</span><span class="n">ir</span><span class="o">.</span><span class="n">Var</span><span class="p">(</span><span class="n">py_name</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">id</span><span class="p">))</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">pyast</span><span class="o">.</span><span class="n">Name</span><span class="p">):</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="o">.</span><span class="n">is_declared</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">id</span><span class="p">):</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">__add_global_var</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">node</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__add_global_var</span><span class="p">(</span><span class="n">ir</span><span class="o">.</span><span class="n">Var</span><span class="p">(</span><span class="n">py_name</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">id</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported lvalue type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">node</span><span class="p">)</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">pyast</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">node</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__parse_expression</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
@@ -242,21 +242,31 @@
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stmt</span><span class="p">,</span> <span class="n">pyast</span><span class="o">.</span><span class="n">If</span><span class="p">)</span>
 
         <span class="n">then_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__parse_statements</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">stmt</span><span class="o">.</span><span class="n">body</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">_t&quot;</span><span class="p">,</span> <span class="n">nextt</span><span class="p">)</span>
-        <span class="n">else_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__parse_statements</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">stmt</span><span class="o">.</span><span class="n">orelse</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">_f&quot;</span><span class="p">,</span> <span class="n">nextt</span><span class="p">)</span>
-
         <span class="n">to_then</span> <span class="o">=</span> <span class="n">ir</span><span class="o">.</span><span class="n">ClockedEdge</span><span class="p">(</span>
             <span class="n">unique_id</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">_true_edge&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;True&quot;</span><span class="p">,</span> <span class="n">child</span><span class="o">=</span><span class="n">then_node</span>
         <span class="p">)</span>
-        <span class="n">to_else</span> <span class="o">=</span> <span class="n">ir</span><span class="o">.</span><span class="n">ClockedEdge</span><span class="p">(</span>
-            <span class="n">unique_id</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">_false_edge&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;False&quot;</span><span class="p">,</span> <span class="n">child</span><span class="o">=</span><span class="n">else_node</span>
-        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">stmt</span><span class="o">.</span><span class="n">orelse</span><span class="p">:</span>
+            <span class="n">else_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__parse_statements</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">stmt</span><span class="o">.</span><span class="n">orelse</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">_f&quot;</span><span class="p">,</span> <span class="n">nextt</span><span class="p">)</span>
+            <span class="n">to_else</span> <span class="o">=</span> <span class="n">ir</span><span class="o">.</span><span class="n">ClockedEdge</span><span class="p">(</span>
+                <span class="n">unique_id</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">_false_edge&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;False&quot;</span><span class="p">,</span> <span class="n">child</span><span class="o">=</span><span class="n">else_node</span>
+            <span class="p">)</span>
+            <span class="n">ifelse</span> <span class="o">=</span> <span class="n">ir</span><span class="o">.</span><span class="n">IfElseNode</span><span class="p">(</span>
+                <span class="n">unique_id</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span>
+                <span class="n">true_edge</span><span class="o">=</span><span class="n">to_then</span><span class="p">,</span>
+                <span class="n">false_edge</span><span class="o">=</span><span class="n">to_else</span><span class="p">,</span>
+                <span class="n">condition</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__parse_expression</span><span class="p">(</span><span class="n">stmt</span><span class="o">.</span><span class="n">test</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">to_else</span> <span class="o">=</span> <span class="n">ir</span><span class="o">.</span><span class="n">ClockedEdge</span><span class="p">(</span>
+                <span class="n">unique_id</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">_false_edge&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;False&quot;</span><span class="p">,</span> <span class="n">child</span><span class="o">=</span><span class="n">nextt</span>
+            <span class="p">)</span>
+            <span class="n">ifelse</span> <span class="o">=</span> <span class="n">ir</span><span class="o">.</span><span class="n">IfElseNode</span><span class="p">(</span>
+                <span class="n">unique_id</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span>
+                <span class="n">true_edge</span><span class="o">=</span><span class="n">to_then</span><span class="p">,</span>
+                <span class="n">false_edge</span><span class="o">=</span><span class="n">to_else</span><span class="p">,</span>
+                <span class="n">condition</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__parse_expression</span><span class="p">(</span><span class="n">stmt</span><span class="o">.</span><span class="n">test</span><span class="p">),</span>
+            <span class="p">)</span>
 
-        <span class="n">ifelse</span> <span class="o">=</span> <span class="n">ir</span><span class="o">.</span><span class="n">IfElseNode</span><span class="p">(</span>
-            <span class="n">unique_id</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span>
-            <span class="n">true_edge</span><span class="o">=</span><span class="n">to_then</span><span class="p">,</span>
-            <span class="n">false_edge</span><span class="o">=</span><span class="n">to_else</span><span class="p">,</span>
-            <span class="n">condition</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__parse_expression</span><span class="p">(</span><span class="n">stmt</span><span class="o">.</span><span class="n">test</span><span class="p">),</span>
-        <span class="p">)</span>
         <span class="k">return</span> <span class="n">ifelse</span>
 
     <span class="k">def</span> <span class="nf">__parse_while</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stmt</span><span class="p">:</span> <span class="n">pyast</span><span class="o">.</span><span class="n">While</span><span class="p">,</span> <span class="n">nextt</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">Element</span><span class="p">,</span> <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
@@ -287,14 +297,23 @@
 
 <span class="sd">        yield &lt;value&gt;;</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">pyast</span><span class="o">.</span><span class="n">Tuple</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">ir</span><span class="o">.</span><span class="n">YieldNode</span><span class="p">(</span>
-            <span class="n">unique_id</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span>
-            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Yield&quot;</span><span class="p">,</span>
-            <span class="n">stmts</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">__parse_expression</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">elts</span><span class="p">],</span>
-        <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">pyast</span><span class="o">.</span><span class="n">Tuple</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">ir</span><span class="o">.</span><span class="n">YieldNode</span><span class="p">(</span>
+                <span class="n">unique_id</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Yield&quot;</span><span class="p">,</span>
+                <span class="n">stmts</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">__parse_expression</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">elts</span><span class="p">],</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span>
+            <span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="n">pyast</span><span class="o">.</span><span class="n">Name</span><span class="p">,</span> <span class="n">pyast</span><span class="o">.</span><span class="n">BinOp</span><span class="p">,</span> <span class="n">pyast</span><span class="o">.</span><span class="n">Compare</span><span class="p">,</span> <span class="n">pyast</span><span class="o">.</span><span class="n">UnaryOp</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="k">return</span> <span class="n">ir</span><span class="o">.</span><span class="n">YieldNode</span><span class="p">(</span>
+                <span class="n">unique_id</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Yield&quot;</span><span class="p">,</span>
+                <span class="n">stmts</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">__parse_expression</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="p">[</span><span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="p">]],</span>
+            <span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Expected tuple </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">__parse_binop_improved</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expr</span><span class="p">:</span> <span class="n">pyast</span><span class="o">.</span><span class="n">BinOp</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__parse_binop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expr</span><span class="p">:</span> <span class="n">pyast</span><span class="o">.</span><span class="n">BinOp</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        &lt;left&gt; &lt;op&gt; &lt;right&gt;</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -312,9 +331,45 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">__parse_expression</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">left</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">__parse_expression</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">right</span><span class="p">)</span>
             <span class="p">)</span>
 
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">op</span><span class="p">,</span> <span class="p">(</span><span class="n">pyast</span><span class="o">.</span><span class="n">Div</span><span class="p">,</span> <span class="n">pyast</span><span class="o">.</span><span class="n">FloorDiv</span><span class="p">)):</span>
-            <span class="k">return</span> <span class="n">ir</span><span class="o">.</span><span class="n">Div</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">__parse_expression</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">left</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">__parse_expression</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">right</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">op</span><span class="p">,</span> <span class="n">pyast</span><span class="o">.</span><span class="n">FloorDiv</span><span class="p">):</span>
+            <span class="n">var_a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__parse_expression</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">left</span><span class="p">)</span>
+            <span class="n">var_b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__parse_expression</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">right</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">ir</span><span class="o">.</span><span class="n">Ternary</span><span class="p">(</span>
+                <span class="n">condition</span><span class="o">=</span><span class="n">ir</span><span class="o">.</span><span class="n">BinOp</span><span class="p">(</span>
+                    <span class="n">left</span><span class="o">=</span><span class="n">ir</span><span class="o">.</span><span class="n">BinOp</span><span class="p">(</span><span class="n">left</span><span class="o">=</span><span class="n">var_a</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="n">var_b</span><span class="p">,</span> <span class="n">oper</span><span class="o">=</span><span class="s2">&quot;%&quot;</span><span class="p">),</span>
+                    <span class="n">right</span><span class="o">=</span><span class="n">ir</span><span class="o">.</span><span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+                    <span class="n">oper</span><span class="o">=</span><span class="s2">&quot;===&quot;</span><span class="p">,</span>
+                <span class="p">),</span>
+                <span class="n">left</span><span class="o">=</span><span class="n">ir</span><span class="o">.</span><span class="n">BinOp</span><span class="p">(</span><span class="n">var_a</span><span class="p">,</span> <span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="n">var_b</span><span class="p">),</span>
+                <span class="n">right</span><span class="o">=</span><span class="n">ir</span><span class="o">.</span><span class="n">BinOp</span><span class="p">(</span>
+                    <span class="n">ir</span><span class="o">.</span><span class="n">BinOp</span><span class="p">(</span><span class="n">var_a</span><span class="p">,</span> <span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="n">var_b</span><span class="p">),</span>
+                    <span class="s2">&quot;-&quot;</span><span class="p">,</span>
+                    <span class="n">ir</span><span class="o">.</span><span class="n">BinOp</span><span class="p">(</span>
+                        <span class="n">ir</span><span class="o">.</span><span class="n">UBinOp</span><span class="p">(</span>
+                            <span class="n">ir</span><span class="o">.</span><span class="n">BinOp</span><span class="p">(</span><span class="n">var_a</span><span class="p">,</span> <span class="s2">&quot;&lt;&quot;</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">)),</span>
+                            <span class="s2">&quot;^&quot;</span><span class="p">,</span>
+                            <span class="n">ir</span><span class="o">.</span><span class="n">BinOp</span><span class="p">(</span><span class="n">var_b</span><span class="p">,</span> <span class="s2">&quot;&lt;&quot;</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">)),</span>
+                        <span class="p">),</span>
+                        <span class="s2">&quot;&amp;&quot;</span><span class="p">,</span>
+                        <span class="n">ir</span><span class="o">.</span><span class="n">Int</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+                    <span class="p">),</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">op</span><span class="p">,</span> <span class="n">pyast</span><span class="o">.</span><span class="n">Mod</span><span class="p">):</span>
+            <span class="n">var_a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__parse_expression</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">left</span><span class="p">)</span>
+            <span class="n">var_b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__parse_expression</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">right</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">ir</span><span class="o">.</span><span class="n">Ternary</span><span class="p">(</span>
+                <span class="n">ir</span><span class="o">.</span><span class="n">UBinOp</span><span class="p">(</span><span class="n">var_a</span><span class="p">,</span> <span class="s2">&quot;&lt;&quot;</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">)),</span>
+                <span class="n">ir</span><span class="o">.</span><span class="n">Ternary</span><span class="p">(</span>
+                    <span class="n">ir</span><span class="o">.</span><span class="n">UBinOp</span><span class="p">(</span><span class="n">var_b</span><span class="p">,</span> <span class="s2">&quot;&gt;=&quot;</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">)),</span>
+                    <span class="n">ir</span><span class="o">.</span><span class="n">UnaryOp</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Mod</span><span class="p">(</span><span class="n">var_a</span><span class="p">,</span> <span class="n">var_b</span><span class="p">)),</span>
+                    <span class="n">ir</span><span class="o">.</span><span class="n">Mod</span><span class="p">(</span><span class="n">var_a</span><span class="p">,</span> <span class="n">var_b</span><span class="p">),</span>
+                <span class="p">),</span>
+                <span class="n">ir</span><span class="o">.</span><span class="n">Ternary</span><span class="p">(</span>
+                    <span class="n">ir</span><span class="o">.</span><span class="n">UBinOp</span><span class="p">(</span><span class="n">var_b</span><span class="p">,</span> <span class="s2">&quot;&lt;&quot;</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">)),</span>
+                    <span class="n">ir</span><span class="o">.</span><span class="n">UnaryOp</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Mod</span><span class="p">(</span><span class="n">var_a</span><span class="p">,</span> <span class="n">var_b</span><span class="p">)),</span>
+                    <span class="n">ir</span><span class="o">.</span><span class="n">Mod</span><span class="p">(</span><span class="n">var_a</span><span class="p">,</span> <span class="n">var_b</span><span class="p">),</span>
+                <span class="p">),</span>
             <span class="p">)</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
             <span class="s2">&quot;Error: unexpected binop type&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">op</span><span class="p">),</span> <span class="n">pyast</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">op</span><span class="p">)</span>
@@ -327,31 +382,14 @@
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">pyast</span><span class="o">.</span><span class="n">Constant</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">ir</span><span class="o">.</span><span class="n">Int</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">pyast</span><span class="o">.</span><span class="n">Name</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">ir</span><span class="o">.</span><span class="n">Var</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">ir</span><span class="o">.</span><span class="n">Var</span><span class="p">(</span><span class="n">py_name</span><span class="o">=</span><span class="n">expr</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">pyast</span><span class="o">.</span><span class="n">Subscript</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__parse_subscript</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">pyast</span><span class="o">.</span><span class="n">BinOp</span><span class="p">):</span>
-            <span class="c1"># Special case for floor division with  2 on right-hand-side</span>
-            <span class="c1"># Due to Verilog handling negative division &quot;rounding&quot;</span>
-            <span class="c1"># differently than Python floor division</span>
-            <span class="c1"># e.g. Verilog: -5 / 2 == -2, Python: -5 // 2 == -3</span>
-            <span class="k">if</span> <span class="p">(</span>
-                <span class="nb">isinstance</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">op</span><span class="p">,</span> <span class="n">pyast</span><span class="o">.</span><span class="n">FloorDiv</span><span class="p">)</span>
-                <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">right</span><span class="p">,</span> <span class="n">pyast</span><span class="o">.</span><span class="n">Constant</span><span class="p">)</span>
-                <span class="ow">and</span> <span class="n">expr</span><span class="o">.</span><span class="n">right</span><span class="o">.</span><span class="n">value</span> <span class="o">&gt;</span> <span class="mi">0</span>
-                <span class="ow">and</span> <span class="n">expr</span><span class="o">.</span><span class="n">right</span><span class="o">.</span><span class="n">value</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span>
-            <span class="p">):</span>
-                <span class="n">a_var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__parse_expression</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">left</span><span class="p">)</span><span class="o">.</span><span class="n">to_string</span><span class="p">()</span>
-                <span class="n">b_var</span> <span class="o">=</span> <span class="n">expr</span><span class="o">.</span><span class="n">right</span><span class="o">.</span><span class="n">value</span>
-                <span class="k">return</span> <span class="n">ir</span><span class="o">.</span><span class="n">Expression</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="n">a_var</span><span class="si">}</span><span class="s2"> &gt; 0) ? (</span><span class="si">{</span><span class="n">a_var</span><span class="si">}</span><span class="s2"> / </span><span class="si">{</span><span class="n">b_var</span><span class="si">}</span><span class="s2">) : (</span><span class="si">{</span><span class="n">a_var</span><span class="si">}</span><span class="s2"> / </span><span class="si">{</span><span class="n">b_var</span><span class="si">}</span><span class="s2"> - 1)&quot;</span>
-                <span class="p">)</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__parse_binop_improved</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__parse_binop</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">pyast</span><span class="o">.</span><span class="n">UnaryOp</span><span class="p">):</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">op</span><span class="p">,</span> <span class="n">pyast</span><span class="o">.</span><span class="n">USub</span><span class="p">):</span>
-                <span class="k">return</span> <span class="n">ir</span><span class="o">.</span><span class="n">Expression</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;-(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">__parse_expression</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">operand</span><span class="p">)</span><span class="o">.</span><span class="n">to_string</span><span class="p">()</span><span class="si">}</span><span class="s2">)&quot;</span>
-                <span class="p">)</span>
+                <span class="k">return</span> <span class="n">ir</span><span class="o">.</span><span class="n">UnaryOp</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__parse_expression</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">operand</span><span class="p">))</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
                 <span class="s2">&quot;Error: unexpected unaryop type&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">op</span><span class="p">),</span> <span class="n">pyast</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">op</span><span class="p">)</span>
             <span class="p">)</span>
@@ -395,13 +433,18 @@
             <span class="n">operator</span> <span class="o">=</span> <span class="s2">&quot;&gt;&quot;</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">ops</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">pyast</span><span class="o">.</span><span class="n">GtE</span><span class="p">):</span>
             <span class="n">operator</span> <span class="o">=</span> <span class="s2">&quot;&gt;=&quot;</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">ops</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">pyast</span><span class="o">.</span><span class="n">NotEq</span><span class="p">):</span>
+            <span class="n">operator</span> <span class="o">=</span> <span class="s2">&quot;!==&quot;</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">ops</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">pyast</span><span class="o">.</span><span class="n">Eq</span><span class="p">):</span>
+            <span class="n">operator</span> <span class="o">=</span> <span class="s2">&quot;===&quot;</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
                 <span class="s2">&quot;Error: unknown operator&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">ops</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">pyast</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">ops</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
             <span class="p">)</span>
-        <span class="k">return</span> <span class="n">ir</span><span class="o">.</span><span class="n">Expression</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">__parse_expression</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">left</span><span class="p">)</span><span class="o">.</span><span class="n">to_string</span><span class="p">()</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">operator</span><span class="si">}</span><span class="s2">&quot;</span>
-            <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">__parse_expression</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">comparators</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">to_string</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">return</span> <span class="n">ir</span><span class="o">.</span><span class="n">BinOp</span><span class="p">(</span>
+            <span class="n">left</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__parse_expression</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">left</span><span class="p">),</span>
+            <span class="n">oper</span><span class="o">=</span><span class="n">operator</span><span class="p">,</span>
+            <span class="n">right</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__parse_expression</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">comparators</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
         <span class="p">)</span></div>
 </pre></div>
 
