@@ -74,12 +74,12 @@ class Generator2Graph:
             f"Unexpected function return type hint {type(node.slice)}, {pyast.dump(node.slice)}"
         )
 
-    def __add_global_var(self, initial_value: str, name: str):
+    def __add_global_var(self, var: ir.Var):
         """
         Adds global variables
         """
-        self._context.global_vars[name] = initial_value
-        return name
+        self._context.global_vars.append(assert_type(var, ir.Var))
+        return var.ver_name
 
     def __parse_targets(self, nodes: list[pyast.AST]):
         """
@@ -109,10 +109,10 @@ class Generator2Graph:
                         )
                     )
                 )
-                self.__add_global_var(str(0), node.value.id)
+                self.__add_global_var(ir.Var(py_name=node.value.id))
         elif isinstance(node, pyast.Name):
             if not self._context.is_declared(node.id):
-                self.__add_global_var(str(0), node.id)
+                self.__add_global_var(ir.Var(py_name=node.id))
         else:
             raise TypeError(f"Unsupported lvalue type {type(node)} {pyast.dump(node)}")
         return self.__parse_expression(node)
@@ -211,21 +211,31 @@ class Generator2Graph:
         assert isinstance(stmt, pyast.If)
 
         then_node = self.__parse_statements(list(stmt.body), f"{prefix}_t", nextt)
-        else_node = self.__parse_statements(list(stmt.orelse), f"{prefix}_f", nextt)
-
         to_then = ir.ClockedEdge(
             unique_id=f"{prefix}_true_edge", name="True", child=then_node
         )
-        to_else = ir.ClockedEdge(
-            unique_id=f"{prefix}_false_edge", name="False", child=else_node
-        )
+        if stmt.orelse:
+            else_node = self.__parse_statements(list(stmt.orelse), f"{prefix}_f", nextt)
+            to_else = ir.ClockedEdge(
+                unique_id=f"{prefix}_false_edge", name="False", child=else_node
+            )
+            ifelse = ir.IfElseNode(
+                unique_id=prefix,
+                true_edge=to_then,
+                false_edge=to_else,
+                condition=self.__parse_expression(stmt.test),
+            )
+        else:
+            to_else = ir.ClockedEdge(
+                unique_id=f"{prefix}_false_edge", name="False", child=nextt
+            )
+            ifelse = ir.IfElseNode(
+                unique_id=prefix,
+                true_edge=to_then,
+                false_edge=to_else,
+                condition=self.__parse_expression(stmt.test),
+            )
 
-        ifelse = ir.IfElseNode(
-            unique_id=prefix,
-            true_edge=to_then,
-            false_edge=to_else,
-            condition=self.__parse_expression(stmt.test),
-        )
         return ifelse
 
     def __parse_while(self, stmt: pyast.While, nextt: ir.Element, prefix: str):
@@ -256,14 +266,23 @@ class Generator2Graph:
 
         yield <value>;
         """
-        assert isinstance(node.value, pyast.Tuple)
-        return ir.YieldNode(
-            unique_id=prefix,
-            name="Yield",
-            stmts=[self.__parse_expression(c) for c in node.value.elts],
-        )
+        if isinstance(node.value, pyast.Tuple):
+            return ir.YieldNode(
+                unique_id=prefix,
+                name="Yield",
+                stmts=[self.__parse_expression(c) for c in node.value.elts],
+            )
+        if isinstance(
+            node.value, (pyast.Name, pyast.BinOp, pyast.Compare, pyast.UnaryOp)
+        ):
+            return ir.YieldNode(
+                unique_id=prefix,
+                name="Yield",
+                stmts=[self.__parse_expression(c) for c in [node.value]],
+            )
+        raise TypeError(f"Expected tuple {type(node.value)}")
 
-    def __parse_binop_improved(self, expr: pyast.BinOp):
+    def __parse_binop(self, expr: pyast.BinOp):
         """
         <left> <op> <right>
         """
@@ -281,9 +300,45 @@ class Generator2Graph:
                 self.__parse_expression(expr.left), self.__parse_expression(expr.right)
             )
 
-        if isinstance(expr.op, (pyast.Div, pyast.FloorDiv)):
-            return ir.Div(
-                self.__parse_expression(expr.left), self.__parse_expression(expr.right)
+        if isinstance(expr.op, pyast.FloorDiv):
+            var_a = self.__parse_expression(expr.left)
+            var_b = self.__parse_expression(expr.right)
+            return ir.Ternary(
+                condition=ir.BinOp(
+                    left=ir.BinOp(left=var_a, right=var_b, oper="%"),
+                    right=ir.Int(0),
+                    oper="===",
+                ),
+                left=ir.BinOp(var_a, "/", var_b),
+                right=ir.BinOp(
+                    ir.BinOp(var_a, "/", var_b),
+                    "-",
+                    ir.BinOp(
+                        ir.UBinOp(
+                            ir.BinOp(var_a, "<", ir.Int(0)),
+                            "^",
+                            ir.BinOp(var_b, "<", ir.Int(0)),
+                        ),
+                        "&",
+                        ir.Int(1),
+                    ),
+                ),
+            )
+        if isinstance(expr.op, pyast.Mod):
+            var_a = self.__parse_expression(expr.left)
+            var_b = self.__parse_expression(expr.right)
+            return ir.Ternary(
+                ir.UBinOp(var_a, "<", ir.Int(0)),
+                ir.Ternary(
+                    ir.UBinOp(var_b, ">=", ir.Int(0)),
+                    ir.UnaryOp("-", ir.Mod(var_a, var_b)),
+                    ir.Mod(var_a, var_b),
+                ),
+                ir.Ternary(
+                    ir.UBinOp(var_b, "<", ir.Int(0)),
+                    ir.UnaryOp("-", ir.Mod(var_a, var_b)),
+                    ir.Mod(var_a, var_b),
+                ),
             )
         raise TypeError(
             "Error: unexpected binop type", type(expr.op), pyast.dump(expr.op)
@@ -296,31 +351,14 @@ class Generator2Graph:
         if isinstance(expr, pyast.Constant):
             return ir.Int(expr.value)
         if isinstance(expr, pyast.Name):
-            return ir.Var(expr.id)
+            return ir.Var(py_name=expr.id)
         if isinstance(expr, pyast.Subscript):
             return self.__parse_subscript(expr)
         if isinstance(expr, pyast.BinOp):
-            # Special case for floor division with  2 on right-hand-side
-            # Due to Verilog handling negative division "rounding"
-            # differently than Python floor division
-            # e.g. Verilog: -5 / 2 == -2, Python: -5 // 2 == -3
-            if (
-                isinstance(expr.op, pyast.FloorDiv)
-                and isinstance(expr.right, pyast.Constant)
-                and expr.right.value > 0
-                and expr.right.value % 2 == 0
-            ):
-                a_var = self.__parse_expression(expr.left).to_string()
-                b_var = expr.right.value
-                return ir.Expression(
-                    f"({a_var} > 0) ? ({a_var} / {b_var}) : ({a_var} / {b_var} - 1)"
-                )
-            return self.__parse_binop_improved(expr)
+            return self.__parse_binop(expr)
         if isinstance(expr, pyast.UnaryOp):
             if isinstance(expr.op, pyast.USub):
-                return ir.Expression(
-                    f"-({self.__parse_expression(expr.operand).to_string()})"
-                )
+                return ir.UnaryOp("-", self.__parse_expression(expr.operand))
             raise TypeError(
                 "Error: unexpected unaryop type", type(expr.op), pyast.dump(expr.op)
             )
@@ -364,11 +402,16 @@ class Generator2Graph:
             operator = ">"
         elif isinstance(node.ops[0], pyast.GtE):
             operator = ">="
+        elif isinstance(node.ops[0], pyast.NotEq):
+            operator = "!=="
+        elif isinstance(node.ops[0], pyast.Eq):
+            operator = "==="
         else:
             raise TypeError(
                 "Error: unknown operator", type(node.ops[0]), pyast.dump(node.ops[0])
             )
-        return ir.Expression(
-            f"{self.__parse_expression(node.left).to_string()} {operator}"
-            f" {self.__parse_expression(node.comparators[0]).to_string()}"
+        return ir.BinOp(
+            left=self.__parse_expression(node.left),
+            oper=operator,
+            right=self.__parse_expression(node.comparators[0]),
         )

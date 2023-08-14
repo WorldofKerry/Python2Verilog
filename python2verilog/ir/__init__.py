@@ -6,8 +6,34 @@ A Control Flow Graph represented as a Directed Graph
 """
 
 # flake8: noqa
-from .expressions import *
-from .statements import *
+from .expressions import (
+    Expression,
+    Int,
+    Var,
+    State,
+    Ternary,
+    UBinOp,
+    BinOp,
+    Add,
+    Sub,
+    Mul,
+    Div,
+    LessThan,
+    Pow,
+    Mod,
+    UnaryOp,
+)
+from .statements import (
+    Statement,
+    Subsitution,
+    NonBlockingSubsitution,
+    BlockingSubsitution,
+    ValidSubsitution,
+    StateSubsitution,
+    Declaration,
+    CaseItem,
+    Case,
+)
 from .context import Context
 from .graph import (
     Element,

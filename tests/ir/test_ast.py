@@ -46,5 +46,5 @@ class TestAst(unittest.TestCase):
         case = Case(Expression("cur_state"), [item0, item1])
         self.assert_lines(
             case.to_string(),
-            "case (cur_state) \n 0: begin \n a = 0; \n end \n 1: begin \n b = 1; \n end \n endcase",
+            "case (cur_state) \n 0: begin \n a = $signed(0); \n end \n 1: begin \n b = $signed(1); \n end \n endcase",
         )

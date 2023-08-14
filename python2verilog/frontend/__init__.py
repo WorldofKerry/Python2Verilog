@@ -3,4 +3,4 @@ Python to IR Parsers
 """
 
 # flake8: noqa
-from .generator2graph import Generator2Graph
+from .generator2ir import Generator2Graph

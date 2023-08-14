@@ -29,7 +29,9 @@ class CodeGen:
 
         self._context.add_state_weak(context.ready)
 
-        self._context.global_vars["_state"] = self._context.ready
+        self._context.global_vars.append(
+            ir.Var("_state", initial_value=self._context.ready)
+        )
 
         self._module = CodeGen.__new_module(root_case, self._context)
 
@@ -48,7 +50,6 @@ class CodeGen:
         outputs = []
         for i in range(len((context.output_vars))):
             outputs.append(f"_out{str(i)}")
-        # TODO: make these extras optional
         always = ver.PosedgeSyncAlways(
             ver.Expression("_clock"),
             body=[
@@ -70,7 +71,8 @@ class CodeGen:
             + [CodeGen.__get_start_ifelse(root, context.entry)],
         )
         body: list[ver.Statement] = [
-            ver.Declaration(v, is_reg=True, is_signed=True) for v in context.global_vars
+            ver.Declaration(str(v), is_reg=True, is_signed=True)
+            for v in context.global_vars
         ]
         body.append(always)
 
@@ -97,7 +99,6 @@ class CodeGen:
         """
         init_body = []
         for item in root.case_items:
-            # TODO: context.entry really should be a ver.Expression
             if str(item.condition) == entry:
                 init_body += item.statements
                 root.case_items.remove(item)
@@ -176,9 +177,7 @@ class CodeGen:
 
         setups.append(ver.Statement(literal="always #5 _clock = !_clock;"))
 
-        initial_body: list[
-            ver.Statement | ver.While
-        ] = []  # TODO: replace with Sequence
+        initial_body: list[ver.Statement | ver.While] = []
         initial_body.append(ver.BlockingSubsitution("_clock", "0"))
         initial_body.append(ver.BlockingSubsitution("_start", "0"))
         initial_body.append(ver.BlockingSubsitution("_reset", "1"))
@@ -255,6 +254,10 @@ class CaseBuilder:
 
         # Work
         self.case.case_items.append(self.new_caseitem(root))
+        # for item in self.case.case_items:
+        #     if str(item.condition) == context.entry:
+        #         warnings.warn(str(item))
+        #         warnings.warn(type(item.statements[0].lvalue))
         if not self.added_ready_node:
             self.case.case_items.append(
                 ver.CaseItem(

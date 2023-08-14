@@ -44,8 +44,6 @@ class TestLines(unittest.TestCase):
             sum += i
             self.assertEqual(Indent(sum) + "abc 123\n", str(lines.indent(i)))
 
-        # TODO: add nestify test
-
 
 class TestIndent(unittest.TestCase):
     def test_all(self):

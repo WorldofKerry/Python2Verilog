@@ -4,6 +4,7 @@ import copy
 from dataclasses import dataclass, field
 from typing import Optional
 from ..utils.assertions import assert_list_type, assert_type, assert_dict_type
+from ..ir import Var
 
 
 @dataclass
@@ -14,7 +15,7 @@ class Context:
     """
 
     name: str = ""
-    global_vars: dict[str, str] = field(default_factory=dict)
+    global_vars: list[Var] = field(default_factory=list)
     input_vars: list[str] = field(default_factory=list)
     output_vars: list[str] = field(default_factory=list)
     _states: set[str] = field(default_factory=set)
@@ -32,7 +33,8 @@ class Context:
         """
         Checks if a variable has been already declared or not
         """
-        return name in set([*self.global_vars, *self.input_vars, *self.output_vars])
+        global_names = [var.py_name for var in self.global_vars]
+        return name in set([*global_names, *self.input_vars, *self.output_vars])
 
     def to_string(self):
         """

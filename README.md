@@ -57,10 +57,31 @@ To run tests, use `python3 -m pytest -sv`.
 
 Additional CLI flags can be found in [tests/conftest.py](tests/conftest.py).
 
+Use `git clean -dxf` to remove gitignored files.
+
 ## Tested Generations
 
 The Github Actions run all the tests with writing enabled.
 You may find its output as a [Github Artifact](https://nightly.link/WorldofKerry/Python2Verilog/workflows/pytest/main/tests-data.zip).
+
+<!-- INFO     root:test_integration.py:43 Testing GraphOpti1
+INFO     root:test_integration.py:50 Testing `circle_lines` with `[(21, 37, 7), (89, 45, 43)]`
+INFO     root:test_integration.py:50 Testing `happy_face` with `[(50, 51, 7), (86, 97, 43)]`
+INFO     root:test_integration.py:50 Testing `rectangle_filled` with `[(32, 84, 5, 7), (64, 78, 34, 48)]`
+INFO     root:test_integration.py:50 Testing `rectangle_lines` with `[(32, 84, 5, 7), (84, 96, 46, 89)]`
+INFO     root:test_integration.py:50 Testing `fib` with `[(10,), (35,)]`
+INFO     root:test_integration.py:50 Testing `testing` with `[(15,)]`
+INFO     root:test_integration.py:50 Testing `dumb_loop` with `[(8,), (512,)]`
+INFO     root:test_integration.py:62  -->
+| function_name    |   py_yields |   module_nchars |   wires |   wire_bits |   public_wires |   public_wire_bits |   memories |   memory_bits |   processes |   cells |   add |   ge |   gt |   mul |   sub |   ver_clks |
+|:-----------------|------------:|----------------:|--------:|------------:|---------------:|-------------------:|-----------:|--------------:|------------:|--------:|------:|-----:|-----:|------:|------:|-----------:|
+| circle_lines     |         296 |            3101 |      98 |        2857 |             18 |                421 |          0 |             0 |           1 |      68 |    35 |    1 |    1 |     6 |    25 |        299 |
+| happy_face       |         696 |            5179 |     169 |        4447 |             18 |                421 |          0 |             0 |           1 |     139 |    77 |    1 |    1 |     3 |    29 |        727 |
+| rectangle_filled |        1667 |            1548 |      45 |         975 |             14 |                293 |          0 |             0 |           1 |      24 |    16 |  nan |  nan |   nan |   nan |       1723 |
+| rectangle_lines  |         294 |            1441 |      43 |        1004 |             14 |                293 |          0 |             0 |           1 |      22 |    15 |  nan |  nan |   nan |     2 |        297 |
+| fib              |          43 |             777 |      25 |         521 |             12 |                229 |          0 |             0 |           1 |       5 |     3 |  nan |  nan |   nan |   nan |         46 |
+| testing          |          16 |             650 |      19 |         360 |             10 |                165 |          0 |             0 |           1 |       3 |     2 |  nan |  nan |   nan |   nan |         18 |
+| dumb_loop        |           2 |             705 |      17 |         265 |              9 |                133 |          0 |             0 |           1 |       3 |     1 |  nan |  nan |   nan |   nan |        523 |
 
 ## For Developers
 
@@ -80,6 +101,9 @@ Uses sphinx.
 Run commands used by [Github Actions](.github/workflows/sphinx.yml).
 
 ## Random Planning, Design, and Notes
+
+### More Variable Data
+How to convert a Python `ast.Name`? We want to be able to map those variables to
 
 ### Start, Ready, Reset
 

@@ -8,4 +8,4 @@ def fib(n: int) -> tuple[int]:
         a = b
         b = c
         c = a + b
-        yield (c,)
+        yield c

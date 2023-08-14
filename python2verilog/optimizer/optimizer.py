@@ -33,15 +33,19 @@ def backwards_replace(expr: ir.Expression, mapping: dict[ir.Expression, ir.Expre
         for key in mapping:
             if key.to_string() == expr.to_string():
                 return mapping[key]
-    elif isinstance(expr, ir.BinOp):
+    elif isinstance(expr, ir.Int):
+        return expr
+    elif isinstance(expr, (ir.BinOp, ir.UBinOp)):
         expr.left = backwards_replace(expr.left, mapping)
         expr.right = backwards_replace(expr.right, mapping)
-    elif isinstance(expr, ir.Expression):
-        # TODO: add BinOp for comparison
-        for key, value in mapping.items():
-            expr = ir.Expression(
-                expr.to_string().replace(key.to_string(), value.to_string())
-            )
+    elif isinstance(expr, ir.Ternary):
+        expr.condition = backwards_replace(expr.condition, mapping)
+        expr.left = backwards_replace(expr.left, mapping)
+        expr.right = backwards_replace(expr.right, mapping)
+    elif isinstance(expr, ir.UnaryOp):
+        expr.expr = backwards_replace(expr.expr, mapping)
+    else:
+        raise TypeError(type(expr))
     return expr
 
 
@@ -193,8 +197,7 @@ class OptimizeGraph:
                         threshold=threshold,
                     )
                     edge = ir.NonClockedEdge(
-                        # TODO: reason about this,
-                        # there are yield -> if -> yield with no clocks in-between
+                        # There may be yield -> if -> yield with no clocks in-between
                         unique_id=f"{element.true_edge.unique_id}_{make_unique()}_optimal",
                         name="True",
                         child=optimal_true_node,
@@ -204,28 +207,31 @@ class OptimizeGraph:
                     # print("no optimize true branch")
                     pass
 
-                if not should_i_be_clocked(
-                    element.false_edge.child, visited, threshold
-                ):
-                    # print("optimzing false branch")
-                    false_mapping = graph_update_mapping(element.false_edge, mapping)
-                    if isinstance(element.false_edge.child, ir.Edge):
-                        raise RuntimeError(f"{element}")
-                    optimal_false_node = helper(
-                        element=element.false_edge.child,
-                        mapping=false_mapping,
-                        visited=copy.deepcopy(visited),
-                        threshold=threshold,
-                    )
-                    edge = ir.NonClockedEdge(
-                        unique_id=f"{element.false_edge.unique_id}_{make_unique()}_optimal",
-                        name="False",
-                        child=optimal_false_node,
-                    )
-                    new_node.optimal_false_edge = edge
-                else:
-                    # print("No optimize false branch")
-                    pass
+                if element.false_edge:
+                    if not should_i_be_clocked(
+                        element.false_edge.child, visited, threshold
+                    ):
+                        # print("optimzing false branch")
+                        false_mapping = graph_update_mapping(
+                            element.false_edge, mapping
+                        )
+                        if isinstance(element.false_edge.child, ir.Edge):
+                            raise RuntimeError(f"{element}")
+                        optimal_false_node = helper(
+                            element=element.false_edge.child,
+                            mapping=false_mapping,
+                            visited=copy.deepcopy(visited),
+                            threshold=threshold,
+                        )
+                        edge = ir.NonClockedEdge(
+                            unique_id=f"{element.false_edge.unique_id}_{make_unique()}_optimal",
+                            name="False",
+                            child=optimal_false_node,
+                        )
+                        new_node.optimal_false_edge = edge
+                    else:
+                        # print("No optimize false branch")
+                        pass
 
                 # print(f"returning {str(ifelse)} {mapping}")
                 return new_node
@@ -235,7 +241,7 @@ class OptimizeGraph:
                     updated.append(backwards_replace(stmt, mapping))
                 if isinstance(element.child.child, ir.Edge):
                     raise RuntimeError(f"{element}")
-                # TODO: currently a clock always happens after a yield,
+                # Currently a clock always happens after a yield,
                 # this results in inefficiencies when there is a yield followed by done
                 # more wave analysis can be done to potentially paramatize this
                 # e.g. can valid and done both be 1 in the same clock cycle?

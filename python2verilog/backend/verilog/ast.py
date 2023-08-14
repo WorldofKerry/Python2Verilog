@@ -11,7 +11,6 @@ import copy
 
 from ...utils.string import Lines, Indent, ImplementsToLines
 from ...utils.assertions import assert_list_type, assert_type, assert_dict_type
-from ... import ir
 
 
 class Expression:
@@ -182,7 +181,7 @@ class Module(ImplementsToLines):
         add_default_ports=True,
         localparams: Optional[dict[str, str]] = None,
     ):
-        self.name = name  # TODO: assert invalid names
+        self.name = name
 
         input_lines = Lines()
         for inputt in inputs:
@@ -316,9 +315,7 @@ class Subsitution(Statement):
     """
 
     def __init__(self, lvalue: str, rvalue: str, oper: str, *args, **kwargs):
-        assert isinstance(
-            rvalue, str
-        ), f"got {type(rvalue)} instead"  # TODO: should eventually take an expression
+        assert isinstance(rvalue, str), f"got {type(rvalue)} instead"
         assert isinstance(lvalue, str)
         self.lvalue = lvalue
         self.rvalue = rvalue
@@ -391,7 +388,7 @@ class Declaration(Statement):
         return Lines(string)
 
 
-class CaseItem:
+class CaseItem(ImplementsToLines):
     """
     Verilog case item, i.e.
     <condition>: begin
@@ -419,12 +416,6 @@ class CaseItem:
             lines.concat(stmt.to_lines(), indent=1)
         lines += "end"
         return lines
-
-    def to_string(self):
-        """
-        To Verilog
-        """
-        return self.to_lines().to_string()
 
 
 class Case(Statement):

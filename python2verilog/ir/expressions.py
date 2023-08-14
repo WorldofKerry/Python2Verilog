@@ -4,6 +4,7 @@ Based on Verilog Syntax
 """
 from __future__ import annotations
 import copy
+from dataclasses import dataclass
 from typing import Optional
 from ..utils.assertions import assert_type, assert_list_type
 
@@ -46,7 +47,7 @@ class Int(Expression):
 
     def __init__(self, value: int):
         assert isinstance(value, int)
-        super().__init__(str(value))
+        super().__init__(f"$signed({str(value)})")
 
 
 class Var(Expression):
@@ -54,9 +55,24 @@ class Var(Expression):
     Named-variable
     """
 
-    def __init__(self, name: str):
-        assert isinstance(name, str)
-        super().__init__(name)
+    def __init__(
+        self,
+        py_name: str,
+        ver_name: str = "",
+        width: int = 32,
+        isSigned: bool = True,
+        initial_value: str = "0",
+    ):
+        if ver_name == "":
+            ver_name = "_" + py_name
+
+        self.ver_name = assert_type(ver_name, str)
+        self.py_name = assert_type(py_name, str)
+        self.width = assert_type(width, int)
+        self.is_signed = assert_type(isSigned, bool)
+        self.initial_value = initial_value
+
+        super().__init__(py_name)
 
 
 class State(Var):
@@ -65,16 +81,32 @@ class State(Var):
     """
 
 
-class BinOp(Expression):
+class Ternary(Expression):
     """
-    <left> <op> <right>
+    <condition> ? <left> : <right>
     """
 
-    def __init__(self, left: Expression, right: Expression, oper: str):
-        self._left = left
-        self._right = right
-        self._oper = oper
-        super().__init__(f"({left.to_string()} {self._oper} {right.to_string()})")
+    def __init__(self, condition: Expression, left: Expression, right: Expression):
+        self.condition = condition
+        self.left = left
+        self.right = right
+        super().__init__(str(self))
+
+    def to_string(self):
+        return f"{str(self.condition)} ? {str(self.left)} : {str(self.right)}"
+
+
+class UBinOp(Expression):
+    """
+    Unsigned BinOp
+    Is usually better for comparators
+    """
+
+    def __init__(self, left: Expression, oper: str, right: Expression):
+        self._left = assert_type(left, Expression)
+        self._right = assert_type(right, Expression)
+        self._oper = assert_type(oper, str)
+        super().__init__(self.__class__.__name__)
 
     @property
     def left(self):
@@ -102,13 +134,22 @@ class BinOp(Expression):
         return f"({self._left.to_string()} {self._oper} {self._right.to_string()})"
 
 
+class BinOp(UBinOp):
+    """
+    $signed(<left> <op> <right>)
+    """
+
+    def to_string(self):
+        return "$signed" + super().to_string()
+
+
 class Add(BinOp):
     """
     <left> + <right>
     """
 
     def __init__(self, left: Expression, right: Expression):
-        super().__init__(left, right, "+")
+        super().__init__(left, "+", right)
 
 
 class Sub(BinOp):
@@ -117,7 +158,7 @@ class Sub(BinOp):
     """
 
     def __init__(self, left: Expression, right: Expression):
-        super().__init__(left, right, "-")
+        super().__init__(left, "-", right)
 
 
 class Mul(BinOp):
@@ -126,7 +167,7 @@ class Mul(BinOp):
     """
 
     def __init__(self, left: Expression, right: Expression):
-        super().__init__(left, right, "*")
+        super().__init__(left, "*", right)
 
 
 class Div(BinOp):
@@ -135,13 +176,48 @@ class Div(BinOp):
     """
 
     def __init__(self, left: Expression, right: Expression):
-        super().__init__(left, right, "/")
+        super().__init__(left, "/", right)
 
 
-class LessThan(BinOp):
+class LessThan(UBinOp):
     """
     <left> < <right>
     """
 
     def __init__(self, left: Expression, right: Expression):
-        super().__init__(left, right, "<")
+        super().__init__(left, "<", right)
+
+
+class Pow(UBinOp):
+    """
+    <left> ** <right>
+    """
+
+    def __init__(self, left: Expression, right: Expression):
+        super().__init__(left, "**", right)
+
+
+class Mod(UBinOp):
+    """
+    <left> % <right>
+    """
+
+    def __init__(self, left: Expression, right: Expression):
+        super().__init__(left, "%", right)
+
+
+class UnaryOp(Expression):
+    """
+    <op>(<expr>)
+    """
+
+    def __init__(self, oper: str, expr: Expression):
+        self.oper = assert_type(oper, str)
+        self.expr = assert_type(expr, Expression)
+        super().__init__(self.__class__.__name__)
+
+    def to_string(self):
+        """
+        string
+        """
+        return f"{self.oper}({self.expr})"

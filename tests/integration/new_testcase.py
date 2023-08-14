@@ -66,17 +66,21 @@ def script(args: argparse.Namespace, logger: logging.Logger, shell: callable) ->
     TEST_CASES_FILE_PATH = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), args.test_cases
     )
-
     with open(TEST_CASES_FILE_PATH, mode="r+") as file:
         data = file.read()
+
         _locals = dict()
         exec(data, None, _locals)
-        if not args.test_name in _locals["test_cases"]:
-            _locals["test_cases"][args.test_name] = "[(,)]"
-            logger.warn(f"Add your test cases to {TEST_CASES_FILE_PATH}")
 
-        text = "test_cases = {\n"
-        for key, value in _locals["test_cases"].items():
+        assert len(_locals) == 1
+        TEST_CASES_VAR_NAME = list(_locals.keys())[0]
+
+        if not args.test_name in _locals[TEST_CASES_VAR_NAME]:
+            _locals[TEST_CASES_VAR_NAME][args.test_name] = "[(,)]"
+            logger.warning(f"Add your test cases to {TEST_CASES_FILE_PATH}")
+
+        text = f"{TEST_CASES_VAR_NAME} = {{\n"
+        for key, value in _locals["TEST_CASES"].items():
             text += f'    "{key}": {str(value)},\n'
         text += "}\n"
         file.seek(0)

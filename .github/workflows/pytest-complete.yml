@@ -1,10 +1,9 @@
-# Runs all pytest tests
-# Locally run `python3 -m pytest`
+# Runs all pytest tests at more optimization levels
 
-name: pytest testing
+name: pytest complete testing
 
 on:
-  push:
+  workflow_dispatch:
 
 jobs:
   build:
@@ -41,7 +40,7 @@ jobs:
       - name: Run Pytest
         run: |
           python3 -m pytest -vs tests/ --cov=python2verilog/ --cov-report term-missing --log-cli-level=info \
-          --write --synthesis --optimization-levels 0 1 2 4 8
+          --write --synthesis --optimization-levels 0 1 2 4 8 16 32
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:

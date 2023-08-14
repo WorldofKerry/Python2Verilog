@@ -1,5 +1,8 @@
 from typing import Optional, Any
 import networkx as nx
+import pytest
+
+from python2verilog.utils.assertions import assert_type
 
 
 class Argument:
@@ -14,44 +17,26 @@ class Argument:
 
     """
 
-    def __init__(
-        self,
-        name: str,
-        default: Any,
-        help: Optional[str] = None,
-        short: Optional[str] = None,
-        action: Optional[str] = "store",
-    ):
-        assert isinstance(name, str)
-        if help:
-            assert isinstance(help, str)
-        if short:
-            assert isinstance(short, str)
-            assert len(short) == 1
-
-        self.short = short
-        self.name = name
-        self.value = default  # mutated
-        self.help = help
-        self.dashed_name = self.name.replace("_", "-")
-        self.action = action
-
-    def add_to_parser(self, parser):
-        if self.short:
-            parser.addoption(
-                f"-{self.short}",
-                f"--{self.dashed_name}",
-                action=self.action,
-                default=self.value,
-                help=self.help,
-            )
+    def __init__(self, *args, **kwargs):
+        if len(args) == 1:
+            self.short = None
+            self.name = args[0]
+            assert isinstance(self.name, str)
+            assert "-" not in self.name, "Used `_` in place of `-`, but use `-` for CLI"
+        elif len(args) == 2:
+            assert len(args[0]) == 1, "First arg is short"
+            self.short = args[0]
+            self.name = args[1]
         else:
-            parser.addoption(
-                f"--{self.dashed_name}",
-                action=self.action,
-                default=self.value,
-                help=self.help,
-            )
+            raise ValueError("Expected 0 or 1 un-named arguments")
+        self.kwargs = kwargs
+        self.dashed_name = self.name.replace("_", "-")
+
+    def add_to_parser(self, parser: pytest.Parser):
+        if self.short:
+            parser.addoption(f"-{self.short}", f"--{self.dashed_name}", **self.kwargs)
+        else:
+            parser.addoption(f"--{self.dashed_name}", **self.kwargs)
 
     def __repr__(self):
         return f"{__class__} {self.name}: {self.value}"
