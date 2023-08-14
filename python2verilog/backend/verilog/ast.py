@@ -155,9 +155,9 @@ class Module(ImplementsToLines):
 
     def __init__(
         self,
-        name: ir.Expression,
-        inputs: list[ir.Expression],
-        outputs: list[ir.Expression],
+        name: str,
+        inputs: list[str],
+        outputs: list[str],
         body: Optional[list[Statement]] = None,
         add_default_ports=True,
         localparams: Optional[dict[ir.Expression, ir.Expression]] = None,
@@ -166,7 +166,7 @@ class Module(ImplementsToLines):
 
         input_lines = Lines()
         for inputt in inputs:
-            assert isinstance(inputt, ir.Expression)
+            assert isinstance(inputt, str)
             input_lines += f"input wire signed [31:0] {inputt}"
         if add_default_ports:
             input_lines += "input wire _start"
@@ -176,7 +176,7 @@ class Module(ImplementsToLines):
 
         output_lines = Lines()
         for output in outputs:
-            assert isinstance(output, ir.Expression)
+            assert isinstance(output, str)
             output_lines += f"output reg signed [31:0] {output}"
         if add_default_ports:
             output_lines += "output reg _ready"
@@ -191,7 +191,7 @@ class Module(ImplementsToLines):
             self.body = []
 
         if localparams:
-            assert_dict_type(localparams, ir.Expression, ir.UInt)
+            assert_dict_type(localparams, str, ir.UInt)
             self.local_params = Lines()
             for key, value in localparams.items():
                 self.local_params.concat(LocalParam(key, value).to_lines())

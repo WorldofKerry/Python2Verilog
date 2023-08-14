@@ -31,7 +31,9 @@ def backwards_replace(expr: ir.Expression, mapping: dict[ir.Expression, ir.Expre
     expr = copy.deepcopy(expr)
     if isinstance(expr, ir.Var):
         for key in mapping:
+            logging.info(f"{key.to_string()} {expr.to_string()}")
             if key.to_string() == expr.to_string():
+                logging.info(f"replaced {expr} with {mapping[key]}")
                 return mapping[key]
     elif isinstance(expr, ir.Int):
         return expr

@@ -5,6 +5,8 @@ Verilog Codegen
 import itertools
 import logging
 import warnings
+
+from python2verilog.optimizer.optimizer import backwards_replace
 from . import ast as ver
 from ... import ir
 from ...utils.assertions import assert_type, assert_list_type, assert_dict_type
@@ -47,11 +49,11 @@ class CodeGen:
 
         inputs: list[ir.Var] = []
         for var in context.input_vars:
-            inputs.append(var)
+            inputs.append(var.py_name)
 
         outputs: list[ir.Var] = []
         for var in context.output_vars:
-            outputs.append(var)
+            outputs.append(var.ver_name)
 
         always = ver.PosedgeSyncAlways(
             ir.Expression("_clock"),
@@ -75,17 +77,20 @@ class CodeGen:
                     else_body=[],
                 )
             ]
-            + [CodeGen.__get_start_ifelse(root, context.entry)],
+            + [CodeGen.__get_start_ifelse(root, context)],
         )
         body: list[ver.Statement] = [
             ver.Declaration(v, is_reg=True, is_signed=True) for v in context.global_vars
         ]
+        body += [
+            ver.Declaration(var.ver_name, is_reg=True, is_signed=True)
+            for var in context.input_vars
+        ]
+
         body.append(always)
 
-        state_vars = {
-            ir.Expression(key): ir.UInt(index)
-            for index, key in enumerate(context.states)
-        }
+        state_vars = {key: ir.UInt(index) for index, key in enumerate(context.states)}
+
         return ver.Module(
             name=context.name,
             inputs=inputs,
@@ -95,7 +100,7 @@ class CodeGen:
         )
 
     @staticmethod
-    def __get_start_ifelse(root: ver.Case, entry: str):
+    def __get_start_ifelse(root: ver.Case, context: ir.Context):
         """
         if (_start) begin
             <var> = <value>;
@@ -109,10 +114,27 @@ class CodeGen:
         # The first case can be included here
         init_body = []
         for item in root.case_items:
-            if item.condition == ir.Expression(entry):
+            if item.condition == ir.Expression(context.entry):
                 init_body += item.statements
                 root.case_items.remove(item)
                 break
+
+        for stmt in init_body:
+            assert isinstance(stmt, ver.NonBlockingSubsitution)
+            if isinstance(stmt.rvalue, ir.Var):
+                mapping = {
+                    ir.Expression(var.ver_name): ir.Expression(var.py_name)
+                    for var in context.input_vars
+                }
+                warnings.warn(f"{mapping}, {stmt.rvalue}, {type(stmt.rvalue)}")
+                stmt.rvalue = backwards_replace(stmt.rvalue, mapping)
+
+        for var in context.input_vars:
+            init_body.append(
+                ver.NonBlockingSubsitution(
+                    ir.Expression(var.ver_name), ir.Expression(var.py_name)
+                )
+            )
 
         block = ver.IfElse(
             ir.Expression("_start"),
@@ -168,20 +190,17 @@ class CodeGen:
         decl.append(ver.Declaration("_start", size=1, is_reg=True))
         decl.append(ver.Declaration("_reset", size=1, is_reg=True))
         decl += [
-            ver.Declaration(var.ver_name, is_signed=True, is_reg=True)
-            for var in self.context.input_vars
-        ]
-        decl += [
             ver.Declaration(var.ver_name, is_signed=True)
             for var in self.context.output_vars
         ]
-
+        decl += [
+            ver.Declaration(var.py_name, is_signed=True, is_reg=True)
+            for var in self.context.input_vars
+        ]
         decl.append(ver.Declaration("_ready", size=1))
         decl.append(ver.Declaration("_valid", size=1))
 
-        ports = {
-            decl.name: decl.name for decl in decl
-        }  # Caution: expects decl to only contain declarations
+        ports = {decl.name: decl.name for decl in decl}
 
         setups: list[ver.Statement] = list(decl)
         setups.append(ver.Instantiation(self.context.name, "DUT", ports))
@@ -210,7 +229,11 @@ class CodeGen:
                 ver.Statement(comment=f"Test case {i}: {str(test_case)}")
             )
             for i, var in enumerate(self.context.input_vars):
-                initial_body.append(ver.BlockingSubsitution(var, ir.Int(test_case[i])))
+                initial_body.append(
+                    ver.BlockingSubsitution(
+                        ir.Expression(var.py_name), ir.Int(test_case[i])
+                    )
+                )
             initial_body.append(
                 ver.BlockingSubsitution(self.context.start_signal, ir.Int(1))
             )
@@ -224,7 +247,7 @@ class CodeGen:
             )
             while_body.append(make_display_stmt())
             while_body.append(ver.AtNegedgeStatement(self.context.clock_signal))
-# 
+
             initial_body.append(
                 ver.While(
                     condition=ir.Expression("!_ready"),
