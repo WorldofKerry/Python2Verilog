@@ -29,9 +29,7 @@ class CodeGen:
 
         self._context.add_state_weak(context.ready)
 
-        self._context.global_vars.append(
-            ir.Var("_state", initial_value=self._context.ready)
-        )
+        self._context.add_global_var(ir.Var("state", initial_value=self._context.ready))
 
         self._module = CodeGen.__new_module(root_case, self._context)
 
@@ -48,8 +46,8 @@ class CodeGen:
         for var in context.input_vars:
             inputs.append(var.ver_name)
         outputs = []
-        for i in range(len((context.output_vars))):
-            outputs.append(f"_out{str(i)}")
+        for var in context.output_vars:
+            outputs.append(var.ver_name)
         always = ver.PosedgeSyncAlways(
             ver.Expression("_clock"),
             body=[
@@ -101,6 +99,7 @@ class CodeGen:
             endcase
         end
         """
+        # The first case can be included here
         init_body = []
         for item in root.case_items:
             if str(item.condition) == entry:
@@ -321,8 +320,8 @@ class CaseBuilder:
 
         elif isinstance(vertex, ir.YieldNode):
             outputs = [
-                ver.NonBlockingSubsitution(f"_out{i}", str(expr))
-                for i, expr in enumerate(vertex.stmts)
+                ver.NonBlockingSubsitution(var.ver_name, str(expr))
+                for var, expr in zip(self.context.output_vars, vertex.stmts)
             ] + [ver.NonBlockingSubsitution("_valid", "1")]
             state_change = []
 

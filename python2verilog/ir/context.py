@@ -39,7 +39,7 @@ class Context:
         """
         Output variables
         """
-        return copy.deepcopy(self._output_vars)
+        return tuple(self._output_vars)
 
     @output_vars.setter
     def output_vars(self, other: list[Var]):
@@ -50,11 +50,17 @@ class Context:
         """
         Global variables
         """
-        return copy.deepcopy(self._global_vars)
+        return tuple(self._global_vars)
 
     @global_vars.setter
     def global_vars(self, other: list[Var]):
         self._global_vars = assert_list_type(other, Var)
+
+    def add_global_var(self, var: Var):
+        """
+        Appends global var
+        """
+        self._global_vars.append(assert_type(var, Var))
 
     @property
     def state_vars(self):

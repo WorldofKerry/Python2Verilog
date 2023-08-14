@@ -76,13 +76,6 @@ class Generator2Graph:
             f"Unexpected function return type hint {type(node.slice)}, {pyast.dump(node.slice)}"
         )
 
-    def __add_global_var(self, var: ir.Var):
-        """
-        Adds global variables
-        """
-        self._context.global_vars.append(assert_type(var, ir.Var))
-        return var.ver_name
-
     def __parse_targets(self, nodes: list[pyast.AST]):
         """
         Warning: only single target on left-hand-side supported
@@ -93,11 +86,15 @@ class Generator2Graph:
         node = nodes[0]
         if isinstance(node, pyast.Subscript):
             assert isinstance(node.value, pyast.Name)
-            if self._context.is_declared(node.value.id):
-                self.__add_global_var(ir.Var(py_name=node.value.id))
+            warnings.warn(
+                f"parsing {node.value.id} {self._context.is_declared(node.id)}"
+            )
+            if not self._context.is_declared(node.value.id):
+                self._context.add_global_var(ir.Var(py_name=node.value.id))
         elif isinstance(node, pyast.Name):
+            warnings.warn(f"parsing {node.id} {self._context.is_declared(node.id)}")
             if not self._context.is_declared(node.id):
-                self.__add_global_var(ir.Var(py_name=node.id))
+                self._context.add_global_var(ir.Var(py_name=node.id))
         else:
             raise TypeError(f"Unsupported lvalue type {type(node)} {pyast.dump(node)}")
         return self.__parse_expression(node)
@@ -245,10 +242,6 @@ class Generator2Graph:
 
     def __parse_yield(self, node: pyast.Yield, prefix: str):
         """
-        Warning: may not work for single output
-
-        Warning: requires self.yieldVars to be complete
-
         yield <value>;
         """
         if isinstance(node.value, pyast.Tuple):

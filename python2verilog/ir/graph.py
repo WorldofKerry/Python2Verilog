@@ -337,12 +337,6 @@ class YieldNode(Vertex, BasicElement):
         """
         return f"yield {str(self._stmts)}"
 
-    def __str__(self):
-        """
-        to string
-        """
-        return "\n".join([f"out{i} <= {str(v)}" for i, v in enumerate(self._stmts)])
-
 
 class DoneNode(Vertex, Element):
     """
