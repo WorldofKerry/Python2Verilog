@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 import copy
+import logging
 import warnings
 import ast as pyast
 import sys
@@ -86,7 +87,7 @@ class Generator2Graph:
         node = nodes[0]
         if isinstance(node, pyast.Subscript):
             assert isinstance(node.value, pyast.Name)
-            warnings.warn(
+            logging.error(
                 f"parsing {node.value.id} {self._context.is_declared(node.id)}"
             )
             if not self._context.is_declared(node.value.id):

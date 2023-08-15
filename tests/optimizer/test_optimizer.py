@@ -18,7 +18,7 @@ class TestGraphApplyMapping(unittest.TestCase):
         )
         self.assertTrue(is_dependent(node.rvalue, str(node.lvalue)))
         updated = graph_apply_mapping(node, mapping)
-        self.assertEqual("i <= $signed($signed(1) + $signed(1))", str(updated))
+        self.assertEqual("_i <= $signed($signed(1) + $signed(1))", str(updated))
 
         mapping = {ir.Var("i"): ir.Add(ir.Var("i"), ir.Int(1))}
         node = ir.AssignNode(
@@ -27,7 +27,7 @@ class TestGraphApplyMapping(unittest.TestCase):
         self.assertTrue(is_dependent(node.rvalue, str(node.lvalue)))
         updated = graph_apply_mapping(node, mapping)
         self.assertEqual(
-            "i <= $signed($signed(i + $signed(1)) + $signed(1))", str(updated)
+            "_i <= $signed($signed(i + $signed(1)) + $signed(1))", str(updated)
         )
 
         mapping = {ir.Var("i"): ir.Int(1)}
@@ -35,7 +35,7 @@ class TestGraphApplyMapping(unittest.TestCase):
         self.assertFalse(is_dependent(node.rvalue, str(node.lvalue)))
         self.assertTrue(is_dependent(node.rvalue, "i"))
         updated = graph_apply_mapping(node, mapping)
-        self.assertEqual("a <= $signed(1)", str(updated))
+        self.assertEqual("_a <= $signed(1)", str(updated))
 
     def test_independent(self):
         """
@@ -47,7 +47,7 @@ class TestGraphApplyMapping(unittest.TestCase):
         )
         self.assertFalse(is_dependent(node.rvalue, str(node.lvalue)))
         updated = graph_apply_mapping(node, mapping)
-        self.assertEqual("i <= $signed($signed(0) + $signed(1))", str(updated))
+        self.assertEqual("_i <= $signed($signed(0) + $signed(1))", str(updated))
 
         mapping = {ir.Var("i"): ir.Add(ir.Var("i"), ir.Var("i"))}
         node = ir.AssignNode(
@@ -55,7 +55,7 @@ class TestGraphApplyMapping(unittest.TestCase):
         )
         self.assertFalse(is_dependent(node.rvalue, str(node.lvalue)))
         updated = graph_apply_mapping(node, mapping)
-        self.assertEqual("i <= $signed($signed(0) + $signed(1))", str(updated))
+        self.assertEqual("_i <= $signed($signed(0) + $signed(1))", str(updated))
 
         mapping = {ir.Var("i"): ir.Add(ir.Int(0), ir.Int(1))}
         node = ir.AssignNode(
@@ -63,7 +63,7 @@ class TestGraphApplyMapping(unittest.TestCase):
         )
         self.assertFalse(is_dependent(node.rvalue, str(node.lvalue)))
         updated = graph_apply_mapping(node, mapping)
-        self.assertEqual("i <= $signed($signed(0) + $signed(1))", str(updated))
+        self.assertEqual("_i <= $signed($signed(0) + $signed(1))", str(updated))
 
 
 # class TestOptimizer(unittest.TestCase):

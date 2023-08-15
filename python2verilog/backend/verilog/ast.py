@@ -214,7 +214,7 @@ class Module(ImplementsToLines):
         lines.concat(self.local_params, 1)
         for stmt in self.body:
             if stmt.to_lines() is None:
-                warnings.warn(type(stmt))
+                logging.error(type(stmt))
             lines.concat(stmt.to_lines(), 1)
         lines += "endmodule"
         return lines

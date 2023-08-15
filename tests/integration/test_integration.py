@@ -72,8 +72,7 @@ class BaseTestCases:
                 )
                 logging.info("\n" + df.to_markdown(index=False))
             else:
-                logging.warning("No stats collected")
-                warnings.warn("No stats collected")
+                logging.error("No stats collected")
 
         def run_test(
             self,
@@ -256,7 +255,7 @@ class BaseTestCases:
 
                     stderr_str = process.stderr.read()
                     if stderr_str != "":
-                        warnings.warn(
+                        logging.critical(
                             f"ERROR with running verilog simulation on {function_name}, with: {stderr_str}"
                         )
 
@@ -280,9 +279,12 @@ class BaseTestCases:
                     filtered_actual = []
                     for row in actual_raw:
                         if row[0] == "1":
-                            filtered_actual.append(
-                                tuple([int(elem) for elem in row[1:]])
-                            )
+                            try:
+                                filtered_actual.append(
+                                    tuple([int(elem) for elem in row[1:]])
+                                )
+                            except ValueError as e:
+                                logging.error(e)
 
                     if args.write:
                         with open(
@@ -323,7 +325,7 @@ class BaseTestCases:
                         stdout = syn_process.stdout.read()
                         stderr = syn_process.stderr.read()
                         if stderr:
-                            warnings.warn(stderr)
+                            logging.critical(stderr)
 
                         stats = stdout[stdout.find("Printing statistics.") :]
 
@@ -353,8 +355,7 @@ class BaseTestCases:
                             statistics[key] = value
 
                 except subprocess.TimeoutExpired as e:
-                    logging.warning(e)
-                    warnings.warn(e)
+                    logging.error(e)
                     process.terminate()
 
                 for key in fifos:
@@ -365,6 +366,7 @@ class BaseTestCases:
 class Graph(BaseTestCases.BaseTest):
     def __init__(self, *args, **kwargs):
         BaseTestCases.BaseTest.__init__(self, TEST_CASES, *args, **kwargs)
+
 
 # For easier testing
 @pytest.mark.usefixtures("argparse")

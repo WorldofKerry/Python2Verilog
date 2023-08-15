@@ -1,3 +1,4 @@
+import logging
 import subprocess
 import warnings
 import unittest
@@ -13,7 +14,7 @@ class TestConvert(unittest.TestCase):
             capture_output=True,
         )
         if result.returncode:
-            warnings.warn(result.stdout + result.stderr)
+            logging.error(result.stdout + result.stderr)
             raise subprocess.CalledProcessError(CMD, "non-zero return code")
 
     def test_module(self):
@@ -26,7 +27,7 @@ class TestConvert(unittest.TestCase):
             capture_output=True,
         )
         if result.returncode:
-            warnings.warn(result.stdout + result.stderr)
+            logging.error(result.stdout + result.stderr)
             raise subprocess.CalledProcessError(CMD, "non-zero return code")
 
     def test_testbench(self):
@@ -39,7 +40,7 @@ class TestConvert(unittest.TestCase):
             capture_output=True,
         )
         if result.returncode:
-            warnings.warn(result.stdout + result.stderr)
+            logging.error(result.stdout + result.stderr)
             raise subprocess.CalledProcessError(CMD, "non-zero return code")
 
     def test_error(self):

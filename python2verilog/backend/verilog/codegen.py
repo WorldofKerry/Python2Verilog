@@ -120,13 +120,13 @@ class CodeGen:
                 break
 
         for stmt in init_body:
-            assert isinstance(stmt, ver.NonBlockingSubsitution)
+            assert_type(stmt, ver.NonBlockingSubsitution)
             if isinstance(stmt.rvalue, ir.Var):
                 mapping = {
                     ir.Expression(var.ver_name): ir.Expression(var.py_name)
                     for var in context.input_vars
                 }
-                warnings.warn(f"{mapping}, {stmt.rvalue}, {type(stmt.rvalue)}")
+                # logging.error(f"{mapping}, {stmt.rvalue}, {type(stmt.rvalue)}")
                 stmt.rvalue = backwards_replace(stmt.rvalue, mapping)
 
         for var in context.input_vars:
