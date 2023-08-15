@@ -32,7 +32,7 @@ class CodeGen:
         self.context.add_state_weak(context.ready_state)
 
         self.context.add_global_var(
-            ir.Var("state", initial_value=self.context.ready_state)
+            ir.InputVar("state", initial_value=self.context.ready_state)
         )
 
         self._module = CodeGen.__new_module(root_case, self.context)
@@ -47,11 +47,11 @@ class CodeGen:
         assert isinstance(root, ver.Statement)
         assert isinstance(context, ir.Context)
 
-        inputs: list[ir.Var] = []
+        inputs: list[ir.InputVar] = []
         for var in context.input_vars:
             inputs.append(var.py_name)
 
-        outputs: list[ir.Var] = []
+        outputs: list[ir.InputVar] = []
         for var in context.output_vars:
             outputs.append(var.ver_name)
 
