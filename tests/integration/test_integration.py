@@ -301,7 +301,7 @@ class BaseTestCases:
                     err_msg = "\nactual_coords vs expected_coords"
                     if len(filtered_actual) == len(expected):
                         err_msg += ", lengths are same, likely a rounding or sign error"
-                    err_msg += f"\n{FILES_IN_ABS_DIR['filtered_actual']}\n{FILES_IN_ABS_DIR['expected']}\n{FILES_IN_ABS_DIR['module']}"
+                    err_msg += f"\n{FILES_IN_ABS_DIR['filtered_actual']}\n{FILES_IN_ABS_DIR['expected']}\n{FILES_IN_ABS_DIR['module']}\n{FILES_IN_ABS_DIR['testbench']}"
                     self.assertEqual(
                         filtered_actual,
                         expected,

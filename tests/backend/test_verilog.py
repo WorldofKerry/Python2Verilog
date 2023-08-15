@@ -1,5 +1,6 @@
 from python2verilog.backend.verilog.ast import *
 from python2verilog.backend.verilog import CodeGen
+from python2verilog import ir
 from python2verilog.frontend import Generator2Graph
 import unittest
 import warnings
@@ -34,7 +35,7 @@ class TestVerilog(unittest.TestCase):
         )
 
     def test_always(self):
-        always = PosedgeSyncAlways(Expression("_clock"))
+        always = PosedgeSyncAlways(ir.Expression("_clock"))
         lines = always.to_lines()
         # assert_lines(
         #     self,

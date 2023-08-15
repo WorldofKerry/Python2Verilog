@@ -46,11 +46,8 @@ def backwards_replace(expr: ir.Expression, mapping: dict[ir.Expression, ir.Expre
         expr.right = backwards_replace(expr.right, mapping)
     elif isinstance(expr, ir.UnaryOp):
         expr.expr = backwards_replace(expr.expr, mapping)
-    elif isinstance(expr, ir.Expression) and str(expr).startswith("_"):
-        # state change, should eventually replace with State class
-        pass
     else:
-        raise TypeError(f"{type(expr)} {expr}")
+        logging.warning(f"{type(expr)} {expr}")
     return expr
 
 

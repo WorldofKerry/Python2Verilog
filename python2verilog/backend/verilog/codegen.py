@@ -112,13 +112,26 @@ class CodeGen:
         end
         """
         # The first case can be included here
+        mapping = {
+            ir.Expression(var.ver_name): ir.Expression(var.py_name)
+            for var in context.input_vars
+        }
+        stmt_stack = []
         init_body = []
-        stmt_stack = list(init_body)
+
+        for item in root.case_items:
+            if item.condition == ir.Expression(context.entry):
+                stmt_stack += item.statements
+                init_body += item.statements
+                root.case_items.remove(item)
+                break
+
         while stmt_stack:
             stmt = stmt_stack.pop()
             if isinstance(stmt, ver.NonBlockingSubsitution):
                 stmt.rvalue = backwards_replace(stmt.rvalue, mapping)
             elif isinstance(stmt, ver.IfElse):
+                stmt.condition = backwards_replace(stmt.condition, mapping)
                 stmt_stack += stmt.then_body
                 stmt_stack += stmt.else_body
             else:
@@ -130,16 +143,6 @@ class CodeGen:
                     ir.Expression(var.ver_name), ir.Expression(var.py_name)
                 )
             )
-        for item in root.case_items:
-            if item.condition == ir.Expression(context.entry):
-                init_body += item.statements
-                root.case_items.remove(item)
-                break
-
-        mapping = {
-            ir.Expression(var.ver_name): ir.Expression(var.py_name)
-            for var in context.input_vars
-        }
 
         block = ver.IfElse(
             ir.Expression("_start"),
@@ -255,7 +258,7 @@ class CodeGen:
 
             initial_body.append(
                 ver.While(
-                    condition=ir.BinOp(self.context.ready_signal, "!==", ir.UInt(0)),
+                    condition=ir.UnaryOp("!", self.context.ready_signal),
                     body=while_body,
                 )
             )

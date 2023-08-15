@@ -28,10 +28,10 @@ class TestAst(unittest.TestCase):
 
     def test_subsitution(self):
         nb = NonBlockingSubsitution(ir.Var("a"), ir.Var("b"))
-        self.assertEqual(nb.to_string(), "a <= b;\n")
+        self.assertEqual(nb.to_string(), "_a <= _b;\n")
 
         b = BlockingSubsitution(ir.Var("c"), ir.Var("d"))
-        self.assertEqual(b.to_string(), "c = d;\n")
+        self.assertEqual(b.to_string(), "_c = _d;\n")
 
     def test_declaration(self):
         decl = Declaration("name")
@@ -46,5 +46,5 @@ class TestAst(unittest.TestCase):
         case = Case(Expression("cur_state"), [item0, item1])
         self.assert_lines(
             case.to_string(),
-            "case (cur_state) \n 0: begin \n a = $signed(0); \n end \n 1: begin \n b = $signed(1); \n end \n endcase",
+            "case (cur_state) \n 0: begin \n _a = $signed(0); \n end \n 1: begin \n _b = $signed(1); \n end \n endcase",
         )
