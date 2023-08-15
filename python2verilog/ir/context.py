@@ -95,6 +95,7 @@ class Context:
             *list(get_strs(self._input_vars)),
             *list(get_strs(self._output_vars)),
         ]
+        return name in vars
 
     def to_string(self):
         """

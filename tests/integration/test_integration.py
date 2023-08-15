@@ -256,8 +256,9 @@ class BaseTestCases:
                     stderr_str = process.stderr.read()
                     if stderr_str != "":
                         logging.critical(
-                            f"ERROR with running verilog simulation on {function_name}, with: {stderr_str}"
+                            f"\nVerilog simulation on {function_name}, with:\n{stderr_str}\n{FILES_IN_ABS_DIR['module']}\n{FILES_IN_ABS_DIR['testbench']}"
                         )
+                        self.fail()
 
                     logging.debug("Getting iverilog stdout")
 
@@ -284,7 +285,9 @@ class BaseTestCases:
                                     tuple([int(elem) for elem in row[1:]])
                                 )
                             except ValueError as e:
-                                logging.error(e)
+                                logging.error(
+                                    f"{function_name} {len(filtered_actual)} {row[1:]} {e}\n{FILES_IN_ABS_DIR['module']}\n{FILES_IN_ABS_DIR['testbench']}"
+                                )
 
                     if args.write:
                         with open(

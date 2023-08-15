@@ -35,7 +35,7 @@ def backwards_replace(expr: ir.Expression, mapping: dict[ir.Expression, ir.Expre
             if key.to_string() == expr.to_string():
                 logging.info(f"replaced {expr} with {mapping[key]}")
                 return mapping[key]
-    elif isinstance(expr, ir.Int):
+    elif isinstance(expr, (ir.UInt, ir.Int)):
         return expr
     elif isinstance(expr, (ir.BinOp, ir.UBinOp)):
         expr.left = backwards_replace(expr.left, mapping)
@@ -46,8 +46,11 @@ def backwards_replace(expr: ir.Expression, mapping: dict[ir.Expression, ir.Expre
         expr.right = backwards_replace(expr.right, mapping)
     elif isinstance(expr, ir.UnaryOp):
         expr.expr = backwards_replace(expr.expr, mapping)
+    elif isinstance(expr, ir.Expression) and str(expr).startswith("_"):
+        # state change, should eventually replace with State class
+        pass
     else:
-        raise TypeError(type(expr))
+        raise TypeError(f"{type(expr)} {expr}")
     return expr
 
 
@@ -62,7 +65,6 @@ def graph_apply_mapping(
     except RecursionError as e:
         raise RecursionError(f"{node}") from e
     if isinstance(node, ir.AssignNode):
-        # if is_dependent(node.rvalue, str(node.lvalue)):
         node.rvalue = backwards_replace(node.rvalue, mapping)
     else:
         raise ValueError(f"Cannot do backwards replace on {node}")

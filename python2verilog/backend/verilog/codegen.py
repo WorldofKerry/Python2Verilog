@@ -58,8 +58,8 @@ class CodeGen:
         always = ver.PosedgeSyncAlways(
             ir.Expression("_clock"),
             body=[
-                ver.NonBlockingSubsitution(context.valid_signal, ir.Int(0)),
-                ver.NonBlockingSubsitution(context.ready_signal, ir.Int(0)),
+                ver.NonBlockingSubsitution(context.valid_signal, ir.UInt(0)),
+                ver.NonBlockingSubsitution(context.ready_signal, ir.UInt(0)),
             ]
             + [
                 ver.NonBlockingSubsitution(out, ir.Int(0))
@@ -113,21 +113,16 @@ class CodeGen:
         """
         # The first case can be included here
         init_body = []
-        for item in root.case_items:
-            if item.condition == ir.Expression(context.entry):
-                init_body += item.statements
-                root.case_items.remove(item)
-                break
-
-        for stmt in init_body:
-            assert_type(stmt, ver.NonBlockingSubsitution)
-            if isinstance(stmt.rvalue, ir.Var):
-                mapping = {
-                    ir.Expression(var.ver_name): ir.Expression(var.py_name)
-                    for var in context.input_vars
-                }
-                # logging.error(f"{mapping}, {stmt.rvalue}, {type(stmt.rvalue)}")
+        stmt_stack = list(init_body)
+        while stmt_stack:
+            stmt = stmt_stack.pop()
+            if isinstance(stmt, ver.NonBlockingSubsitution):
                 stmt.rvalue = backwards_replace(stmt.rvalue, mapping)
+            elif isinstance(stmt, ver.IfElse):
+                stmt_stack += stmt.then_body
+                stmt_stack += stmt.else_body
+            else:
+                raise TypeError(f"Unexpected {type(stmt)} {stmt}")
 
         for var in context.input_vars:
             init_body.append(
@@ -135,6 +130,16 @@ class CodeGen:
                     ir.Expression(var.ver_name), ir.Expression(var.py_name)
                 )
             )
+        for item in root.case_items:
+            if item.condition == ir.Expression(context.entry):
+                init_body += item.statements
+                root.case_items.remove(item)
+                break
+
+        mapping = {
+            ir.Expression(var.ver_name): ir.Expression(var.py_name)
+            for var in context.input_vars
+        }
 
         block = ver.IfElse(
             ir.Expression("_start"),
@@ -209,17 +214,17 @@ class CodeGen:
 
         initial_body: list[ver.Statement | ver.While] = []
         initial_body.append(
-            ver.BlockingSubsitution(self.context.clock_signal, ir.Int(0))
+            ver.BlockingSubsitution(self.context.clock_signal, ir.UInt(0))
         )
         initial_body.append(
-            ver.BlockingSubsitution(self.context.start_signal, ir.Int(0))
+            ver.BlockingSubsitution(self.context.start_signal, ir.UInt(0))
         )
         initial_body.append(
-            ver.BlockingSubsitution(self.context.reset_signal, ir.Int(1))
+            ver.BlockingSubsitution(self.context.reset_signal, ir.UInt(1))
         )
         initial_body.append(ver.AtNegedgeStatement(self.context.clock_signal))
         initial_body.append(
-            ver.BlockingSubsitution(self.context.reset_signal, ir.Int(0))
+            ver.BlockingSubsitution(self.context.reset_signal, ir.UInt(0))
         )
         initial_body.append(ver.Statement())
 
@@ -235,7 +240,7 @@ class CodeGen:
                     )
                 )
             initial_body.append(
-                ver.BlockingSubsitution(self.context.start_signal, ir.Int(1))
+                ver.BlockingSubsitution(self.context.start_signal, ir.UInt(1))
             )
 
             initial_body.append(ver.AtNegedgeStatement(self.context.clock_signal))
@@ -243,14 +248,14 @@ class CodeGen:
             # wait for done signal
             while_body: list[ver.Statement] = []
             while_body.append(
-                ver.BlockingSubsitution(self.context.start_signal, ir.Int(0))
+                ver.BlockingSubsitution(self.context.start_signal, ir.UInt(0))
             )
             while_body.append(make_display_stmt())
             while_body.append(ver.AtNegedgeStatement(self.context.clock_signal))
 
             initial_body.append(
                 ver.While(
-                    condition=ir.Expression("!_ready"),
+                    condition=ir.BinOp(self.context.ready_signal, "!==", ir.UInt(0)),
                     body=while_body,
                 )
             )
@@ -333,7 +338,7 @@ class CaseBuilder:
 
         if isinstance(vertex, ir.DoneNode):
             stmts += [
-                ver.NonBlockingSubsitution(self.context.ready_signal, ir.Int(1)),
+                ver.NonBlockingSubsitution(self.context.ready_signal, ir.UInt(1)),
                 ver.NonBlockingSubsitution(
                     self.case.condition, ir.Expression(self.context.ready_state)
                 ),
@@ -359,12 +364,12 @@ class CaseBuilder:
             outputs = [
                 ver.NonBlockingSubsitution(var, expr)
                 for var, expr in zip(self.context.output_vars, vertex.stmts)
-            ] + [ver.NonBlockingSubsitution(self.context.valid_signal, ir.Int(1))]
+            ] + [ver.NonBlockingSubsitution(self.context.valid_signal, ir.UInt(1))]
             state_change = []
 
             if isinstance(vertex.optimal_child.optimal_child, ir.DoneNode):
                 outputs.append(
-                    ver.NonBlockingSubsitution(self.context.ready_signal, ir.Int(1))
+                    ver.NonBlockingSubsitution(self.context.ready_signal, ir.UInt(1))
                 )
 
             state_change.append(
