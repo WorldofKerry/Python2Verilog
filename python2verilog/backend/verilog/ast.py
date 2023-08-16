@@ -11,47 +11,27 @@ import copy
 
 from ...utils.string import Lines, Indent, ImplementsToLines
 from ...utils.assertions import assert_list_type, assert_type, assert_dict_type
+from ... import ir
 
 
-class Expression:
-    """
-    Verilog expression, e.g.
-    a + b
-    Currently just a string
-    """
-
-    def __init__(self, expr: str):
-        assert isinstance(expr, str)
-        self.expr = expr
-
-    def __str__(self):
-        return self.to_string()
-
-    def to_string(self):
-        """
-        To Verilog
-        """
-        return self.expr
-
-
-class AtPosedge(Expression):
+class AtPosedge(ir.Expression):
     """
     @(posedge <condition>)
     """
 
-    def __init__(self, condition: Expression):
-        assert isinstance(condition, Expression)
+    def __init__(self, condition: ir.Expression):
+        assert isinstance(condition, ir.Expression)
         self.condition = condition
         super().__init__(f"@(posedge {condition.to_string()})")
 
 
-class AtNegedge(Expression):
+class AtNegedge(ir.Expression):
     """
     @(negedge <condition>)
     """
 
-    def __init__(self, condition: Expression):
-        assert isinstance(condition, Expression)
+    def __init__(self, condition: ir.Expression):
+        assert isinstance(condition, ir.Expression)
         self.condition = condition
         super().__init__(f"@(negedge {condition.to_string()})")
 
@@ -63,8 +43,8 @@ class Statement(ImplementsToLines):
     """
 
     def __init__(self, literal: str = "", comment: str = ""):
-        self.literal = literal
-        self.comment = comment
+        self.literal = assert_type(literal, str)
+        self.comment = assert_type(comment, str)
 
     def to_lines(self):
         """
@@ -103,7 +83,8 @@ class LocalParam(Statement):
     localparam <name> = <value>;
     """
 
-    def __init__(self, name: str, value: str, *args, **kwargs):
+    def __init__(self, name: ir.Expression, value: ir.UInt, *args, **kwargs):
+        assert isinstance(value, ir.UInt)
         super().__init__(f"localparam {name} = {value};", *args, **kwargs)
 
 
@@ -112,8 +93,8 @@ class AtPosedgeStatement(Statement):
     @(posedge <condition>);
     """
 
-    def __init__(self, condition: Expression, *args, **kwargs):
-        assert isinstance(condition, Expression)
+    def __init__(self, condition: ir.Expression, *args, **kwargs):
+        assert isinstance(condition, ir.Expression)
         super().__init__(f"{AtPosedge(condition).to_string()};", *args, **kwargs)
 
 
@@ -122,8 +103,8 @@ class AtNegedgeStatement(Statement):
     @(negedge <condition>);
     """
 
-    def __init__(self, condition: Expression, *args, **kwargs):
-        assert isinstance(condition, Expression)
+    def __init__(self, condition: ir.Expression, *args, **kwargs):
+        assert isinstance(condition, ir.Expression)
         super().__init__(f"{AtNegedge(condition).to_string()};", *args, **kwargs)
 
 
@@ -137,7 +118,7 @@ class Instantiation(Statement):
         self,
         module_name: str,
         given_name: str,
-        port_connections: dict[str, str],
+        port_connections: dict[ir.Expression | str, ir.Expression | str],
         *args,
         **kwargs,
     ):
@@ -179,7 +160,7 @@ class Module(ImplementsToLines):
         outputs: list[str],
         body: Optional[list[Statement]] = None,
         add_default_ports=True,
-        localparams: Optional[dict[str, str]] = None,
+        localparams: Optional[dict[ir.Expression, ir.UInt]] = None,
     ):
         self.name = name
 
@@ -210,7 +191,7 @@ class Module(ImplementsToLines):
             self.body = []
 
         if localparams:
-            assert_dict_type(localparams, str, str)
+            assert_dict_type(localparams, str, ir.UInt)
             self.local_params = Lines()
             for key, value in localparams.items():
                 self.local_params.concat(LocalParam(key, value).to_lines())
@@ -233,7 +214,7 @@ class Module(ImplementsToLines):
         lines.concat(self.local_params, 1)
         for stmt in self.body:
             if stmt.to_lines() is None:
-                warnings.warn(type(stmt))
+                logging.error(type(stmt))
             lines.concat(stmt.to_lines(), 1)
         lines += "endmodule"
         return lines
@@ -269,12 +250,12 @@ class Always(Statement):
 
     def __init__(
         self,
-        trigger: Expression,
+        trigger: ir.Expression,
         *args,
         body: Optional[list[Statement]] = None,
         **kwargs,
     ):
-        assert isinstance(trigger, Expression)
+        assert isinstance(trigger, ir.Expression)
         self.trigger = trigger
         if body:
             for stmt in body:
@@ -302,8 +283,8 @@ class PosedgeSyncAlways(Always):
     end
     """
 
-    def __init__(self, clock: Expression, *args, **kwargs):
-        assert isinstance(clock, Expression)
+    def __init__(self, clock: ir.Expression, *args, **kwargs):
+        assert isinstance(clock, ir.Expression)
         self.clock = clock
         super().__init__(AtPosedge(clock), *args, **kwargs)
 
@@ -314,9 +295,16 @@ class Subsitution(Statement):
     <lvalue> <blocking or nonblocking> <rvalue>
     """
 
-    def __init__(self, lvalue: str, rvalue: str, oper: str, *args, **kwargs):
-        assert isinstance(rvalue, str), f"got {type(rvalue)} instead"
-        assert isinstance(lvalue, str)
+    def __init__(
+        self,
+        lvalue: ir.Expression,
+        rvalue: ir.Expression,
+        oper: str,
+        *args,
+        **kwargs,
+    ):
+        assert isinstance(rvalue, (ir.Expression)), f"got {type(rvalue)} instead"
+        assert isinstance(lvalue, (ir.Expression))
         self.lvalue = lvalue
         self.rvalue = rvalue
         self.oper = oper
@@ -337,7 +325,7 @@ class NonBlockingSubsitution(Subsitution):
     <lvalue> <= <rvalue>
     """
 
-    def __init__(self, lvalue: str, rvalue: str, *args, **kwargs):
+    def __init__(self, lvalue: ir.Expression, rvalue: ir.Expression, *args, **kwargs):
         super().__init__(lvalue, rvalue, "<=", *args, **kwargs)
 
 
@@ -346,7 +334,7 @@ class BlockingSubsitution(Subsitution):
     <lvalue> = <rvalue>
     """
 
-    def __init__(self, lvalue: str, rvalue: str, *args, **kwargs):
+    def __init__(self, lvalue: ir.Expression, rvalue: ir.Expression, *args, **kwargs):
         super().__init__(lvalue, rvalue, "=", *args, *kwargs)
 
 
@@ -357,7 +345,7 @@ class Declaration(Statement):
 
     def __init__(
         self,
-        name: str,
+        name: ir.Expression | str,
         *args,
         size: int = 32,
         is_reg: bool = False,
@@ -396,8 +384,8 @@ class CaseItem(ImplementsToLines):
     end
     """
 
-    def __init__(self, condition: Expression, statements: list[Statement]):
-        assert isinstance(condition, Expression)
+    def __init__(self, condition: ir.Expression, statements: list[Statement]):
+        assert isinstance(condition, ir.Expression)
         self.condition = condition  # Can these by expressions are only literals?
         if statements:
             for stmt in statements:
@@ -429,9 +417,9 @@ class Case(Statement):
     """
 
     def __init__(
-        self, expression: Expression, case_items: list[CaseItem], *args, **kwargs
+        self, expression: ir.Expression, case_items: list[CaseItem], *args, **kwargs
     ):
-        assert isinstance(expression, Expression)
+        assert isinstance(expression, ir.Expression)
         self.condition = expression
         if case_items:
             for item in case_items:
@@ -460,15 +448,14 @@ class IfElse(Statement):
 
     def __init__(
         self,
-        condition: Expression,
+        condition: ir.Expression,
         then_body: list[Statement],
         else_body: Optional[list[Statement]],
         *args,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        assert isinstance(condition, Expression)
-        self.condition = condition
+        self.condition = assert_type(condition, ir.Expression)
         self.then_body = assert_list_type(then_body, Statement)
         self.else_body = assert_list_type(else_body, Statement)
 
@@ -496,11 +483,11 @@ class While(Statement):
     def __init__(
         self,
         *args,
-        condition: Expression,
+        condition: ir.Expression,
         body: Optional[list[Statement]] = None,
         **kwargs,
     ):
-        assert isinstance(condition, Expression)
+        assert isinstance(condition, ir.Expression)
         self.condition = condition
         if body:
             assert_list_type(body, Statement)

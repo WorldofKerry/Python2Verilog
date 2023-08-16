@@ -5,11 +5,11 @@ A Control Flow Graph represented as a Directed Graph
 
 """
 
-# flake8: noqa
 from .expressions import (
     Expression,
     Int,
-    Var,
+    UInt,
+    InputVar,
     State,
     Ternary,
     UBinOp,

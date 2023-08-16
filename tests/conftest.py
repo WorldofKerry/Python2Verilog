@@ -1,6 +1,7 @@
 import subprocess
 import os
 import warnings
+import sys
 import pytest
 from .utils import Argument
 
@@ -58,4 +59,6 @@ def argparse(request):
     args = {}
     for param in params:
         args[param.name] = request.config.getoption(f"--{param.dashed_name}")
+    if max(args["optimization_levels"]) > 8:
+        sys.setrecursionlimit(2000)
     setattr(request.cls, "args", type("Args", (object,), args))

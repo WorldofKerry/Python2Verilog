@@ -2,6 +2,7 @@
 Verilog Backend
 """
 
-# flake8: noqa
+from .codegen import (
+    CodeGen,
+)
 from .ast import *
-from .codegen import *

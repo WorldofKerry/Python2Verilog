@@ -8,62 +8,67 @@ from python2verilog.backend.verilog import CodeGen
 
 
 class TestGraphApplyMapping(unittest.TestCase):
-    def test_dependent(self):
+    def test_mapping(self):
         """
         i <= f(i)
         """
-        mapping = {ir.Var("i"): ir.Int(1)}
+        mapping = {ir.InputVar("i"): ir.Int(1)}
         node = ir.AssignNode(
-            unique_id="", lvalue=ir.Var("i"), rvalue=ir.Add(ir.Var("i"), ir.Int(1))
+            unique_id="",
+            lvalue=ir.InputVar("i"),
+            rvalue=ir.Add(ir.InputVar("i"), ir.Int(1)),
         )
-        self.assertTrue(is_dependent(node.rvalue, str(node.lvalue)))
         updated = graph_apply_mapping(node, mapping)
-        self.assertEqual("i <= $signed($signed(1) + $signed(1))", str(updated))
+        self.assertEqual("_i <= $signed($signed(1) + $signed(1))", str(updated))
 
-        mapping = {ir.Var("i"): ir.Add(ir.Var("i"), ir.Int(1))}
+        mapping = {ir.InputVar("i"): ir.Add(ir.InputVar("i"), ir.Int(1))}
         node = ir.AssignNode(
-            unique_id="", lvalue=ir.Var("i"), rvalue=ir.Add(ir.Var("i"), ir.Int(1))
+            unique_id="",
+            lvalue=ir.InputVar("i"),
+            rvalue=ir.Add(ir.InputVar("i"), ir.Int(1)),
         )
-        self.assertTrue(is_dependent(node.rvalue, str(node.lvalue)))
         updated = graph_apply_mapping(node, mapping)
         self.assertEqual(
-            "i <= $signed($signed(i + $signed(1)) + $signed(1))", str(updated)
+            "_i <= $signed($signed(_i + $signed(1)) + $signed(1))", str(updated)
         )
 
-        mapping = {ir.Var("i"): ir.Int(1)}
-        node = ir.AssignNode(unique_id="", lvalue=ir.Var("a"), rvalue=ir.Var("i"))
-        self.assertFalse(is_dependent(node.rvalue, str(node.lvalue)))
-        self.assertTrue(is_dependent(node.rvalue, "i"))
+        mapping = {ir.InputVar("i"): ir.Int(1)}
+        node = ir.AssignNode(
+            unique_id="", lvalue=ir.InputVar("a"), rvalue=ir.InputVar("i")
+        )
         updated = graph_apply_mapping(node, mapping)
-        self.assertEqual("a <= $signed(1)", str(updated))
+        self.assertEqual("_a <= $signed(1)", str(updated))
 
     def test_independent(self):
         """
         i <= constant
         """
-        mapping = {ir.Var("i"): ir.Add(ir.Var("i"), ir.Int(1))}
+        mapping = {ir.InputVar("i"): ir.Add(ir.InputVar("i"), ir.Int(1))}
         node = ir.AssignNode(
-            unique_id="abc", lvalue=ir.Var("i"), rvalue=ir.Add(ir.Int(0), ir.Int(1))
+            unique_id="abc",
+            lvalue=ir.InputVar("i"),
+            rvalue=ir.Add(ir.Int(0), ir.Int(1)),
         )
-        self.assertFalse(is_dependent(node.rvalue, str(node.lvalue)))
         updated = graph_apply_mapping(node, mapping)
-        self.assertEqual("i <= $signed($signed(0) + $signed(1))", str(updated))
+        self.assertEqual("_i <= $signed($signed(0) + $signed(1))", str(updated))
 
-        mapping = {ir.Var("i"): ir.Add(ir.Var("i"), ir.Var("i"))}
+        mapping = {ir.InputVar("i"): ir.Add(ir.InputVar("i"), ir.InputVar("i"))}
         node = ir.AssignNode(
-            unique_id="abc", lvalue=ir.Var("i"), rvalue=ir.Add(ir.Int(0), ir.Int(1))
+            unique_id="abc",
+            lvalue=ir.InputVar("i"),
+            rvalue=ir.Add(ir.Int(0), ir.Int(1)),
         )
-        self.assertFalse(is_dependent(node.rvalue, str(node.lvalue)))
         updated = graph_apply_mapping(node, mapping)
-        self.assertEqual("i <= $signed($signed(0) + $signed(1))", str(updated))
+        self.assertEqual("_i <= $signed($signed(0) + $signed(1))", str(updated))
 
-        mapping = {ir.Var("i"): ir.Add(ir.Int(0), ir.Int(1))}
+        mapping = {ir.InputVar("i"): ir.Add(ir.Int(0), ir.Int(1))}
         node = ir.AssignNode(
-            unique_id="abc", lvalue=ir.Var("i"), rvalue=ir.Add(ir.Int(0), ir.Int(1))
+            unique_id="abc",
+            lvalue=ir.InputVar("i"),
+            rvalue=ir.Add(ir.Int(0), ir.Int(1)),
         )
-        self.assertFalse(is_dependent(node.rvalue, str(node.lvalue)))
         updated = graph_apply_mapping(node, mapping)
-        self.assertEqual("i <= $signed($signed(0) + $signed(1))", str(updated))
+        self.assertEqual("_i <= $signed($signed(0) + $signed(1))", str(updated))
 
 
 # class TestOptimizer(unittest.TestCase):

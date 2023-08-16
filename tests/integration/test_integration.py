@@ -16,8 +16,6 @@ import networkx as nx
 from matplotlib import pyplot as plt
 from abc import abstractmethod
 
-from python2verilog.backend.verilog import CodeGen, CaseBuilder
-from python2verilog.frontend import Generator2Graph
 from python2verilog import ir
 from python2verilog.api import convert_graph_debug
 from python2verilog.utils.assertions import assert_type
@@ -72,8 +70,7 @@ class BaseTestCases:
                 )
                 logging.info("\n" + df.to_markdown(index=False))
             else:
-                logging.warning("No stats collected")
-                warnings.warn("No stats collected")
+                logging.error("No stats collected")
 
         def run_test(
             self,
@@ -256,9 +253,10 @@ class BaseTestCases:
 
                     stderr_str = process.stderr.read()
                     if stderr_str != "":
-                        warnings.warn(
-                            f"ERROR with running verilog simulation on {function_name}, with: {stderr_str}"
+                        logging.critical(
+                            f"\nVerilog simulation on {function_name}, with:\n{stderr_str}\n{FILES_IN_ABS_DIR['module']}\n{FILES_IN_ABS_DIR['testbench']}"
                         )
+                        self.fail()
 
                     logging.debug("Getting iverilog stdout")
 
@@ -280,9 +278,14 @@ class BaseTestCases:
                     filtered_actual = []
                     for row in actual_raw:
                         if row[0] == "1":
-                            filtered_actual.append(
-                                tuple([int(elem) for elem in row[1:]])
-                            )
+                            try:
+                                filtered_actual.append(
+                                    tuple([int(elem) for elem in row[1:]])
+                                )
+                            except ValueError as e:
+                                logging.error(
+                                    f"{function_name} {len(filtered_actual)} {row[1:]} {e}\n{FILES_IN_ABS_DIR['module']}\n{FILES_IN_ABS_DIR['testbench']}"
+                                )
 
                     if args.write:
                         with open(
@@ -296,7 +299,7 @@ class BaseTestCases:
                     err_msg = "\nactual_coords vs expected_coords"
                     if len(filtered_actual) == len(expected):
                         err_msg += ", lengths are same, likely a rounding or sign error"
-                    err_msg += f"\n{FILES_IN_ABS_DIR['filtered_actual']}\n{FILES_IN_ABS_DIR['expected']}\n{FILES_IN_ABS_DIR['module']}"
+                    err_msg += f"\n{FILES_IN_ABS_DIR['filtered_actual']}\n{FILES_IN_ABS_DIR['expected']}\n{FILES_IN_ABS_DIR['module']}\n{FILES_IN_ABS_DIR['testbench']}"
                     self.assertEqual(
                         filtered_actual,
                         expected,
@@ -323,7 +326,7 @@ class BaseTestCases:
                         stdout = syn_process.stdout.read()
                         stderr = syn_process.stderr.read()
                         if stderr:
-                            warnings.warn(stderr)
+                            logging.critical(stderr)
 
                         stats = stdout[stdout.find("Printing statistics.") :]
 
@@ -353,8 +356,7 @@ class BaseTestCases:
                             statistics[key] = value
 
                 except subprocess.TimeoutExpired as e:
-                    logging.warning(e)
-                    warnings.warn(e)
+                    logging.error(e)
                     process.terminate()
 
                 for key in fifos:
@@ -367,47 +369,10 @@ class Graph(BaseTestCases.BaseTest):
         BaseTestCases.BaseTest.__init__(self, TEST_CASES, *args, **kwargs)
 
 
-# @pytest.mark.usefixtures("argparse")
-# class GraphOpti1(BaseTestCases.BaseTest, OptimizedGraphBase):
-#     def __init__(self, *args, **kwargs):
-#         OptimizedGraphBase.__init__(
-#             self, optimization_levels=int(self.__class__.__name__[-1])
-#         )
-#         BaseTestCases.BaseTest.__init__(self, TEST_CASES, *args, **kwargs)
-
-
-# @pytest.mark.usefixtures("argparse")
-# class GraphOpti2(BaseTestCases.BaseTest, OptimizedGraphBase):
-#     def __init__(self, *args, **kwargs):
-#         OptimizedGraphBase.__init__(
-#             self, optimization_levels=int(self.__class__.__name__[-1])
-#         )
-#         BaseTestCases.BaseTest.__init__(self, TEST_CASES, *args, **kwargs)
-
-
-# @pytest.mark.usefixtures("argparse")
-# class GraphOpti3(BaseTestCases.BaseTest, OptimizedGraphBase):
-#     def __init__(self, *args, **kwargs):
-#         OptimizedGraphBase.__init__(
-#             self, optimization_levels=int(self.__class__.__name__[-1])
-#         )
-#         BaseTestCases.BaseTest.__init__(self, TEST_CASES, *args, **kwargs)
-
-
-# @pytest.mark.usefixtures("argparse")
-# class GraphOpti8(BaseTestCases.BaseTest, OptimizedGraphBase):
-#     def __init__(self, *args, **kwargs):
-#         OptimizedGraphBase.__init__(
-#             self, optimization_levels=int(self.__class__.__name__[-1])
-#         )
-#         BaseTestCases.BaseTest.__init__(self, TEST_CASES, *args, **kwargs)
-
-
-# # For easier testing
-# @pytest.mark.usefixtures("argparse")
-# class GraphTesting(BaseTestCases.BaseTest, OptimizedGraphBase):
-#     def __init__(self, *args, **kwargs):
-#         OptimizedGraphBase.__init__(self, optimization_levels=1)
-#         BaseTestCases.BaseTest.__init__(
-#             self, {"testing": TEST_CASES["testing"]}, *args, **kwargs
-#         )
+# For easier testing
+@pytest.mark.usefixtures("argparse")
+class GraphTesting(BaseTestCases.BaseTest):
+    def __init__(self, *args, **kwargs):
+        BaseTestCases.BaseTest.__init__(
+            self, {"testing": TEST_CASES["testing"]}, *args, **kwargs
+        )

@@ -1,6 +1,6 @@
 [project]
 name = "python2verilog"
-version = "0.1.4"
+version = "0.1.5"
 authors = [{ name = "Kerry Wang", email = "kerrywang369@gmail.com" }]
 description = "Converts a subset of python generator functions into synthesizable sequential SystemVerilog"
 readme = "README.md"
@@ -14,5 +14,12 @@ classifiers = [
 "Homepage" = "https://github.com/WorldofKerry/Python2Verilog/"
 "Bug Tracker" = "https://github.com/WorldofKerry/Python2Verilog/issues"
 
-[tool.setuptools]
-"packages" = ["python2verilog"]
+[tool.setuptools.packages.find]
+"include" = ["python2verilog*"]
+
+[tool.pytest.ini_options]
+log_cli = true
+log_cli_level = "WARNING"
+log_cli_format = "%(levelname)s %(filename)s:%(lineno)s %(message)s"
+# log_cli_format = "%(asctime)s [%(levelname)8s] %(message)s (%(filename)s:%(lineno)s)"
+# log_cli_date_format = "%Y-%m-%d %H:%M:%S"

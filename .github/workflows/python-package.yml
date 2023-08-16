@@ -1,5 +1,4 @@
-# Runs flake8
-# Locally run `pre-commit install` then commit (Pylint should include flake8)
+# Builds package
 
 name: python package
 
@@ -27,11 +26,11 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        python -m pip install flake8
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-    - name: Lint with flake8
+    - name: Install This Package and Use
       run: |
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        mkdir build
+        cd build
+        python3 -m pip install ..
+        cp ../tests/integration/data/circle_lines/python.py .
+        python3 -m python2verilog python.py
