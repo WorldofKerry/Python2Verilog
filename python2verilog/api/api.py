@@ -81,19 +81,28 @@ def parse_python(code: str, function_name: str, file_path: Optional[str] = None)
     logging.info(f"Test cases: {test_cases}")
 
     input_names = [var.arg for var in func.args.args]
-    logging.warning(input_names)
+    logging.info(f"Input param names: {input_names}")
 
     input_types = [type(val) for val in test_cases[0]]
-    for case in test_cases:
-        for i, (expected_type, actual_value) in enumerate(zip(input_types, case)):
+    for tupl in test_cases:
+        for i, (expected_type, actual_value) in enumerate(zip(input_types, tupl)):
             assert expected_type == type(
                 actual_value
             ), f"Expected parameter `{input_names[i]}` to be {expected_type} but got {type(actual_value)} instead"
-    logging.warning(input_types)
+    logging.info(f"Input param types: {input_types}")
 
     context = ir.Context(name=function_name)
 
     locals_ = dict()
-    generator_func = exec(code, None, locals_)
+    exec(code, None, locals_)  # 1-indexed
+    generator = locals_[function_name](*test_cases[0])
 
-    return (func, test_cases)
+    output_types = [type(val) for val in next(generator)]
+    for tupl in generator:
+        for i, (expected_type, actual_value) in enumerate(zip(input_types, tupl)):
+            assert expected_type == type(
+                actual_value
+            ), f"Expected parameter `{input_names[i]}` to be {expected_type} but got {type(actual_value)} instead"
+
+    logging.info(f"Output param types: {output_types}")
+    return (func, test_cases, input_names, input_types, output_types)

@@ -18,7 +18,7 @@ def deeznuts(input):
 
 inst = nuts(50, 51)
 inst = nuts(15, 16)
-inst = deeznuts((420,))
+inst = deeznuts(420)
 """
         logging.warning(parse_python(code, "nuts"))
 
@@ -32,8 +32,23 @@ def deeznuts(input):
   yield input
   yield input + 1
 
-inst = nuts((50, 51))
-inst = nuts((15, "16"))
-inst = deeznuts((420,))
+inst = nuts(50, 51)
+inst = nuts(15, "16")
+inst = deeznuts(420)
+"""
+        self.assertRaises(AssertionError, parse_python, code, "nuts")
+
+        code = """
+def nuts(input, other):
+  yield input, input
+  yield input + 1, "bruv"
+
+def deeznuts(input):
+  yield input
+  yield input + 1
+
+inst = nuts(50, 51)
+inst = nuts(15, 16)
+inst = deeznuts(420)
 """
         self.assertRaises(AssertionError, parse_python, code, "nuts")
