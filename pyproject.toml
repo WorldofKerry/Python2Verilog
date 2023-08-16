@@ -15,4 +15,4 @@ classifiers = [
 "Bug Tracker" = "https://github.com/WorldofKerry/Python2Verilog/issues"
 
 [tool.setuptools]
-"py-modules" = ["python2verilog"]
+"packages" = ["python2verilog"]
