@@ -45,7 +45,7 @@ def backwards_replace(expr: ir.Expression, mapping: dict[ir.Expression, ir.Expre
     elif isinstance(expr, ir.UnaryOp):
         expr.expr = backwards_replace(expr.expr, mapping)
     else:
-        logging.info(f"TODO: use the State class {type(expr)} {expr}")
+        logging.debug(f"TODO: use the State class {type(expr)} {expr}")
     return expr
 
 

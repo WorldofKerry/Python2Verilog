@@ -64,15 +64,6 @@ Use `git clean -dxf` to remove gitignored files.
 The Github Actions run all the tests with writing enabled.
 You may find its output as a [Github Artifact](https://nightly.link/WorldofKerry/Python2Verilog/workflows/pytest/main/tests-data.zip).
 
-<!-- INFO     root:test_integration.py:43 Testing GraphOpti1
-INFO     root:test_integration.py:50 Testing `circle_lines` with `[(21, 37, 7), (89, 45, 43)]`
-INFO     root:test_integration.py:50 Testing `happy_face` with `[(50, 51, 7), (86, 97, 43)]`
-INFO     root:test_integration.py:50 Testing `rectangle_filled` with `[(32, 84, 5, 7), (64, 78, 34, 48)]`
-INFO     root:test_integration.py:50 Testing `rectangle_lines` with `[(32, 84, 5, 7), (84, 96, 46, 89)]`
-INFO     root:test_integration.py:50 Testing `fib` with `[(10,), (35,)]`
-INFO     root:test_integration.py:50 Testing `testing` with `[(15,)]`
-INFO     root:test_integration.py:50 Testing `dumb_loop` with `[(8,), (512,)]`
-INFO     root:test_integration.py:62  -->
 | function_name    |   py_yields |   module_nchars |   wires |   wire_bits |   public_wires |   public_wire_bits |   memories |   memory_bits |   processes |   cells |   add |   ge |   gt |   mul |   sub |   ver_clks |
 |:-----------------|------------:|----------------:|--------:|------------:|---------------:|-------------------:|-----------:|--------------:|------------:|--------:|------:|-----:|-----:|------:|------:|-----------:|
 | circle_lines     |         296 |            3101 |      98 |        2857 |             18 |                421 |          0 |             0 |           1 |      68 |    35 |    1 |    1 |     6 |    25 |        299 |
