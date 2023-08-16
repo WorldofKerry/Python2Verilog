@@ -82,20 +82,20 @@ class Context:
         Checks if a Python variable has been already declared or not
         """
 
-        def get_strs(vars: list[InputVar]):
+        def get_strs(variables: list[InputVar]):
             """
             Maps vars to str
             """
-            for var in vars:
-                yield (var.py_name)
+            for var in variables:
+                yield var.py_name
 
         assert isinstance(name, str)
-        vars = [
+        variables = [
             *list(get_strs(self._global_vars)),
             *list(get_strs(self._input_vars)),
             *list(get_strs(self._output_vars)),
         ]
-        return name in vars
+        return name in variables
 
     def to_string(self):
         """

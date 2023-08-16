@@ -42,9 +42,9 @@ class Statement(ImplementsToLines):
     If used directly, it is treated as a string literal
     """
 
-    def __init__(self, literal: ir.Expression = "", comment: ir.Expression = ""):
-        self.literal = literal
-        self.comment = comment
+    def __init__(self, literal: str = "", comment: str = ""):
+        self.literal = assert_type(literal, str)
+        self.comment = assert_type(comment, str)
 
     def to_lines(self):
         """
@@ -118,7 +118,7 @@ class Instantiation(Statement):
         self,
         module_name: str,
         given_name: str,
-        port_connections: dict[str, str],
+        port_connections: dict[ir.Expression | str, ir.Expression | str],
         *args,
         **kwargs,
     ):
@@ -160,7 +160,7 @@ class Module(ImplementsToLines):
         outputs: list[str],
         body: Optional[list[Statement]] = None,
         add_default_ports=True,
-        localparams: Optional[dict[ir.Expression, ir.Expression]] = None,
+        localparams: Optional[dict[ir.Expression, ir.UInt]] = None,
     ):
         self.name = name
 
@@ -303,8 +303,8 @@ class Subsitution(Statement):
         *args,
         **kwargs,
     ):
-        assert isinstance(rvalue, ir.Expression), f"got {type(rvalue)} instead"
-        assert isinstance(lvalue, ir.Expression)
+        assert isinstance(rvalue, (ir.Expression)), f"got {type(rvalue)} instead"
+        assert isinstance(lvalue, (ir.Expression))
         self.lvalue = lvalue
         self.rvalue = rvalue
         self.oper = oper
@@ -345,7 +345,7 @@ class Declaration(Statement):
 
     def __init__(
         self,
-        name: ir.Expression,
+        name: ir.Expression | str,
         *args,
         size: int = 32,
         is_reg: bool = False,

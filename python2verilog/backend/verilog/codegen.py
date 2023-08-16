@@ -47,11 +47,11 @@ class CodeGen:
         assert isinstance(root, ver.Statement)
         assert isinstance(context, ir.Context)
 
-        inputs: list[ir.InputVar] = []
+        inputs = []
         for var in context.input_vars:
             inputs.append(var.py_name)
 
-        outputs: list[ir.InputVar] = []
+        outputs = []
         for var in context.output_vars:
             outputs.append(var.ver_name)
 
@@ -239,7 +239,7 @@ class CodeGen:
             for i, var in enumerate(self.context.input_vars):
                 initial_body.append(
                     ver.BlockingSubsitution(
-                        ir.Expression(var.py_name), ir.Int(test_case[i])
+                        ir.Expression(var.py_name), ir.Int(int(test_case[i]))
                     )
                 )
             initial_body.append(
@@ -316,7 +316,9 @@ class CaseBuilder:
                 ver.CaseItem(
                     ir.Expression(context.ready_state),
                     statements=[
-                        ver.NonBlockingSubsitution(lvalue="_ready", rvalue="1")
+                        ver.NonBlockingSubsitution(
+                            lvalue=ir.State("_ready"), rvalue=ir.UInt(1)
+                        )
                     ],
                 )
             )
