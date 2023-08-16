@@ -36,6 +36,8 @@
 <span class="kn">import</span> <span class="nn">itertools</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
+
+<span class="kn">from</span> <span class="nn">python2verilog.optimizer.optimizer</span> <span class="kn">import</span> <span class="n">backwards_replace</span>
 <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">ast</span> <span class="k">as</span> <span class="n">ver</span>
 <span class="kn">from</span> <span class="nn">...</span> <span class="kn">import</span> <span class="n">ir</span>
 <span class="kn">from</span> <span class="nn">...utils.assertions</span> <span class="kn">import</span> <span class="n">assert_type</span><span class="p">,</span> <span class="n">assert_list_type</span><span class="p">,</span> <span class="n">assert_dict_type</span>
@@ -52,19 +54,19 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">assert_type</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Vertex</span><span class="p">)</span>
         <span class="n">assert_type</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Context</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_context</span> <span class="o">=</span> <span class="n">context</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">context</span> <span class="o">=</span> <span class="n">context</span>
         <span class="n">root_case</span> <span class="o">=</span> <span class="n">CaseBuilder</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">context</span><span class="p">)</span><span class="o">.</span><span class="n">case</span>
 
         <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">root_case</span><span class="o">.</span><span class="n">case_items</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="o">.</span><span class="n">add_state</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">condition</span><span class="o">.</span><span class="n">to_string</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">add_state</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">condition</span><span class="o">.</span><span class="n">to_string</span><span class="p">())</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="o">.</span><span class="n">add_state_weak</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">ready</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">add_state_weak</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">ready_state</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="o">.</span><span class="n">global_vars</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-            <span class="n">ir</span><span class="o">.</span><span class="n">Var</span><span class="p">(</span><span class="s2">&quot;_state&quot;</span><span class="p">,</span> <span class="n">initial_value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="o">.</span><span class="n">ready</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">add_global_var</span><span class="p">(</span>
+            <span class="n">ir</span><span class="o">.</span><span class="n">InputVar</span><span class="p">(</span><span class="s2">&quot;state&quot;</span><span class="p">,</span> <span class="n">initial_value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">ready_state</span><span class="p">)</span>
         <span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_module</span> <span class="o">=</span> <span class="n">CodeGen</span><span class="o">.</span><span class="n">__new_module</span><span class="p">(</span><span class="n">root_case</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_module</span> <span class="o">=</span> <span class="n">CodeGen</span><span class="o">.</span><span class="n">__new_module</span><span class="p">(</span><span class="n">root_case</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="p">)</span>
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">__new_module</span><span class="p">(</span><span class="n">root</span><span class="p">:</span> <span class="n">ver</span><span class="o">.</span><span class="n">Case</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">Context</span><span class="p">):</span>
@@ -75,39 +77,51 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">ver</span><span class="o">.</span><span class="n">Statement</span><span class="p">)</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Context</span><span class="p">)</span>
+
         <span class="n">inputs</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">context</span><span class="o">.</span><span class="n">input_vars</span><span class="p">:</span>
-            <span class="n">inputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">var</span><span class="p">)</span>
+            <span class="n">inputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">var</span><span class="o">.</span><span class="n">py_name</span><span class="p">)</span>
+
         <span class="n">outputs</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">((</span><span class="n">context</span><span class="o">.</span><span class="n">output_vars</span><span class="p">))):</span>
-            <span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;_out</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">context</span><span class="o">.</span><span class="n">output_vars</span><span class="p">:</span>
+            <span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">var</span><span class="o">.</span><span class="n">ver_name</span><span class="p">)</span>
+
         <span class="n">always</span> <span class="o">=</span> <span class="n">ver</span><span class="o">.</span><span class="n">PosedgeSyncAlways</span><span class="p">(</span>
-            <span class="n">ver</span><span class="o">.</span><span class="n">Expression</span><span class="p">(</span><span class="s2">&quot;_clock&quot;</span><span class="p">),</span>
+            <span class="n">ir</span><span class="o">.</span><span class="n">Expression</span><span class="p">(</span><span class="s2">&quot;_clock&quot;</span><span class="p">),</span>
             <span class="n">body</span><span class="o">=</span><span class="p">[</span>
-                <span class="n">ver</span><span class="o">.</span><span class="n">NonBlockingSubsitution</span><span class="p">(</span><span class="s2">&quot;_valid&quot;</span><span class="p">,</span> <span class="s2">&quot;0&quot;</span><span class="p">),</span>
-                <span class="n">ver</span><span class="o">.</span><span class="n">NonBlockingSubsitution</span><span class="p">(</span><span class="s2">&quot;_ready&quot;</span><span class="p">,</span> <span class="s2">&quot;0&quot;</span><span class="p">),</span>
+                <span class="n">ver</span><span class="o">.</span><span class="n">NonBlockingSubsitution</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">valid_signal</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">UInt</span><span class="p">(</span><span class="mi">0</span><span class="p">)),</span>
+                <span class="n">ver</span><span class="o">.</span><span class="n">NonBlockingSubsitution</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">ready_signal</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">UInt</span><span class="p">(</span><span class="mi">0</span><span class="p">)),</span>
             <span class="p">]</span>
-            <span class="o">+</span> <span class="p">[</span><span class="n">ver</span><span class="o">.</span><span class="n">NonBlockingSubsitution</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="s2">&quot;0&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">out</span> <span class="ow">in</span> <span class="n">context</span><span class="o">.</span><span class="n">output_vars</span><span class="p">]</span>
+            <span class="o">+</span> <span class="p">[</span>
+                <span class="n">ver</span><span class="o">.</span><span class="n">NonBlockingSubsitution</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+                <span class="k">for</span> <span class="n">out</span> <span class="ow">in</span> <span class="n">context</span><span class="o">.</span><span class="n">output_vars</span>
+            <span class="p">]</span>
             <span class="o">+</span> <span class="p">[</span>
                 <span class="n">ver</span><span class="o">.</span><span class="n">IfElse</span><span class="p">(</span>
-                    <span class="n">ver</span><span class="o">.</span><span class="n">Expression</span><span class="p">(</span><span class="s2">&quot;_reset&quot;</span><span class="p">),</span>
+                    <span class="n">ir</span><span class="o">.</span><span class="n">Expression</span><span class="p">(</span><span class="s2">&quot;_reset&quot;</span><span class="p">),</span>
                     <span class="n">then_body</span><span class="o">=</span><span class="p">[</span>
                         <span class="n">ver</span><span class="o">.</span><span class="n">NonBlockingSubsitution</span><span class="p">(</span>
-                            <span class="n">lvalue</span><span class="o">=</span><span class="s2">&quot;_state&quot;</span><span class="p">,</span> <span class="n">rvalue</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">ready</span>
+                            <span class="n">lvalue</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">state_var</span><span class="p">,</span>
+                            <span class="n">rvalue</span><span class="o">=</span><span class="n">ir</span><span class="o">.</span><span class="n">Expression</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">ready_state</span><span class="p">),</span>
                         <span class="p">)</span>
                     <span class="p">],</span>
                     <span class="n">else_body</span><span class="o">=</span><span class="p">[],</span>
                 <span class="p">)</span>
             <span class="p">]</span>
-            <span class="o">+</span> <span class="p">[</span><span class="n">CodeGen</span><span class="o">.</span><span class="n">__get_start_ifelse</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">entry</span><span class="p">)],</span>
+            <span class="o">+</span> <span class="p">[</span><span class="n">CodeGen</span><span class="o">.</span><span class="n">__get_start_ifelse</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">context</span><span class="p">)],</span>
         <span class="p">)</span>
         <span class="n">body</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ver</span><span class="o">.</span><span class="n">Statement</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">ver</span><span class="o">.</span><span class="n">Declaration</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">),</span> <span class="n">is_reg</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">is_signed</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">context</span><span class="o">.</span><span class="n">global_vars</span>
+            <span class="n">ver</span><span class="o">.</span><span class="n">Declaration</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">is_reg</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">is_signed</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">context</span><span class="o">.</span><span class="n">global_vars</span>
         <span class="p">]</span>
+        <span class="n">body</span> <span class="o">+=</span> <span class="p">[</span>
+            <span class="n">ver</span><span class="o">.</span><span class="n">Declaration</span><span class="p">(</span><span class="n">var</span><span class="o">.</span><span class="n">ver_name</span><span class="p">,</span> <span class="n">is_reg</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">is_signed</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">context</span><span class="o">.</span><span class="n">input_vars</span>
+        <span class="p">]</span>
+
         <span class="n">body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">always</span><span class="p">)</span>
 
-        <span class="n">state_vars</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">index</span><span class="p">)</span> <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">state_vars</span><span class="p">)}</span>
+        <span class="n">state_vars</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">UInt</span><span class="p">(</span><span class="n">index</span><span class="p">)</span> <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">states</span><span class="p">)}</span>
+
         <span class="k">return</span> <span class="n">ver</span><span class="o">.</span><span class="n">Module</span><span class="p">(</span>
             <span class="n">name</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
             <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span>
@@ -117,7 +131,7 @@
         <span class="p">)</span>
 
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">__get_start_ifelse</span><span class="p">(</span><span class="n">root</span><span class="p">:</span> <span class="n">ver</span><span class="o">.</span><span class="n">Case</span><span class="p">,</span> <span class="n">entry</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__get_start_ifelse</span><span class="p">(</span><span class="n">root</span><span class="p">:</span> <span class="n">ver</span><span class="o">.</span><span class="n">Case</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">Context</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        if (_start) begin</span>
 <span class="sd">            &lt;var&gt; = &lt;value&gt;;</span>
@@ -128,15 +142,41 @@
 <span class="sd">            endcase</span>
 <span class="sd">        end</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># The first case can be included here</span>
+        <span class="n">mapping</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">ir</span><span class="o">.</span><span class="n">Expression</span><span class="p">(</span><span class="n">var</span><span class="o">.</span><span class="n">ver_name</span><span class="p">):</span> <span class="n">ir</span><span class="o">.</span><span class="n">Expression</span><span class="p">(</span><span class="n">var</span><span class="o">.</span><span class="n">py_name</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">context</span><span class="o">.</span><span class="n">input_vars</span>
+        <span class="p">}</span>
+        <span class="n">stmt_stack</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">init_body</span> <span class="o">=</span> <span class="p">[]</span>
+
         <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">case_items</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">condition</span><span class="p">)</span> <span class="o">==</span> <span class="n">entry</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">condition</span> <span class="o">==</span> <span class="n">ir</span><span class="o">.</span><span class="n">Expression</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">entry</span><span class="p">):</span>
+                <span class="n">stmt_stack</span> <span class="o">+=</span> <span class="n">item</span><span class="o">.</span><span class="n">statements</span>
                 <span class="n">init_body</span> <span class="o">+=</span> <span class="n">item</span><span class="o">.</span><span class="n">statements</span>
                 <span class="n">root</span><span class="o">.</span><span class="n">case_items</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
                 <span class="k">break</span>
 
+        <span class="k">while</span> <span class="n">stmt_stack</span><span class="p">:</span>
+            <span class="n">stmt</span> <span class="o">=</span> <span class="n">stmt_stack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stmt</span><span class="p">,</span> <span class="n">ver</span><span class="o">.</span><span class="n">NonBlockingSubsitution</span><span class="p">):</span>
+                <span class="n">stmt</span><span class="o">.</span><span class="n">rvalue</span> <span class="o">=</span> <span class="n">backwards_replace</span><span class="p">(</span><span class="n">stmt</span><span class="o">.</span><span class="n">rvalue</span><span class="p">,</span> <span class="n">mapping</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stmt</span><span class="p">,</span> <span class="n">ver</span><span class="o">.</span><span class="n">IfElse</span><span class="p">):</span>
+                <span class="n">stmt</span><span class="o">.</span><span class="n">condition</span> <span class="o">=</span> <span class="n">backwards_replace</span><span class="p">(</span><span class="n">stmt</span><span class="o">.</span><span class="n">condition</span><span class="p">,</span> <span class="n">mapping</span><span class="p">)</span>
+                <span class="n">stmt_stack</span> <span class="o">+=</span> <span class="n">stmt</span><span class="o">.</span><span class="n">then_body</span>
+                <span class="n">stmt_stack</span> <span class="o">+=</span> <span class="n">stmt</span><span class="o">.</span><span class="n">else_body</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unexpected </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">stmt</span><span class="p">)</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">stmt</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">context</span><span class="o">.</span><span class="n">input_vars</span><span class="p">:</span>
+            <span class="n">init_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">ver</span><span class="o">.</span><span class="n">NonBlockingSubsitution</span><span class="p">(</span>
+                    <span class="n">ir</span><span class="o">.</span><span class="n">Expression</span><span class="p">(</span><span class="n">var</span><span class="o">.</span><span class="n">ver_name</span><span class="p">),</span> <span class="n">ir</span><span class="o">.</span><span class="n">Expression</span><span class="p">(</span><span class="n">var</span><span class="o">.</span><span class="n">py_name</span><span class="p">)</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
         <span class="n">block</span> <span class="o">=</span> <span class="n">ver</span><span class="o">.</span><span class="n">IfElse</span><span class="p">(</span>
-            <span class="n">ver</span><span class="o">.</span><span class="n">Expression</span><span class="p">(</span><span class="s2">&quot;_start&quot;</span><span class="p">),</span>
+            <span class="n">ir</span><span class="o">.</span><span class="n">Expression</span><span class="p">(</span><span class="s2">&quot;_start&quot;</span><span class="p">),</span>
             <span class="n">init_body</span><span class="p">,</span>
             <span class="p">[</span><span class="n">root</span><span class="p">],</span>
         <span class="p">)</span>
@@ -176,44 +216,50 @@
 <span class="sd">            $display(&quot;%0d, ...&quot;, _valid, ...);</span>
 <span class="sd">            &quot;&quot;&quot;</span>
             <span class="n">string</span> <span class="o">=</span> <span class="s1">&#39;$display(&quot;</span><span class="si">%0d</span><span class="s1">, &#39;</span>
-            <span class="n">string</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="si">%0d</span><span class="s2">, &quot;</span> <span class="o">*</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="o">.</span><span class="n">output_vars</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">string</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="si">%0d</span><span class="s2">, &quot;</span> <span class="o">*</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">output_vars</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
             <span class="n">string</span> <span class="o">+=</span> <span class="s1">&#39;</span><span class="si">%0d</span><span class="s1">&quot;, _valid&#39;</span>
-            <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="o">.</span><span class="n">output_vars</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">output_vars</span><span class="p">:</span>
                 <span class="n">string</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;, </span><span class="si">{</span><span class="n">var</span><span class="si">}</span><span class="s2">&quot;</span>
             <span class="n">string</span> <span class="o">+=</span> <span class="s2">&quot;);&quot;</span>
             <span class="k">return</span> <span class="n">ver</span><span class="o">.</span><span class="n">Statement</span><span class="p">(</span><span class="n">literal</span><span class="o">=</span><span class="n">string</span><span class="p">)</span>
 
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Context</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Context</span><span class="p">)</span>
         <span class="n">decl</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ver</span><span class="o">.</span><span class="n">Declaration</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">decl</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ver</span><span class="o">.</span><span class="n">Declaration</span><span class="p">(</span><span class="s2">&quot;_clock&quot;</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">is_reg</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
         <span class="n">decl</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ver</span><span class="o">.</span><span class="n">Declaration</span><span class="p">(</span><span class="s2">&quot;_start&quot;</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">is_reg</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
         <span class="n">decl</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ver</span><span class="o">.</span><span class="n">Declaration</span><span class="p">(</span><span class="s2">&quot;_reset&quot;</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">is_reg</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
         <span class="n">decl</span> <span class="o">+=</span> <span class="p">[</span>
-            <span class="n">ver</span><span class="o">.</span><span class="n">Declaration</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">is_signed</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">is_reg</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="o">.</span><span class="n">input_vars</span>
+            <span class="n">ver</span><span class="o">.</span><span class="n">Declaration</span><span class="p">(</span><span class="n">var</span><span class="o">.</span><span class="n">ver_name</span><span class="p">,</span> <span class="n">is_signed</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">output_vars</span>
         <span class="p">]</span>
         <span class="n">decl</span> <span class="o">+=</span> <span class="p">[</span>
-            <span class="n">ver</span><span class="o">.</span><span class="n">Declaration</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">is_signed</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="o">.</span><span class="n">output_vars</span>
+            <span class="n">ver</span><span class="o">.</span><span class="n">Declaration</span><span class="p">(</span><span class="n">var</span><span class="o">.</span><span class="n">py_name</span><span class="p">,</span> <span class="n">is_signed</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">is_reg</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">input_vars</span>
         <span class="p">]</span>
-
         <span class="n">decl</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ver</span><span class="o">.</span><span class="n">Declaration</span><span class="p">(</span><span class="s2">&quot;_ready&quot;</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
         <span class="n">decl</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ver</span><span class="o">.</span><span class="n">Declaration</span><span class="p">(</span><span class="s2">&quot;_valid&quot;</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
 
-        <span class="n">ports</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="n">decl</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">decl</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">decl</span> <span class="ow">in</span> <span class="n">decl</span>
-        <span class="p">}</span>  <span class="c1"># Caution: expects decl to only contain declarations</span>
+        <span class="n">ports</span> <span class="o">=</span> <span class="p">{</span><span class="n">decl</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">decl</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">decl</span> <span class="ow">in</span> <span class="n">decl</span><span class="p">}</span>
 
         <span class="n">setups</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ver</span><span class="o">.</span><span class="n">Statement</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">decl</span><span class="p">)</span>
-        <span class="n">setups</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ver</span><span class="o">.</span><span class="n">Instantiation</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="s2">&quot;DUT&quot;</span><span class="p">,</span> <span class="n">ports</span><span class="p">))</span>
+        <span class="n">setups</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ver</span><span class="o">.</span><span class="n">Instantiation</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="s2">&quot;DUT&quot;</span><span class="p">,</span> <span class="n">ports</span><span class="p">))</span>
 
         <span class="n">setups</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ver</span><span class="o">.</span><span class="n">Statement</span><span class="p">(</span><span class="n">literal</span><span class="o">=</span><span class="s2">&quot;always #5 _clock = !_clock;&quot;</span><span class="p">))</span>
 
         <span class="n">initial_body</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ver</span><span class="o">.</span><span class="n">Statement</span> <span class="o">|</span> <span class="n">ver</span><span class="o">.</span><span class="n">While</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">initial_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ver</span><span class="o">.</span><span class="n">BlockingSubsitution</span><span class="p">(</span><span class="s2">&quot;_clock&quot;</span><span class="p">,</span> <span class="s2">&quot;0&quot;</span><span class="p">))</span>
-        <span class="n">initial_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ver</span><span class="o">.</span><span class="n">BlockingSubsitution</span><span class="p">(</span><span class="s2">&quot;_start&quot;</span><span class="p">,</span> <span class="s2">&quot;0&quot;</span><span class="p">))</span>
-        <span class="n">initial_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ver</span><span class="o">.</span><span class="n">BlockingSubsitution</span><span class="p">(</span><span class="s2">&quot;_reset&quot;</span><span class="p">,</span> <span class="s2">&quot;1&quot;</span><span class="p">))</span>
-        <span class="n">initial_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ver</span><span class="o">.</span><span class="n">AtNegedgeStatement</span><span class="p">(</span><span class="n">ver</span><span class="o">.</span><span class="n">Expression</span><span class="p">(</span><span class="s2">&quot;_clock&quot;</span><span class="p">)))</span>
-        <span class="n">initial_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ver</span><span class="o">.</span><span class="n">BlockingSubsitution</span><span class="p">(</span><span class="s2">&quot;_reset&quot;</span><span class="p">,</span> <span class="s2">&quot;0&quot;</span><span class="p">))</span>
+        <span class="n">initial_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">ver</span><span class="o">.</span><span class="n">BlockingSubsitution</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">clock_signal</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">UInt</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+        <span class="p">)</span>
+        <span class="n">initial_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">ver</span><span class="o">.</span><span class="n">BlockingSubsitution</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">start_signal</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">UInt</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+        <span class="p">)</span>
+        <span class="n">initial_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">ver</span><span class="o">.</span><span class="n">BlockingSubsitution</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">reset_signal</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">UInt</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        <span class="p">)</span>
+        <span class="n">initial_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ver</span><span class="o">.</span><span class="n">AtNegedgeStatement</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">clock_signal</span><span class="p">))</span>
+        <span class="n">initial_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">ver</span><span class="o">.</span><span class="n">BlockingSubsitution</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">reset_signal</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">UInt</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+        <span class="p">)</span>
         <span class="n">initial_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ver</span><span class="o">.</span><span class="n">Statement</span><span class="p">())</span>
 
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">test_case</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">test_cases</span><span class="p">):</span>
@@ -221,20 +267,31 @@
             <span class="n">initial_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="n">ver</span><span class="o">.</span><span class="n">Statement</span><span class="p">(</span><span class="n">comment</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Test case </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">test_case</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="p">)</span>
-            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">var</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="o">.</span><span class="n">input_vars</span><span class="p">):</span>
-                <span class="n">initial_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ver</span><span class="o">.</span><span class="n">BlockingSubsitution</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">test_case</span><span class="p">[</span><span class="n">i</span><span class="p">])))</span>
-            <span class="n">initial_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ver</span><span class="o">.</span><span class="n">BlockingSubsitution</span><span class="p">(</span><span class="s2">&quot;_start&quot;</span><span class="p">,</span> <span class="s2">&quot;1&quot;</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">var</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">input_vars</span><span class="p">):</span>
+                <span class="n">initial_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">ver</span><span class="o">.</span><span class="n">BlockingSubsitution</span><span class="p">(</span>
+                        <span class="n">ir</span><span class="o">.</span><span class="n">Expression</span><span class="p">(</span><span class="n">var</span><span class="o">.</span><span class="n">py_name</span><span class="p">),</span> <span class="n">ir</span><span class="o">.</span><span class="n">Int</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">test_case</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+            <span class="n">initial_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">ver</span><span class="o">.</span><span class="n">BlockingSubsitution</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">start_signal</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">UInt</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+            <span class="p">)</span>
 
-            <span class="n">initial_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ver</span><span class="o">.</span><span class="n">AtNegedgeStatement</span><span class="p">(</span><span class="n">ver</span><span class="o">.</span><span class="n">Expression</span><span class="p">(</span><span class="s2">&quot;_clock&quot;</span><span class="p">)))</span>
+            <span class="n">initial_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ver</span><span class="o">.</span><span class="n">AtNegedgeStatement</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">clock_signal</span><span class="p">))</span>
 
             <span class="c1"># wait for done signal</span>
             <span class="n">while_body</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ver</span><span class="o">.</span><span class="n">Statement</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="n">while_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ver</span><span class="o">.</span><span class="n">BlockingSubsitution</span><span class="p">(</span><span class="s2">&quot;_start&quot;</span><span class="p">,</span> <span class="s2">&quot;0&quot;</span><span class="p">))</span>
+            <span class="n">while_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">ver</span><span class="o">.</span><span class="n">BlockingSubsitution</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">start_signal</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">UInt</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+            <span class="p">)</span>
             <span class="n">while_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">make_display_stmt</span><span class="p">())</span>
-            <span class="n">while_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ver</span><span class="o">.</span><span class="n">AtNegedgeStatement</span><span class="p">(</span><span class="n">ver</span><span class="o">.</span><span class="n">Expression</span><span class="p">(</span><span class="s2">&quot;_clock&quot;</span><span class="p">)))</span>
+            <span class="n">while_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ver</span><span class="o">.</span><span class="n">AtNegedgeStatement</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">clock_signal</span><span class="p">))</span>
 
             <span class="n">initial_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="n">ver</span><span class="o">.</span><span class="n">While</span><span class="p">(</span><span class="n">condition</span><span class="o">=</span><span class="n">ver</span><span class="o">.</span><span class="n">Expression</span><span class="p">(</span><span class="s2">&quot;!_ready&quot;</span><span class="p">),</span> <span class="n">body</span><span class="o">=</span><span class="n">while_body</span><span class="p">)</span>
+                <span class="n">ver</span><span class="o">.</span><span class="n">While</span><span class="p">(</span>
+                    <span class="n">condition</span><span class="o">=</span><span class="n">ir</span><span class="o">.</span><span class="n">UnaryOp</span><span class="p">(</span><span class="s2">&quot;!&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">ready_signal</span><span class="p">),</span>
+                    <span class="n">body</span><span class="o">=</span><span class="n">while_body</span><span class="p">,</span>
+                <span class="p">)</span>
             <span class="p">)</span>
             <span class="n">initial_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">make_display_stmt</span><span class="p">())</span>
             <span class="n">initial_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ver</span><span class="o">.</span><span class="n">Statement</span><span class="p">())</span>
@@ -243,9 +300,9 @@
 
         <span class="n">initial_loop</span> <span class="o">=</span> <span class="n">ver</span><span class="o">.</span><span class="n">Initial</span><span class="p">(</span><span class="n">body</span><span class="o">=</span><span class="n">initial_body</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="p">:</span>
             <span class="n">module</span> <span class="o">=</span> <span class="n">ver</span><span class="o">.</span><span class="n">Module</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">_tb&quot;</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">_tb&quot;</span><span class="p">,</span>
                 <span class="p">[],</span>
                 <span class="p">[],</span>
                 <span class="n">body</span><span class="o">=</span><span class="n">setups</span> <span class="o">+</span> <span class="p">[</span><span class="n">initial_loop</span><span class="p">],</span>
@@ -276,7 +333,7 @@
         <span class="c1"># Member Vars</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">visited</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">context</span> <span class="o">=</span> <span class="n">context</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">case</span> <span class="o">=</span> <span class="n">ver</span><span class="o">.</span><span class="n">Case</span><span class="p">(</span><span class="n">expression</span><span class="o">=</span><span class="n">ver</span><span class="o">.</span><span class="n">Expression</span><span class="p">(</span><span class="s2">&quot;_state&quot;</span><span class="p">),</span> <span class="n">case_items</span><span class="o">=</span><span class="p">[])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">case</span> <span class="o">=</span> <span class="n">ver</span><span class="o">.</span><span class="n">Case</span><span class="p">(</span><span class="n">expression</span><span class="o">=</span><span class="n">ir</span><span class="o">.</span><span class="n">Expression</span><span class="p">(</span><span class="s2">&quot;_state&quot;</span><span class="p">),</span> <span class="n">case_items</span><span class="o">=</span><span class="p">[])</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">added_ready_node</span> <span class="o">=</span> <span class="kc">False</span>
 
         <span class="c1"># Member Funcs</span>
@@ -285,16 +342,14 @@
 
         <span class="c1"># Work</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">case</span><span class="o">.</span><span class="n">case_items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">new_caseitem</span><span class="p">(</span><span class="n">root</span><span class="p">))</span>
-        <span class="c1"># for item in self.case.case_items:</span>
-        <span class="c1">#     if str(item.condition) == context.entry:</span>
-        <span class="c1">#         warnings.warn(str(item))</span>
-        <span class="c1">#         warnings.warn(type(item.statements[0].lvalue))</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">added_ready_node</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">case</span><span class="o">.</span><span class="n">case_items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="n">ver</span><span class="o">.</span><span class="n">CaseItem</span><span class="p">(</span>
-                    <span class="n">ver</span><span class="o">.</span><span class="n">Expression</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">ready</span><span class="p">),</span>
+                    <span class="n">ir</span><span class="o">.</span><span class="n">Expression</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">ready_state</span><span class="p">),</span>
                     <span class="n">statements</span><span class="o">=</span><span class="p">[</span>
-                        <span class="n">ver</span><span class="o">.</span><span class="n">NonBlockingSubsitution</span><span class="p">(</span><span class="n">lvalue</span><span class="o">=</span><span class="s2">&quot;_ready&quot;</span><span class="p">,</span> <span class="n">rvalue</span><span class="o">=</span><span class="s2">&quot;1&quot;</span><span class="p">)</span>
+                        <span class="n">ver</span><span class="o">.</span><span class="n">NonBlockingSubsitution</span><span class="p">(</span>
+                            <span class="n">lvalue</span><span class="o">=</span><span class="n">ir</span><span class="o">.</span><span class="n">State</span><span class="p">(</span><span class="s2">&quot;_ready&quot;</span><span class="p">),</span> <span class="n">rvalue</span><span class="o">=</span><span class="n">ir</span><span class="o">.</span><span class="n">UInt</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+                        <span class="p">)</span>
                     <span class="p">],</span>
                 <span class="p">)</span>
             <span class="p">)</span>
@@ -304,7 +359,7 @@
 <span class="sd">        Creates a new case item with the root&#39;s unique id as identifier</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">stmts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">do_vertex</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
-        <span class="n">item</span> <span class="o">=</span> <span class="n">ver</span><span class="o">.</span><span class="n">CaseItem</span><span class="p">(</span><span class="n">condition</span><span class="o">=</span><span class="n">ver</span><span class="o">.</span><span class="n">Expression</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">unique_id</span><span class="p">),</span> <span class="n">statements</span><span class="o">=</span><span class="n">stmts</span><span class="p">)</span>
+        <span class="n">item</span> <span class="o">=</span> <span class="n">ver</span><span class="o">.</span><span class="n">CaseItem</span><span class="p">(</span><span class="n">condition</span><span class="o">=</span><span class="n">ir</span><span class="o">.</span><span class="n">Expression</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">unique_id</span><span class="p">),</span> <span class="n">statements</span><span class="o">=</span><span class="n">stmts</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">item</span></div>
 
@@ -319,17 +374,15 @@
 
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">vertex</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">DoneNode</span><span class="p">):</span>
             <span class="n">stmts</span> <span class="o">+=</span> <span class="p">[</span>
-                <span class="n">ver</span><span class="o">.</span><span class="n">NonBlockingSubsitution</span><span class="p">(</span><span class="s2">&quot;_ready&quot;</span><span class="p">,</span> <span class="s2">&quot;1&quot;</span><span class="p">),</span>
+                <span class="n">ver</span><span class="o">.</span><span class="n">NonBlockingSubsitution</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">ready_signal</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">UInt</span><span class="p">(</span><span class="mi">1</span><span class="p">)),</span>
                 <span class="n">ver</span><span class="o">.</span><span class="n">NonBlockingSubsitution</span><span class="p">(</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">case</span><span class="o">.</span><span class="n">condition</span><span class="o">.</span><span class="n">to_string</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">ready</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">case</span><span class="o">.</span><span class="n">condition</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Expression</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">ready_state</span><span class="p">)</span>
                 <span class="p">),</span>
             <span class="p">]</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">added_ready_node</span> <span class="o">=</span> <span class="kc">True</span>
 
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">vertex</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">AssignNode</span><span class="p">):</span>
-            <span class="n">stmts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="n">ver</span><span class="o">.</span><span class="n">NonBlockingSubsitution</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">vertex</span><span class="o">.</span><span class="n">lvalue</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">vertex</span><span class="o">.</span><span class="n">rvalue</span><span class="p">))</span>
-            <span class="p">)</span>
+            <span class="n">stmts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ver</span><span class="o">.</span><span class="n">NonBlockingSubsitution</span><span class="p">(</span><span class="n">vertex</span><span class="o">.</span><span class="n">lvalue</span><span class="p">,</span> <span class="n">vertex</span><span class="o">.</span><span class="n">rvalue</span><span class="p">))</span>
             <span class="n">stmts</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">do_edge</span><span class="p">(</span><span class="n">vertex</span><span class="o">.</span><span class="n">optimal_child</span><span class="p">)</span>
 
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">vertex</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">IfElseNode</span><span class="p">):</span>
@@ -337,7 +390,7 @@
             <span class="n">else_body</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">do_edge</span><span class="p">(</span><span class="n">vertex</span><span class="o">.</span><span class="n">optimal_false_edge</span><span class="p">)</span>
             <span class="n">stmts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="n">ver</span><span class="o">.</span><span class="n">IfElse</span><span class="p">(</span>
-                    <span class="n">condition</span><span class="o">=</span><span class="n">ver</span><span class="o">.</span><span class="n">Expression</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">vertex</span><span class="o">.</span><span class="n">condition</span><span class="p">)),</span>
+                    <span class="n">condition</span><span class="o">=</span><span class="n">vertex</span><span class="o">.</span><span class="n">condition</span><span class="p">,</span>
                     <span class="n">then_body</span><span class="o">=</span><span class="n">then_body</span><span class="p">,</span>
                     <span class="n">else_body</span><span class="o">=</span><span class="n">else_body</span><span class="p">,</span>
                 <span class="p">)</span>
@@ -345,17 +398,20 @@
 
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">vertex</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">YieldNode</span><span class="p">):</span>
             <span class="n">outputs</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="n">ver</span><span class="o">.</span><span class="n">NonBlockingSubsitution</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;_out</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">expr</span><span class="p">))</span>
-                <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">expr</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">vertex</span><span class="o">.</span><span class="n">stmts</span><span class="p">)</span>
-            <span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">ver</span><span class="o">.</span><span class="n">NonBlockingSubsitution</span><span class="p">(</span><span class="s2">&quot;_valid&quot;</span><span class="p">,</span> <span class="s2">&quot;1&quot;</span><span class="p">)]</span>
+                <span class="n">ver</span><span class="o">.</span><span class="n">NonBlockingSubsitution</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">expr</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">var</span><span class="p">,</span> <span class="n">expr</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">output_vars</span><span class="p">,</span> <span class="n">vertex</span><span class="o">.</span><span class="n">stmts</span><span class="p">)</span>
+            <span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">ver</span><span class="o">.</span><span class="n">NonBlockingSubsitution</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">valid_signal</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">UInt</span><span class="p">(</span><span class="mi">1</span><span class="p">))]</span>
             <span class="n">state_change</span> <span class="o">=</span> <span class="p">[]</span>
 
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">vertex</span><span class="o">.</span><span class="n">optimal_child</span><span class="o">.</span><span class="n">optimal_child</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">DoneNode</span><span class="p">):</span>
-                <span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ver</span><span class="o">.</span><span class="n">NonBlockingSubsitution</span><span class="p">(</span><span class="s2">&quot;_ready&quot;</span><span class="p">,</span> <span class="s2">&quot;1&quot;</span><span class="p">))</span>
+                <span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">ver</span><span class="o">.</span><span class="n">NonBlockingSubsitution</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">ready_signal</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">UInt</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+                <span class="p">)</span>
 
             <span class="n">state_change</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="n">ver</span><span class="o">.</span><span class="n">NonBlockingSubsitution</span><span class="p">(</span>
-                    <span class="s2">&quot;_state&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">vertex</span><span class="o">.</span><span class="n">optimal_child</span><span class="o">.</span><span class="n">optimal_child</span><span class="o">.</span><span class="n">unique_id</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">state_var</span><span class="p">,</span>
+                    <span class="n">ir</span><span class="o">.</span><span class="n">Expression</span><span class="p">(</span><span class="n">vertex</span><span class="o">.</span><span class="n">optimal_child</span><span class="o">.</span><span class="n">optimal_child</span><span class="o">.</span><span class="n">unique_id</span><span class="p">),</span>
                 <span class="p">)</span>
             <span class="p">)</span>
             <span class="k">if</span> <span class="n">vertex</span><span class="o">.</span><span class="n">optimal_child</span><span class="o">.</span><span class="n">optimal_child</span><span class="o">.</span><span class="n">unique_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">visited</span><span class="p">:</span>
@@ -381,7 +437,9 @@
             <span class="k">if</span> <span class="n">edge</span><span class="o">.</span><span class="n">optimal_child</span><span class="o">.</span><span class="n">unique_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">visited</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">case</span><span class="o">.</span><span class="n">case_items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">new_caseitem</span><span class="p">(</span><span class="n">edge</span><span class="o">.</span><span class="n">optimal_child</span><span class="p">))</span>
             <span class="k">return</span> <span class="p">[</span>
-                <span class="n">ver</span><span class="o">.</span><span class="n">NonBlockingSubsitution</span><span class="p">(</span><span class="s2">&quot;_state&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">edge</span><span class="o">.</span><span class="n">optimal_child</span><span class="o">.</span><span class="n">unique_id</span><span class="p">))</span>
+                <span class="n">ver</span><span class="o">.</span><span class="n">NonBlockingSubsitution</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">state_var</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Expression</span><span class="p">(</span><span class="n">edge</span><span class="o">.</span><span class="n">optimal_child</span><span class="o">.</span><span class="n">unique_id</span><span class="p">)</span>
+                <span class="p">)</span>
             <span class="p">]</span>
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">edge</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div></div>
 </pre></div>

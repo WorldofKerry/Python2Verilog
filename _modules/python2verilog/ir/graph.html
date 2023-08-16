@@ -366,13 +366,7 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        To string</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;yield </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_stmts</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span></div>
-
-    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        to string</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="sa">f</span><span class="s2">&quot;out</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> &lt;= </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_stmts</span><span class="p">)])</span></div>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;yield </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_stmts</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span></div></div>
 
 
 <div class="viewcode-block" id="DoneNode"><a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.graph.DoneNode">[docs]</a><span class="k">class</span> <span class="nc">DoneNode</span><span class="p">(</span><span class="n">Vertex</span><span class="p">,</span> <span class="n">Element</span><span class="p">):</span>

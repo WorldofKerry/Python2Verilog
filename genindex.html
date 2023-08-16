@@ -61,6 +61,8 @@
 </li>
       <li><a href="python2verilog.utils.html#python2verilog.utils.string.Lines.add">add() (Lines method)</a>
 </li>
+      <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.add_global_var">add_global_var() (Context method)</a>
+</li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.add_state">add_state() (Context method)</a>
 </li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.add_state_weak">add_state_weak() (Context method)</a>
@@ -69,10 +71,10 @@
 </li>
       <li><a href="python2verilog.utils.html#python2verilog.utils.assertions.assert_dict_type">assert_dict_type() (in module python2verilog.utils.assertions)</a>
 </li>
-      <li><a href="python2verilog.utils.html#python2verilog.utils.assertions.assert_list_type">assert_list_type() (in module python2verilog.utils.assertions)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="python2verilog.utils.html#python2verilog.utils.assertions.assert_list_type">assert_list_type() (in module python2verilog.utils.assertions)</a>
+</li>
       <li><a href="python2verilog.utils.html#python2verilog.utils.string.Lines.assert_no_newline">assert_no_newline() (Lines static method)</a>
 </li>
       <li><a href="python2verilog.utils.html#python2verilog.utils.assertions.assert_type">assert_type() (in module python2verilog.utils.assertions)</a>
@@ -130,6 +132,8 @@
       <li><a href="python2verilog.ir.html#python2verilog.ir.graph.BasicElement.child">child (BasicElement property)</a>
 </li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.graph.Element.children">children (Element property)</a>
+</li>
+      <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.clock_signal">clock_signal (Context attribute)</a>
 </li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.graph.ClockedEdge">ClockedEdge (class in python2verilog.ir.graph)</a>
 </li>
@@ -189,12 +193,8 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.entry">entry (Context attribute)</a>
 </li>
-      <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.ast.Expression">Expression (class in python2verilog.backend.verilog.ast)</a>
-
-      <ul>
-        <li><a href="python2verilog.ir.html#python2verilog.ir.expressions.Expression">(class in python2verilog.ir.expressions)</a>
+      <li><a href="python2verilog.ir.html#python2verilog.ir.expressions.Expression">Expression (class in python2verilog.ir.expressions)</a>
 </li>
-      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -239,7 +239,7 @@
         <li><a href="python2verilog.ir.html#python2verilog.ir.graph.IfElseNode.get_optimal_children">(IfElseNode method)</a>
 </li>
       </ul></li>
-      <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.global_vars">global_vars (Context attribute)</a>
+      <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.global_vars">global_vars (Context property)</a>
 </li>
       <li><a href="python2verilog.optimizer.html#python2verilog.optimizer.optimizer.graph_apply_mapping">graph_apply_mapping() (in module python2verilog.optimizer.optimizer)</a>
 </li>
@@ -263,13 +263,15 @@
 </li>
       <li><a href="python2verilog.utils.html#python2verilog.utils.string.Indent.indentify">indentify() (Indent method)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="python2verilog.utils.html#python2verilog.utils.string.Indent.indentor">indentor (Indent attribute)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.ast.Initial">Initial (class in python2verilog.backend.verilog.ast)</a>
 </li>
-      <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.input_vars">input_vars (Context attribute)</a>
+      <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.input_vars">input_vars (Context property)</a>
+</li>
+      <li><a href="python2verilog.ir.html#python2verilog.ir.expressions.InputVar">InputVar (class in python2verilog.ir.expressions)</a>
 </li>
       <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.ast.Instantiation">Instantiation (class in python2verilog.backend.verilog.ast)</a>
 </li>
@@ -404,7 +406,7 @@
 </li>
       <li><a href="python2verilog.optimizer.html#python2verilog.optimizer.optimizer.OptimizeGraph">OptimizeGraph (class in python2verilog.optimizer.optimizer)</a>
 </li>
-      <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.output_vars">output_vars (Context attribute)</a>
+      <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.output_vars">output_vars (Context property)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -557,12 +559,16 @@
 <h2 id="R">R</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.ready">ready (Context attribute)</a>
+      <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.ready_signal">ready_signal (Context attribute)</a>
 </li>
-      <li><a href="python2verilog.frontend.html#python2verilog.frontend.generator2ir.Generator2Graph.results">results (Generator2Graph property)</a>
+      <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.ready_state">ready_state (Context attribute)</a>
+</li>
+      <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.reset_signal">reset_signal (Context attribute)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="python2verilog.frontend.html#python2verilog.frontend.generator2ir.Generator2Graph.results">results (Generator2Graph property)</a>
+</li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.expressions.UBinOp.right">right (UBinOp property)</a>
 </li>
       <li><a href="python2verilog.frontend.html#python2verilog.frontend.generator2ir.Generator2Graph.root">root (Generator2Graph property)</a>
@@ -575,9 +581,11 @@
 <h2 id="S">S</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.start_signal">start_signal (Context attribute)</a>
+</li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.expressions.State">State (class in python2verilog.ir.expressions)</a>
 </li>
-      <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.state_vars">state_vars (Context property)</a>
+      <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.state_var">state_var (Context attribute)</a>
 </li>
       <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.ast.Statement">Statement (class in python2verilog.backend.verilog.ast)</a>
 
@@ -587,6 +595,8 @@
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.states">states (Context property)</a>
+</li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.statements.StateSubsitution">StateSubsitution (class in python2verilog.ir.statements)</a>
 </li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.graph.YieldNode.stmts">stmts (YieldNode property)</a>
@@ -646,7 +656,7 @@
 </li>
         <li><a href="python2verilog.ir.html#python2verilog.ir.graph.Element.to_string">(Element method)</a>
 </li>
-        <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.ast.Expression.to_string">(Expression method)</a>, <a href="python2verilog.ir.html#python2verilog.ir.expressions.Expression.to_string">[1]</a>
+        <li><a href="python2verilog.ir.html#python2verilog.ir.expressions.Expression.to_string">(Expression method)</a>
 </li>
         <li><a href="python2verilog.ir.html#python2verilog.ir.graph.IfElseNode.to_string">(IfElseNode method)</a>
 </li>
@@ -673,10 +683,12 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="python2verilog.ir.html#python2verilog.ir.expressions.UBinOp">UBinOp (class in python2verilog.ir.expressions)</a>
 </li>
-      <li><a href="python2verilog.ir.html#python2verilog.ir.expressions.UnaryOp">UnaryOp (class in python2verilog.ir.expressions)</a>
+      <li><a href="python2verilog.ir.html#python2verilog.ir.expressions.UInt">UInt (class in python2verilog.ir.expressions)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="python2verilog.ir.html#python2verilog.ir.expressions.UnaryOp">UnaryOp (class in python2verilog.ir.expressions)</a>
+</li>
       <li><a href="python2verilog.optimizer.html#python2verilog.optimizer.optimizer.OptimizeGraph.unique_counter">unique_counter (OptimizeGraph attribute)</a>
 </li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.graph.Element.unique_id">unique_id (Element property)</a>
@@ -687,11 +699,11 @@
 <h2 id="V">V</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="python2verilog.ir.html#python2verilog.ir.statements.ValidSubsitution">ValidSubsitution (class in python2verilog.ir.statements)</a>
+      <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.valid_signal">valid_signal (Context attribute)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="python2verilog.ir.html#python2verilog.ir.expressions.Var">Var (class in python2verilog.ir.expressions)</a>
+      <li><a href="python2verilog.ir.html#python2verilog.ir.statements.ValidSubsitution">ValidSubsitution (class in python2verilog.ir.statements)</a>
 </li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.graph.Vertex">Vertex (class in python2verilog.ir.graph)</a>
 </li>

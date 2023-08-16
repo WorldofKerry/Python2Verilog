@@ -34,8 +34,9 @@
 <span class="kn">import</span> <span class="nn">copy</span>
 <span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">from</span> <span class="nn">..utils.assertions</span> <span class="kn">import</span> <span class="n">assert_list_type</span><span class="p">,</span> <span class="n">assert_type</span><span class="p">,</span> <span class="n">assert_dict_type</span>
-<span class="kn">from</span> <span class="nn">..ir</span> <span class="kn">import</span> <span class="n">Var</span>
+<span class="kn">from</span> <span class="nn">..ir</span> <span class="kn">import</span> <span class="n">InputVar</span>
 
 
 <div class="viewcode-block" id="Context"><a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.Context">[docs]</a><span class="nd">@dataclass</span>
@@ -45,27 +46,88 @@
 <span class="sd">    E.g. variables, I/O, parameters, localparam</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+    <span class="c1"># pylint: disable=too-many-instance-attributes</span>
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
-    <span class="n">global_vars</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Var</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
-    <span class="n">input_vars</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
-    <span class="n">output_vars</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">_global_vars</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">InputVar</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">_input_vars</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">InputVar</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">_output_vars</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">InputVar</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
     <span class="n">_states</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">set</span><span class="p">)</span>
+
+    <span class="n">valid_signal</span><span class="p">:</span> <span class="n">InputVar</span> <span class="o">=</span> <span class="n">InputVar</span><span class="p">(</span><span class="s2">&quot;valid&quot;</span><span class="p">)</span>
+    <span class="n">ready_signal</span><span class="p">:</span> <span class="n">InputVar</span> <span class="o">=</span> <span class="n">InputVar</span><span class="p">(</span><span class="s2">&quot;ready&quot;</span><span class="p">)</span>
+    <span class="n">clock_signal</span><span class="p">:</span> <span class="n">InputVar</span> <span class="o">=</span> <span class="n">InputVar</span><span class="p">(</span><span class="s2">&quot;clock&quot;</span><span class="p">)</span>
+    <span class="n">start_signal</span><span class="p">:</span> <span class="n">InputVar</span> <span class="o">=</span> <span class="n">InputVar</span><span class="p">(</span><span class="s2">&quot;start&quot;</span><span class="p">)</span>
+    <span class="n">reset_signal</span><span class="p">:</span> <span class="n">InputVar</span> <span class="o">=</span> <span class="n">InputVar</span><span class="p">(</span><span class="s2">&quot;reset&quot;</span><span class="p">)</span>
+
+    <span class="n">state_var</span><span class="p">:</span> <span class="n">InputVar</span> <span class="o">=</span> <span class="n">InputVar</span><span class="p">(</span><span class="s2">&quot;state&quot;</span><span class="p">)</span>
     <span class="n">entry</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
-    <span class="n">ready</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">ready_state</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">state_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">input_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        State vars</span>
+<span class="sd">        Input variables</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_input_vars</span><span class="p">)</span>
+
+    <span class="nd">@input_vars</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">input_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">InputVar</span><span class="p">]):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_input_vars</span> <span class="o">=</span> <span class="n">assert_list_type</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">InputVar</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">output_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Output variables</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_output_vars</span><span class="p">)</span>
+
+    <span class="nd">@output_vars</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">output_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">InputVar</span><span class="p">]):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_output_vars</span> <span class="o">=</span> <span class="n">assert_list_type</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">InputVar</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">global_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Global variables</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_global_vars</span><span class="p">)</span>
+
+    <span class="nd">@global_vars</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">global_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">InputVar</span><span class="p">]):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_global_vars</span> <span class="o">=</span> <span class="n">assert_list_type</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">InputVar</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Context.add_global_var"><a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.Context.add_global_var">[docs]</a>    <span class="k">def</span> <span class="nf">add_global_var</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var</span><span class="p">:</span> <span class="n">InputVar</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Appends global var</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_global_vars</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">assert_type</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">InputVar</span><span class="p">))</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">states</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        State variables</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_states</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Context.is_declared"><a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.Context.is_declared">[docs]</a>    <span class="k">def</span> <span class="nf">is_declared</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Checks if a variable has been already declared or not</span>
+<span class="sd">        Checks if a Python variable has been already declared or not</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">global_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">var</span><span class="o">.</span><span class="n">py_name</span> <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">global_vars</span><span class="p">]</span>
-        <span class="k">return</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">([</span><span class="o">*</span><span class="n">global_names</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">input_vars</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">output_vars</span><span class="p">])</span></div>
+
+        <span class="k">def</span> <span class="nf">get_strs</span><span class="p">(</span><span class="n">variables</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">InputVar</span><span class="p">]):</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Maps vars to str</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">variables</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">var</span><span class="o">.</span><span class="n">py_name</span>
+
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+        <span class="n">variables</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="o">*</span><span class="nb">list</span><span class="p">(</span><span class="n">get_strs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_global_vars</span><span class="p">)),</span>
+            <span class="o">*</span><span class="nb">list</span><span class="p">(</span><span class="n">get_strs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_input_vars</span><span class="p">)),</span>
+            <span class="o">*</span><span class="nb">list</span><span class="p">(</span><span class="n">get_strs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_output_vars</span><span class="p">)),</span>
+        <span class="p">]</span>
+        <span class="k">return</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">variables</span></div>
 
 <div class="viewcode-block" id="Context.to_string"><a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.Context.to_string">[docs]</a>    <span class="k">def</span> <span class="nf">to_string</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
