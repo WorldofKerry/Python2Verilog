@@ -19,7 +19,7 @@ A testbench can also be generated and asserted against the Python outputs.
 
 ## Usage
 
-For an online demo, checkout out this [Replit](https://replit.com/@WorldofKerry/Python2Verilog-Demo)
+For an online demo, checkout out this [Replit project](https://replit.com/@WorldofKerry/Python2Verilog-Demo)! No guarantees on the up-to-dateness of this demo.
 
 ### Installation
 
