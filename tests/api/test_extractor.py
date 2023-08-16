@@ -16,8 +16,8 @@ def deeznuts(input):
   yield input
   yield input + 1
 
-inst = nuts((50, 51))
-inst = nuts((15, 16))
+inst = nuts(50, 51)
+inst = nuts(15, 16)
 inst = deeznuts((420,))
 """
         logging.warning(parse_python(code, "nuts"))

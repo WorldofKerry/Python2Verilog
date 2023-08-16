@@ -66,29 +66,34 @@ def parse_python(code: str, function_name: str, file_path: Optional[str] = None)
             and isinstance(stmt.value.func, ast.Name)
             and stmt.value.func.id == function_name
         ):
-            logging.info(f"Found test case at {get_file_and_line_num(stmt)}")
-            assert len(stmt.value.args) == 1
-            assert isinstance(stmt.value.args[0], ast.Tuple)
-            tupl = stmt.value.args[0]
-            for i, line in enumerate(code.split("\n")):
-                if i + 1 == tupl.lineno:  # 1-indexed line numbers
-                    test_case = ast.literal_eval(
-                        line[tupl.col_offset : tupl.end_col_offset]
-                    )
-                    test_cases.append(test_case)
-    logging.info(f"Test cases: {test_cases}")
+            func_call_str = ast.get_source_segment(code, stmt.value)
+            assert func_call_str
+            func_call_str = "(" + func_call_str.split("(", 1)[1]
+            func_call_str = func_call_str.rsplit(")", 1)[0] + ")"
 
-    context = ir.Context(name=function_name)
+            test_case = ast.literal_eval(func_call_str)
+            test_cases.append(test_case)
+
+            logging.info(
+                f"Found test case at {get_file_and_line_num(stmt)} with {test_case}"
+            )
+
+    logging.info(f"Test cases: {test_cases}")
 
     input_names = [var.arg for var in func.args.args]
     logging.warning(input_names)
 
-    first_inputs = [val for val in test_cases[0]]
+    input_types = [type(val) for val in test_cases[0]]
     for case in test_cases:
-        for i, (expected, actual) in enumerate(zip(first_inputs, case)):
-            assert type(expected) == type(
-                actual
-            ), f"Expected parameter `{input_names[i]}` to be {type(expected)} but got {type(actual)} instead"
-    logging.warning(first_inputs)
+        for i, (expected_type, actual_value) in enumerate(zip(input_types, case)):
+            assert expected_type == type(
+                actual_value
+            ), f"Expected parameter `{input_names[i]}` to be {expected_type} but got {type(actual_value)} instead"
+    logging.warning(input_types)
+
+    context = ir.Context(name=function_name)
+
+    locals_ = dict()
+    generator_func = exec(code, None, locals_)
 
     return (func, test_cases)
