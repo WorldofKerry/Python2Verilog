@@ -19,6 +19,8 @@ A testbench can also be generated and asserted against the Python outputs.
 
 ## Usage
 
+For an online demo, checkout out this [Replit](https://replit.com/@WorldofKerry/Python2Verilog-Demo)
+
 ### Installation
 
 `python3 -m pip install --upgrade pip`
