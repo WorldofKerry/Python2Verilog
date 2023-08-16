@@ -32,5 +32,6 @@ jobs:
         mkdir build
         cd build
         python3 -m pip install ..
-        cp ../tests/integration/data/circle_lines/python.py .
+        cp ../tests/integration/data/happy_face/python.py .
         python3 -m python2verilog python.py
+        cat python.sv
