@@ -32,4 +32,4 @@ jobs:
           pip install mypy
       - name: Analysing the code with mypy
         run: |
-          python3 -m mypy python2verilog/ --ignore-missing-imports
+          python3 -m mypy python2verilog/
