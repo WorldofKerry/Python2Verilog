@@ -29,5 +29,8 @@ jobs:
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Test Install Package and Use
       run: |
-        python3 -m pip install .
-        python3 -m python2verilog
+        mkdir build
+        cd build
+        python3 -m pip install ..
+        cp ../tests/integration/data/circle_lines/python.py .
+        python3 -m python2verilog python.py
