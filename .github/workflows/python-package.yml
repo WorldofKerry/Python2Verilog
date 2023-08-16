@@ -34,3 +34,4 @@ jobs:
         python3 -m pip install ..
         cp ../tests/integration/data/circle_lines/python.py .
         python3 -m python2verilog python.py
+        cat python.sv
