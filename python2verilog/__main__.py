@@ -10,7 +10,7 @@ import os
 import ast
 import warnings
 from typing import Optional
-from .api import convert_graph
+from .api import convert_generator
 
 
 if __name__ == "__main__":
@@ -82,7 +82,7 @@ if __name__ == "__main__":
         tree = ast.parse(python)
         function = tree.body[0]
         assert isinstance(function, ast.FunctionDef)
-        verilog = convert_graph(function, args.optimization_level)
+        verilog = convert_generator(function, args.optimization_level)
 
         with open(
             os.path.abspath(args.output), mode="w+", encoding="utf8"

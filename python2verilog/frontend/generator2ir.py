@@ -24,6 +24,7 @@ class Generator2Graph:
         """
         Initializes the parser, does quick setup work
         """
+        assert_type(python_func, pyast.FunctionDef)
         self._context = ir.Context(name=assert_type(python_func.name, str))
 
         assert python_func.returns is not None, "Write a return type-hint for function"
