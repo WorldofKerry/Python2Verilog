@@ -9,5 +9,4 @@ def func(input: np.ndarray) -> tuple[np.ndarray]:
 import ast
 
 tree = ast.parse(code)
-print(tree)
-print(ast.dump(tree, indent=1))
+print(ast.dump(tree, indent=4))
