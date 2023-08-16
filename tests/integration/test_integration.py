@@ -16,8 +16,6 @@ import networkx as nx
 from matplotlib import pyplot as plt
 from abc import abstractmethod
 
-from python2verilog.backend.verilog import CodeGen, CaseBuilder
-from python2verilog.frontend import Generator2Graph
 from python2verilog import ir
 from python2verilog.api import convert_graph_debug
 from python2verilog.utils.assertions import assert_type

@@ -19,7 +19,10 @@ A testbench can also be generated and asserted against the Python outputs.
 
 ## Usage
 
+### Installation
+
 `python3 -m pip install --upgrade pip`
+
 `python3 -m pip install python2verilog`
 
 ### Basics
@@ -64,53 +67,53 @@ Use `git clean -dxf` to remove gitignored files.
 The Github Actions run all the tests with writing enabled.
 You may find its output as a [Github Artifact](https://nightly.link/WorldofKerry/Python2Verilog/workflows/pytest/main/tests-data.zip).
 
-| function_name        |   py_yields |   module_nchars |   ver_clks |   wires |   wire_bits |   public_wires |   public_wire_bits |   memories |   memory_bits |   processes |   cells |   add |   ge |   gt |   mul |   sub |
-|:---------------------|------------:|----------------:|-----------:|--------:|------------:|---------------:|-------------------:|-----------:|--------------:|------------:|--------:|------:|-----:|-----:|------:|------:|
-| circle_lines -O0     |         296 |            4326 |        464 |      81 |        2313 |             21 |                517 |          0 |             0 |           1 |      45 |    21 |    1 |    1 |     3 |    19 |
-| circle_lines -O1     |         296 |            4101 |        299 |     104 |        3049 |             21 |                517 |          0 |             0 |           1 |      68 |    35 |    1 |    1 |     6 |    25 |
-| circle_lines -O2     |         296 |            4101 |        299 |     104 |        3049 |             21 |                517 |          0 |             0 |           1 |      68 |    35 |    1 |    1 |     6 |    25 |
-| circle_lines -O4     |         296 |            4101 |        299 |     104 |        3049 |             21 |                517 |          0 |             0 |           1 |      68 |    35 |    1 |    1 |     6 |    25 |
-| circle_lines -O8     |         296 |            4101 |        299 |     104 |        3049 |             21 |                517 |          0 |             0 |           1 |      68 |    35 |    1 |    1 |     6 |    25 |
-| dumb_loop -O0        |           2 |             834 |       1047 |      18 |         328 |             10 |                165 |          0 |             0 |           1 |       2 |     1 |  nan |  nan |   nan |   nan |
-| dumb_loop -O1        |           2 |             832 |        523 |      19 |         329 |             10 |                165 |          0 |             0 |           1 |       3 |     1 |  nan |  nan |   nan |   nan |
-| dumb_loop -O2        |           2 |            1193 |        263 |      25 |         459 |             10 |                165 |          0 |             0 |           1 |       9 |     5 |  nan |  nan |   nan |   nan |
-| dumb_loop -O4        |           2 |            2275 |        133 |      46 |        1007 |             10 |                165 |          0 |             0 |           1 |      30 |    22 |  nan |  nan |   nan |   nan |
-| dumb_loop -O8        |           2 |            5879 |         68 |     124 |        3255 |             10 |                165 |          0 |             0 |           1 |     108 |    92 |  nan |  nan |   nan |   nan |
-| fib -O0              |          43 |            1397 |        271 |      25 |         552 |             13 |                261 |          0 |             0 |           1 |       3 |     2 |  nan |  nan |   nan |   nan |
-| fib -O1              |          43 |            1021 |         46 |      27 |         585 |             13 |                261 |          0 |             0 |           1 |       5 |     3 |  nan |  nan |   nan |   nan |
-| fib -O2              |          43 |            1021 |         46 |      27 |         585 |             13 |                261 |          0 |             0 |           1 |       5 |     3 |  nan |  nan |   nan |   nan |
-| fib -O4              |          43 |            1021 |         46 |      27 |         585 |             13 |                261 |          0 |             0 |           1 |       5 |     3 |  nan |  nan |   nan |   nan |
-| fib -O8              |          43 |            1021 |         46 |      27 |         585 |             13 |                261 |          0 |             0 |           1 |       5 |     3 |  nan |  nan |   nan |   nan |
-| floor_div -O0        |         612 |            1414 |       1963 |      32 |         652 |             11 |                197 |          0 |             0 |           1 |      14 |     2 |  nan |  nan |   nan |     1 |
-| floor_div -O1        |         612 |            2358 |        643 |      66 |        1399 |             11 |                197 |          0 |             0 |           1 |      48 |    11 |  nan |  nan |   nan |     3 |
-| floor_div -O2        |         612 |            4400 |        615 |     124 |        2821 |             11 |                197 |          0 |             0 |           1 |     106 |    34 |  nan |  nan |   nan |     6 |
-| floor_div -O4        |         612 |            9924 |        615 |     294 |        7393 |             11 |                197 |          0 |             0 |           1 |     276 |   134 |  nan |  nan |   nan |    12 |
-| floor_div -O8        |         612 |           26732 |        615 |     850 |       23449 |             11 |                197 |          0 |             0 |           1 |     832 |   550 |  nan |  nan |   nan |    24 |
-| happy_face -O0       |         696 |            6594 |       1816 |     115 |        3153 |             21 |                517 |          0 |             0 |           1 |      79 |    32 |    1 |    1 |     3 |    22 |
-| happy_face -O1       |         696 |            8686 |        727 |     227 |        5807 |             21 |                517 |          0 |             0 |           1 |     191 |    77 |    1 |    1 |     3 |    35 |
-| happy_face -O2       |         696 |           17319 |        699 |     445 |       10861 |             21 |                517 |          0 |             0 |           1 |     409 |   161 |    1 |    1 |     3 |    59 |
-| happy_face -O4       |         696 |           50299 |        699 |    1199 |       28541 |             21 |                517 |          0 |             0 |           1 |    1163 |   455 |    1 |    1 |     3 |   143 |
-| happy_face -O8       |         696 |          199275 |        699 |    3979 |       94189 |             21 |                517 |          0 |             0 |           1 |    3943 |  1547 |    1 |    1 |     3 |   455 |
-| operators -O0        |          69 |            1404 |         88 |      47 |        1070 |             13 |                261 |          0 |             0 |           1 |      26 |     1 |    1 |  nan |     1 |     2 |
-| operators -O1        |          69 |            1347 |         73 |      47 |        1070 |             13 |                261 |          0 |             0 |           1 |      26 |     1 |    1 |  nan |     1 |     2 |
-| operators -O2        |          69 |            1347 |         73 |      47 |        1070 |             13 |                261 |          0 |             0 |           1 |      26 |     1 |    1 |  nan |     1 |     2 |
-| operators -O4        |          69 |            1347 |         73 |      47 |        1070 |             13 |                261 |          0 |             0 |           1 |      26 |     1 |    1 |  nan |     1 |     2 |
-| operators -O8        |          69 |            1347 |         73 |      47 |        1070 |             13 |                261 |          0 |             0 |           1 |      26 |     1 |    1 |  nan |     1 |     2 |
-| rectangle_filled -O0 |        1667 |            1568 |       5228 |      35 |         841 |             18 |                421 |          0 |             0 |           1 |       6 |     4 |  nan |  nan |   nan |   nan |
-| rectangle_filled -O1 |        1667 |            2101 |       1723 |      53 |        1231 |             18 |                421 |          0 |             0 |           1 |      24 |    16 |  nan |  nan |   nan |   nan |
-| rectangle_filled -O2 |        1667 |            3410 |       1670 |      83 |        1943 |             18 |                421 |          0 |             0 |           1 |      54 |    38 |  nan |  nan |   nan |   nan |
-| rectangle_filled -O4 |        1667 |            6748 |       1670 |     170 |        4231 |             18 |                421 |          0 |             0 |           1 |     141 |   109 |  nan |  nan |   nan |   nan |
-| rectangle_filled -O8 |        1667 |           16304 |       1670 |     452 |       12263 |             18 |                421 |          0 |             0 |           1 |     423 |   359 |  nan |  nan |   nan |   nan |
-| rectangle_lines -O0  |         294 |            1884 |        599 |      41 |        1033 |             18 |                421 |          0 |             0 |           1 |      12 |     8 |  nan |  nan |   nan |     2 |
-| rectangle_lines -O1  |         294 |            1938 |        297 |      51 |        1260 |             18 |                421 |          0 |             0 |           1 |      22 |    15 |  nan |  nan |   nan |     2 |
-| rectangle_lines -O2  |         294 |            1938 |        297 |      51 |        1260 |             18 |                421 |          0 |             0 |           1 |      22 |    15 |  nan |  nan |   nan |     2 |
-| rectangle_lines -O4  |         294 |            1938 |        297 |      51 |        1260 |             18 |                421 |          0 |             0 |           1 |      22 |    15 |  nan |  nan |   nan |     2 |
-| rectangle_lines -O8  |         294 |            1938 |        297 |      51 |        1260 |             18 |                421 |          0 |             0 |           1 |      22 |    15 |  nan |  nan |   nan |     2 |
-| testing -O0          |          20 |            1275 |         83 |      21 |         424 |             11 |                197 |          0 |             0 |           1 |       3 |     2 |  nan |  nan |   nan |   nan |
-| testing -O1          |          20 |             793 |         23 |      21 |         424 |             11 |                197 |          0 |             0 |           1 |       3 |     2 |  nan |  nan |   nan |   nan |
-| testing -O2          |          20 |            1086 |         23 |      21 |         424 |             11 |                197 |          0 |             0 |           1 |       3 |     2 |  nan |  nan |   nan |   nan |
-| testing -O4          |          20 |            1912 |         23 |      21 |         424 |             11 |                197 |          0 |             0 |           1 |       3 |     2 |  nan |  nan |   nan |   nan |
-| testing -O8          |          20 |            4524 |         23 |      21 |         424 |             11 |                197 |          0 |             0 |           1 |       3 |     2 |  nan |  nan |   nan |   nan |
+| function_name        | py_yields | module_nchars | ver_clks | wires | wire_bits | public_wires | public_wire_bits | memories | memory_bits | processes | cells |  add |   ge |   gt |  mul |  sub |
+| :------------------- | --------: | ------------: | -------: | ----: | --------: | -----------: | ---------------: | -------: | ----------: | --------: | ----: | ---: | ---: | ---: | ---: | ---: |
+| circle_lines -O0     |       296 |          4326 |      464 |    81 |      2313 |           21 |              517 |        0 |           0 |         1 |    45 |   21 |    1 |    1 |    3 |   19 |
+| circle_lines -O1     |       296 |          4101 |      299 |   104 |      3049 |           21 |              517 |        0 |           0 |         1 |    68 |   35 |    1 |    1 |    6 |   25 |
+| circle_lines -O2     |       296 |          4101 |      299 |   104 |      3049 |           21 |              517 |        0 |           0 |         1 |    68 |   35 |    1 |    1 |    6 |   25 |
+| circle_lines -O4     |       296 |          4101 |      299 |   104 |      3049 |           21 |              517 |        0 |           0 |         1 |    68 |   35 |    1 |    1 |    6 |   25 |
+| circle_lines -O8     |       296 |          4101 |      299 |   104 |      3049 |           21 |              517 |        0 |           0 |         1 |    68 |   35 |    1 |    1 |    6 |   25 |
+| dumb_loop -O0        |         2 |           834 |     1047 |    18 |       328 |           10 |              165 |        0 |           0 |         1 |     2 |    1 |  nan |  nan |  nan |  nan |
+| dumb_loop -O1        |         2 |           832 |      523 |    19 |       329 |           10 |              165 |        0 |           0 |         1 |     3 |    1 |  nan |  nan |  nan |  nan |
+| dumb_loop -O2        |         2 |          1193 |      263 |    25 |       459 |           10 |              165 |        0 |           0 |         1 |     9 |    5 |  nan |  nan |  nan |  nan |
+| dumb_loop -O4        |         2 |          2275 |      133 |    46 |      1007 |           10 |              165 |        0 |           0 |         1 |    30 |   22 |  nan |  nan |  nan |  nan |
+| dumb_loop -O8        |         2 |          5879 |       68 |   124 |      3255 |           10 |              165 |        0 |           0 |         1 |   108 |   92 |  nan |  nan |  nan |  nan |
+| fib -O0              |        43 |          1397 |      271 |    25 |       552 |           13 |              261 |        0 |           0 |         1 |     3 |    2 |  nan |  nan |  nan |  nan |
+| fib -O1              |        43 |          1021 |       46 |    27 |       585 |           13 |              261 |        0 |           0 |         1 |     5 |    3 |  nan |  nan |  nan |  nan |
+| fib -O2              |        43 |          1021 |       46 |    27 |       585 |           13 |              261 |        0 |           0 |         1 |     5 |    3 |  nan |  nan |  nan |  nan |
+| fib -O4              |        43 |          1021 |       46 |    27 |       585 |           13 |              261 |        0 |           0 |         1 |     5 |    3 |  nan |  nan |  nan |  nan |
+| fib -O8              |        43 |          1021 |       46 |    27 |       585 |           13 |              261 |        0 |           0 |         1 |     5 |    3 |  nan |  nan |  nan |  nan |
+| floor_div -O0        |       612 |          1414 |     1963 |    32 |       652 |           11 |              197 |        0 |           0 |         1 |    14 |    2 |  nan |  nan |  nan |    1 |
+| floor_div -O1        |       612 |          2358 |      643 |    66 |      1399 |           11 |              197 |        0 |           0 |         1 |    48 |   11 |  nan |  nan |  nan |    3 |
+| floor_div -O2        |       612 |          4400 |      615 |   124 |      2821 |           11 |              197 |        0 |           0 |         1 |   106 |   34 |  nan |  nan |  nan |    6 |
+| floor_div -O4        |       612 |          9924 |      615 |   294 |      7393 |           11 |              197 |        0 |           0 |         1 |   276 |  134 |  nan |  nan |  nan |   12 |
+| floor_div -O8        |       612 |         26732 |      615 |   850 |     23449 |           11 |              197 |        0 |           0 |         1 |   832 |  550 |  nan |  nan |  nan |   24 |
+| happy_face -O0       |       696 |          6594 |     1816 |   115 |      3153 |           21 |              517 |        0 |           0 |         1 |    79 |   32 |    1 |    1 |    3 |   22 |
+| happy_face -O1       |       696 |          8686 |      727 |   227 |      5807 |           21 |              517 |        0 |           0 |         1 |   191 |   77 |    1 |    1 |    3 |   35 |
+| happy_face -O2       |       696 |         17319 |      699 |   445 |     10861 |           21 |              517 |        0 |           0 |         1 |   409 |  161 |    1 |    1 |    3 |   59 |
+| happy_face -O4       |       696 |         50299 |      699 |  1199 |     28541 |           21 |              517 |        0 |           0 |         1 |  1163 |  455 |    1 |    1 |    3 |  143 |
+| happy_face -O8       |       696 |        199275 |      699 |  3979 |     94189 |           21 |              517 |        0 |           0 |         1 |  3943 | 1547 |    1 |    1 |    3 |  455 |
+| operators -O0        |        69 |          1404 |       88 |    47 |      1070 |           13 |              261 |        0 |           0 |         1 |    26 |    1 |    1 |  nan |    1 |    2 |
+| operators -O1        |        69 |          1347 |       73 |    47 |      1070 |           13 |              261 |        0 |           0 |         1 |    26 |    1 |    1 |  nan |    1 |    2 |
+| operators -O2        |        69 |          1347 |       73 |    47 |      1070 |           13 |              261 |        0 |           0 |         1 |    26 |    1 |    1 |  nan |    1 |    2 |
+| operators -O4        |        69 |          1347 |       73 |    47 |      1070 |           13 |              261 |        0 |           0 |         1 |    26 |    1 |    1 |  nan |    1 |    2 |
+| operators -O8        |        69 |          1347 |       73 |    47 |      1070 |           13 |              261 |        0 |           0 |         1 |    26 |    1 |    1 |  nan |    1 |    2 |
+| rectangle_filled -O0 |      1667 |          1568 |     5228 |    35 |       841 |           18 |              421 |        0 |           0 |         1 |     6 |    4 |  nan |  nan |  nan |  nan |
+| rectangle_filled -O1 |      1667 |          2101 |     1723 |    53 |      1231 |           18 |              421 |        0 |           0 |         1 |    24 |   16 |  nan |  nan |  nan |  nan |
+| rectangle_filled -O2 |      1667 |          3410 |     1670 |    83 |      1943 |           18 |              421 |        0 |           0 |         1 |    54 |   38 |  nan |  nan |  nan |  nan |
+| rectangle_filled -O4 |      1667 |          6748 |     1670 |   170 |      4231 |           18 |              421 |        0 |           0 |         1 |   141 |  109 |  nan |  nan |  nan |  nan |
+| rectangle_filled -O8 |      1667 |         16304 |     1670 |   452 |     12263 |           18 |              421 |        0 |           0 |         1 |   423 |  359 |  nan |  nan |  nan |  nan |
+| rectangle_lines -O0  |       294 |          1884 |      599 |    41 |      1033 |           18 |              421 |        0 |           0 |         1 |    12 |    8 |  nan |  nan |  nan |    2 |
+| rectangle_lines -O1  |       294 |          1938 |      297 |    51 |      1260 |           18 |              421 |        0 |           0 |         1 |    22 |   15 |  nan |  nan |  nan |    2 |
+| rectangle_lines -O2  |       294 |          1938 |      297 |    51 |      1260 |           18 |              421 |        0 |           0 |         1 |    22 |   15 |  nan |  nan |  nan |    2 |
+| rectangle_lines -O4  |       294 |          1938 |      297 |    51 |      1260 |           18 |              421 |        0 |           0 |         1 |    22 |   15 |  nan |  nan |  nan |    2 |
+| rectangle_lines -O8  |       294 |          1938 |      297 |    51 |      1260 |           18 |              421 |        0 |           0 |         1 |    22 |   15 |  nan |  nan |  nan |    2 |
+| testing -O0          |        20 |          1275 |       83 |    21 |       424 |           11 |              197 |        0 |           0 |         1 |     3 |    2 |  nan |  nan |  nan |  nan |
+| testing -O1          |        20 |           793 |       23 |    21 |       424 |           11 |              197 |        0 |           0 |         1 |     3 |    2 |  nan |  nan |  nan |  nan |
+| testing -O2          |        20 |          1086 |       23 |    21 |       424 |           11 |              197 |        0 |           0 |         1 |     3 |    2 |  nan |  nan |  nan |  nan |
+| testing -O4          |        20 |          1912 |       23 |    21 |       424 |           11 |              197 |        0 |           0 |         1 |     3 |    2 |  nan |  nan |  nan |  nan |
+| testing -O8          |        20 |          4524 |       23 |    21 |       424 |           11 |              197 |        0 |           0 |         1 |     3 |    2 |  nan |  nan |  nan |  nan |
 
 ## For Developers
 

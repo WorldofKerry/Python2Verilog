@@ -2,5 +2,8 @@
 Optimizer Functions
 """
 
-# flake8: noqa
-from .optimizer import *
+from .optimizer import (
+    backwards_replace,
+    OptimizeGraph,
+    graph_apply_mapping,
+)

@@ -15,6 +15,7 @@ class Context:
     E.g. variables, I/O, parameters, localparam
     """
 
+    # pylint: disable=too-many-instance-attributes
     name: str = ""
     _global_vars: list[InputVar] = field(default_factory=list)
     _input_vars: list[InputVar] = field(default_factory=list)

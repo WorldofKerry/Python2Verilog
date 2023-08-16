@@ -5,7 +5,6 @@ A Control Flow Graph represented as a Directed Graph
 
 """
 
-# flake8: noqa
 from .expressions import (
     Expression,
     Int,
