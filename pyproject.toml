@@ -14,10 +14,8 @@ classifiers = [
 "Homepage" = "https://github.com/WorldofKerry/Python2Verilog/"
 "Bug Tracker" = "https://github.com/WorldofKerry/Python2Verilog/issues"
 
-# [tool.setuptools.packages.find]
-# "include" = ["python2verilog*"]
-[tool.setuptools]
-"packages" = ["python2verilog"]
+[tool.setuptools.packages.find]
+"include" = ["python2verilog*"]
 
 [tool.pytest.ini_options]
 log_cli = true
