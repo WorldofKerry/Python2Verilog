@@ -38,7 +38,7 @@ class Generator2Graph:
             prefix="_state",
             nextt=ir.DoneNode(unique_id=DONE_STATE_NAME, name="done"),
         )
-        self._context.entry = self._root.unique_id
+        self._context.entry_state = self._root.unique_id
         self._context.ready_state = DONE_STATE_NAME
 
     @property

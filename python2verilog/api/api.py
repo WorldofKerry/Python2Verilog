@@ -116,6 +116,7 @@ def parse_python(code: str, function_name: str, file_path: Optional[str] = None)
     context = ir.Context(name=function_name)
     context.input_vars = [ir.Var(name) for name in input_names]
     context.output_vars = [ir.Var(str(i)) for i in range(len(output_types))]
+    context.test_cases = test_cases
 
     # Currently the types are not used
-    return (func, test_cases, context)
+    return context

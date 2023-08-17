@@ -4,12 +4,14 @@ import copy
 from dataclasses import dataclass, field
 from typing import Optional
 import warnings
+
+from python2verilog.utils.generics import GenericReprAndStr
 from ..utils.assertions import assert_list_type, assert_type, assert_dict_type
 from ..ir import Var
 
 
 @dataclass
-class Context:
+class Context(GenericReprAndStr):
     """
     Context needed by the Intermediate Representation
     E.g. variables, I/O, parameters, localparam
@@ -17,6 +19,8 @@ class Context:
 
     # pylint: disable=too-many-instance-attributes
     name: str = ""
+    test_cases: list[int | list] = field(default_factory=list)
+
     _global_vars: list[Var] = field(default_factory=list)
     _input_vars: list[Var] = field(default_factory=list)
     _output_vars: list[Var] = field(default_factory=list)
@@ -29,8 +33,9 @@ class Context:
     reset_signal: Var = Var("reset")
 
     state_var: Var = Var("state")
-    entry: str = ""
-    ready_state: str = ""
+
+    entry_state: str = "UNSPECIFIED ENTRY"
+    ready_state: str = "UNSPECIFIED STATE"
 
     @property
     def input_vars(self):
@@ -97,12 +102,6 @@ class Context:
             *list(get_strs(self._output_vars)),
         ]
         return name in variables
-
-    def to_string(self):
-        """
-        To string
-        """
-        return str(self.__dict__)
 
     def add_state(self, name: str):
         """

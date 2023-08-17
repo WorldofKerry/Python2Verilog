@@ -120,7 +120,7 @@ class CodeGen:
         init_body = []
 
         for item in root.case_items:
-            if item.condition == ir.Expression(context.entry):
+            if item.condition == ir.Expression(context.entry_state):
                 stmt_stack += item.statements
                 init_body += item.statements
                 root.case_items.remove(item)

@@ -20,7 +20,7 @@ inst = nuts(50, 51)
 inst = nuts(15, 16)
 inst = deeznuts(420)
 """
-        logging.warning(parse_python(code, "nuts"))
+        logging.warning(repr(parse_python(code, "nuts")))
 
     def test_mix_types(self):
         code = """
