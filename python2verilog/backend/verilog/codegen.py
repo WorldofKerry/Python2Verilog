@@ -32,7 +32,7 @@ class CodeGen:
         self.context.add_state_weak(context.ready_state)
 
         self.context.add_global_var(
-            ir.InputVar("state", initial_value=self.context.ready_state)
+            ir.Var("state", initial_value=self.context.ready_state)
         )
 
         self._module = CodeGen.__new_module(root_case, self.context)

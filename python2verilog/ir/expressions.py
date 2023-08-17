@@ -60,7 +60,7 @@ class UInt(Expression):
         super().__init__(str(value))
 
 
-class InputVar(Expression):
+class Var(Expression):
     """
     Named-variable
     """
@@ -84,8 +84,11 @@ class InputVar(Expression):
 
         super().__init__(ver_name)
 
+    def __repr__(self):
+        return f"Var({self.ver_name})"
 
-class State(InputVar):
+
+class State(Var):
     """
     State variable
     """

@@ -91,18 +91,31 @@ def parse_python(code: str, function_name: str, file_path: Optional[str] = None)
             ), f"Expected parameter `{input_names[i]}` to be {expected_type} but got {type(actual_value)} instead"
     logging.info(f"Input param types: {input_types}")
 
-    context = ir.Context(name=function_name)
-
     locals_ = dict()
     exec(code, None, locals_)  # 1-indexed
-    generator = locals_[function_name](*test_cases[0])
+    # Note that only first test case is used
+    generator_func = locals_[function_name]
 
-    output_types = [type(val) for val in next(generator)]
-    for tupl in generator:
-        for i, (expected_type, actual_value) in enumerate(zip(input_types, tupl)):
-            assert expected_type == type(
-                actual_value
-            ), f"Expected parameter `{input_names[i]}` to be {expected_type} but got {type(actual_value)} instead"
+    initialized = False
+
+    for test_case in test_cases:
+        generator = generator_func(*test_case)
+
+        if not initialized:
+            output_types = [type(val) for val in next(generator)]
+            initialized = True
+
+        for tupl in generator:
+            for i, (expected_type, actual_value) in enumerate(zip(input_types, tupl)):
+                assert expected_type == type(
+                    actual_value
+                ), f"Expected parameter `{input_names[i]}` to be {expected_type} but got {type(actual_value)} instead"
 
     logging.info(f"Output param types: {output_types}")
-    return (func, test_cases, input_names, input_types, output_types)
+
+    context = ir.Context(name=function_name)
+    context.input_vars = [ir.Var(name) for name in input_names]
+    context.output_vars = [ir.Var(str(i)) for i in range(len(output_types))]
+
+    # Currently the types are not used
+    return (func, test_cases, context)

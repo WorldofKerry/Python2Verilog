@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from typing import Optional
 import warnings
 from ..utils.assertions import assert_list_type, assert_type, assert_dict_type
-from ..ir import InputVar
+from ..ir import Var
 
 
 @dataclass
@@ -17,18 +17,18 @@ class Context:
 
     # pylint: disable=too-many-instance-attributes
     name: str = ""
-    _global_vars: list[InputVar] = field(default_factory=list)
-    _input_vars: list[InputVar] = field(default_factory=list)
-    _output_vars: list[InputVar] = field(default_factory=list)
+    _global_vars: list[Var] = field(default_factory=list)
+    _input_vars: list[Var] = field(default_factory=list)
+    _output_vars: list[Var] = field(default_factory=list)
     _states: set[str] = field(default_factory=set)
 
-    valid_signal: InputVar = InputVar("valid")
-    ready_signal: InputVar = InputVar("ready")
-    clock_signal: InputVar = InputVar("clock")
-    start_signal: InputVar = InputVar("start")
-    reset_signal: InputVar = InputVar("reset")
+    valid_signal: Var = Var("valid")
+    ready_signal: Var = Var("ready")
+    clock_signal: Var = Var("clock")
+    start_signal: Var = Var("start")
+    reset_signal: Var = Var("reset")
 
-    state_var: InputVar = InputVar("state")
+    state_var: Var = Var("state")
     entry: str = ""
     ready_state: str = ""
 
@@ -40,8 +40,8 @@ class Context:
         return copy.deepcopy(self._input_vars)
 
     @input_vars.setter
-    def input_vars(self, other: list[InputVar]):
-        self._input_vars = assert_list_type(other, InputVar)
+    def input_vars(self, other: list[Var]):
+        self._input_vars = assert_list_type(other, Var)
 
     @property
     def output_vars(self):
@@ -51,8 +51,8 @@ class Context:
         return tuple(self._output_vars)
 
     @output_vars.setter
-    def output_vars(self, other: list[InputVar]):
-        self._output_vars = assert_list_type(other, InputVar)
+    def output_vars(self, other: list[Var]):
+        self._output_vars = assert_list_type(other, Var)
 
     @property
     def global_vars(self):
@@ -62,14 +62,14 @@ class Context:
         return tuple(self._global_vars)
 
     @global_vars.setter
-    def global_vars(self, other: list[InputVar]):
-        self._global_vars = assert_list_type(other, InputVar)
+    def global_vars(self, other: list[Var]):
+        self._global_vars = assert_list_type(other, Var)
 
-    def add_global_var(self, var: InputVar):
+    def add_global_var(self, var: Var):
         """
         Appends global var
         """
-        self._global_vars.append(assert_type(var, InputVar))
+        self._global_vars.append(assert_type(var, Var))
 
     @property
     def states(self):
@@ -83,7 +83,7 @@ class Context:
         Checks if a Python variable has been already declared or not
         """
 
-        def get_strs(variables: list[InputVar]):
+        def get_strs(variables: list[Var]):
             """
             Maps vars to str
             """
