@@ -113,7 +113,7 @@ def fib(n: int) -> tuple[int]:
         yield (c,)
 """
         func = ast.parse(python).body[0]
-        inst = Generator2Graph(func)
+        inst = Generator2Graph(ir.Context(), func)
 
         verilog = CodeGen(inst.root, inst.context)
         module = verilog.get_module_lines()

@@ -23,17 +23,30 @@ def convert_generator(func: ast.FunctionDef, optimization_level: int):
     return convert_generator_debug(func, optimization_level)[0]
 
 
-def convert_generator_debug(func: ast.FunctionDef, optimization_level: int):
+def convert_generator_debug(
+    code: str,
+    name: str,
+    optimization_level: int,
+    extra_test_cases: Optional[list] = None,
+):
     """
     Wrapper for Python to Verilog conversion
     """
-    ir, context = Generator2Graph(func).results
+    basic_context, func_ast, func_callable = parse_python(
+        code, name, extra_test_cases=extra_test_cases
+    )
+    ir_root, context = Generator2Graph(basic_context, func_ast).results
     if optimization_level > 0:
-        OptimizeGraph(ir, threshold=optimization_level - 1)
-    return verilog.CodeGen(ir, context), ir
+        OptimizeGraph(ir_root, threshold=optimization_level - 1)
+    return verilog.CodeGen(ir_root, context), ir_root
 
 
-def parse_python(code: str, function_name: str, file_path: Optional[str] = None):
+def parse_python(
+    code: str,
+    function_name: str,
+    file_path: Optional[str] = None,
+    extra_test_cases: Optional[list] = None,
+):
     """
     Parses python code into the function and testbench
     """
@@ -53,13 +66,13 @@ def parse_python(code: str, function_name: str, file_path: Optional[str] = None)
 
     tree = ast.parse(code)
 
-    func: Optional[ast.FunctionDef]
-    test_cases = []
+    generator_ast: Optional[ast.FunctionDef]
+    test_cases = extra_test_cases if extra_test_cases else []
 
     for node in ast.walk(tree):
         if isinstance(node, ast.FunctionDef) and node.name == function_name:
             logging.info(f"Found function at {get_file_and_line_num(node)}")
-            func = node
+            generator_ast = node
         elif (
             isinstance(node, ast.Assign)
             and isinstance(node.value, ast.Call)
@@ -80,7 +93,8 @@ def parse_python(code: str, function_name: str, file_path: Optional[str] = None)
 
     logging.info(f"Test cases: {test_cases}")
 
-    input_names = [var.arg for var in func.args.args]
+    input_names = [var.arg for var in generator_ast.args.args]
+
     logging.info(f"Input param names: {input_names}")
 
     initialized = False
@@ -110,10 +124,16 @@ def parse_python(code: str, function_name: str, file_path: Optional[str] = None)
         generator = generator_func(*test_case)
 
         if not initialized:
-            output_types = [type(val) for val in next(generator)]
+            result = next(generator)
+            if not isinstance(result, tuple):
+                result = (result,)
+            output_types = [type(val) for val in result]
             initialized = True
 
         for test_case in generator:
+            if not isinstance(test_case, tuple):
+                test_case = (test_case,)
+
             for i, (expected_type, actual_value) in enumerate(
                 zip(input_types, test_case)
             ):
@@ -121,12 +141,14 @@ def parse_python(code: str, function_name: str, file_path: Optional[str] = None)
                     actual_value
                 ), f"Expected parameter `{input_names[i]}` to be {expected_type} but got {type(actual_value)} instead"
 
-    logging.info(f"Output param types: {output_types}")
-
     context = ir.Context(name=function_name)
+
+    if initialized:
+        logging.info(f"Output param types: {output_types}")
+        context.output_vars = [ir.Var(str(i)) for i in range(len(output_types))]
+
     context.input_vars = [ir.Var(name) for name in input_names]
-    context.output_vars = [ir.Var(str(i)) for i in range(len(output_types))]
     context.test_cases = test_cases
 
     # Currently the types are not used
-    return context
+    return (context, generator_ast, generator_func)

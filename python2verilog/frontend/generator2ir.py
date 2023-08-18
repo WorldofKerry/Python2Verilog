@@ -12,34 +12,32 @@ from .. import ir
 from ..utils.string import Lines, Indent
 from ..utils.assertions import assert_type, assert_list_type
 
-DONE_STATE_NAME = "_statelmaoready"
-
 
 class Generator2Graph:
     """
     Parses python generator functions to Verilog AST
     """
 
-    def __init__(self, python_func: pyast.FunctionDef):
+    def __init__(
+        self,
+        context: ir.Context,
+        python_func: pyast.FunctionDef,
+        done_state_name: str = "_statelmaoready",
+    ):
         """
         Initializes the parser, does quick setup work
         """
         assert_type(python_func, pyast.FunctionDef)
-        self._context = ir.Context(name=assert_type(python_func.name, str))
-
-        assert python_func.returns is not None, "Write a return type-hint for function"
-        self._context.output_vars = self.__generate_output_vars(
-            node=python_func.returns, prefix=""
-        )
-        self._context.input_vars = [ir.Var(var.arg) for var in python_func.args.args]
+        self._context = assert_type(context, ir.Context)
 
         self._root = self.__parse_statements(
             stmts=list(python_func.body),
             prefix="_state",
-            nextt=ir.DoneNode(unique_id=DONE_STATE_NAME, name="done"),
+            nextt=ir.DoneNode(unique_id=done_state_name, name="done"),
         )
+
         self._context.entry_state = self._root.unique_id
-        self._context.ready_state = DONE_STATE_NAME
+        self._context.ready_state = done_state_name
 
     @property
     def root(self):

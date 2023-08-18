@@ -126,11 +126,13 @@ class BaseTestCases:
             logging.debug(f"executing python")
 
             with open(FILES_IN_ABS_DIR["python"]) as python_file:
-                python = python_file.read()
+                python_text = python_file.read()
                 _locals = dict()
-                exec(python, None, _locals)  # grab's exec's populated scoped variables
+                exec(
+                    python_text, None, _locals
+                )  # grab's exec's populated scoped variables
 
-                tree = ast.parse(python)
+                tree = ast.parse(python_text)
 
                 expected = []
                 for test_case in test_cases:
@@ -196,7 +198,10 @@ class BaseTestCases:
 
                 function = tree.body[0]
                 verilog, root = convert_generator_debug(
-                    function, optimization_level=optimization_level
+                    python_text,
+                    function_name,
+                    optimization_level=optimization_level,
+                    extra_test_cases=test_cases,
                 )
                 if args.write:
                     with open(FILES_IN_ABS_DIR["cytoscape"], mode="w") as cyto_file:

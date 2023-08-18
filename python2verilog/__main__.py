@@ -10,6 +10,8 @@ import os
 import ast
 import warnings
 from typing import Optional
+
+from python2verilog.api.api import convert_generator_debug
 from .api import convert_generator
 
 
@@ -22,6 +24,14 @@ if __name__ == "__main__":
         "input_file",
         type=str,
         help="Input file containing a python generator function",
+    )
+
+    parser.add_argument(
+        "-n",
+        "--name",
+        type=str,
+        help="Name of function to be converted, defaults to python filename stem",
+        default="",
     )
 
     parser.add_argument(
@@ -69,6 +79,8 @@ if __name__ == "__main__":
     if args.output == "":
         args.output = input_file_stem + ".sv"
 
+    if args.name == "":
+        args.name = input_file_stem
     if args.testbench == "":
         args.testbench = get_default_tb_filename(input_file_stem)
 
@@ -82,7 +94,7 @@ if __name__ == "__main__":
         tree = ast.parse(python)
         function = tree.body[0]
         assert isinstance(function, ast.FunctionDef)
-        verilog = convert_generator(function, args.optimization_level)
+        verilog, _ = convert_generator_debug(python, args.name, args.optimization_level)
 
         with open(
             os.path.abspath(args.output), mode="w+", encoding="utf8"
