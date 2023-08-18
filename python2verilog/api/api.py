@@ -3,6 +3,7 @@ Wrappers
 """
 
 import argparse
+import copy
 import logging
 import os
 import ast
@@ -27,8 +28,43 @@ def convert(context: ir.Context, code: str, optimization_level: int = 1):
 
 
 def convert(context: str | ir.Context, code: str, optimization_level: int = 1):
+    """
+    Converts python code to verilog module and testbench
+    """
     verilog, _ = convert_to_verilog_ir(context, code, optimization_level)
     return verilog.get_module_str(), verilog.new_testbench_str(context.test_cases)
+
+
+def convert_file_to_file(
+    function_name: str,
+    input_path: str,
+    output_module_path: Optional[str] = None,
+    output_testbench_path: Optional[str] = None,
+    overwrite: bool = False,
+    optimization_level: int = 1,
+):
+    """
+    Reads a python file and outputs verilog and testbench to files
+    Default output naming is [python file name stem]_module.sv and [python file name stem]_tb.sv respectively
+    """
+    python_file_stem = os.path.splitext(input_path)[0]
+    if not output_module_path:
+        output_module_path = python_file_stem + "_module.sv"
+    if not output_testbench_path:
+        output_testbench_path = python_file_stem + "_tb.sv"
+
+    with open(input_path, mode="r", encoding="utf8") as python_file:
+        module, testbench = convert(
+            function_name, python_file.read(), optimization_level
+        )
+
+        mode = "w" if overwrite else "x"
+
+        with open(output_module_path, mode=mode, encoding="utf8") as module_file:
+            module_file.write(module)
+
+        with open(output_testbench_path, mode=mode, encoding="utf8") as testbench_file:
+            testbench_file.write(testbench)
 
 
 def convert_to_verilog_ir(
@@ -82,10 +118,10 @@ def parse_python(
 
     tree = ast.parse(code)
 
-    generator_ast: Optional[ast.FunctionDef]
     test_cases = extra_test_cases if extra_test_cases else []
 
     for node in ast.walk(tree):
+        logging.debug(f"Walking through {ast.dump(node)}")
         if isinstance(node, ast.FunctionDef) and node.name == function_name:
             logging.info(f"Found function at {get_file_and_line_num(node)}")
             generator_ast = node
