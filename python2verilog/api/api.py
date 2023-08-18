@@ -48,7 +48,7 @@ def parse_python(code: str, function_name: str, file_path: Optional[str] = None)
             string = file_path
         else:
             string = "line"
-        string += f":{node.lineno}:{node.end_lineno}"
+        string += f":{node.lineno}"
         return string
 
     tree = ast.parse(code)
@@ -56,17 +56,17 @@ def parse_python(code: str, function_name: str, file_path: Optional[str] = None)
     func: Optional[ast.FunctionDef]
     test_cases = []
 
-    for stmt in tree.body:
-        if isinstance(stmt, ast.FunctionDef) and stmt.name == function_name:
-            logging.info(f"Found function at {get_file_and_line_num(stmt)}")
-            func = stmt
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef) and node.name == function_name:
+            logging.info(f"Found function at {get_file_and_line_num(node)}")
+            func = node
         elif (
-            isinstance(stmt, ast.Assign)
-            and isinstance(stmt.value, ast.Call)
-            and isinstance(stmt.value.func, ast.Name)
-            and stmt.value.func.id == function_name
+            isinstance(node, ast.Assign)
+            and isinstance(node.value, ast.Call)
+            and isinstance(node.value.func, ast.Name)
+            and node.value.func.id == function_name
         ):
-            func_call_str = ast.get_source_segment(code, stmt.value)
+            func_call_str = ast.get_source_segment(code, node.value)
             assert func_call_str
             func_call_str = "(" + func_call_str.split("(", 1)[1]
             func_call_str = func_call_str.rsplit(")", 1)[0] + ")"
@@ -75,7 +75,7 @@ def parse_python(code: str, function_name: str, file_path: Optional[str] = None)
             test_cases.append(test_case)
 
             logging.info(
-                f"Found test case at {get_file_and_line_num(stmt)} with {test_case}"
+                f"Found test case at {get_file_and_line_num(node)} with {test_case}"
             )
 
     logging.info(f"Test cases: {test_cases}")
@@ -83,18 +83,26 @@ def parse_python(code: str, function_name: str, file_path: Optional[str] = None)
     input_names = [var.arg for var in func.args.args]
     logging.info(f"Input param names: {input_names}")
 
-    input_types = [type(val) for val in test_cases[0]]
-    for tupl in test_cases:
-        for i, (expected_type, actual_value) in enumerate(zip(input_types, tupl)):
+    initialized = False
+    input_types: str | list = "Unknown"
+    for test_case in test_cases:
+        if not initialized:
+            input_types = [type(val) for val in test_case]
+            initialized = True
+
+        for i, (expected_type, actual_value) in enumerate(zip(input_types, test_case)):
             assert expected_type == type(
                 actual_value
             ), f"Expected parameter `{input_names[i]}` to be {expected_type} but got {type(actual_value)} instead"
+
     logging.info(f"Input param types: {input_types}")
 
     locals_ = dict()
-    exec(code, None, locals_)  # 1-indexed
-    # Note that only first test case is used
-    generator_func = locals_[function_name]
+    exec(code, None, locals_)
+    try:
+        generator_func = locals_[function_name]
+    except KeyError as e:
+        raise RuntimeError(f"def {function_name} not found in global context") from e
 
     initialized = False
 
@@ -105,8 +113,10 @@ def parse_python(code: str, function_name: str, file_path: Optional[str] = None)
             output_types = [type(val) for val in next(generator)]
             initialized = True
 
-        for tupl in generator:
-            for i, (expected_type, actual_value) in enumerate(zip(input_types, tupl)):
+        for test_case in generator:
+            for i, (expected_type, actual_value) in enumerate(
+                zip(input_types, test_case)
+            ):
                 assert expected_type == type(
                     actual_value
                 ), f"Expected parameter `{input_names[i]}` to be {expected_type} but got {type(actual_value)} instead"
