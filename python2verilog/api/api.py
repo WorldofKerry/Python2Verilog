@@ -7,7 +7,7 @@ import logging
 import os
 import ast
 import warnings
-from typing import Optional
+from typing import Optional, overload
 
 from python2verilog.utils.assertions import assert_type
 from ..frontend import Generator2Graph
@@ -16,24 +16,30 @@ from ..backend import verilog
 from ..optimizer import OptimizeGraph
 
 
-def convert_generator(func: ast.FunctionDef, optimization_level: int):
-    """
-    Wrapper for Python to Verilog conversion
-    """
-    return convert_generator_debug(func, optimization_level)[0]
+@overload
+def convert(context: str, code: str, optimization_level: int = 0):
+    ...
 
 
-def convert_generator_debug(
-    code: str,
-    name: str,
-    optimization_level: int,
-    extra_test_cases: Optional[list] = None,
-):
+@overload
+def convert(context: ir.Context, code: str, optimization_level: int = 0):
+    ...
+
+
+def convert(context: str | ir.Context, code: str, optimization_level: int = 0):
+    if isinstance(context, str):
+        context = ir.Context(name=context)
+    return convert_generator_debug(
+        code=code, context=context, optimization_level=optimization_level
+    )
+
+
+def convert_generator_debug(code: str, context: ir.Context, optimization_level: int):
     """
     Wrapper for Python to Verilog conversion
     """
     basic_context, func_ast, func_callable = parse_python(
-        code, name, extra_test_cases=extra_test_cases
+        code, context.name, extra_test_cases=context.test_cases
     )
     ir_root, context = Generator2Graph(basic_context, func_ast).results
     if optimization_level > 0:
