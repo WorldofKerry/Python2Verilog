@@ -2,4 +2,9 @@
 API wrappers
 """
 
-from .api import convert_generator_debug, parse_python, convert
+from .api import (
+    parse_python,
+    convert_to_verilog_ir,
+    convert_for_debug,
+    convert,
+)

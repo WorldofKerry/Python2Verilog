@@ -17,7 +17,7 @@ from matplotlib import pyplot as plt
 from abc import abstractmethod
 
 from python2verilog import ir
-from python2verilog.api import convert_generator_debug
+from python2verilog.api import convert_for_debug
 from python2verilog.utils.assertions import assert_type
 from tools.visualization import make_visual
 from .cases import TEST_CASES
@@ -198,7 +198,7 @@ class BaseTestCases:
 
                 function = tree.body[0]
                 context = ir.Context(name=function_name, test_cases=test_cases)
-                verilog, root = convert_generator_debug(
+                verilog, root = convert_for_debug(
                     code=python_text,
                     context=context,
                     optimization_level=optimization_level,

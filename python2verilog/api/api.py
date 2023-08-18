@@ -17,26 +17,36 @@ from ..optimizer import OptimizeGraph
 
 
 @overload
-def convert(context: str, code: str, optimization_level: int = 0):
+def convert(context: str, code: str, optimization_level: int = 1):
     ...
 
 
 @overload
-def convert(context: ir.Context, code: str, optimization_level: int = 0):
+def convert(context: ir.Context, code: str, optimization_level: int = 1):
     ...
 
 
-def convert(context: str | ir.Context, code: str, optimization_level: int = 0):
+def convert(context: str | ir.Context, code: str, optimization_level: int = 1):
+    verilog, _ = convert_to_verilog_ir(context, code, optimization_level)
+    return verilog.get_module_str(), verilog.new_testbench_str(context.test_cases)
+
+
+def convert_to_verilog_ir(
+    context: str | ir.Context, code: str, optimization_level: int = 1
+):
+    """
+    For more complex usage
+    """
     if isinstance(context, str):
         context = ir.Context(name=context)
-    return convert_generator_debug(
+    return convert_for_debug(
         code=code, context=context, optimization_level=optimization_level
     )
 
 
-def convert_generator_debug(code: str, context: ir.Context, optimization_level: int):
+def convert_for_debug(code: str, context: ir.Context, optimization_level: int):
     """
-    Wrapper for Python to Verilog conversion
+    Converts python code to verilog and its ir
     """
     basic_context, func_ast, func_callable = parse_python(
         code, context.name, extra_test_cases=context.test_cases

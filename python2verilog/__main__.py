@@ -11,8 +11,8 @@ import ast
 import warnings
 from typing import Optional
 
-from python2verilog.api.api import convert
-from .api import convert
+from python2verilog.api.api import convert_to_verilog_ir
+from .api import convert_to_verilog_ir
 
 
 if __name__ == "__main__":
@@ -94,7 +94,7 @@ if __name__ == "__main__":
         tree = ast.parse(python)
         function = tree.body[0]
         assert isinstance(function, ast.FunctionDef)
-        verilog, _ = convert(
+        verilog, _ = convert_to_verilog_ir(
             context=args.name, code=python, optimization_level=args.optimization_level
         )
 
