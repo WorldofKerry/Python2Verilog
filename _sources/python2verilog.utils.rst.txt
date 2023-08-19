@@ -12,6 +12,14 @@ python2verilog.utils.assertions module
    :undoc-members:
    :show-inheritance:
 
+python2verilog.utils.generics module
+------------------------------------
+
+.. automodule:: python2verilog.utils.generics
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 python2verilog.utils.string module
 ----------------------------------
 

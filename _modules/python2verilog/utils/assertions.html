@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 
-<html lang="en">
+<html lang="en" data-content_root="../../../">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>python2verilog.utils.assertions &#8212; python2verilog  documentation</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=4f649999" />
     <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=039e1c02" />
-    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js?v=b3ba4146"></script>
+    <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
     <script src="../../../_static/doctools.js?v=888ff710"></script>
-    <script src="../../../_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
    
@@ -35,7 +35,9 @@
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Any</span>
 
 
-<div class="viewcode-block" id="assert_list_type"><a class="viewcode-back" href="../../../python2verilog.utils.html#python2verilog.utils.assertions.assert_list_type">[docs]</a><span class="k">def</span> <span class="nf">assert_list_type</span><span class="p">(</span><span class="n">list_</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">],</span> <span class="n">type_</span><span class="p">:</span> <span class="nb">type</span><span class="p">):</span>
+<div class="viewcode-block" id="assert_list_type">
+<a class="viewcode-back" href="../../../python2verilog.utils.html#python2verilog.utils.assertions.assert_list_type">[docs]</a>
+<span class="k">def</span> <span class="nf">assert_list_type</span><span class="p">(</span><span class="n">list_</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">],</span> <span class="n">type_</span><span class="p">:</span> <span class="nb">type</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Asserts that all elems in list_ are of type_, then returns list_ or [] if list_ is None</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -47,7 +49,10 @@
     <span class="k">return</span> <span class="p">[]</span></div>
 
 
-<div class="viewcode-block" id="assert_dict_type"><a class="viewcode-back" href="../../../python2verilog.utils.html#python2verilog.utils.assertions.assert_dict_type">[docs]</a><span class="k">def</span> <span class="nf">assert_dict_type</span><span class="p">(</span><span class="n">dict_</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">],</span> <span class="n">key_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span> <span class="n">value_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">):</span>
+
+<div class="viewcode-block" id="assert_dict_type">
+<a class="viewcode-back" href="../../../python2verilog.utils.html#python2verilog.utils.assertions.assert_dict_type">[docs]</a>
+<span class="k">def</span> <span class="nf">assert_dict_type</span><span class="p">(</span><span class="n">dict_</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">],</span> <span class="n">key_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span> <span class="n">value_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Asserts that all key, values in dict_ are correctly typed,</span>
 <span class="sd">    returns dict_ or {} if dict_ is None</span>
@@ -61,13 +66,17 @@
     <span class="k">return</span> <span class="p">{}</span></div>
 
 
-<div class="viewcode-block" id="assert_type"><a class="viewcode-back" href="../../../python2verilog.utils.html#python2verilog.utils.assertions.assert_type">[docs]</a><span class="k">def</span> <span class="nf">assert_type</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">type_</span><span class="p">:</span> <span class="nb">type</span><span class="p">):</span>
+
+<div class="viewcode-block" id="assert_type">
+<a class="viewcode-back" href="../../../python2verilog.utils.html#python2verilog.utils.assertions.assert_type">[docs]</a>
+<span class="k">def</span> <span class="nf">assert_type</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">type_</span><span class="p">:</span> <span class="nb">type</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Asserts that obj is of type type_, then returns obj or None if obj is None</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">obj</span><span class="p">:</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">type_</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;expected </span><span class="si">{</span><span class="n">type_</span><span class="si">}</span><span class="s2"> got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span><span class="si">}</span><span class="s2"> instead&quot;</span>
     <span class="k">return</span> <span class="n">obj</span></div>
+
 </pre></div>
 
           </div>
@@ -126,7 +135,7 @@
       &copy;2023, Kerry Wang.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.1.2</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.2</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
       
     </div>
