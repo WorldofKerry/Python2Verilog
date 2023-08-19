@@ -62,7 +62,10 @@
 <a class="viewcode-back" href="../../../python2verilog.optimizer.html#python2verilog.optimizer.optimizer.backwards_replace">[docs]</a>
 <span class="k">def</span> <span class="nf">backwards_replace</span><span class="p">(</span><span class="n">expr</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">Expression</span><span class="p">,</span> <span class="n">mapping</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">ir</span><span class="o">.</span><span class="n">Expression</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Expression</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Replaces instances of variables with the mapped value</span>
+<span class="sd">    If the expression matches a key in the mapping, it is replaced with</span>
+<span class="sd">    the corresponding value in the mapping.</span>
+
+<span class="sd">    :return: a copy of the updated expression.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">expr</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Var</span><span class="p">):</span>
@@ -92,7 +95,11 @@
     <span class="n">node</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">AssignNode</span><span class="p">,</span> <span class="n">mapping</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">ir</span><span class="o">.</span><span class="n">Expression</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Expression</span><span class="p">]</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Replace all rvalues of expressions in stmt with mapping</span>
+<span class="sd">    If the right-hand-side of an assignment (e.g. the `b` in `a = b`)</span>
+<span class="sd">    matches a key in the mapping, it will be replaced with the</span>
+<span class="sd">    corresponding value in the mapping.</span>
+
+<span class="sd">    :return: a node with the mapping applied</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">node</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>

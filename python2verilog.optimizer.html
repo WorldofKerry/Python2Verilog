@@ -65,13 +65,26 @@ but an increase in hardware usage</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="python2verilog.optimizer.optimizer.backwards_replace">
 <span class="sig-name descname"><span class="pre">backwards_replace</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">expr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.expressions.Expression" title="python2verilog.ir.expressions.Expression"><span class="pre">Expression</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">mapping</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.expressions.Expression" title="python2verilog.ir.expressions.Expression"><span class="pre">Expression</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.expressions.Expression" title="python2verilog.ir.expressions.Expression"><span class="pre">Expression</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/optimizer/optimizer.html#backwards_replace"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.optimizer.optimizer.backwards_replace" title="Link to this definition">¶</a></dt>
-<dd><p>Replaces instances of variables with the mapped value</p>
+<dd><p>If the expression matches a key in the mapping, it is replaced with
+the corresponding value in the mapping.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>a copy of the updated expression.</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="python2verilog.optimizer.optimizer.graph_apply_mapping">
 <span class="sig-name descname"><span class="pre">graph_apply_mapping</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.graph.AssignNode" title="python2verilog.ir.graph.AssignNode"><span class="pre">AssignNode</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">mapping</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.expressions.Expression" title="python2verilog.ir.expressions.Expression"><span class="pre">Expression</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.expressions.Expression" title="python2verilog.ir.expressions.Expression"><span class="pre">Expression</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/optimizer/optimizer.html#graph_apply_mapping"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.optimizer.optimizer.graph_apply_mapping" title="Link to this definition">¶</a></dt>
-<dd><p>Replace all rvalues of expressions in stmt with mapping</p>
+<dd><p>If the right-hand-side of an assignment (e.g. the <cite>b</cite> in <cite>a = b</cite>)
+matches a key in the mapping, it will be replaced with the
+corresponding value in the mapping.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>a node with the mapping applied</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
