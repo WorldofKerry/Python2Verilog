@@ -1,6 +1,9 @@
 """
 Intermediate Representation Expressions
-Based on Verilog Syntax
+
+Represents the subset of Python expressions
+that are synthesizable
+
 """
 from __future__ import annotations
 import copy

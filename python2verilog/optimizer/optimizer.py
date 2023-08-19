@@ -26,7 +26,10 @@ def is_dependent(expr: ir.Expression, var: str):
 
 def backwards_replace(expr: ir.Expression, mapping: dict[ir.Expression, ir.Expression]):
     """
-    Replaces instances of variables with the mapped value
+    If the expression matches a key in the mapping, it is replaced with
+    the corresponding value in the mapping.
+
+    :return: a copy of the updated expression.
     """
     expr = copy.deepcopy(expr)
     if isinstance(expr, ir.Var):
@@ -53,7 +56,11 @@ def graph_apply_mapping(
     node: ir.AssignNode, mapping: dict[ir.Expression, ir.Expression]
 ):
     """
-    Replace all rvalues of expressions in stmt with mapping
+    If the right-hand-side of an assignment (e.g. the `b` in `a = b`)
+    matches a key in the mapping, it will be replaced with the
+    corresponding value in the mapping.
+
+    :return: a node with the mapping applied
     """
     try:
         node = copy.copy(node)
