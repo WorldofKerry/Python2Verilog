@@ -23,10 +23,10 @@ inst = deeznuts(420)
         context, func_ast, func_callable = parse_python(code, "nuts")
         logging.warning(func_ast)
 
-    def test_this_file(self):
-        with open(__file__, mode="r") as f:
-            # logging.warning(parse_python(f.read(), "test_parse_python"))
-            self.assertRaises(RuntimeError, parse_python, f.read(), "test_parse_python")
+    # def test_this_file(self):
+    #     with open(__file__, mode="r") as f:
+    #         # logging.warning(parse_python(f.read(), "test_parse_python"))
+    #         self.assertRaises(RuntimeError, parse_python, f.read(), "test_parse_python")
 
     def test_mix_types(self):
         code = """

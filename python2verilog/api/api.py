@@ -7,8 +7,9 @@ import copy
 import logging
 import os
 import ast
+import typing
 import warnings
-from typing import Optional, overload
+from typing import Optional, Union, overload
 
 from python2verilog.utils.assertions import assert_type
 from ..frontend import Generator2Graph
@@ -31,8 +32,14 @@ def convert(context: str | ir.Context, code: str, optimization_level: int = 1):
     """
     Converts python code to verilog module and testbench
     """
-    verilog, _ = convert_to_verilog_ir(context, code, optimization_level)
-    return verilog.get_module_str(), verilog.new_testbench_str(context.test_cases)
+    if isinstance(context, str):
+        context = ir.Context(name=context)
+    ver_code_gen, _ = convert_for_debug(
+        code=code, context=context, optimization_level=optimization_level
+    )
+    return ver_code_gen.get_module_str(), ver_code_gen.new_testbench_str(
+        context.test_cases
+    )
 
 
 def convert_file_to_file(
@@ -45,7 +52,8 @@ def convert_file_to_file(
 ):
     """
     Reads a python file and outputs verilog and testbench to files
-    Default output naming is [python file name stem]_module.sv and [python file name stem]_tb.sv respectively
+    Default output naming is [python file name stem]_module.sv
+    and [python file name stem]_tb.sv respectively
     """
     python_file_stem = os.path.splitext(input_path)[0]
     if not output_module_path:
@@ -67,24 +75,11 @@ def convert_file_to_file(
             testbench_file.write(testbench)
 
 
-def convert_to_verilog_ir(
-    context: str | ir.Context, code: str, optimization_level: int = 1
-):
-    """
-    For more complex usage
-    """
-    if isinstance(context, str):
-        context = ir.Context(name=context)
-    return convert_for_debug(
-        code=code, context=context, optimization_level=optimization_level
-    )
-
-
 def convert_for_debug(code: str, context: ir.Context, optimization_level: int):
     """
     Converts python code to verilog and its ir
     """
-    basic_context, func_ast, func_callable = parse_python(
+    basic_context, func_ast, _ = parse_python(
         code, context.name, extra_test_cases=context.test_cases
     )
     ir_root, context = Generator2Graph(basic_context, func_ast).results
@@ -102,6 +97,7 @@ def parse_python(
     """
     Parses python code into the function and testbench
     """
+    # pylint: disable=too-many-locals
     assert_type(code, str)
     assert_type(function_name, str)
 
@@ -150,7 +146,7 @@ def parse_python(
     logging.info(f"Input param names: {input_names}")
 
     initialized = False
-    input_types: str | list = "Unknown"
+    input_types: Union[str, list] = "Unknown"
     for test_case in test_cases:
         if not initialized:
             input_types = [type(val) for val in test_case]
@@ -159,11 +155,12 @@ def parse_python(
         for i, (expected_type, actual_value) in enumerate(zip(input_types, test_case)):
             assert expected_type == type(
                 actual_value
-            ), f"Expected parameter `{input_names[i]}` to be {expected_type} but got {type(actual_value)} instead"
+            ), f"Expected parameter `{input_names[i]}` to be \
+                {expected_type} but got {type(actual_value)} instead"
 
     logging.info(f"Input param types: {input_types}")
 
-    locals_ = dict()
+    locals_: dict[str, typing.Callable] = {}
     exec(code, None, locals_)
     try:
         generator_func = locals_[function_name]
@@ -191,7 +188,8 @@ def parse_python(
             ):
                 assert expected_type == type(
                     actual_value
-                ), f"Expected parameter `{input_names[i]}` to be {expected_type} but got {type(actual_value)} instead"
+                ), f"Expected parameter `{input_names[i]}` to be \
+                    {expected_type} but got {type(actual_value)} instead"
 
     context = ir.Context(name=function_name)
 
