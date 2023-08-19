@@ -1,12 +1,16 @@
+"""
+Implementation of generic base classes for __repr__ and __str__
+"""
+
 import logging
 
 
-def pretty_dict(d: dict, indent=0):
+def pretty_dict(dic: dict, indent=0):
     """
     Returns pretty-formatted stringified dict
     """
     result = "{\n"
-    for key, value in d.items():
+    for key, value in dic.items():
         result += "\t" * (indent + 1) + str(key) + ": "
         if isinstance(value, dict):
             result += pretty_dict(value, indent + 1)

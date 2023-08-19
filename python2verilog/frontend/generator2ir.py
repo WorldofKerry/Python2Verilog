@@ -60,21 +60,6 @@ class Generator2Graph:
         """
         return (self.root, self.context)
 
-    @staticmethod
-    def __generate_output_vars(node: pyast.AST, prefix: str):
-        """
-        Generates the yielded variables of the function
-        Uses prefix + index for naming
-        """
-        assert isinstance(node, pyast.Subscript)
-        if isinstance(node.slice, pyast.Tuple):
-            return [ir.Var(f"{prefix}{str(i)}") for i in range(len(node.slice.elts))]
-        if isinstance(node.slice, pyast.Name):
-            return [ir.Var(f"{prefix}0")]
-        raise NotImplementedError(
-            f"Unexpected function return type hint {type(node.slice)}, {pyast.dump(node.slice)}"
-        )
-
     def __parse_targets(self, nodes: list[pyast.AST]):
         """
         Warning: only single target on left-hand-side supported
