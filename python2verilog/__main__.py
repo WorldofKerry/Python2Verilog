@@ -93,21 +93,21 @@ if __name__ == "__main__":
         tree = ast.parse(python)
         function = tree.body[0]
         assert isinstance(function, ast.FunctionDef)
-        verilog, _ = convert_for_debug(
+        verilog_code_gen, _ = convert_for_debug(
             context=args.name, code=python, optimization_level=args.optimization_level
         )
 
         with open(
             os.path.abspath(args.output), mode="w+", encoding="utf8"
         ) as module_file:
-            module_file.write(verilog.get_module_lines().to_string())
+            module_file.write(verilog_code_gen.get_module_lines().to_string())
 
         if args.test_cases != "":
             with open(
                 os.path.abspath(args.testbench), mode="w+", encoding="utf8"
             ) as tb_file:
                 tb_file.write(
-                    verilog.new_testbench(ast.literal_eval(args.test_cases))
+                    verilog_code_gen.new_testbench(ast.literal_eval(args.test_cases))
                     .to_lines()
                     .to_string()
                 )

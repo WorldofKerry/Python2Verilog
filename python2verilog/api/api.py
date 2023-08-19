@@ -28,7 +28,7 @@ def convert(context: ir.Context, code: str, optimization_level: int = 1):
     ...
 
 
-def convert(context: str | ir.Context, code: str, optimization_level: int = 1):
+def convert(context: Union[str, ir.Context], code: str, optimization_level: int = 1):
     """
     Converts python code to verilog module and testbench
     """
@@ -75,17 +75,22 @@ def convert_file_to_file(
             testbench_file.write(testbench)
 
 
-def convert_for_debug(code: str, context: ir.Context, optimization_level: int):
+def convert_for_debug(
+    code: str, context: Union[str, ir.Context], optimization_level: int
+):
     """
     Converts python code to verilog and its ir
     """
-    basic_context, func_ast, _ = parse_python(
+    if isinstance(context, str):
+        context = ir.Context(name=context)
+
+    _context, func_ast, _ = parse_python(
         code, context.name, extra_test_cases=context.test_cases
     )
-    ir_root, context = Generator2Graph(basic_context, func_ast).results
+    ir_root, _context = Generator2Graph(_context, func_ast).results
     if optimization_level > 0:
         OptimizeGraph(ir_root, threshold=optimization_level - 1)
-    return verilog.CodeGen(ir_root, context), ir_root
+    return verilog.CodeGen(ir_root, _context), ir_root
 
 
 def parse_python(
