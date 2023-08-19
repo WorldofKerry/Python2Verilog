@@ -10,7 +10,8 @@ import os
 import ast
 import warnings
 from typing import Optional
-from .api import convert_graph
+
+from python2verilog.api import convert_for_debug
 
 
 if __name__ == "__main__":
@@ -22,6 +23,14 @@ if __name__ == "__main__":
         "input_file",
         type=str,
         help="Input file containing a python generator function",
+    )
+
+    parser.add_argument(
+        "-n",
+        "--name",
+        type=str,
+        help="Name of function to be converted, defaults to python filename stem",
+        default="",
     )
 
     parser.add_argument(
@@ -69,6 +78,8 @@ if __name__ == "__main__":
     if args.output == "":
         args.output = input_file_stem + ".sv"
 
+    if args.name == "":
+        args.name = input_file_stem
     if args.testbench == "":
         args.testbench = get_default_tb_filename(input_file_stem)
 
@@ -82,19 +93,21 @@ if __name__ == "__main__":
         tree = ast.parse(python)
         function = tree.body[0]
         assert isinstance(function, ast.FunctionDef)
-        verilog = convert_graph(function, args.optimization_level)
+        verilog_code_gen, _ = convert_for_debug(
+            context=args.name, code=python, optimization_level=args.optimization_level
+        )
 
         with open(
             os.path.abspath(args.output), mode="w+", encoding="utf8"
         ) as module_file:
-            module_file.write(verilog.get_module_lines().to_string())
+            module_file.write(verilog_code_gen.get_module_lines().to_string())
 
         if args.test_cases != "":
             with open(
                 os.path.abspath(args.testbench), mode="w+", encoding="utf8"
             ) as tb_file:
                 tb_file.write(
-                    verilog.new_testbench(ast.literal_eval(args.test_cases))
+                    verilog_code_gen.new_testbench(ast.literal_eval(args.test_cases))
                     .to_lines()
                     .to_string()
                 )

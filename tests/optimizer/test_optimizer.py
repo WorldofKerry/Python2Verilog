@@ -12,30 +12,28 @@ class TestGraphApplyMapping(unittest.TestCase):
         """
         i <= f(i)
         """
-        mapping = {ir.InputVar("i"): ir.Int(1)}
+        mapping = {ir.Var("i"): ir.Int(1)}
         node = ir.AssignNode(
             unique_id="",
-            lvalue=ir.InputVar("i"),
-            rvalue=ir.Add(ir.InputVar("i"), ir.Int(1)),
+            lvalue=ir.Var("i"),
+            rvalue=ir.Add(ir.Var("i"), ir.Int(1)),
         )
         updated = graph_apply_mapping(node, mapping)
         self.assertEqual("_i <= $signed($signed(1) + $signed(1))", str(updated))
 
-        mapping = {ir.InputVar("i"): ir.Add(ir.InputVar("i"), ir.Int(1))}
+        mapping = {ir.Var("i"): ir.Add(ir.Var("i"), ir.Int(1))}
         node = ir.AssignNode(
             unique_id="",
-            lvalue=ir.InputVar("i"),
-            rvalue=ir.Add(ir.InputVar("i"), ir.Int(1)),
+            lvalue=ir.Var("i"),
+            rvalue=ir.Add(ir.Var("i"), ir.Int(1)),
         )
         updated = graph_apply_mapping(node, mapping)
         self.assertEqual(
             "_i <= $signed($signed(_i + $signed(1)) + $signed(1))", str(updated)
         )
 
-        mapping = {ir.InputVar("i"): ir.Int(1)}
-        node = ir.AssignNode(
-            unique_id="", lvalue=ir.InputVar("a"), rvalue=ir.InputVar("i")
-        )
+        mapping = {ir.Var("i"): ir.Int(1)}
+        node = ir.AssignNode(unique_id="", lvalue=ir.Var("a"), rvalue=ir.Var("i"))
         updated = graph_apply_mapping(node, mapping)
         self.assertEqual("_a <= $signed(1)", str(updated))
 
@@ -43,28 +41,28 @@ class TestGraphApplyMapping(unittest.TestCase):
         """
         i <= constant
         """
-        mapping = {ir.InputVar("i"): ir.Add(ir.InputVar("i"), ir.Int(1))}
+        mapping = {ir.Var("i"): ir.Add(ir.Var("i"), ir.Int(1))}
         node = ir.AssignNode(
             unique_id="abc",
-            lvalue=ir.InputVar("i"),
+            lvalue=ir.Var("i"),
             rvalue=ir.Add(ir.Int(0), ir.Int(1)),
         )
         updated = graph_apply_mapping(node, mapping)
         self.assertEqual("_i <= $signed($signed(0) + $signed(1))", str(updated))
 
-        mapping = {ir.InputVar("i"): ir.Add(ir.InputVar("i"), ir.InputVar("i"))}
+        mapping = {ir.Var("i"): ir.Add(ir.Var("i"), ir.Var("i"))}
         node = ir.AssignNode(
             unique_id="abc",
-            lvalue=ir.InputVar("i"),
+            lvalue=ir.Var("i"),
             rvalue=ir.Add(ir.Int(0), ir.Int(1)),
         )
         updated = graph_apply_mapping(node, mapping)
         self.assertEqual("_i <= $signed($signed(0) + $signed(1))", str(updated))
 
-        mapping = {ir.InputVar("i"): ir.Add(ir.Int(0), ir.Int(1))}
+        mapping = {ir.Var("i"): ir.Add(ir.Int(0), ir.Int(1))}
         node = ir.AssignNode(
             unique_id="abc",
-            lvalue=ir.InputVar("i"),
+            lvalue=ir.Var("i"),
             rvalue=ir.Add(ir.Int(0), ir.Int(1)),
         )
         updated = graph_apply_mapping(node, mapping)

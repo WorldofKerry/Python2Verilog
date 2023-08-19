@@ -32,7 +32,7 @@ class CodeGen:
         self.context.add_state_weak(context.ready_state)
 
         self.context.add_global_var(
-            ir.InputVar("state", initial_value=self.context.ready_state)
+            ir.Var("state", initial_value=self.context.ready_state)
         )
 
         self._module = CodeGen.__new_module(root_case, self.context)
@@ -120,7 +120,7 @@ class CodeGen:
         init_body = []
 
         for item in root.case_items:
-            if item.condition == ir.Expression(context.entry):
+            if item.condition == ir.Expression(context.entry_state):
                 stmt_stack += item.statements
                 init_body += item.statements
                 root.case_items.remove(item)
