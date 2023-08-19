@@ -147,7 +147,10 @@ def parse_python(
 
     logging.info(f"Test cases: {test_cases}")
 
-    input_names = [var.arg for var in generator_ast.args.args]
+    try:
+        input_names = [var.arg for var in generator_ast.args.args]
+    except UnboundLocalError as e:
+        raise RuntimeError(f"Didn't find f{function_name} in file") from e
 
     logging.info(f"Input param names: {input_names}")
 
