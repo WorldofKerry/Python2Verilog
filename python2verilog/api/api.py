@@ -31,8 +31,10 @@ def convert(context: str | ir.Context, code: str, optimization_level: int = 1):
     """
     Converts python code to verilog module and testbench
     """
-    verilog, _ = convert_to_verilog_ir(context, code, optimization_level)
-    return verilog.get_module_str(), verilog.new_testbench_str(context.test_cases)
+    code_gen, _ = convert_to_verilog_ir(context, code, optimization_level)
+    return code_gen.get_module_str(), code_gen.new_testbench_str(
+        code_gen.context.test_cases
+    )
 
 
 def convert_file_to_file(
@@ -126,17 +128,18 @@ def parse_python(
             logging.info(f"Found function at {get_file_and_line_num(node)}")
             generator_ast = node
         elif (
-            isinstance(node, ast.Assign)
-            and isinstance(node.value, ast.Call)
-            and isinstance(node.value.func, ast.Name)
-            and node.value.func.id == function_name
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Name)
+            and node.func.id == function_name
         ):
-            func_call_str = ast.get_source_segment(code, node.value)
+            func_call_str = ast.get_source_segment(code, node)
             assert func_call_str
             func_call_str = "(" + func_call_str.split("(", 1)[1]
             func_call_str = func_call_str.rsplit(")", 1)[0] + ")"
 
             test_case = ast.literal_eval(func_call_str)
+            if not isinstance(test_case, tuple):
+                test_case = (test_case,)
             test_cases.append(test_case)
 
             logging.info(
@@ -164,7 +167,11 @@ def parse_python(
     logging.info(f"Input param types: {input_types}")
 
     locals_ = dict()
-    exec(code, None, locals_)
+    lines = code.splitlines()
+    func_lines = lines[generator_ast.lineno - 1 : generator_ast.end_lineno]
+    func_str = "\n".join(func_lines)
+    logging.error(func_str)
+    exec(func_str, None, locals_)
     try:
         generator_func = locals_[function_name]
     except KeyError as e:
