@@ -33,5 +33,5 @@ jobs:
         cd build
         python3 -m pip install ..
         cp ../tests/integration/data/happy_face/python.py .
-        python3 -m python2verilog python.py
+        python3 -m python2verilog python.py -n happy_face
         cat python.sv

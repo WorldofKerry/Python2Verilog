@@ -17,7 +17,7 @@ from matplotlib import pyplot as plt
 from abc import abstractmethod
 
 from python2verilog import ir
-from python2verilog.api import convert_graph_debug
+from python2verilog.api import convert_for_debug
 from python2verilog.utils.assertions import assert_type
 from tools.visualization import make_visual
 from .cases import TEST_CASES
@@ -126,11 +126,13 @@ class BaseTestCases:
             logging.debug(f"executing python")
 
             with open(FILES_IN_ABS_DIR["python"]) as python_file:
-                python = python_file.read()
+                python_text = python_file.read()
                 _locals = dict()
-                exec(python, None, _locals)  # grab's exec's populated scoped variables
+                exec(
+                    python_text, None, _locals
+                )  # grab's exec's populated scoped variables
 
-                tree = ast.parse(python)
+                tree = ast.parse(python_text)
 
                 expected = []
                 for test_case in test_cases:
@@ -195,8 +197,11 @@ class BaseTestCases:
                 )
 
                 function = tree.body[0]
-                verilog, root = convert_graph_debug(
-                    function, optimization_level=optimization_level
+                context = ir.Context(name=function_name, test_cases=test_cases)
+                verilog, root = convert_for_debug(
+                    code=python_text,
+                    context=context,
+                    optimization_level=optimization_level,
                 )
                 if args.write:
                     with open(FILES_IN_ABS_DIR["cytoscape"], mode="w") as cyto_file:

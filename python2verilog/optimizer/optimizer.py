@@ -15,7 +15,7 @@ def is_dependent(expr: ir.Expression, var: str):
     """
     Returns whether or not expr is dependent on var
     """
-    if isinstance(expr, ir.InputVar):
+    if isinstance(expr, ir.Var):
         return var == expr.to_string()
     if isinstance(expr, ir.BinOp):
         return is_dependent(expr.left, var) or is_dependent(expr.right, var)
@@ -32,7 +32,7 @@ def backwards_replace(expr: ir.Expression, mapping: dict[ir.Expression, ir.Expre
     :return: a copy of the updated expression.
     """
     expr = copy.deepcopy(expr)
-    if isinstance(expr, ir.InputVar):
+    if isinstance(expr, ir.Var):
         for key in mapping:
             if key.to_string() == expr.to_string():
                 return mapping[key]

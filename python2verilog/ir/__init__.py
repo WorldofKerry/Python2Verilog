@@ -9,7 +9,7 @@ from .expressions import (
     Expression,
     Int,
     UInt,
-    InputVar,
+    Var,
     State,
     Ternary,
     UBinOp,

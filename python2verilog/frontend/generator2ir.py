@@ -12,35 +12,32 @@ from .. import ir
 from ..utils.string import Lines, Indent
 from ..utils.assertions import assert_type, assert_list_type
 
-DONE_STATE_NAME = "_statelmaoready"
-
 
 class Generator2Graph:
     """
     Parses python generator functions to Verilog AST
     """
 
-    def __init__(self, python_func: pyast.FunctionDef):
+    def __init__(
+        self,
+        context: ir.Context,
+        python_func: pyast.FunctionDef,
+        done_state_name: str = "_statelmaoready",
+    ):
         """
         Initializes the parser, does quick setup work
         """
-        self._context = ir.Context(name=assert_type(python_func.name, str))
-
-        assert python_func.returns is not None, "Write a return type-hint for function"
-        self._context.output_vars = self.__generate_output_vars(
-            node=python_func.returns, prefix=""
-        )
-        self._context.input_vars = [
-            ir.InputVar(var.arg) for var in python_func.args.args
-        ]
+        assert_type(python_func, pyast.FunctionDef)
+        self._context = assert_type(context, ir.Context)
 
         self._root = self.__parse_statements(
             stmts=list(python_func.body),
             prefix="_state",
-            nextt=ir.DoneNode(unique_id=DONE_STATE_NAME, name="done"),
+            nextt=ir.DoneNode(unique_id=done_state_name, name="done"),
         )
-        self._context.entry = self._root.unique_id
-        self._context.ready_state = DONE_STATE_NAME
+
+        self._context.entry_state = self._root.unique_id
+        self._context.ready_state = done_state_name
 
     @property
     def root(self):
@@ -63,23 +60,6 @@ class Generator2Graph:
         """
         return (self.root, self.context)
 
-    @staticmethod
-    def __generate_output_vars(node: pyast.AST, prefix: str):
-        """
-        Generates the yielded variables of the function
-        Uses prefix + index for naming
-        """
-        assert isinstance(node, pyast.Subscript)
-        if isinstance(node.slice, pyast.Tuple):
-            return [
-                ir.InputVar(f"{prefix}{str(i)}") for i in range(len(node.slice.elts))
-            ]
-        if isinstance(node.slice, pyast.Name):
-            return [ir.InputVar(f"{prefix}0")]
-        raise NotImplementedError(
-            f"Unexpected function return type hint {type(node.slice)}, {pyast.dump(node.slice)}"
-        )
-
     def __parse_targets(self, nodes: list[pyast.AST]):
         """
         Warning: only single target on left-hand-side supported
@@ -91,10 +71,10 @@ class Generator2Graph:
         if isinstance(node, pyast.Subscript):
             assert isinstance(node.value, pyast.Name)
             if not self._context.is_declared(node.value.id):
-                self._context.add_global_var(ir.InputVar(py_name=node.value.id))
+                self._context.add_global_var(ir.Var(py_name=node.value.id))
         elif isinstance(node, pyast.Name):
             if not self._context.is_declared(node.id):
-                self._context.add_global_var(ir.InputVar(py_name=node.id))
+                self._context.add_global_var(ir.Var(py_name=node.id))
         else:
             raise TypeError(f"Unsupported lvalue type {type(node)} {pyast.dump(node)}")
         return self.__parse_expression(node)
@@ -329,7 +309,7 @@ class Generator2Graph:
         if isinstance(expr, pyast.Constant):
             return ir.Int(expr.value)
         if isinstance(expr, pyast.Name):
-            return ir.InputVar(py_name=expr.id)
+            return ir.Var(py_name=expr.id)
         if isinstance(expr, pyast.Subscript):
             return self.__parse_subscript(expr)
         if isinstance(expr, pyast.BinOp):

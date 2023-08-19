@@ -9,10 +9,12 @@ from __future__ import annotations
 import copy
 from dataclasses import dataclass
 from typing import Optional
+
+from python2verilog.utils.generics import GenericRepr
 from ..utils.assertions import assert_type, assert_list_type
 
 
-class Expression:
+class Expression(GenericRepr):
     """
     A String (that can be equated to something)
     """
@@ -29,10 +31,6 @@ class Expression:
 
     def __str__(self):
         return self.to_string()
-
-    def __repr__(self):
-        items = [f"{key}=({value})" for key, value in self.__dict__.items()]
-        return f"{self.__class__.__name__}({','.join(items)})"
 
     def __eq__(self, other: object):
         if assert_type(other, Expression):
@@ -63,7 +61,7 @@ class UInt(Expression):
         super().__init__(str(value))
 
 
-class InputVar(Expression):
+class Var(Expression):
     """
     Named-variable
     """
@@ -73,8 +71,9 @@ class InputVar(Expression):
         py_name: str,
         ver_name: str = "",
         width: int = 32,
-        isSigned: bool = True,
+        is_signed: bool = True,
         initial_value: str = "0",
+        **_,
     ):
         if ver_name == "":
             ver_name = "_" + py_name
@@ -82,13 +81,13 @@ class InputVar(Expression):
         self.ver_name = assert_type(ver_name, str)
         self.py_name = assert_type(py_name, str)  # Matches I/O of Verilog
         self.width = assert_type(width, int)
-        self.is_signed = assert_type(isSigned, bool)
+        self.is_signed = assert_type(is_signed, bool)
         self.initial_value = initial_value
 
         super().__init__(ver_name)
 
 
-class State(InputVar):
+class State(Var):
     """
     State variable
     """
