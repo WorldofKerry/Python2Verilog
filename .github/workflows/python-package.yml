@@ -31,10 +31,12 @@ jobs:
           mkdir build
           cd build
           python3 -m pip install ..
-          cp ../tests/integration/data/happy_face/python.py .
-          python3 -m python2verilog python.py -n happy_face
-          cat python.sv
+
           python3 ../examples/decorator_basic.py
           cat ../examples/decorator_basic.sv
+
           python3 ../examples/decorator_advanced.py
           cat ../examples/decorator_advanced.sv
+
+          python3 -m python2verilog ../examples/cli.py -n happy_face -t "[5, 7, 3]"
+          cat ../examples/cli.sv
