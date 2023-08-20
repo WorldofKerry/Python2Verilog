@@ -14,7 +14,7 @@ from typing import Optional
 from python2verilog import ir
 
 from python2verilog.api import convert_for_debug
-from python2verilog.api.api import convert_from_cli
+from python2verilog.api.cli import convert_from_cli
 
 logging.root.setLevel(logging.INFO)
 
