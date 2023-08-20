@@ -29,6 +29,8 @@ class Context(GenericReprAndStr):
     input_types: list = field(default_factory=list)
     output_types: list = field(default_factory=list)
 
+    optimization_level: int = 1
+
     write: bool = False
     module_path: str = ""
     testbench_path: str = ""

@@ -3,6 +3,7 @@ Wrappers
 """
 
 import argparse
+import atexit
 import copy
 import logging
 import os
@@ -23,25 +24,55 @@ from .. import ir
 from ..backend import verilog
 from ..optimizer import OptimizeGraph
 
-# All functions if a lesser scope is not given
+# All functions if a lesser namespace is not given
 global_scope: dict[FunctionType, ir.Context] = {}
+namespaces = [global_scope]
+
+
+def new_scope():
+    """
+    Create new namespace and returns that namespace
+    """
+    namespace = {}
+    namespaces.append(namespace)
+    return namespace
+
+
+def __scope_exit_handler():
+    """
+    Handles the conversions in each namespace for program exit
+    """
+    for namespace in namespaces:
+        for _, value in namespace.items():
+            print(value.name, value.test_cases, value.input_types, value.output_types)
+        for context in namespace.values():
+            ir_root, context = Generator2Graph(context, context.py_ast).results
+            if context.optimization_level > 0:
+                OptimizeGraph(ir_root, threshold=context.optimization_level - 1)
+            ver_code_gen = verilog.CodeGen(ir_root, context)
+            logging.error(ver_code_gen.get_module_str())
+
+
+atexit.register(__scope_exit_handler)
 
 
 # pylint: disable=dangerous-default-value
 @decorator_with_args
 def verilogify(
     func: FunctionType,
-    scope: dict[FunctionType, ir.Context] = global_scope,
+    namespace: dict[FunctionType, ir.Context] = global_scope,
     module_path: str = "",
     testbench_path: str = "",
     write: bool = False,
 ):
     """
+    :param namespace: the namespace to put this function, for linking purposes
+
+    :param write: if write, then files are written to the provided paths
     :param module_path: path to write verilog module to, defaults to function_name.sv
     :param testbench_path: path to write verilog testbench to, defaults to function_name_tb.sv
-
     """
-    if func in scope:
+    if func in namespace:
         raise RuntimeError(f"{func.__name__} has already been decorated")
 
     context = ir.Context(name=func.__name__)
@@ -59,7 +90,7 @@ def verilogify(
     context.module_path = module_path
     context.testbench_path = testbench_path
 
-    scope[func] = context
+    namespace[func] = context
 
     @wraps(func)
     def generator_wrapper(*args, **kwargs):
@@ -67,7 +98,7 @@ def verilogify(
             raise RuntimeError(
                 "Keyword arguments not yet supported, use positional arguments only"
             )
-        context = scope[func]
+        context = namespace[func]
         context.test_cases.append(args)
         if not context.input_types:
             context.input_types = [type(arg) for arg in args]
