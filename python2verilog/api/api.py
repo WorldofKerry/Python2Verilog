@@ -354,9 +354,8 @@ def parse_python(
 
     context = ir.Context(name=function_name)
 
-    context.output_types = output_types
-
     if initialized:
+        context.output_types = output_types
         context.output_vars = [ir.Var(str(i)) for i in range(len(output_types))]
 
     logging.info(f"Output param types: {context.output_types}")
