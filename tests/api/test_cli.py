@@ -43,7 +43,7 @@ class TestConvert(unittest.TestCase):
             logging.error(result.stdout + result.stderr)
             raise subprocess.CalledProcessError(CMD, "non-zero return code")
 
-    def test_error(self):
+    def test_err(self):
         CMD = "python3 -m python2verilog tests/integration/data/happy_face/python.py -n happy_face \
                 -o tests/api/module.sv -t tests/api/testbench.sv"
 
