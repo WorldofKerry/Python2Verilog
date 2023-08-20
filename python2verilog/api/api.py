@@ -46,7 +46,9 @@ def __scope_exit_handler():
     """
     for namespace in namespaces:
         for _, value in namespace.items():
-            print(value.name, value.test_cases, value.input_types, value.output_types)
+            logging.info(
+                value.name, value.test_cases, value.input_types, value.output_types
+            )
         for context in namespace.values():
             ir_root, context = Generator2Graph(context, context.py_ast).results
             if context.optimization_level > 0:
@@ -107,6 +109,8 @@ def verilogify(
     context = ir.Context(name=func.__name__)
     context.py_ast = func_ast
     context.py_func = func
+
+    context.input_vars = [ir.Var(name.arg) for name in func_ast.args.args]
 
     context.write = write
 

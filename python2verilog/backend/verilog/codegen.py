@@ -24,6 +24,11 @@ class CodeGen:
         assert_type(root, ir.Vertex)
         assert_type(context, ir.Context)
         self.context = context
+
+        self.context.output_vars = [
+            ir.Var(str(i)) for i in range(len(self.context.output_types))
+        ]
+
         root_case = CaseBuilder(root, context).case
 
         for item in root_case.case_items:
