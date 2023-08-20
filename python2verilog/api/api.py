@@ -5,6 +5,7 @@ Wrappers
 import argparse
 import atexit
 import copy
+from io import IOBase
 import logging
 import os
 import ast
@@ -106,18 +107,6 @@ def verilogify(
     if not testbench_output:
         testbench_output = Path(input_file_stem + "_tb.sv")
 
-    if overwrite:
-        mode = "w"
-    else:
-        mode = "x"
-
-    if write:
-        # pylint: disable=consider-using-with
-        if isinstance(module_output, os.PathLike):
-            module_output = open(module_output, mode=mode, encoding="utf8")
-        if isinstance(testbench_output, os.PathLike):
-            testbench_output = open(testbench_output, mode=mode, encoding="utf8")
-
     tree = ast.parse(textwrap.dedent(inspect.getsource(func)))
     assert len(tree.body) == 1
     func_ast = tree.body[0]
@@ -131,10 +120,21 @@ def verilogify(
 
     context.write = write
     context.overwrite = overwrite
-    assert isinstance(module_output, IO)
-    assert isinstance(testbench_output, IO)
-    context.module_file = module_output
-    context.testbench_file = testbench_output
+    # assert isinstance(module_output, IOBase), f"Got {type(module_output)} instead"
+    # assert isinstance(testbench_output, IOBase), f"Got {type(testbench_output)} instead"
+
+    if write:
+        if overwrite:
+            mode = "w"
+        else:
+            mode = "x"
+        # pylint: disable=consider-using-with
+        if isinstance(module_output, os.PathLike):
+            module_output = open(module_output, mode=mode, encoding="utf8")
+        if isinstance(testbench_output, os.PathLike):
+            testbench_output = open(testbench_output, mode=mode, encoding="utf8")
+        context.module_file = module_output
+        context.testbench_file = testbench_output
 
     namespace[func] = context
 
