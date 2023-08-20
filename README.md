@@ -24,6 +24,8 @@ Unsupported Python paradigms include but are not limited to the following:
 - Regular functions that use the `return` keyword, instead `yield` once
 - `for` loops, instead rewrite as a while loop
 - Function calls, instead use the converter on each of the subfunctions
+- Keyword arguments, instead use positional arguments
+- Global (nonlocal) variables, instead declare them within the function
 
 ## Usage
 
