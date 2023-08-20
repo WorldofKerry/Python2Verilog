@@ -233,6 +233,7 @@ def convert_for_debug(code: str, context: ir.Context, optimization_level: int):
     context, func_ast, _ = parse_python(
         code, context.name, extra_test_cases=context.test_cases
     )
+    logging.error(context.output_types)
     ir_root, context = Generator2Graph(context, func_ast).results
     if optimization_level > 0:
         OptimizeGraph(ir_root, threshold=optimization_level - 1)
@@ -266,6 +267,7 @@ def parse_python(
     tree = ast.parse(code)
 
     test_cases = extra_test_cases if extra_test_cases else []
+    print(f"parse_python test cases {test_cases}")
 
     for node in ast.walk(tree):
         logging.debug(f"Walking through {ast.dump(node)}")
@@ -352,9 +354,13 @@ def parse_python(
 
     context = ir.Context(name=function_name)
 
+    context.output_types = output_types
+
     if initialized:
-        logging.info(f"Output param types: {output_types}")
         context.output_vars = [ir.Var(str(i)) for i in range(len(output_types))]
+
+    logging.info(f"Output param types: {context.output_types}")
+    logging.info(f"Output param names: {context.output_vars}")
 
     context.input_vars = [ir.Var(name) for name in input_names]
     context.test_cases = test_cases

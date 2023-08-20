@@ -4,6 +4,7 @@ Converts Python generator functions to synthesizable Verilog.
 For sample Python inputs,
 visit https://github.com/WorldofKerry/Python2Verilog/tree/main/tests/integration/data
 """
+import logging
 
 import argparse
 import os
@@ -13,6 +14,8 @@ from typing import Optional
 from python2verilog import ir
 
 from python2verilog.api import convert_for_debug
+
+logging.root.setLevel(logging.INFO)
 
 
 if __name__ == "__main__":
@@ -101,6 +104,7 @@ if __name__ == "__main__":
         if args.test_cases:
             context.test_cases = ast.literal_eval(args.test_cases)
 
+        print(f"TEST CASES: {context.test_cases}")
         verilog_code_gen, _ = convert_for_debug(
             context=context, code=python, optimization_level=args.optimization_level
         )

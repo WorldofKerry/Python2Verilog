@@ -183,12 +183,11 @@ class CodeGen:
         Each element of test_cases represents a single test case
         """
         if len(self.context.input_vars) == 0:
-            raise RuntimeError(
-                f"Output variable type not deduced for {self.context.name}"
-            )
+            raise RuntimeError(f"Input var names not deduced for {self.context.name}")
         if len(self.context.output_vars) == 0:
             raise RuntimeError(
-                f"Output variable type not deduced for {self.context.name}"
+                f"Output var types not deduced for {self.context.name}, \
+                    types are {self.context.output_types}"
             )
 
         def make_display_stmt():
