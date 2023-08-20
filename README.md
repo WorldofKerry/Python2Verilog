@@ -16,7 +16,7 @@ A use case is for drawing shapes on grids (for VGA output), where the user may p
 
 Constrains on Python functions include: 
 - Supports only `if` and `while` blocks
-- Supports only integral types and operations
+- Supports only integral types and operations for input and output
 - Must be a [generator function](https://wiki.python.org/moin/Generators)
 - Must be a [pure function](https://en.wikipedia.org/wiki/Pure_function)
 
