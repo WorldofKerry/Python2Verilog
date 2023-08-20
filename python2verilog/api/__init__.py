@@ -7,4 +7,5 @@ from .api import (
     convert_for_debug,
     convert,
     convert_file_to_file,
+    global_scope,
 )

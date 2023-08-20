@@ -7,6 +7,7 @@ import copy
 import logging
 import os
 import ast
+import textwrap
 import types
 import typing
 import warnings
@@ -16,50 +17,58 @@ import inspect
 from types import FunctionType
 
 from python2verilog.utils.assertions import assert_type
+from python2verilog.utils.decorator import decorator_with_args
 from ..frontend import Generator2Graph
 from .. import ir
 from ..backend import verilog
 from ..optimizer import OptimizeGraph
 
-all_functions: dict[FunctionType, ir.Context] = {}
+# All functions if a lesser scope is not given
+global_scope: dict[FunctionType, ir.Context] = {}
 
 
-def decorator_with_args(func: FunctionType):
-    """
-    a decorator decorator, allowing the decorator to be used as:
-    @decorator(with, arguments, and=kwargs)
-    or
-    @decorator
-
-    Note: can't distinguish between a function as a parameter vs
-    a function to-be decorated
-    """
-
-    @wraps(func)
-    def new_dec(*args, **kwargs):
-        if len(args) == 1 and len(kwargs) == 0 and isinstance(args[0], FunctionType):
-            # actual decorated function
-            return func(args[0])
-        # decorator arguments
-        return lambda realf: func(realf, *args, **kwargs)
-
-    return new_dec
-
-
+# pylint: disable=dangerous-default-value
 @decorator_with_args
-def verilogify(func: FunctionType, module_path: str = "", testbench_path: str = ""):
+def verilogify(
+    func: FunctionType,
+    scope: dict[FunctionType, ir.Context] = global_scope,
+    module_path: str = "",
+    testbench_path: str = "",
+    write: bool = False,
+):
     """
     :param module_path: path to write verilog module to, defaults to function_name.sv
     :param testbench_path: path to write verilog testbench to, defaults to function_name_tb.sv
 
     """
-    print("Created verilogify")
+    if func in scope:
+        raise RuntimeError(f"{func.__name__} has already been decorated")
+
+    context = ir.Context(name=func.__name__)
+
+    func_ast_ast = ast.parse(textwrap.dedent(inspect.getsource(func)))
+    assert isinstance(func_ast_ast, ast.FunctionDef)
+    context.py_ast = func_ast_ast
+    context.py_func = func
+
+    context.write = write
+    context.module_path = module_path
+    context.testbench_path = testbench_path
+
+    scope[func] = context
 
     @wraps(func)
     def generator_wrapper(*args, **kwargs):
-        print(f"Called with {str(*args)} {str(**kwargs)}")
-
-        all_functions[func] = {"func": func, "source": inspect.getsource(func)}
+        if kwargs:
+            raise RuntimeError(
+                "Keyword arguments not yet supported, use positional arguments only"
+            )
+        context = scope[func]
+        context.test_cases.append(args)
+        if not context.input_types:
+            context.input_types = [type(arg) for arg in args]
+        else:
+            context.check_input_types(args)
 
         @wraps(func)
         def __generator(*args, **kwargs):
@@ -67,6 +76,16 @@ def verilogify(func: FunctionType, module_path: str = "", testbench_path: str = 
             Required to executate function up until first yield
             """
             for result in func(*args, **kwargs):
+                if not isinstance(result, tuple):
+                    result = (result,)
+
+                if not context.output_types:
+                    logging.error(f"Using {result} as reference")
+                    context.output_types = [type(arg) for arg in result]
+                else:
+                    logging.error(f"Next yield gave {result}")
+                    context.check_output_types(result)
+
                 yield result
 
         return __generator(*args, **kwargs)
@@ -234,7 +253,7 @@ def parse_python(
     lines = code.splitlines()
     func_lines = lines[generator_ast.lineno - 1 : generator_ast.end_lineno]
     func_str = "\n".join(func_lines)
-    logging.error(func_str)
+    logging.debug(func_str)
     exec(func_str, None, locals_)
     try:
         generator_func = locals_[function_name]

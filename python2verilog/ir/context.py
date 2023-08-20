@@ -1,7 +1,9 @@
 """Context for Intermediate Representation"""
 from __future__ import annotations
+import ast
 import copy
 from dataclasses import dataclass, field
+from types import FunctionType
 from typing import Optional
 import warnings
 
@@ -21,6 +23,13 @@ class Context(GenericReprAndStr):
     name: str = ""
     test_cases: list[int | list] = field(default_factory=list)
 
+    py_func: Optional[FunctionType] = None
+    py_ast: Optional[ast.FunctionDef] = None
+
+    input_types: list = field(default_factory=list)
+    output_types: list = field(default_factory=list)
+
+    write: bool = False
     module_path: str = ""
     testbench_path: str = ""
 
@@ -120,3 +129,22 @@ class Context(GenericReprAndStr):
         """
         assert isinstance(name, str)
         self._states.add(name)
+
+    def __check_types(self, expected_types: list, actual_values: list):
+        for expected, actual in zip(expected_types, actual_values):
+            assert isinstance(
+                actual, expected
+            ), f"Expected {expected}, got {type(actual)}, with value {actual}, \
+                with function name {self.name}"
+
+    def check_input_types(self, input_):
+        """
+        Checks if input to functions' types matches previous inputs
+        """
+        self.__check_types(self.input_types, input_)
+
+    def check_output_types(self, output):
+        """
+        Checks if outputs to functions' types matches previous outputs
+        """
+        self.__check_types(self.output_types, output)
