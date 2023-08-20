@@ -10,6 +10,7 @@ import os
 import ast
 import warnings
 from typing import Optional
+from python2verilog import ir
 
 from python2verilog.api import convert_for_debug
 
@@ -93,8 +94,15 @@ if __name__ == "__main__":
         tree = ast.parse(python)
         function = tree.body[0]
         assert isinstance(function, ast.FunctionDef)
+
+        context = ir.Context(
+            name=args.name,
+        )
+        if args.test_cases:
+            context.test_cases = ast.literal_eval(args.test_cases)
+
         verilog_code_gen, _ = convert_for_debug(
-            context=args.name, code=python, optimization_level=args.optimization_level
+            context=context, code=python, optimization_level=args.optimization_level
         )
 
         with open(
