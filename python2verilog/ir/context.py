@@ -21,6 +21,9 @@ class Context(GenericReprAndStr):
     name: str = ""
     test_cases: list[int | list] = field(default_factory=list)
 
+    module_path: str = ""
+    testbench_path: str = ""
+
     _global_vars: list[Var] = field(default_factory=list)
     _input_vars: list[Var] = field(default_factory=list)
     _output_vars: list[Var] = field(default_factory=list)

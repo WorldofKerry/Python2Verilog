@@ -1,4 +1,3 @@
-from typing import Callable
 import unittest
 import ast
 import warnings

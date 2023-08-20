@@ -24,7 +24,7 @@ import os
 import configparser
 
 
-def script(args: argparse.Namespace, logger: logging.Logger, shell: callable) -> int:
+def script(args: argparse.Namespace, logger: logging.Logger, shell: function) -> int:
     # Save args into config
     PATH_TO_NEW_TEST = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), args.directory, args.test_name
