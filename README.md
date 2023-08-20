@@ -6,16 +6,22 @@
 
 # python2verilog
 
-Converts a subset of python generator functions into synthesizable sequential SystemVerilog.
+Converts a subset of python functions into synthesizable sequential SystemVerilog.
 
 A use case is for drawing shapes on grids (for VGA output), where the user may prototype the algorithm in python and then convert it to verilog for use in an FPGA.
 
-Supports Python [Generator functions](https://wiki.python.org/moin/Generators) as well as the following block types:
-
-- `if`
-- `while`
-
 A testbench can also be generated and asserted against the Python outputs.
+
+Constrains on Python functions include: 
+- Supports only `if` and `while` blocks
+- Supports only integral types and operations
+- Must be a [generator function](https://wiki.python.org/moin/Generators)
+- Must be a [pure function](https://en.wikipedia.org/wiki/Pure_function)
+
+Not supported Python syntax include but are not limited to the following: 
+- Regular functions that use the `return` keyword, instead `yield` once
+- `for` loops, instead rewrite as a while loop
+- Function calls, instead use the converter on each of the subfunctions
 
 ## Usage
 
