@@ -100,7 +100,6 @@ def verilogify(
     # is the filename that contains that decorator
     filename = inspect.stack()[2].filename
     input_file_stem = os.path.splitext(filename)[0]  # path with no extension
-    input_file_stem += f"_{func.__name__}"
 
     if not module_output:
         module_output = Path(input_file_stem + ".sv")
