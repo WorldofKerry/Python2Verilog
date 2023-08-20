@@ -251,7 +251,10 @@ class BaseTestCases:
                     testbench_file.write(tb_str)
 
                 try:
-                    process.wait(timeout=max(1, len(expected)))  # May need adjusting
+                    timeout = max(1, len(expected) / 60)
+                    logging.info(f"Running iverilog for {timeout}s")
+
+                    process.wait(timeout=timeout)  # May need adjusting
 
                     logging.debug("Getting iverilog stderr")
 
@@ -362,6 +365,7 @@ class BaseTestCases:
                 except subprocess.TimeoutExpired as e:
                     logging.error(e)
                     process.terminate()
+                    self.fail(e)
 
                 for key in fifos:
                     os.remove(FILES_IN_ABS_DIR[key])

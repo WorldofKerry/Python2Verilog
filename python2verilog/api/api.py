@@ -149,10 +149,10 @@ def verilogify(
                 result = (result,)
 
             if not context.output_types:
-                logging.error(f"Using {result} as reference")
+                logging.info(f"Using {result} as reference")
                 context.output_types = [type(arg) for arg in result]
             else:
-                logging.error(f"Next yield gave {result}")
+                logging.debug(f"Next yield gave {result}")
                 context.check_output_types(result)
 
         return func(*args, **kwargs)
