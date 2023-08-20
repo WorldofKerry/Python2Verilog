@@ -24,7 +24,7 @@ import os
 import configparser
 
 
-def script(args: argparse.Namespace, logger: logging.Logger, shell: callable) -> int:
+def script(args: argparse.Namespace, logger: logging.Logger, shell: function) -> int:
     # Save args into config
     PATH_TO_NEW_TEST = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), args.directory, args.test_name
@@ -69,18 +69,18 @@ def script(args: argparse.Namespace, logger: logging.Logger, shell: callable) ->
     with open(TEST_CASES_FILE_PATH, mode="r+") as file:
         data = file.read()
 
-        _locals = dict()
-        exec(data, None, _locals)
+        locals_ = dict()
+        exec(data, None, locals_)
 
-        assert len(_locals) == 1
-        TEST_CASES_VAR_NAME = list(_locals.keys())[0]
+        assert len(locals_) == 1
+        TEST_CASES_VAR_NAME = list(locals_.keys())[0]
 
-        if not args.test_name in _locals[TEST_CASES_VAR_NAME]:
-            _locals[TEST_CASES_VAR_NAME][args.test_name] = "[(,)]"
+        if not args.test_name in locals_[TEST_CASES_VAR_NAME]:
+            locals_[TEST_CASES_VAR_NAME][args.test_name] = "[(,)]"
             logger.warning(f"Add your test cases to {TEST_CASES_FILE_PATH}")
 
         text = f"{TEST_CASES_VAR_NAME} = {{\n"
-        for key, value in _locals["TEST_CASES"].items():
+        for key, value in locals_["TEST_CASES"].items():
             text += f'    "{key}": {str(value)},\n'
         text += "}\n"
         file.seek(0)

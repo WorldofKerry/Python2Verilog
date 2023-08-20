@@ -1,8 +1,11 @@
 """Context for Intermediate Representation"""
 from __future__ import annotations
+import ast
 import copy
 from dataclasses import dataclass, field
-from typing import Optional
+import io
+from types import FunctionType
+from typing import Optional, IO
 import warnings
 
 from python2verilog.utils.generics import GenericReprAndStr
@@ -21,6 +24,18 @@ class Context(GenericReprAndStr):
     name: str = ""
     test_cases: list[int | list] = field(default_factory=list)
 
+    py_func: Optional[FunctionType] = None
+    py_ast: Optional[ast.FunctionDef] = None
+
+    input_types: list = field(default_factory=list)
+    output_types: list = field(default_factory=list)
+
+    optimization_level: int = 1
+
+    write: bool = False
+    module_file: IO = io.StringIO()
+    testbench_file: IO = io.StringIO()
+
     _global_vars: list[Var] = field(default_factory=list)
     _input_vars: list[Var] = field(default_factory=list)
     _output_vars: list[Var] = field(default_factory=list)
@@ -36,6 +51,15 @@ class Context(GenericReprAndStr):
 
     entry_state: str = "UNSPECIFIED ENTRY"
     ready_state: str = "UNSPECIFIED STATE"
+
+    def validate_preprocessing(self):
+        """
+        Makes sure all important bits are filled before python is parsed
+        """
+        assert self.input_types
+        assert self.input_vars
+        assert self.output_types
+        assert self.output_vars
 
     @property
     def input_vars(self):
@@ -117,3 +141,22 @@ class Context(GenericReprAndStr):
         """
         assert isinstance(name, str)
         self._states.add(name)
+
+    def __check_types(self, expected_types: list, actual_values: list):
+        for expected, actual in zip(expected_types, actual_values):
+            assert isinstance(
+                actual, expected
+            ), f"Expected {expected}, got {type(actual)}, with value {actual}, \
+                with function name {self.name}"
+
+    def check_input_types(self, input_):
+        """
+        Checks if input to functions' types matches previous inputs
+        """
+        self.__check_types(self.input_types, input_)
+
+    def check_output_types(self, output):
+        """
+        Checks if outputs to functions' types matches previous outputs
+        """
+        self.__check_types(self.output_types, output)
