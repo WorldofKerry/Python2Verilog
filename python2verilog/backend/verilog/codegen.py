@@ -24,6 +24,11 @@ class CodeGen:
         assert_type(root, ir.Vertex)
         assert_type(context, ir.Context)
         self.context = context
+
+        self.context.output_vars = [
+            ir.Var(str(i)) for i in range(len(self.context.output_types))
+        ]
+
         root_case = CaseBuilder(root, context).case
 
         for item in root_case.case_items:
@@ -177,6 +182,13 @@ class CodeGen:
 
         Each element of test_cases represents a single test case
         """
+        if len(self.context.input_vars) == 0:
+            raise RuntimeError(f"Input var names not deduced for {self.context.name}")
+        if len(self.context.output_vars) == 0:
+            raise RuntimeError(
+                f"Output var types not deduced for {self.context.name}, \
+                    types are {self.context.output_types}"
+            )
 
         def make_display_stmt():
             """

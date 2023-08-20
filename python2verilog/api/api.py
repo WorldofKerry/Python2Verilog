@@ -3,19 +3,170 @@ Wrappers
 """
 
 import argparse
+import atexit
 import copy
+from io import IOBase
 import logging
 import os
 import ast
+import textwrap
+import types
 import typing
 import warnings
+from pathlib import Path
 from typing import Optional, Union, overload
+from functools import wraps
+import inspect
+from types import FunctionType
 
 from python2verilog.utils.assertions import assert_type
+from python2verilog.utils.decorator import decorator_with_args
 from ..frontend import Generator2Graph
 from .. import ir
 from ..backend import verilog
 from ..optimizer import OptimizeGraph
+
+# All functions if a lesser namespace is not given
+global_scope: dict[FunctionType, ir.Context] = {}
+namespaces = [global_scope]
+
+
+def new_namespace():
+    """
+    Create new namespace and returns that namespace
+    """
+    namespace = {}
+    namespaces.append(namespace)
+    return namespace
+
+
+def __scope_exit_handler():
+    """
+    Handles the conversions in each namespace for program exit
+    """
+    for namespace in namespaces:
+        for _, value in namespace.items():
+            logging.info(
+                value.name, value.test_cases, value.input_types, value.output_types
+            )
+        for context in namespace.values():
+            ir_root, context = Generator2Graph(context, context.py_ast).results
+            if context.optimization_level > 0:
+                OptimizeGraph(ir_root, threshold=context.optimization_level - 1)
+            ver_code_gen = verilog.CodeGen(ir_root, context)
+            assert isinstance(context, ir.Context)
+
+            if context.write:
+                module_str = ver_code_gen.get_module_str()
+                tb_str = ver_code_gen.new_testbench_str(context.test_cases)
+                context.module_file.write(module_str)
+                context.testbench_file.write(tb_str)
+
+
+atexit.register(__scope_exit_handler)
+
+
+# pylint: disable=dangerous-default-value
+@decorator_with_args
+def verilogify(
+    func: FunctionType,
+    namespace: dict[FunctionType, ir.Context] = global_scope,
+    module_output: Optional[Union[os.PathLike, typing.IO]] = None,
+    testbench_output: Optional[Union[os.PathLike, typing.IO]] = None,
+    write: bool = False,
+    overwrite: bool = False,
+):
+    """
+    :param namespace: the namespace to put this function, for linking purposes
+    :param write: if True, files will be written to the specified paths
+    :param overwrite: If True, existing files will be overwritten
+    :param module_output: path to write verilog module to, defaults to function_name.sv
+    :param testbench_output: path to write verilog testbench to, defaults to function_name_tb.sv
+    """
+    if overwrite and not write:
+        raise RuntimeError("Overwrite is true, but write is set to false")
+    if func in namespace:
+        raise RuntimeError(f"{func.__name__} has already been decorated")
+
+    # Get caller filename for default output paths
+    # .stack()[2] as this function uses a decorator, so the first frames' filename
+    # is the filename that contains that decorator
+    filename = inspect.stack()[2].filename
+    input_file_stem = os.path.splitext(filename)[0]  # path with no extension
+
+    if not module_output:
+        module_output = Path(input_file_stem + ".sv")
+    if not testbench_output:
+        testbench_output = Path(input_file_stem + "_tb.sv")
+
+    tree = ast.parse(textwrap.dedent(inspect.getsource(func)))
+    assert len(tree.body) == 1
+    func_ast = tree.body[0]
+    assert isinstance(
+        func_ast, ast.FunctionDef
+    ), f"Got {type(func_ast)} expected {ast.FunctionDef}"
+
+    context = ir.Context(name=func.__name__)
+    context.py_ast = func_ast
+    context.py_func = func
+
+    context.input_vars = [ir.Var(name.arg) for name in func_ast.args.args]
+
+    context.write = write
+
+    if write:
+        if overwrite:
+            mode = "w"
+        else:
+            mode = "x"
+        # pylint: disable=consider-using-with
+        if isinstance(module_output, os.PathLike):
+            try:
+                module_output = open(module_output, mode=mode, encoding="utf8")
+            except FileExistsError as e:
+                raise FileExistsError("Try setting overwrite to True") from e
+        if isinstance(testbench_output, os.PathLike):
+            try:
+                testbench_output = open(testbench_output, mode=mode, encoding="utf8")
+            except FileExistsError as e:
+                raise FileExistsError("Try setting overwrite to True") from e
+        context.module_file = module_output
+        context.testbench_file = testbench_output
+
+    namespace[func] = context
+
+    @wraps(func)
+    def generator_wrapper(*args, **kwargs):
+        if kwargs:
+            raise RuntimeError(
+                "Keyword arguments not yet supported, use positional arguments only"
+            )
+        context = namespace[func]
+        context.test_cases.append(args)
+        if not context.input_types:
+            context.input_types = [type(arg) for arg in args]
+        else:
+            context.check_input_types(args)
+
+        for result in func(*args, **kwargs):
+            if not isinstance(result, tuple):
+                result = (result,)
+
+            if not context.output_types:
+                logging.info(f"Using {result} as reference")
+                context.output_types = [type(arg) for arg in result]
+            else:
+                logging.debug(f"Next yield gave {result}")
+                context.check_output_types(result)
+
+        return func(*args, **kwargs)
+
+    @wraps(func)
+    def function_wrapper(*args, **kwargs):
+        logging.error("Non-generator functions currently not supported")
+        return func(*args, **kwargs)
+
+    return generator_wrapper if inspect.isgeneratorfunction(func) else function_wrapper
 
 
 @overload
@@ -75,22 +226,45 @@ def convert_file_to_file(
             testbench_file.write(testbench)
 
 
-def convert_for_debug(
-    code: str, context: Union[str, ir.Context], optimization_level: int
+def convert_from_cli(
+    code: str,
+    func_name: str,
+    optimization_level: int,
+    test_cases: Optional[list] = None,
+    file_path: str = "",
 ):
+    """
+    Converts from cli
+    """
+    context, func_ast, _ = parse_python(
+        code=code,
+        function_name=func_name,
+        extra_test_cases=test_cases,
+        file_path=file_path,
+    )
+    assert isinstance(context, ir.Context)
+    assert isinstance(test_cases, list)
+    context.test_cases = test_cases
+    context.validate_preprocessing()
+
+    ir_root, context = Generator2Graph(context, func_ast).results
+    if optimization_level > 0:
+        OptimizeGraph(ir_root, threshold=optimization_level - 1)
+    return verilog.CodeGen(ir_root, context), ir_root
+
+
+def convert_for_debug(code: str, context: ir.Context, optimization_level: int):
     """
     Converts python code to verilog and its ir
     """
-    if isinstance(context, str):
-        context = ir.Context(name=context)
-
-    _context, func_ast, _ = parse_python(
+    context, func_ast, _ = parse_python(
         code, context.name, extra_test_cases=context.test_cases
     )
-    ir_root, _context = Generator2Graph(_context, func_ast).results
+    logging.debug(context.output_types)
+    ir_root, context = Generator2Graph(context, func_ast).results
     if optimization_level > 0:
         OptimizeGraph(ir_root, threshold=optimization_level - 1)
-    return verilog.CodeGen(ir_root, _context), ir_root
+    return verilog.CodeGen(ir_root, context), ir_root
 
 
 def parse_python(
@@ -120,6 +294,7 @@ def parse_python(
     tree = ast.parse(code)
 
     test_cases = extra_test_cases if extra_test_cases else []
+    print(f"parse_python test cases {test_cases}")
 
     for node in ast.walk(tree):
         logging.debug(f"Walking through {ast.dump(node)}")
@@ -169,11 +344,11 @@ def parse_python(
 
     logging.info(f"Input param types: {input_types}")
 
-    locals_: dict[str, typing.Callable] = {}
+    locals_: dict[str, FunctionType] = {}
     lines = code.splitlines()
     func_lines = lines[generator_ast.lineno - 1 : generator_ast.end_lineno]
     func_str = "\n".join(func_lines)
-    logging.error(func_str)
+    logging.debug(func_str)
     exec(func_str, None, locals_)
     try:
         generator_func = locals_[function_name]
@@ -207,10 +382,15 @@ def parse_python(
     context = ir.Context(name=function_name)
 
     if initialized:
-        logging.info(f"Output param types: {output_types}")
+        context.output_types = output_types
         context.output_vars = [ir.Var(str(i)) for i in range(len(output_types))]
 
+    logging.info(f"Output param types: {context.output_types}")
+    logging.info(f"Output param names: {context.output_vars}")
+
     context.input_vars = [ir.Var(name) for name in input_names]
+    assert isinstance(input_types, list)
+    context.input_types = input_types
     context.test_cases = test_cases
 
     # Currently the types are not used

@@ -4,14 +4,19 @@ Converts Python generator functions to synthesizable Verilog.
 For sample Python inputs,
 visit https://github.com/WorldofKerry/Python2Verilog/tree/main/tests/integration/data
 """
+import logging
 
 import argparse
 import os
 import ast
 import warnings
 from typing import Optional
+from python2verilog import ir
 
 from python2verilog.api import convert_for_debug
+from python2verilog.api.api import convert_from_cli
+
+logging.root.setLevel(logging.INFO)
 
 
 if __name__ == "__main__":
@@ -93,8 +98,21 @@ if __name__ == "__main__":
         tree = ast.parse(python)
         function = tree.body[0]
         assert isinstance(function, ast.FunctionDef)
-        verilog_code_gen, _ = convert_for_debug(
-            context=args.name, code=python, optimization_level=args.optimization_level
+
+        context = ir.Context(
+            name=args.name,
+        )
+        if args.test_cases:
+            context.test_cases = ast.literal_eval(args.test_cases)
+        test_cases = ast.literal_eval(args.test_cases) if args.test_cases else []
+
+        print(f"TEST CASES: {context.test_cases}")
+        verilog_code_gen, _ = convert_from_cli(
+            code=python,
+            func_name=args.name,
+            optimization_level=args.optimization_level,
+            test_cases=test_cases,
+            file_path=input_file_path,
         )
 
         with open(

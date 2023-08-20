@@ -33,6 +33,10 @@ class TestGenericReprAndStr(unittest.TestCase):
 
     def test_generic_repr(self):
         context = Context("bruv")
+
+        # StringIO do not have reconstructable __repr__
+        context.module_file = None
+        context.testbench_file = None
         copy = eval(repr(context))
 
         self.assertEqual(context, copy)
