@@ -43,7 +43,10 @@
 <li class="toctree-l3"><a class="reference internal" href="python2verilog.api.html#python2verilog.api.api.convert"><code class="docutils literal notranslate"><span class="pre">convert()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="python2verilog.api.html#python2verilog.api.api.convert_file_to_file"><code class="docutils literal notranslate"><span class="pre">convert_file_to_file()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="python2verilog.api.html#python2verilog.api.api.convert_for_debug"><code class="docutils literal notranslate"><span class="pre">convert_for_debug()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="python2verilog.api.html#python2verilog.api.api.convert_from_cli"><code class="docutils literal notranslate"><span class="pre">convert_from_cli()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="python2verilog.api.html#python2verilog.api.api.new_namespace"><code class="docutils literal notranslate"><span class="pre">new_namespace()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="python2verilog.api.html#python2verilog.api.api.parse_python"><code class="docutils literal notranslate"><span class="pre">parse_python()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="python2verilog.api.html#python2verilog.api.api.verilogify"><code class="docutils literal notranslate"><span class="pre">verilogify()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="python2verilog.api.html#module-contents">Module contents</a></li>
@@ -84,13 +87,21 @@
 <li class="toctree-l4"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.context.Context.add_global_var"><code class="docutils literal notranslate"><span class="pre">Context.add_global_var()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.context.Context.add_state"><code class="docutils literal notranslate"><span class="pre">Context.add_state()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.context.Context.add_state_weak"><code class="docutils literal notranslate"><span class="pre">Context.add_state_weak()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.context.Context.check_input_types"><code class="docutils literal notranslate"><span class="pre">Context.check_input_types()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.context.Context.check_output_types"><code class="docutils literal notranslate"><span class="pre">Context.check_output_types()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.context.Context.clock_signal"><code class="docutils literal notranslate"><span class="pre">Context.clock_signal</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.context.Context.entry_state"><code class="docutils literal notranslate"><span class="pre">Context.entry_state</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.context.Context.global_vars"><code class="docutils literal notranslate"><span class="pre">Context.global_vars</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.context.Context.input_types"><code class="docutils literal notranslate"><span class="pre">Context.input_types</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.context.Context.input_vars"><code class="docutils literal notranslate"><span class="pre">Context.input_vars</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.context.Context.is_declared"><code class="docutils literal notranslate"><span class="pre">Context.is_declared()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.context.Context.module_file"><code class="docutils literal notranslate"><span class="pre">Context.module_file</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.context.Context.name"><code class="docutils literal notranslate"><span class="pre">Context.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.context.Context.optimization_level"><code class="docutils literal notranslate"><span class="pre">Context.optimization_level</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.context.Context.output_types"><code class="docutils literal notranslate"><span class="pre">Context.output_types</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.context.Context.output_vars"><code class="docutils literal notranslate"><span class="pre">Context.output_vars</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.context.Context.py_ast"><code class="docutils literal notranslate"><span class="pre">Context.py_ast</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.context.Context.py_func"><code class="docutils literal notranslate"><span class="pre">Context.py_func</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.context.Context.ready_signal"><code class="docutils literal notranslate"><span class="pre">Context.ready_signal</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.context.Context.ready_state"><code class="docutils literal notranslate"><span class="pre">Context.ready_state</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.context.Context.reset_signal"><code class="docutils literal notranslate"><span class="pre">Context.reset_signal</span></code></a></li>
@@ -98,7 +109,10 @@
 <li class="toctree-l4"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.context.Context.state_var"><code class="docutils literal notranslate"><span class="pre">Context.state_var</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.context.Context.states"><code class="docutils literal notranslate"><span class="pre">Context.states</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.context.Context.test_cases"><code class="docutils literal notranslate"><span class="pre">Context.test_cases</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.context.Context.testbench_file"><code class="docutils literal notranslate"><span class="pre">Context.testbench_file</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.context.Context.valid_signal"><code class="docutils literal notranslate"><span class="pre">Context.valid_signal</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.context.Context.validate_preprocessing"><code class="docutils literal notranslate"><span class="pre">Context.validate_preprocessing()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.context.Context.write"><code class="docutils literal notranslate"><span class="pre">Context.write</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -243,6 +257,10 @@
 <li class="toctree-l3"><a class="reference internal" href="python2verilog.utils.html#python2verilog.utils.assertions.assert_dict_type"><code class="docutils literal notranslate"><span class="pre">assert_dict_type()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="python2verilog.utils.html#python2verilog.utils.assertions.assert_list_type"><code class="docutils literal notranslate"><span class="pre">assert_list_type()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="python2verilog.utils.html#python2verilog.utils.assertions.assert_type"><code class="docutils literal notranslate"><span class="pre">assert_type()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="python2verilog.utils.html#python2verilog-utils-decorator-module">python2verilog.utils.decorator module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="python2verilog.utils.html#python2verilog.utils.decorator.decorator_with_args"><code class="docutils literal notranslate"><span class="pre">decorator_with_args()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="python2verilog.utils.html#python2verilog-utils-generics-module">python2verilog.utils.generics module</a><ul>
