@@ -31,7 +31,7 @@ global_scope: dict[FunctionType, ir.Context] = {}
 namespaces = [global_scope]
 
 
-def new_scope():
+def new_namespace():
     """
     Create new namespace and returns that namespace
     """
@@ -45,8 +45,8 @@ def __scope_exit_handler():
     Handles the conversions in each namespace for program exit
     """
     for namespace in namespaces:
-        for _, value in namespace.items():
-            print(value.name, value.test_cases, value.input_types, value.output_types)
+        # for _, value in namespace.items():
+        #     print(value.name, value.test_cases, value.input_types, value.output_types)
         for context in namespace.values():
             ir_root, context = Generator2Graph(context, context.py_ast).results
             if context.optimization_level > 0:
@@ -109,7 +109,6 @@ def verilogify(
     context.py_func = func
 
     context.write = write
-    context.overwrite = overwrite
 
     if write:
         if overwrite:
@@ -118,9 +117,15 @@ def verilogify(
             mode = "x"
         # pylint: disable=consider-using-with
         if isinstance(module_output, os.PathLike):
-            module_output = open(module_output, mode=mode, encoding="utf8")
+            try:
+                module_output = open(module_output, mode=mode, encoding="utf8")
+            except FileExistsError as e:
+                raise FileExistsError("Try setting overwrite to True") from e
         if isinstance(testbench_output, os.PathLike):
-            testbench_output = open(testbench_output, mode=mode, encoding="utf8")
+            try:
+                testbench_output = open(testbench_output, mode=mode, encoding="utf8")
+            except FileExistsError as e:
+                raise FileExistsError("Try setting overwrite to True") from e
         context.module_file = module_output
         context.testbench_file = testbench_output
 
@@ -150,7 +155,7 @@ def verilogify(
                 logging.error(f"Next yield gave {result}")
                 context.check_output_types(result)
 
-        return func
+        return func(*args, **kwargs)
 
     @wraps(func)
     def function_wrapper(*args, **kwargs):

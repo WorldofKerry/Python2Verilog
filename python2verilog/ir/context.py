@@ -33,7 +33,6 @@ class Context(GenericReprAndStr):
     optimization_level: int = 1
 
     write: bool = False
-    overwrite: bool = False
     module_file: IO = io.StringIO()
     testbench_file: IO = io.StringIO()
 
