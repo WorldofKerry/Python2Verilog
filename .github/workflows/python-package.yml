@@ -26,17 +26,19 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-      - name: Install This Package and Use
+      - name: Install package
+        working-directory: build
         run: |
-          mkdir build
-          cd build
           python3 -m pip install ..
 
-          python3 ../examples/decorator_basic.py
-          cat ../examples/decorator_basic.sv
+      - name: Run Examples
+        working-directory: examples
+        run: |
+          python3 decorator_basic.py
+          cat decorator_basic.sv
 
-          python3 ../examples/decorator_advanced.py
-          cat ../examples/decorator_advanced.sv
+          python3 decorator_advanced.py
+          cat decorator_advanced.sv
 
-          python3 -m python2verilog ../examples/cli.py -n happy_face -t "[5, 7, 3]"
-          cat ../examples/cli.sv
+          python3 -m python2verilog cli.py -n happy_face -t "[5, 7, 3]"
+          cat cli.sv
