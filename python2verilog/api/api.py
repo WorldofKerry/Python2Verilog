@@ -46,9 +46,13 @@ def verilogify(
 
     context = ir.Context(name=func.__name__)
 
-    func_ast_ast = ast.parse(textwrap.dedent(inspect.getsource(func)))
-    assert isinstance(func_ast_ast, ast.FunctionDef)
-    context.py_ast = func_ast_ast
+    func_parsed_to_ast = ast.parse(textwrap.dedent(inspect.getsource(func)))
+    assert len(func_parsed_to_ast.body) == 1
+    func_def = func_parsed_to_ast.body[0]
+    assert isinstance(
+        func_def, ast.FunctionDef
+    ), f"Got {type(func_def)} expected {ast.FunctionDef}"
+    context.py_ast = func_def
     context.py_func = func
 
     context.write = write
