@@ -1,5 +1,6 @@
+from io import StringIO
 import logging
-from python2verilog.api.decorator import verilogify
+from python2verilog.api.decorator import verilogify, verilogify_function
 import unittest
 
 
@@ -7,7 +8,15 @@ class TestVerilogify(unittest.TestCase):
     def test_main(self):
         namespace = {}
 
-        @verilogify(namespace=namespace)
+        module_stream = StringIO()
+        testbench_stream = StringIO()
+
+        @verilogify(
+            namespace=namespace,
+            write=True,
+            module_output=module_stream,
+            testbench_output=testbench_stream,
+        )
         def count(n):
             i = 0
             while i < n:
@@ -16,4 +25,13 @@ class TestVerilogify(unittest.TestCase):
 
         count(10)
 
-        logging.error(namespace[count])
+        self.assertIn(count.__name__, str(namespace[count]))
+
+        module, testbench = verilogify_function(namespace[count])
+        self.assertIn(count.__name__, testbench)
+        self.assertIn(count.__name__, module)
+
+        module_stream.seek(0)
+        testbench_stream.seek(0)
+        self.assertIn(count.__name__, module_stream.read())
+        self.assertIn(count.__name__, testbench_stream.read())

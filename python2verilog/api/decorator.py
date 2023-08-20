@@ -1,5 +1,5 @@
 """
-Wrappers
+Decorators
 """
 
 import argparse
@@ -27,50 +27,72 @@ from ..backend import verilog
 from ..optimizer import OptimizeGraph
 
 # All functions if a lesser namespace is not given
-global_scope: dict[Callable, ir.Context] = {}
-namespaces = [global_scope]
+global_namespace: dict[Callable, ir.Context] = {}
+exit_namespaces = [global_namespace]
 
 
 def new_namespace():
     """
-    Create new namespace and returns that namespace
+    Create new namespace that is handled on program exit
+
+    :return: newly created namespace
     """
     namespace = {}
-    namespaces.append(namespace)
+    exit_namespaces.append(namespace)
     return namespace
 
 
-def __scope_exit_handler():
+def verilogify_function(context: ir.Context):
+    """
+    Verilogifies a function that has be decorated
+
+    If decorated with write enabled, writes to designated files/streams
+
+    :return: (module, testbench) tuple
+    """
+    ir_root, context = Generator2Graph(context, context.py_ast).results
+    if context.optimization_level > 0:
+        OptimizeGraph(ir_root, threshold=context.optimization_level - 1)
+    ver_code_gen = verilog.CodeGen(ir_root, context)
+    assert isinstance(context, ir.Context)
+
+    module_str = ver_code_gen.get_module_str()
+    tb_str = ver_code_gen.new_testbench_str(context.test_cases)
+    if context.write:
+        context.module_file.write(module_str)
+        context.testbench_file.write(tb_str)
+
+    return (module_str, tb_str)
+
+
+def verilogify_namespace(namespace: dict[Callable, ir.Context]):
+    """
+    Verilogifies a namespace
+    """
+    logging.info(verilogify_namespace.__name__)
+    for context in namespace.values():
+        _ = verilogify_function(context=context)
+        logging.info(
+            context.name, context.test_cases, context.input_types, context.output_types
+        )
+
+
+def __global_namespace_exit_handler():
     """
     Handles the conversions in each namespace for program exit
     """
-    for namespace in namespaces:
-        for _, value in namespace.items():
-            logging.info(
-                value.name, value.test_cases, value.input_types, value.output_types
-            )
-        for context in namespace.values():
-            ir_root, context = Generator2Graph(context, context.py_ast).results
-            if context.optimization_level > 0:
-                OptimizeGraph(ir_root, threshold=context.optimization_level - 1)
-            ver_code_gen = verilog.CodeGen(ir_root, context)
-            assert isinstance(context, ir.Context)
-
-            if context.write:
-                module_str = ver_code_gen.get_module_str()
-                tb_str = ver_code_gen.new_testbench_str(context.test_cases)
-                context.module_file.write(module_str)
-                context.testbench_file.write(tb_str)
+    for namespace in exit_namespaces:
+        verilogify_namespace(namespace)
 
 
-atexit.register(__scope_exit_handler)
+atexit.register(__global_namespace_exit_handler)
 
 
 # pylint: disable=dangerous-default-value
 @decorator_with_args
 def verilogify(
     func: FunctionType,
-    namespace: dict[Callable, ir.Context] = global_scope,
+    namespace: dict[Callable, ir.Context] = global_namespace,
     module_output: Optional[Union[os.PathLike, typing.IO]] = None,
     testbench_output: Optional[Union[os.PathLike, typing.IO]] = None,
     write: bool = False,

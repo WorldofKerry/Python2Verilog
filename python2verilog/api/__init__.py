@@ -10,6 +10,9 @@ from .cli import (
 )
 
 from .decorator import (
-    global_scope,
+    global_namespace,
     verilogify,
+    new_namespace,
+    verilogify_namespace,
+    verilogify_function,
 )

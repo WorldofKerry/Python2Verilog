@@ -8,7 +8,7 @@ import ast
 import warnings
 
 from python2verilog.api.cli import parse_python
-from python2verilog.api.decorator import new_namespace, verilogify, global_scope
+from python2verilog.api.decorator import new_namespace, verilogify, global_namespace
 
 
 class TestParsePython(unittest.TestCase):
@@ -111,7 +111,7 @@ class TestVerilogify(unittest.TestCase):
         counter0(10)
         counter1(15, 20)
 
-        for key, value in global_scope.items():
+        for key, value in global_namespace.items():
             print(type(key), type(value))
 
     @writes
