@@ -52,6 +52,15 @@ class Context(GenericReprAndStr):
     entry_state: str = "UNSPECIFIED ENTRY"
     ready_state: str = "UNSPECIFIED STATE"
 
+    def validate_preprocessing(self):
+        """
+        Makes sure all important bits are filled before python is parsed
+        """
+        assert self.input_types
+        assert self.input_vars
+        assert self.output_types
+        assert self.output_vars
+
     @property
     def input_vars(self):
         """

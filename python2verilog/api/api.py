@@ -226,6 +226,33 @@ def convert_file_to_file(
             testbench_file.write(testbench)
 
 
+def convert_from_cli(
+    code: str,
+    func_name: str,
+    optimization_level: int,
+    test_cases: Optional[list] = None,
+    file_path: str = "",
+):
+    """
+    Converts from cli
+    """
+    context, func_ast, _ = parse_python(
+        code=code,
+        function_name=func_name,
+        extra_test_cases=test_cases,
+        file_path=file_path,
+    )
+    assert isinstance(context, ir.Context)
+    assert isinstance(test_cases, list)
+    context.test_cases = test_cases
+    context.validate_preprocessing()
+
+    ir_root, context = Generator2Graph(context, func_ast).results
+    if optimization_level > 0:
+        OptimizeGraph(ir_root, threshold=optimization_level - 1)
+    return verilog.CodeGen(ir_root, context), ir_root
+
+
 def convert_for_debug(code: str, context: ir.Context, optimization_level: int):
     """
     Converts python code to verilog and its ir
@@ -233,7 +260,7 @@ def convert_for_debug(code: str, context: ir.Context, optimization_level: int):
     context, func_ast, _ = parse_python(
         code, context.name, extra_test_cases=context.test_cases
     )
-    logging.error(context.output_types)
+    logging.debug(context.output_types)
     ir_root, context = Generator2Graph(context, func_ast).results
     if optimization_level > 0:
         OptimizeGraph(ir_root, threshold=optimization_level - 1)
@@ -362,6 +389,8 @@ def parse_python(
     logging.info(f"Output param names: {context.output_vars}")
 
     context.input_vars = [ir.Var(name) for name in input_names]
+    assert isinstance(input_types, list)
+    context.input_types = input_types
     context.test_cases = test_cases
 
     # Currently the types are not used
