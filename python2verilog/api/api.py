@@ -12,7 +12,8 @@ import textwrap
 import types
 import typing
 import warnings
-from typing import Optional, Union, overload
+from pathlib import Path
+from typing import IO, Optional, Union, overload
 from functools import wraps
 import inspect
 from types import FunctionType
@@ -50,7 +51,23 @@ def __scope_exit_handler():
             if context.optimization_level > 0:
                 OptimizeGraph(ir_root, threshold=context.optimization_level - 1)
             ver_code_gen = verilog.CodeGen(ir_root, context)
-            logging.error(ver_code_gen.get_module_str())
+            assert isinstance(context, ir.Context)
+
+            # if context.overwrite:
+            #     mode = "w"
+            # else:
+            #     mode = "x"
+            # if context.write:
+            #     with open(context.module_path, mode=mode, encoding="utf8") as file:
+            #         file.write(ver_code_gen.get_module_str())
+            #     with open(context.testbench_path, mode=mode, encoding="utf8") as file:
+            #         file.write(ver_code_gen.new_testbench_str(context.test_cases))
+
+            if context.write:
+                module_str = ver_code_gen.get_module_str()
+                tb_str = ver_code_gen.new_testbench_str(context.test_cases)
+                context.module_file.write(module_str)
+                context.testbench_file.write(tb_str)
 
 
 atexit.register(__scope_exit_handler)
@@ -61,34 +78,64 @@ atexit.register(__scope_exit_handler)
 def verilogify(
     func: FunctionType,
     namespace: dict[FunctionType, ir.Context] = global_scope,
-    module_path: str = "",
-    testbench_path: str = "",
+    module_output: Optional[Union[os.PathLike, typing.IO]] = None,
+    testbench_output: Optional[Union[os.PathLike, typing.IO]] = None,
     write: bool = False,
+    overwrite: bool = False,
 ):
     """
     :param namespace: the namespace to put this function, for linking purposes
-
-    :param write: if write, then files are written to the provided paths
-    :param module_path: path to write verilog module to, defaults to function_name.sv
-    :param testbench_path: path to write verilog testbench to, defaults to function_name_tb.sv
+    :param write: if True, files will be written to the specified paths
+    :param overwrite: If True, existing files will be overwritten
+    :param module_output: path to write verilog module to, defaults to function_name.sv
+    :param testbench_output: path to write verilog testbench to, defaults to function_name_tb.sv
     """
+    if overwrite and not write:
+        raise RuntimeError("Overwrite is true, but write is set to false")
     if func in namespace:
         raise RuntimeError(f"{func.__name__} has already been decorated")
 
-    context = ir.Context(name=func.__name__)
+    # Get caller filename for default output paths
+    # .stack()[2] as this function uses a decorator, so the first frames' filename
+    # is the filename that contains that decorator
+    filename = inspect.stack()[2].filename
+    input_file_stem = os.path.splitext(filename)[0]  # path with no extension
+    input_file_stem += f"_{func.__name__}"
 
-    func_parsed_to_ast = ast.parse(textwrap.dedent(inspect.getsource(func)))
-    assert len(func_parsed_to_ast.body) == 1
-    func_def = func_parsed_to_ast.body[0]
+    if not module_output:
+        module_output = Path(input_file_stem + ".sv")
+    if not testbench_output:
+        testbench_output = Path(input_file_stem + "_tb.sv")
+
+    if overwrite:
+        mode = "w"
+    else:
+        mode = "x"
+
+    if write:
+        # pylint: disable=consider-using-with
+        if isinstance(module_output, os.PathLike):
+            module_output = open(module_output, mode=mode, encoding="utf8")
+        if isinstance(testbench_output, os.PathLike):
+            testbench_output = open(testbench_output, mode=mode, encoding="utf8")
+
+    tree = ast.parse(textwrap.dedent(inspect.getsource(func)))
+    assert len(tree.body) == 1
+    func_ast = tree.body[0]
     assert isinstance(
-        func_def, ast.FunctionDef
-    ), f"Got {type(func_def)} expected {ast.FunctionDef}"
-    context.py_ast = func_def
+        func_ast, ast.FunctionDef
+    ), f"Got {type(func_ast)} expected {ast.FunctionDef}"
+
+    context = ir.Context(name=func.__name__)
+    context.py_ast = func_ast
     context.py_func = func
 
     context.write = write
-    context.module_path = module_path
-    context.testbench_path = testbench_path
+    context.overwrite = overwrite
+    assert isinstance(module_output, IO)
+    assert isinstance(testbench_output, IO)
+    context.module_file = module_output
+    context.testbench_file = testbench_output
 
     namespace[func] = context
 

@@ -8,4 +8,5 @@ from .api import (
     convert,
     convert_file_to_file,
     global_scope,
+    verilogify,
 )

@@ -64,14 +64,14 @@ inst = deeznuts(420)
 
 class TestVerilogify(unittest.TestCase):
     def test_main(self):
-        @verilogify
+        @verilogify(write=True)
         def my_counter(n):
             i = 0
             while i < n:
                 yield (i)
                 i += 1
 
-        @verilogify(module_path="ayy lmao")
+        @verilogify
         def my_counter2(n, other):
             i = 0
             while i < n:
@@ -85,11 +85,3 @@ class TestVerilogify(unittest.TestCase):
 
         for key, value in global_scope.items():
             print(type(key), type(value))
-
-        def exit_handler():
-            for key, value in global_scope.items():
-                print(
-                    value.name, value.test_cases, value.input_types, value.output_types
-                )
-
-        atexit.register(exit_handler)

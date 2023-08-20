@@ -3,8 +3,9 @@ from __future__ import annotations
 import ast
 import copy
 from dataclasses import dataclass, field
+import io
 from types import FunctionType
-from typing import Optional
+from typing import Optional, IO
 import warnings
 
 from python2verilog.utils.generics import GenericReprAndStr
@@ -32,8 +33,9 @@ class Context(GenericReprAndStr):
     optimization_level: int = 1
 
     write: bool = False
-    module_path: str = ""
-    testbench_path: str = ""
+    overwrite: bool = False
+    module_file: IO = io.StringIO()
+    testbench_file: IO = io.StringIO()
 
     _global_vars: list[Var] = field(default_factory=list)
     _input_vars: list[Var] = field(default_factory=list)
