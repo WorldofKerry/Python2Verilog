@@ -14,7 +14,7 @@ import types
 import typing
 import warnings
 from pathlib import Path
-from typing import IO, Optional, Union, overload
+from typing import Optional, Union, overload
 from functools import wraps
 import inspect
 from types import FunctionType
@@ -53,16 +53,6 @@ def __scope_exit_handler():
                 OptimizeGraph(ir_root, threshold=context.optimization_level - 1)
             ver_code_gen = verilog.CodeGen(ir_root, context)
             assert isinstance(context, ir.Context)
-
-            # if context.overwrite:
-            #     mode = "w"
-            # else:
-            #     mode = "x"
-            # if context.write:
-            #     with open(context.module_path, mode=mode, encoding="utf8") as file:
-            #         file.write(ver_code_gen.get_module_str())
-            #     with open(context.testbench_path, mode=mode, encoding="utf8") as file:
-            #         file.write(ver_code_gen.new_testbench_str(context.test_cases))
 
             if context.write:
                 module_str = ver_code_gen.get_module_str()
@@ -120,8 +110,6 @@ def verilogify(
 
     context.write = write
     context.overwrite = overwrite
-    # assert isinstance(module_output, IOBase), f"Got {type(module_output)} instead"
-    # assert isinstance(testbench_output, IOBase), f"Got {type(testbench_output)} instead"
 
     if write:
         if overwrite:
@@ -151,25 +139,18 @@ def verilogify(
         else:
             context.check_input_types(args)
 
-        @wraps(func)
-        def __generator(*args, **kwargs):
-            """
-            Required to executate function up until first yield
-            """
-            for result in func(*args, **kwargs):
-                if not isinstance(result, tuple):
-                    result = (result,)
+        for result in func(*args, **kwargs):
+            if not isinstance(result, tuple):
+                result = (result,)
 
-                if not context.output_types:
-                    logging.error(f"Using {result} as reference")
-                    context.output_types = [type(arg) for arg in result]
-                else:
-                    logging.error(f"Next yield gave {result}")
-                    context.check_output_types(result)
+            if not context.output_types:
+                logging.error(f"Using {result} as reference")
+                context.output_types = [type(arg) for arg in result]
+            else:
+                logging.error(f"Next yield gave {result}")
+                context.check_output_types(result)
 
-                yield result
-
-        return __generator(*args, **kwargs)
+        return func
 
     @wraps(func)
     def function_wrapper(*args, **kwargs):
