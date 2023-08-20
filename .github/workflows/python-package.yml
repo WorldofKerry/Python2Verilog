@@ -35,3 +35,5 @@ jobs:
         cp ../tests/integration/data/happy_face/python.py .
         python3 -m python2verilog python.py -n happy_face
         cat python.sv
+        python3 -m ../../examples/decorator_basic.py
+        python3 -m ../../examples/decorator_advanced.py
