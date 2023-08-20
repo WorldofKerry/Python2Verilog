@@ -251,7 +251,7 @@ class BaseTestCases:
                     testbench_file.write(tb_str)
 
                 try:
-                    timeout = max(1, len(expected) / 60)
+                    timeout = max(1, len(expected))
                     logging.info(f"Running iverilog for {timeout}s")
 
                     process.wait(timeout=timeout)  # May need adjusting
