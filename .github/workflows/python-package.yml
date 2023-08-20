@@ -4,13 +4,12 @@ name: python package
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -18,22 +17,24 @@ jobs:
         python-version: ["3.11"]
 
     steps:
-    - uses: actions/checkout@v3
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-    - name: Install This Package and Use
-      run: |
-        mkdir build
-        cd build
-        python3 -m pip install ..
-        cp ../tests/integration/data/happy_face/python.py .
-        python3 -m python2verilog python.py -n happy_face
-        cat python.sv
-        python3 ../../examples/decorator_basic.py
-        python3 ../../examples/decorator_advanced.py
+      - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      - name: Install This Package and Use
+        run: |
+          mkdir build
+          cd build
+          python3 -m pip install ..
+          cp ../tests/integration/data/happy_face/python.py .
+          python3 -m python2verilog python.py -n happy_face
+          cat python.sv
+          python3 ../examples/decorator_basic.py
+          cat ../examples/decorator_basic.sv
+          python3 ../examples/decorator_advanced.py
+          cat ../examples/decorator_advanced.sv
