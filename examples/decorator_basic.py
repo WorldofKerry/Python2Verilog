@@ -2,7 +2,7 @@ from python2verilog.api import verilogify
 
 
 @verilogify(write=True, overwrite=True)
-def fib(n, b):
+def fib(n):
     a = 0
     b = 1
     c = 0
@@ -15,5 +15,4 @@ def fib(n, b):
         yield c
 
 
-# fib(10)
-fib(10, 20)
+fib(10)

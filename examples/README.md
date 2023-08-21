@@ -4,6 +4,15 @@ Two ways of using this library
 
 ## Importing the Package (Recommended)
 
+### Basic
+
+`python3 decorator_basic.py`
+
+### Advanced
+
+`python3 -m pip install -r requirements.txt`
+`python3 decorator_advanced.py`
+
 ## Command Line Interface
 
 `python3 -m python2verilog cli.py -n happy_face`

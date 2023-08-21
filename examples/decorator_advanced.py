@@ -59,12 +59,12 @@ def make_visual(generator_inst, directory: str):
 
 
 @verilogify(write=True)
-def drawCircle(centre_x, centre_y, radius):
+def draw_circle(centre_x, centre_y, radius):
     offset_y = 0
     offset_x = radius
     crit = 1 - radius
     while offset_y <= offset_x:
-        yield (centre_x + offset_x, centre_y + offset_y)  #  -- octant 1
+        yield (centre_x + offset_x, centre_y + offset_y)  # -- octant 1
         yield (centre_x + offset_y, centre_y + offset_x)  # -- octant 2
         yield (centre_x - offset_x, centre_y + offset_y)  # -- octant 4
         yield (centre_x - offset_y, centre_y + offset_x)  # -- octant 3
@@ -80,4 +80,4 @@ def drawCircle(centre_x, centre_y, radius):
             crit = crit + 2 * (offset_y - offset_x) + 1
 
 
-make_visual(drawCircle(10, 10, 5), "visual.png")
+make_visual(draw_circle(10, 15, 7), "visual.png")
