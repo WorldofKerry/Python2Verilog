@@ -18,6 +18,7 @@ from typing import IO, Callable, Optional, Union, overload
 from functools import wraps
 import inspect
 from types import FunctionType
+from python2verilog.api.wrappers import context_to_verilog
 
 from python2verilog.utils.assertions import assert_type
 from python2verilog.utils.decorator import decorator_with_args
@@ -50,13 +51,7 @@ def verilogify_function(context: ir.Context):
 
     :return: (module, testbench) tuple
     """
-    context.validate()
-    assert isinstance(context.py_ast, ast.FunctionDef)
-    ir_root, context = Generator2Graph(context).results
-    if context.optimization_level > 0:
-        OptimizeGraph(ir_root, threshold=context.optimization_level - 1)
-    ver_code_gen = verilog.CodeGen(ir_root, context)
-    assert isinstance(context, ir.Context)
+    ver_code_gen, _ = context_to_verilog(context)
 
     module_str = ver_code_gen.get_module_str()
     tb_str = ver_code_gen.new_testbench_str(context.test_cases)

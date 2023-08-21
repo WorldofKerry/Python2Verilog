@@ -18,6 +18,7 @@ from typing import Optional, Union, overload
 from functools import wraps
 import inspect
 from types import FunctionType
+from python2verilog.api.wrappers import context_to_verilog
 
 from python2verilog.utils.assertions import assert_type
 from python2verilog.utils.decorator import decorator_with_args
@@ -30,7 +31,6 @@ from ..optimizer import OptimizeGraph
 def convert_from_cli(
     code: str,
     func_name: str,
-    optimization_level: int,
     test_cases: Optional[list] = None,
     file_path: str = "",
 ):
@@ -46,28 +46,7 @@ def convert_from_cli(
     assert isinstance(context, ir.Context)
     assert isinstance(test_cases, list)
     context.test_cases = test_cases
-    context.validate()
-
-    ir_root, context = Generator2Graph(context).results
-    if optimization_level > 0:
-        OptimizeGraph(ir_root, threshold=optimization_level - 1)
-    return verilog.CodeGen(ir_root, context), ir_root
-
-
-def convert_for_debug(
-    code: str,
-    optimization_level: int,
-    test_cases: list[tuple],
-    name: str,
-):
-    """
-    Converts python code to verilog and its ir
-    """
-    context = parse_python(code=code, function_name=name, extra_test_cases=test_cases)
-    ir_root, context = Generator2Graph(context).results
-    if optimization_level > 0:
-        OptimizeGraph(ir_root, threshold=optimization_level - 1)
-    return verilog.CodeGen(ir_root, context), ir_root
+    return context_to_verilog(context)
 
 
 def parse_python(
