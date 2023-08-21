@@ -16,7 +16,7 @@ from matplotlib import pyplot as plt
 from abc import abstractmethod
 
 from python2verilog import ir
-from python2verilog.api.cli import parse_python
+from python2verilog.api.cli import convert_from_cli, parse_python
 from python2verilog.api.wrappers import context_to_verilog
 from python2verilog.extern.iverilog import (
     run_iverilog_with_fifos,
@@ -189,12 +189,12 @@ class BaseTestCases:
                     f'For debugging, try running `iverilog -s {function_name}_tb {FILES_IN_ABS_DIR["module"]} {FILES_IN_ABS_DIR["testbench"]} -o iverilog.log && unbuffer vvp iverilog.log && rm iverilog.log`'
                 )
 
-                context = parse_python(
+                verilog, root = convert_from_cli(
                     code=python_text,
                     function_name=function_name,
                     extra_test_cases=test_cases,
+                    file_path=FILES_IN_ABS_DIR["python"],
                 )
-                verilog, root = context_to_verilog(context)
 
                 if args.write:
                     with open(FILES_IN_ABS_DIR["cytoscape"], mode="w") as cyto_file:

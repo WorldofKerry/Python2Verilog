@@ -108,8 +108,8 @@ if __name__ == "__main__":
         print(f"TEST CASES: {context.test_cases}")
         verilog_code_gen, _ = convert_from_cli(
             code=python,
-            func_name=args.name,
-            test_cases=test_cases,
+            function_name=args.name,
+            extra_test_cases=test_cases,
             file_path=input_file_path,
         )
 

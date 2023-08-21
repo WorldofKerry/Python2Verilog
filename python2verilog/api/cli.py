@@ -30,8 +30,8 @@ from ..optimizer import OptimizeGraph
 
 def convert_from_cli(
     code: str,
-    func_name: str,
-    test_cases: Optional[list] = None,
+    function_name: str,
+    extra_test_cases: Optional[list] = None,
     file_path: str = "",
 ):
     """
@@ -39,13 +39,13 @@ def convert_from_cli(
     """
     context = parse_python(
         code=code,
-        function_name=func_name,
-        extra_test_cases=test_cases,
+        function_name=function_name,
+        extra_test_cases=extra_test_cases,
         file_path=file_path,
     )
     assert isinstance(context, ir.Context)
-    assert isinstance(test_cases, list)
-    context.test_cases = test_cases
+    assert isinstance(extra_test_cases, list)
+    context.test_cases = extra_test_cases
     return context_to_verilog(context)
 
 
