@@ -31,7 +31,7 @@ Unsupported Python paradigms include but are not limited to the following:
 
 ## Usage
 
-For an online demo, checkout out this [Replit project](https://replit.com/@WorldofKerry/Python2Verilog-Demo)! No guarantees on the up-to-dateness of this demo.
+For an online demo, checkout out this [Replit project](https://replit.com/@WorldofKerry/Python2Verilog-Demo#main.py)! Please view the files in the filesystem, as that's where the output is written to. No guarantees on the up-to-dateness of this demo.
 
 ### Installation
 
@@ -56,7 +56,7 @@ To setup pre-commit, run `pre-commit install`.
 
 ### Docs
 
-Sphinx is used. Follow what [Github workflow](.github/workflows/sphinx.yml) uses to generate local copy.
+Sphinx is used. Follow the [Github workflow](.github/workflows/sphinx.yml) to generate a local copy.
 
 ## Testing
 
