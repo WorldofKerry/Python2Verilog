@@ -34,8 +34,8 @@ class Context(GenericReprAndStr):
     optimization_level: int = 1
 
     write: bool = False
-    module_file: IO = io.StringIO()
-    testbench_file: IO = io.StringIO()
+    module_file: Optional[IO] = None
+    testbench_file: Optional[IO] = None
 
     _global_vars: list[Var] = field(default_factory=list)
     _input_vars: list[Var] = field(default_factory=list)
@@ -53,15 +53,32 @@ class Context(GenericReprAndStr):
     entry_state: str = "UNSPECIFIED ENTRY"
     ready_state: str = "UNSPECIFIED STATE"
 
-    def validate_preprocessing(self):
+    def validate(self):
         """
         Makes sure all important bits are filled before python is parsed
+
+        :return: self
         """
-        if os.environ.get("PYTHON_2_VERILOG_DEBUG", None):
-            assert self.input_types
-            assert self.input_vars
-            assert self.output_types
-            assert self.output_vars
+        if not os.environ.get("PYTHON_2_VERILOG_DEBUG", False):
+            return self
+
+        assert isinstance(self.py_ast, ast.FunctionDef), type(self.py_func)
+        assert isinstance(self.py_func, FunctionType)
+
+        def check_list(list_: list):
+            return isinstance(list_, list) and len(list_) > 0
+
+        assert check_list(self.input_types), self
+        assert check_list(self.input_vars), self
+
+        assert check_list(self.output_types), self
+        assert check_list(self.output_vars), self
+
+        if self.write:
+            assert self.module_file
+            assert self.testbench_file
+
+        return self
 
     @property
     def input_vars(self):
@@ -79,11 +96,18 @@ class Context(GenericReprAndStr):
         """
         Output variables
         """
-        return tuple(self._output_vars)
+        return copy.deepcopy(self._output_vars)
 
     @output_vars.setter
     def output_vars(self, other: list[Var]):
         self._output_vars = assert_list_type(other, Var)
+
+    def default_output_vars(self):
+        """
+        Sets own output vars to default based on number of output variables
+        """
+        assert self.output_types and len(self.output_types) > 0
+        self._output_vars = [Var(str(i)) for i in range(len(self.output_types))]
 
     @property
     def global_vars(self):

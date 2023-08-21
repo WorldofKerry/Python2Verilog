@@ -188,12 +188,11 @@ class BaseTestCases:
                     f'For debugging, try running `iverilog -s {function_name}_tb {FILES_IN_ABS_DIR["module"]} {FILES_IN_ABS_DIR["testbench"]} -o iverilog.log && unbuffer vvp iverilog.log && rm iverilog.log`'
                 )
 
-                function = tree.body[0]
-                context = ir.Context(name=function_name, test_cases=test_cases)
                 verilog, root = convert_for_debug(
                     code=python_text,
-                    context=context,
                     optimization_level=optimization_level,
+                    name=function_name,
+                    test_cases=test_cases,
                 )
                 if args.write:
                     with open(FILES_IN_ABS_DIR["cytoscape"], mode="w") as cyto_file:

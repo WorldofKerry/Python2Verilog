@@ -14,7 +14,7 @@ import types
 import typing
 import warnings
 from pathlib import Path
-from typing import Callable, Optional, Union, overload
+from typing import IO, Callable, Optional, Union, overload
 from functools import wraps
 import inspect
 from types import FunctionType
@@ -50,6 +50,7 @@ def verilogify_function(context: ir.Context):
 
     :return: (module, testbench) tuple
     """
+    context.validate()
     assert isinstance(context.py_ast, ast.FunctionDef)
     ir_root, context = Generator2Graph(context, context.py_ast).results
     if context.optimization_level > 0:
@@ -59,6 +60,8 @@ def verilogify_function(context: ir.Context):
 
     module_str = ver_code_gen.get_module_str()
     tb_str = ver_code_gen.new_testbench_str(context.test_cases)
+    assert isinstance(context.module_file, IO)
+    assert isinstance(context.testbench_file, IO)
     if context.write:
         context.module_file.write(module_str)
         context.testbench_file.write(tb_str)
@@ -193,6 +196,7 @@ def verilogify(
             if not context.output_types:
                 logging.info(f"Using {result} as reference")
                 context.output_types = [type(arg) for arg in result]
+                context.default_output_vars()
             else:
                 logging.debug(f"Next yield gave {result}")
                 context.check_output_types(result)

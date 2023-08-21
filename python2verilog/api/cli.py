@@ -27,63 +27,6 @@ from ..backend import verilog
 from ..optimizer import OptimizeGraph
 
 
-@overload
-def convert(context: str, code: str, optimization_level: int = 1):
-    ...
-
-
-@overload
-def convert(context: ir.Context, code: str, optimization_level: int = 1):
-    ...
-
-
-def convert(context: Union[str, ir.Context], code: str, optimization_level: int = 1):
-    """
-    Converts python code to verilog module and testbench
-    """
-    if isinstance(context, str):
-        context = ir.Context(name=context)
-    ver_code_gen, _ = convert_for_debug(
-        code=code, context=context, optimization_level=optimization_level
-    )
-    return ver_code_gen.get_module_str(), ver_code_gen.new_testbench_str(
-        context.test_cases
-    )
-
-
-def convert_file_to_file(
-    function_name: str,
-    input_path: str,
-    output_module_path: Optional[str] = None,
-    output_testbench_path: Optional[str] = None,
-    overwrite: bool = False,
-    optimization_level: int = 1,
-):
-    """
-    Reads a python file and outputs verilog and testbench to files
-    Default output naming is [python file name stem]_module.sv
-    and [python file name stem]_tb.sv respectively
-    """
-    python_file_stem = os.path.splitext(input_path)[0]
-    if not output_module_path:
-        output_module_path = python_file_stem + "_module.sv"
-    if not output_testbench_path:
-        output_testbench_path = python_file_stem + "_tb.sv"
-
-    with open(input_path, mode="r", encoding="utf8") as python_file:
-        module, testbench = convert(
-            function_name, python_file.read(), optimization_level
-        )
-
-        mode = "w" if overwrite else "x"
-
-        with open(output_module_path, mode=mode, encoding="utf8") as module_file:
-            module_file.write(module)
-
-        with open(output_testbench_path, mode=mode, encoding="utf8") as testbench_file:
-            testbench_file.write(testbench)
-
-
 def convert_from_cli(
     code: str,
     func_name: str,
@@ -103,7 +46,7 @@ def convert_from_cli(
     assert isinstance(context, ir.Context)
     assert isinstance(test_cases, list)
     context.test_cases = test_cases
-    context.validate_preprocessing()
+    context.validate()
 
     ir_root, context = Generator2Graph(context, func_ast).results
     if optimization_level > 0:
@@ -111,14 +54,18 @@ def convert_from_cli(
     return verilog.CodeGen(ir_root, context), ir_root
 
 
-def convert_for_debug(code: str, context: ir.Context, optimization_level: int):
+def convert_for_debug(
+    code: str,
+    optimization_level: int,
+    test_cases: list[tuple],
+    name: str,
+):
     """
     Converts python code to verilog and its ir
     """
     context, func_ast, _ = parse_python(
-        code, context.name, extra_test_cases=context.test_cases
+        code=code, function_name=name, extra_test_cases=test_cases
     )
-    logging.debug(context.output_types)
     ir_root, context = Generator2Graph(context, func_ast).results
     if optimization_level > 0:
         OptimizeGraph(ir_root, threshold=optimization_level - 1)
@@ -133,6 +80,8 @@ def parse_python(
 ):
     """
     Parses python code into the function and testbench
+
+    :return: (context, generator_ast, generator_func)
     """
     # pylint: disable=too-many-locals
     assert_type(code, str)
@@ -241,7 +190,7 @@ def parse_python(
 
     if initialized:
         context.output_types = output_types
-        context.output_vars = [ir.Var(str(i)) for i in range(len(output_types))]
+        context.default_output_vars()
 
     logging.info(f"Output param types: {context.output_types}")
     logging.info(f"Output param names: {context.output_vars}")
@@ -250,6 +199,8 @@ def parse_python(
     assert isinstance(input_types, list)
     context.input_types = input_types
     context.test_cases = test_cases
+    context.py_ast = generator_ast
+    context.py_func = generator_func
 
     # Currently the types are not used
-    return (context, generator_ast, generator_func)
+    return (context.validate(), generator_ast, generator_func)
