@@ -37,7 +37,7 @@ def convert_from_cli(
     """
     Converts from cli
     """
-    context, func_ast, _ = parse_python(
+    context = parse_python(
         code=code,
         function_name=func_name,
         extra_test_cases=test_cases,
@@ -48,7 +48,7 @@ def convert_from_cli(
     context.test_cases = test_cases
     context.validate()
 
-    ir_root, context = Generator2Graph(context, func_ast).results
+    ir_root, context = Generator2Graph(context, context.py_ast).results
     if optimization_level > 0:
         OptimizeGraph(ir_root, threshold=optimization_level - 1)
     return verilog.CodeGen(ir_root, context), ir_root
@@ -63,10 +63,8 @@ def convert_for_debug(
     """
     Converts python code to verilog and its ir
     """
-    context, func_ast, _ = parse_python(
-        code=code, function_name=name, extra_test_cases=test_cases
-    )
-    ir_root, context = Generator2Graph(context, func_ast).results
+    context = parse_python(code=code, function_name=name, extra_test_cases=test_cases)
+    ir_root, context = Generator2Graph(context, context.py_ast).results
     if optimization_level > 0:
         OptimizeGraph(ir_root, threshold=optimization_level - 1)
     return verilog.CodeGen(ir_root, context), ir_root
@@ -81,7 +79,7 @@ def parse_python(
     """
     Parses python code into the function and testbench
 
-    :return: (context, generator_ast, generator_func)
+    :return: validated context
     """
     # pylint: disable=too-many-locals
     assert_type(code, str)
@@ -203,4 +201,4 @@ def parse_python(
     context.py_func = generator_func
 
     # Currently the types are not used
-    return (context.validate(), generator_ast, generator_func)
+    return context.validate()

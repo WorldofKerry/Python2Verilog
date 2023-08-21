@@ -26,8 +26,8 @@ inst = nuts(50, 51)
 inst = nuts(15, 16)
 inst = deeznuts(420)
 """
-        context, func_ast, func_callable = parse_python(code, "nuts")
-        logging.debug(func_ast)
+        context = parse_python(code, "nuts")
+        # logging.debug(func_ast)
 
     # def test_this_file(self):
     #     with open(__file__, mode="r") as f:

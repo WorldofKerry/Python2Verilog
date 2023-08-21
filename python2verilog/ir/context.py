@@ -30,7 +30,7 @@ class Context(GenericReprAndStr):
     test_cases: list[tuple] = field(default_factory=list)
 
     py_func: Optional[FunctionType] = None
-    py_ast: Optional[ast.FunctionDef] = None
+    _py_ast: Optional[ast.FunctionDef] = None
 
     input_types: list = field(default_factory=list)
     output_types: list = field(default_factory=list)
@@ -94,6 +94,19 @@ class Context(GenericReprAndStr):
             assert self.ready_state in self.states, self
 
         return self
+
+    @property
+    def py_ast(self):
+        """
+        Python ast node rooted at function
+        """
+        assert isinstance(self._py_ast, ast.FunctionDef)
+        return self._py_ast
+
+    @py_ast.setter
+    def py_ast(self, other: ast.FunctionDef):
+        assert isinstance(other, ast.FunctionDef)
+        self._py_ast = other
 
     @property
     def testbench_file(self):
