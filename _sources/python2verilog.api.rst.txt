@@ -4,18 +4,26 @@ python2verilog.api package
 Submodules
 ----------
 
-python2verilog.api.cli module
------------------------------
-
-.. automodule:: python2verilog.api.cli
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 python2verilog.api.decorator module
 -----------------------------------
 
 .. automodule:: python2verilog.api.decorator
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+python2verilog.api.text module
+------------------------------
+
+.. automodule:: python2verilog.api.text
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+python2verilog.api.wrappers module
+----------------------------------
+
+.. automodule:: python2verilog.api.wrappers
    :members:
    :undoc-members:
    :show-inheritance:

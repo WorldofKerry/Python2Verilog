@@ -4,7 +4,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>python2verilog.utils.env_vars &#8212; python2verilog  documentation</title>
+    <title>python2verilog.api.wrappers &#8212; python2verilog  documentation</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=4f649999" />
     <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=039e1c02" />
     <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
@@ -28,38 +28,29 @@
 
           <div class="body" role="main">
             
-  <h1>Source code for python2verilog.utils.env_vars</h1><div class="highlight"><pre>
+  <h1>Source code for python2verilog.api.wrappers</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">Special env variable functions</span>
+<span class="sd">Wrappers</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
-<span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">from</span> <span class="nn">python2verilog</span> <span class="kn">import</span> <span class="n">ir</span>
+<span class="kn">from</span> <span class="nn">python2verilog.backend</span> <span class="kn">import</span> <span class="n">verilog</span>
+<span class="kn">from</span> <span class="nn">python2verilog.frontend.generator2ir</span> <span class="kn">import</span> <span class="n">Generator2Graph</span>
+<span class="kn">from</span> <span class="nn">python2verilog.optimizer.optimizer</span> <span class="kn">import</span> <span class="n">OptimizeGraph</span>
 
 
-<span class="n">DEBUG_MODE_ENV_VAR</span> <span class="o">=</span> <span class="s2">&quot;PYTHON_2_VERILOG_DEBUG&quot;</span>
-
-
-<div class="viewcode-block" id="set_debug_mode">
-<a class="viewcode-back" href="../../../python2verilog.utils.html#python2verilog.utils.env_vars.set_debug_mode">[docs]</a>
-<span class="k">def</span> <span class="nf">set_debug_mode</span><span class="p">(</span><span class="n">mode</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
+<div class="viewcode-block" id="context_to_verilog">
+<a class="viewcode-back" href="../../../python2verilog.api.html#python2verilog.api.wrappers.context_to_verilog">[docs]</a>
+<span class="k">def</span> <span class="nf">context_to_verilog</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">Context</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Sets the debug mode of package</span>
+<span class="sd">    Converts a context to verilog and its ir</span>
+
+<span class="sd">    :return: (codegen, ir)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">mode</span><span class="p">:</span>
-        <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="n">DEBUG_MODE_ENV_VAR</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">del</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="n">DEBUG_MODE_ENV_VAR</span><span class="p">]</span></div>
-
-
-
-<div class="viewcode-block" id="is_debug_mode">
-<a class="viewcode-back" href="../../../python2verilog.utils.html#python2verilog.utils.env_vars.is_debug_mode">[docs]</a>
-<span class="k">def</span> <span class="nf">is_debug_mode</span><span class="p">():</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    :return: True if in debug mode, false otherwise</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="n">DEBUG_MODE_ENV_VAR</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span></div>
+    <span class="n">ir_root</span><span class="p">,</span> <span class="n">context</span> <span class="o">=</span> <span class="n">Generator2Graph</span><span class="p">(</span><span class="n">context</span><span class="p">)</span><span class="o">.</span><span class="n">results</span>
+    <span class="k">if</span> <span class="n">context</span><span class="o">.</span><span class="n">optimization_level</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">OptimizeGraph</span><span class="p">(</span><span class="n">ir_root</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">optimization_level</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">verilog</span><span class="o">.</span><span class="n">CodeGen</span><span class="p">(</span><span class="n">ir_root</span><span class="p">,</span> <span class="n">context</span><span class="p">),</span> <span class="n">ir_root</span></div>
 
 </pre></div>
 

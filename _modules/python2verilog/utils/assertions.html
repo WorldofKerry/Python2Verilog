@@ -32,12 +32,12 @@
 <span></span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">Type assertion utilities</span>
 <span class="sd">&quot;&quot;&quot;</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Any</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Union</span>
 
 
 <div class="viewcode-block" id="assert_list_type">
 <a class="viewcode-back" href="../../../python2verilog.utils.html#python2verilog.utils.assertions.assert_list_type">[docs]</a>
-<span class="k">def</span> <span class="nf">assert_list_type</span><span class="p">(</span><span class="n">list_</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">],</span> <span class="n">type_</span><span class="p">:</span> <span class="nb">type</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">assert_list_type</span><span class="p">(</span><span class="n">list_</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">],</span> <span class="n">type_</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Asserts that all elems in list_ are of type_, then returns list_ or [] if list_ is None</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -52,7 +52,7 @@
 
 <div class="viewcode-block" id="assert_dict_type">
 <a class="viewcode-back" href="../../../python2verilog.utils.html#python2verilog.utils.assertions.assert_dict_type">[docs]</a>
-<span class="k">def</span> <span class="nf">assert_dict_type</span><span class="p">(</span><span class="n">dict_</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">],</span> <span class="n">key_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span> <span class="n">value_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">assert_dict_type</span><span class="p">(</span><span class="n">dict_</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">],</span> <span class="n">key_type</span><span class="p">,</span> <span class="n">value_type</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Asserts that all key, values in dict_ are correctly typed,</span>
 <span class="sd">    returns dict_ or {} if dict_ is None</span>
@@ -69,7 +69,7 @@
 
 <div class="viewcode-block" id="assert_type">
 <a class="viewcode-back" href="../../../python2verilog.utils.html#python2verilog.utils.assertions.assert_type">[docs]</a>
-<span class="k">def</span> <span class="nf">assert_type</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">type_</span><span class="p">:</span> <span class="nb">type</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">assert_type</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">type_</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Asserts that obj is of type type_, then returns obj or None if obj is None</span>
 <span class="sd">    &quot;&quot;&quot;</span>

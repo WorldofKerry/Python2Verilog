@@ -37,6 +37,7 @@
 <span class="kn">import</span> <span class="nn">atexit</span>
 <span class="kn">import</span> <span class="nn">copy</span>
 <span class="kn">from</span> <span class="nn">io</span> <span class="kn">import</span> <span class="n">IOBase</span>
+<span class="kn">import</span> <span class="nn">io</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">ast</span>
@@ -45,12 +46,13 @@
 <span class="kn">import</span> <span class="nn">typing</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">overload</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">IO</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">overload</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span>
 <span class="kn">import</span> <span class="nn">inspect</span>
 <span class="kn">from</span> <span class="nn">types</span> <span class="kn">import</span> <span class="n">FunctionType</span>
+<span class="kn">from</span> <span class="nn">python2verilog.api.wrappers</span> <span class="kn">import</span> <span class="n">context_to_verilog</span>
 
-<span class="kn">from</span> <span class="nn">python2verilog.utils.assertions</span> <span class="kn">import</span> <span class="n">assert_type</span>
+<span class="kn">from</span> <span class="nn">python2verilog.utils.assertions</span> <span class="kn">import</span> <span class="n">assert_dict_type</span><span class="p">,</span> <span class="n">assert_type</span>
 <span class="kn">from</span> <span class="nn">python2verilog.utils.decorator</span> <span class="kn">import</span> <span class="n">decorator_with_args</span>
 <span class="kn">from</span> <span class="nn">..frontend</span> <span class="kn">import</span> <span class="n">Generator2Graph</span>
 <span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">ir</span>
@@ -86,15 +88,11 @@
 
 <span class="sd">    :return: (module, testbench) tuple</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">py_ast</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">FunctionDef</span><span class="p">)</span>
-    <span class="n">ir_root</span><span class="p">,</span> <span class="n">context</span> <span class="o">=</span> <span class="n">Generator2Graph</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">py_ast</span><span class="p">)</span><span class="o">.</span><span class="n">results</span>
-    <span class="k">if</span> <span class="n">context</span><span class="o">.</span><span class="n">optimization_level</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="n">OptimizeGraph</span><span class="p">(</span><span class="n">ir_root</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">optimization_level</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
-    <span class="n">ver_code_gen</span> <span class="o">=</span> <span class="n">verilog</span><span class="o">.</span><span class="n">CodeGen</span><span class="p">(</span><span class="n">ir_root</span><span class="p">,</span> <span class="n">context</span><span class="p">)</span>
-    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Context</span><span class="p">)</span>
+    <span class="n">assert_type</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Context</span><span class="p">)</span>
+    <span class="n">ver_code_gen</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">context_to_verilog</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
 
     <span class="n">module_str</span> <span class="o">=</span> <span class="n">ver_code_gen</span><span class="o">.</span><span class="n">get_module_str</span><span class="p">()</span>
-    <span class="n">tb_str</span> <span class="o">=</span> <span class="n">ver_code_gen</span><span class="o">.</span><span class="n">new_testbench_str</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">test_cases</span><span class="p">)</span>
+    <span class="n">tb_str</span> <span class="o">=</span> <span class="n">ver_code_gen</span><span class="o">.</span><span class="n">get_testbench_str</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">context</span><span class="o">.</span><span class="n">write</span><span class="p">:</span>
         <span class="n">context</span><span class="o">.</span><span class="n">module_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">module_str</span><span class="p">)</span>
         <span class="n">context</span><span class="o">.</span><span class="n">testbench_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">tb_str</span><span class="p">)</span>
@@ -169,6 +167,13 @@
 <span class="sd">    :param module_output: path to write verilog module to, defaults to function_name.sv</span>
 <span class="sd">    :param testbench_output: path to write verilog testbench to, defaults to function_name_tb.sv</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">assert_type</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">FunctionType</span><span class="p">)</span>
+    <span class="n">assert_dict_type</span><span class="p">(</span><span class="n">namespace</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Context</span><span class="p">)</span>
+    <span class="n">assert_type</span><span class="p">(</span><span class="n">module_output</span><span class="p">,</span> <span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">,</span> <span class="n">io</span><span class="o">.</span><span class="n">IOBase</span><span class="p">))</span>
+    <span class="n">assert_type</span><span class="p">(</span><span class="n">testbench_output</span><span class="p">,</span> <span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">,</span> <span class="n">io</span><span class="o">.</span><span class="n">IOBase</span><span class="p">))</span>
+    <span class="n">assert_type</span><span class="p">(</span><span class="n">write</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span>
+    <span class="n">assert_type</span><span class="p">(</span><span class="n">overwrite</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span>
+
     <span class="k">if</span> <span class="n">overwrite</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">write</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Overwrite is true, but write is set to false&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">func</span> <span class="ow">in</span> <span class="n">namespace</span><span class="p">:</span>
@@ -238,6 +243,7 @@
             <span class="k">if</span> <span class="ow">not</span> <span class="n">context</span><span class="o">.</span><span class="n">output_types</span><span class="p">:</span>
                 <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Using </span><span class="si">{</span><span class="n">result</span><span class="si">}</span><span class="s2"> as reference&quot;</span><span class="p">)</span>
                 <span class="n">context</span><span class="o">.</span><span class="n">output_types</span> <span class="o">=</span> <span class="p">[</span><span class="nb">type</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">result</span><span class="p">]</span>
+                <span class="n">context</span><span class="o">.</span><span class="n">default_output_vars</span><span class="p">()</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Next yield gave </span><span class="si">{</span><span class="n">result</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
                 <span class="n">context</span><span class="o">.</span><span class="n">check_output_types</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>

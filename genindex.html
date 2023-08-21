@@ -137,12 +137,12 @@
 </li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.graph.Element.children">children (Element property)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.clock_signal">clock_signal (Context attribute)</a>
 </li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.graph.ClockedEdge">ClockedEdge (class in python2verilog.ir.graph)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.codegen.CodeGen">CodeGen (class in python2verilog.backend.verilog.codegen)</a>
 </li>
       <li><a href="python2verilog.utils.html#python2verilog.utils.string.Lines.concat">concat() (Lines method)</a>
@@ -153,13 +153,7 @@
 </li>
       <li><a href="python2verilog.frontend.html#python2verilog.frontend.generator2ir.Generator2Graph.context">context (Generator2Graph property)</a>
 </li>
-      <li><a href="python2verilog.api.html#python2verilog.api.cli.convert">convert() (in module python2verilog.api.cli)</a>
-</li>
-      <li><a href="python2verilog.api.html#python2verilog.api.cli.convert_file_to_file">convert_file_to_file() (in module python2verilog.api.cli)</a>
-</li>
-      <li><a href="python2verilog.api.html#python2verilog.api.cli.convert_for_debug">convert_for_debug() (in module python2verilog.api.cli)</a>
-</li>
-      <li><a href="python2verilog.api.html#python2verilog.api.cli.convert_from_cli">convert_from_cli() (in module python2verilog.api.cli)</a>
+      <li><a href="python2verilog.api.html#python2verilog.api.wrappers.context_to_verilog">context_to_verilog() (in module python2verilog.api.wrappers)</a>
 </li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.graph.create_cytoscape_elements">create_cytoscape_elements() (in module python2verilog.ir.graph)</a>
 </li>
@@ -178,6 +172,8 @@
 </li>
       </ul></li>
       <li><a href="python2verilog.utils.html#python2verilog.utils.decorator.decorator_with_args">decorator_with_args() (in module python2verilog.utils.decorator)</a>
+</li>
+      <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.default_output_vars">default_output_vars() (Context method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -201,7 +197,7 @@
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.entry_state">entry_state (Context attribute)</a>
+      <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.entry_state">entry_state (Context property)</a>
 </li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.expressions.Expression">Expression (class in python2verilog.ir.expressions)</a>
 </li>
@@ -235,16 +231,14 @@
       </ul></li>
       <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.ast.Statement.get_blocked_comment">get_blocked_comment() (Statement method)</a>
 </li>
-      <li><a href="python2verilog.utils.html#python2verilog.utils.env_vars.get_debug_mode">get_debug_mode() (in module python2verilog.utils.env_vars)</a>
-</li>
       <li><a href="python2verilog.api.html#python2verilog.api.decorator.get_func_ast_from_func">get_func_ast_from_func() (in module python2verilog.api.decorator)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.ast.Statement.get_inline_comment">get_inline_comment() (Statement method)</a>
 </li>
       <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.codegen.CodeGen.get_module_lines">get_module_lines() (CodeGen method)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.codegen.CodeGen.get_module_str">get_module_str() (CodeGen method)</a>
 </li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.graph.Edge.get_name">get_name() (Edge method)</a>
@@ -257,6 +251,12 @@
         <li><a href="python2verilog.ir.html#python2verilog.ir.graph.IfElseNode.get_optimal_children">(IfElseNode method)</a>
 </li>
       </ul></li>
+      <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.codegen.CodeGen.get_testbench">get_testbench() (CodeGen method)</a>
+</li>
+      <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.codegen.CodeGen.get_testbench_lines">get_testbench_lines() (CodeGen method)</a>
+</li>
+      <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.codegen.CodeGen.get_testbench_str">get_testbench_str() (CodeGen method)</a>
+</li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.global_vars">global_vars (Context property)</a>
 </li>
       <li><a href="python2verilog.optimizer.html#python2verilog.optimizer.optimizer.graph_apply_mapping">graph_apply_mapping() (in module python2verilog.optimizer.optimizer)</a>
@@ -294,6 +294,8 @@
       <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.ast.Instantiation">Instantiation (class in python2verilog.backend.verilog.ast)</a>
 </li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.expressions.Int">Int (class in python2verilog.ir.expressions)</a>
+</li>
+      <li><a href="python2verilog.utils.html#python2verilog.utils.env_vars.is_debug_mode">is_debug_mode() (in module python2verilog.utils.env_vars)</a>
 </li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.is_declared">is_declared() (Context method)</a>
 </li>
@@ -335,9 +337,11 @@
 </li>
         <li><a href="python2verilog.api.html#module-python2verilog.api">python2verilog.api</a>
 </li>
-        <li><a href="python2verilog.api.html#module-python2verilog.api.cli">python2verilog.api.cli</a>
-</li>
         <li><a href="python2verilog.api.html#module-python2verilog.api.decorator">python2verilog.api.decorator</a>
+</li>
+        <li><a href="python2verilog.api.html#module-python2verilog.api.text">python2verilog.api.text</a>
+</li>
+        <li><a href="python2verilog.api.html#module-python2verilog.api.wrappers">python2verilog.api.wrappers</a>
 </li>
         <li><a href="python2verilog.backend.html#module-python2verilog.backend">python2verilog.backend</a>
 </li>
@@ -388,7 +392,7 @@
 </li>
       <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.codegen.CodeGen.module">module (CodeGen property)</a>
 </li>
-      <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.module_file">module_file (Context attribute)</a>
+      <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.module_file">module_file (Context property)</a>
 </li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.expressions.Mul">Mul (class in python2verilog.ir.expressions)</a>
 </li>
@@ -408,15 +412,9 @@
 </li>
       <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.codegen.CaseBuilder.new_caseitem">new_caseitem() (CaseBuilder method)</a>
 </li>
-      <li><a href="python2verilog.api.html#python2verilog.api.decorator.new_namespace">new_namespace() (in module python2verilog.api.decorator)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.codegen.CodeGen.new_testbench">new_testbench() (CodeGen method)</a>
-</li>
-      <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.codegen.CodeGen.new_testbench_lines">new_testbench_lines() (CodeGen method)</a>
-</li>
-      <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.codegen.CodeGen.new_testbench_str">new_testbench_str() (CodeGen method)</a>
+      <li><a href="python2verilog.api.html#python2verilog.api.decorator.new_namespace">new_namespace() (in module python2verilog.api.decorator)</a>
 </li>
       <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.ast.NonBlockingSubsitution">NonBlockingSubsitution (class in python2verilog.backend.verilog.ast)</a>
 
@@ -454,15 +452,13 @@
 <h2 id="P">P</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="python2verilog.api.html#python2verilog.api.cli.parse_python">parse_python() (in module python2verilog.api.cli)</a>
-</li>
       <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.ast.PosedgeSyncAlways">PosedgeSyncAlways (class in python2verilog.backend.verilog.ast)</a>
 </li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.expressions.Pow">Pow (class in python2verilog.ir.expressions)</a>
 </li>
       <li><a href="python2verilog.utils.html#python2verilog.utils.generics.pretty_dict">pretty_dict() (in module python2verilog.utils.generics)</a>
 </li>
-      <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.py_ast">py_ast (Context attribute)</a>
+      <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.py_ast">py_ast (Context property)</a>
 </li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.py_func">py_func (Context attribute)</a>
 </li>
@@ -481,17 +477,24 @@
 </li>
       </ul></li>
       <li>
-    python2verilog.api.cli
-
-      <ul>
-        <li><a href="python2verilog.api.html#module-python2verilog.api.cli">module</a>
-</li>
-      </ul></li>
-      <li>
     python2verilog.api.decorator
 
       <ul>
         <li><a href="python2verilog.api.html#module-python2verilog.api.decorator">module</a>
+</li>
+      </ul></li>
+      <li>
+    python2verilog.api.text
+
+      <ul>
+        <li><a href="python2verilog.api.html#module-python2verilog.api.text">module</a>
+</li>
+      </ul></li>
+      <li>
+    python2verilog.api.wrappers
+
+      <ul>
+        <li><a href="python2verilog.api.html#module-python2verilog.api.wrappers">module</a>
 </li>
       </ul></li>
       <li>
@@ -651,7 +654,7 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.ready_signal">ready_signal (Context attribute)</a>
 </li>
-      <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.ready_state">ready_state (Context attribute)</a>
+      <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.ready_state">ready_state (Context property)</a>
 </li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.reset_signal">reset_signal (Context attribute)</a>
 </li>
@@ -719,7 +722,13 @@
 </li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.test_cases">test_cases (Context attribute)</a>
 </li>
-      <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.testbench_file">testbench_file (Context attribute)</a>
+      <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.testbench_file">testbench_file (Context property)</a>
+</li>
+      <li><a href="python2verilog.api.html#python2verilog.api.text.text_to_context">text_to_context() (in module python2verilog.api.text)</a>
+</li>
+      <li><a href="python2verilog.api.html#python2verilog.api.text.text_to_text">text_to_text() (in module python2verilog.api.text)</a>
+</li>
+      <li><a href="python2verilog.api.html#python2verilog.api.text.text_to_verilog">text_to_verilog() (in module python2verilog.api.text)</a>
 </li>
       <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.ast.Always.to_lines">to_lines() (Always method)</a>
 
@@ -803,7 +812,7 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.valid_signal">valid_signal (Context attribute)</a>
 </li>
-      <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.validate_preprocessing">validate_preprocessing() (Context method)</a>
+      <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.validate">validate() (Context method)</a>
 </li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.statements.ValidSubsitution">ValidSubsitution (class in python2verilog.ir.statements)</a>
 </li>
