@@ -13,7 +13,7 @@ import warnings
 from typing import Optional
 from python2verilog import ir
 
-from python2verilog.api.cli import convert_from_cli
+from python2verilog.api.cli import text_to_verilog
 
 logging.root.setLevel(logging.INFO)
 
@@ -106,7 +106,7 @@ if __name__ == "__main__":
         test_cases = ast.literal_eval(args.test_cases) if args.test_cases else []
 
         print(f"TEST CASES: {context.test_cases}")
-        verilog_code_gen, _ = convert_from_cli(
+        verilog_code_gen, _ = text_to_verilog(
             code=python,
             function_name=args.name,
             extra_test_cases=test_cases,

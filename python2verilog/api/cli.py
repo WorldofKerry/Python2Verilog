@@ -28,7 +28,7 @@ from ..backend import verilog
 from ..optimizer import OptimizeGraph
 
 
-def convert_from_cli(
+def text_to_verilog(
     code: str,
     function_name: str,
     extra_test_cases: Optional[list] = None,
@@ -36,8 +36,10 @@ def convert_from_cli(
 ):
     """
     Converts from cli
+
+    :return: (context, ir)
     """
-    context = parse_python(
+    context = text_to_context(
         code=code,
         function_name=function_name,
         extra_test_cases=extra_test_cases,
@@ -49,7 +51,7 @@ def convert_from_cli(
     return context_to_verilog(context)
 
 
-def parse_python(
+def text_to_context(
     code: str,
     function_name: str,
     file_path: Optional[str] = None,

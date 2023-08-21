@@ -3,7 +3,7 @@ API wrappers
 """
 
 from .cli import (
-    parse_python,
+    text_to_context,
 )
 
 from .decorator import (

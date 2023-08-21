@@ -16,7 +16,7 @@ from matplotlib import pyplot as plt
 from abc import abstractmethod
 
 from python2verilog import ir
-from python2verilog.api.cli import convert_from_cli, parse_python
+from python2verilog.api.cli import text_to_verilog, text_to_context
 from python2verilog.api.wrappers import context_to_verilog
 from python2verilog.extern.iverilog import (
     run_iverilog_with_fifos,
@@ -189,7 +189,7 @@ class BaseTestCases:
                     f'For debugging, try running `iverilog -s {function_name}_tb {FILES_IN_ABS_DIR["module"]} {FILES_IN_ABS_DIR["testbench"]} -o iverilog.log && unbuffer vvp iverilog.log && rm iverilog.log`'
                 )
 
-                verilog, root = convert_from_cli(
+                verilog, root = text_to_verilog(
                     code=python_text,
                     function_name=function_name,
                     extra_test_cases=test_cases,
