@@ -18,13 +18,3 @@ def context_to_verilog(context: ir.Context):
     if context.optimization_level > 0:
         OptimizeGraph(ir_root, threshold=context.optimization_level - 1)
     return verilog.CodeGen(ir_root, context), ir_root
-
-
-def context_to_text(context: ir.Context):
-    """
-    Converts a context to module and testbench strings
-
-    :return: (module, testbench) pair of strings
-    """
-    ver_code_gen, _ = context_to_verilog(context)
-    return ver_code_gen.get_module_str(), ver_code_gen.new_testbench_str()

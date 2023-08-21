@@ -6,6 +6,7 @@ import argparse
 import atexit
 import copy
 from io import IOBase
+import io
 import logging
 import os
 import ast
@@ -20,7 +21,7 @@ import inspect
 from types import FunctionType
 from python2verilog.api.wrappers import context_to_verilog
 
-from python2verilog.utils.assertions import assert_type
+from python2verilog.utils.assertions import assert_dict_type, assert_type
 from python2verilog.utils.decorator import decorator_with_args
 from ..frontend import Generator2Graph
 from .. import ir
@@ -51,6 +52,7 @@ def verilogify_function(context: ir.Context):
 
     :return: (module, testbench) tuple
     """
+    assert_type(context, ir.Context)
     ver_code_gen, _ = context_to_verilog(context)
 
     module_str = ver_code_gen.get_module_str()
@@ -120,6 +122,13 @@ def verilogify(
     :param module_output: path to write verilog module to, defaults to function_name.sv
     :param testbench_output: path to write verilog testbench to, defaults to function_name_tb.sv
     """
+    assert_type(func, FunctionType)
+    assert_dict_type(namespace, Callable, ir.Context)
+    assert_type(module_output, (os.PathLike, io.IOBase))
+    assert_type(testbench_output, (os.PathLike, io.IOBase))
+    assert_type(write, bool)
+    assert_type(overwrite, bool)
+
     if overwrite and not write:
         raise RuntimeError("Overwrite is true, but write is set to false")
     if func in namespace:

@@ -20,7 +20,7 @@ import inspect
 from types import FunctionType
 from python2verilog.api.wrappers import context_to_verilog
 
-from python2verilog.utils.assertions import assert_type
+from python2verilog.utils.assertions import assert_list_type, assert_type
 from python2verilog.utils.decorator import decorator_with_args
 from ..frontend import Generator2Graph
 from .. import ir
@@ -35,7 +35,7 @@ def text_to_verilog(
     file_path: str = "",
 ):
     """
-    Converts from cli
+    Converts from code to verilog code generator
 
     :return: (context, ir)
     """
@@ -48,6 +48,34 @@ def text_to_verilog(
     assert isinstance(context, ir.Context)
     assert isinstance(extra_test_cases, list)
     context.test_cases = extra_test_cases
+    return context_to_verilog(context)
+
+
+def text_to_text(
+    code: str,
+    function_name: str,
+    extra_test_cases: Optional[list[tuple]] = None,
+    file_path: str = "",
+):
+    """
+    Converts from code to module and testbench strings
+
+    :return: (module, testbench)
+    """
+    assert_type(code, str)
+    assert_type(function_name, str)
+    assert function_name in code
+    assert_list_type(extra_test_cases, list)
+    assert_type(file_path, str)
+
+    context = text_to_context(
+        code=code,
+        function_name=function_name,
+        extra_test_cases=extra_test_cases,
+        file_path=file_path,
+    )
+    assert isinstance(context, ir.Context)
+    context.test_cases = extra_test_cases if extra_test_cases else []
     return context_to_verilog(context)
 
 
