@@ -50,6 +50,8 @@ def pytest_addoption(parser: pytest.Parser):
     for param in params:
         param.add_to_parser(parser)
 
+    os.environ["PYTHON_2_VERILOG_DEBUG"] = "1"
+
 
 @pytest.fixture()
 def argparse(request):
@@ -59,6 +61,8 @@ def argparse(request):
     args = {}
     for param in params:
         args[param.name] = request.config.getoption(f"--{param.dashed_name}")
+
     if max(args["optimization_levels"]) > 8:
         sys.setrecursionlimit(2000)
+
     setattr(request.cls, "args", type("Args", (object,), args))

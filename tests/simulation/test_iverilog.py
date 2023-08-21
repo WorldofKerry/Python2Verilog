@@ -1,7 +1,8 @@
 import unittest
-from python2verilog.simulation.iverilog import run_iverilog
+from python2verilog.simulation.iverilog import make_iverilog_cmd
 
 
 class TestIVerilog(unittest.TestCase):
     def test_basics(self):
-        result = run_iverilog("name", ["a.sv", "b.sv"])
+        result = make_iverilog_cmd("name", ["a.sv", "b.sv"])
+        self.assertTrue(result)
