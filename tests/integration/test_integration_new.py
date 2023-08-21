@@ -17,7 +17,13 @@ from abc import abstractmethod
 
 from python2verilog import ir
 from python2verilog.api import convert_for_debug
-from python2verilog.simulation.iverilog import make_iverilog_cmd, run_cmd_with_fifos
+from python2verilog.simulation.iverilog import (
+    make_iverilog_cmd,
+    run_cmd_with_fifos,
+    run_cmd_with_files,
+    run_iverilog_with_fifos,
+    run_iverilog_with_files,
+)
 from python2verilog.utils.assertions import assert_type
 from tools.visualization import make_visual
 from .cases import TEST_CASES
@@ -181,15 +187,6 @@ class BaseTestCases:
 
                 logging.debug(f"Finished executing python and created expected")
 
-                iverilog_cmd = make_iverilog_cmd(
-                    f"{function_name}_tb",
-                    [
-                        FILES_IN_ABS_DIR["module_fifo"],
-                        FILES_IN_ABS_DIR["testbench_fifo"],
-                    ],
-                )
-
-                logging.debug(f"Running `{iverilog_cmd}`")
                 logging.debug(
                     f'For debugging, try running `iverilog -s {function_name}_tb {FILES_IN_ABS_DIR["module"]} {FILES_IN_ABS_DIR["testbench"]} -o iverilog.log && unbuffer vvp iverilog.log && rm iverilog.log`'
                 )
@@ -224,14 +221,24 @@ class BaseTestCases:
                     ) as testbench_file:
                         testbench_file.write(tb_str)
 
-                stdout, stderr = run_cmd_with_fifos(
-                    iverilog_cmd,
-                    {
-                        FILES_IN_ABS_DIR["module_fifo"]: module_str,
-                        FILES_IN_ABS_DIR["testbench_fifo"]: tb_str,
-                    },
-                    timeout=5,
-                )
+                if args.write:
+                    stdout, stderr = run_iverilog_with_files(
+                        f"{function_name}_tb",
+                        {
+                            FILES_IN_ABS_DIR["module"]: module_str,
+                            FILES_IN_ABS_DIR["testbench"]: tb_str,
+                        },
+                        timeout=max(1, len(expected) / 60 + 1),
+                    )
+                else:
+                    stdout, stderr = run_iverilog_with_fifos(
+                        f"{function_name}_tb",
+                        {
+                            FILES_IN_ABS_DIR["module_fifo"]: module_str,
+                            FILES_IN_ABS_DIR["testbench_fifo"]: tb_str,
+                        },
+                        timeout=max(1, len(expected) / 60 + 1),
+                    )
 
                 self.assertTrue(
                     stdout and not stderr,
