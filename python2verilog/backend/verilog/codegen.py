@@ -34,6 +34,7 @@ class CodeGen:
         for item in root_case.case_items:
             self.context.add_state(item.condition.to_string())
 
+        assert isinstance(context.ready_state, str)
         self.context.add_state_weak(context.ready_state)
 
         self.context.add_global_var(

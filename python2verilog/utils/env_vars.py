@@ -19,8 +19,8 @@ def set_debug_mode(mode: bool):
         del os.environ[DEBUG_MODE_ENV_VAR]
 
 
-def get_debug_mode():
+def is_debug_mode():
     """
-    Gets the debug mode of package
+    :return: True if in debug mode, false otherwise
     """
     return os.getenv(DEBUG_MODE_ENV_VAR) is not None
