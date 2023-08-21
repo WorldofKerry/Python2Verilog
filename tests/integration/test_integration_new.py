@@ -17,10 +17,7 @@ from abc import abstractmethod
 
 from python2verilog import ir
 from python2verilog.api import convert_for_debug
-from python2verilog.simulation.iverilog import (
-    make_iverilog_cmd,
-    run_cmd_with_fifos,
-    run_cmd_with_files,
+from python2verilog.extern.iverilog import (
     run_iverilog_with_fifos,
     run_iverilog_with_files,
 )
@@ -228,7 +225,7 @@ class BaseTestCases:
                             FILES_IN_ABS_DIR["module"]: module_str,
                             FILES_IN_ABS_DIR["testbench"]: tb_str,
                         },
-                        timeout=max(1, len(expected) / 60 + 1),
+                        timeout=60,
                     )
                 else:
                     stdout, stderr = run_iverilog_with_fifos(
@@ -237,7 +234,7 @@ class BaseTestCases:
                             FILES_IN_ABS_DIR["module_fifo"]: module_str,
                             FILES_IN_ABS_DIR["testbench_fifo"]: tb_str,
                         },
-                        timeout=max(1, len(expected) / 60 + 1),
+                        timeout=10,
                     )
 
                 self.assertTrue(
@@ -337,6 +334,7 @@ class BaseTestCases:
                         data[key] = value
                     for key, value in data.items():
                         statistics[key] = value
+
                 for key in fifos:
                     os.remove(FILES_IN_ABS_DIR[key])
 

@@ -1,5 +1,5 @@
 import unittest
-from python2verilog.simulation.iverilog import make_iverilog_cmd
+from python2verilog.extern.iverilog import make_iverilog_cmd
 
 
 class TestIVerilog(unittest.TestCase):

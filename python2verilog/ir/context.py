@@ -23,7 +23,7 @@ class Context(GenericReprAndStr):
 
     # pylint: disable=too-many-instance-attributes
     name: str = ""
-    test_cases: list[int | list] = field(default_factory=list)
+    test_cases: list[tuple] = field(default_factory=list)
 
     py_func: Optional[FunctionType] = None
     py_ast: Optional[ast.FunctionDef] = None

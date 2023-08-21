@@ -50,6 +50,7 @@ def verilogify_function(context: ir.Context):
 
     :return: (module, testbench) tuple
     """
+    assert isinstance(context.py_ast, ast.FunctionDef)
     ir_root, context = Generator2Graph(context, context.py_ast).results
     if context.optimization_level > 0:
         OptimizeGraph(ir_root, threshold=context.optimization_level - 1)
@@ -86,6 +87,23 @@ def __global_namespace_exit_handler():
 
 
 atexit.register(__global_namespace_exit_handler)
+
+
+def get_func_ast_from_func(func: FunctionType):
+    """
+    Given a function, gets its ast tree
+
+    :return: ast rooted at function
+    """
+    tree = ast.parse(textwrap.dedent(inspect.getsource(func)))
+    assert len(tree.body) == 1
+
+    func_tree = tree.body[0]
+    assert isinstance(
+        func_tree, ast.FunctionDef
+    ), f"Got {type(func_tree)} expected {ast.FunctionDef}"
+
+    return func_tree
 
 
 # pylint: disable=dangerous-default-value
@@ -137,10 +155,8 @@ def verilogify(
     context.write = write
 
     if write:
-        if overwrite:
-            mode = "w"
-        else:
-            mode = "x"
+        mode = "w" if overwrite else "x"
+
         # pylint: disable=consider-using-with
         if isinstance(module_output, os.PathLike):
             try:
@@ -152,6 +168,7 @@ def verilogify(
                 testbench_output = open(testbench_output, mode=mode, encoding="utf8")
             except FileExistsError as e:
                 raise FileExistsError("Try setting overwrite to True") from e
+
         context.module_file = module_output
         context.testbench_file = testbench_output
 
