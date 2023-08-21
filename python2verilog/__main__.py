@@ -13,7 +13,7 @@ import warnings
 from typing import Optional
 from python2verilog import ir
 
-from python2verilog.api.text import text_to_verilog
+from python2verilog.api.text import text_to_text, text_to_verilog
 
 
 if __name__ == "__main__":
@@ -72,12 +72,6 @@ if __name__ == "__main__":
     verbose_quiet_group.add_argument("-v", "--verbose", action="count", default=0)
     verbose_quiet_group.add_argument("-q", "--quiet", action="store_const", const=True)
 
-    def get_default_tb_filename(stem: str):
-        """
-        Gets default testbench filename
-        """
-        return stem + "_tb.sv"
-
     args = parser.parse_args()
 
     if not args.quiet:
@@ -88,6 +82,12 @@ if __name__ == "__main__":
         else:
             logging.root.setLevel(logging.WARNING)
         logging.basicConfig(format="%(levelname)s %(filename)s:%(lineno)s %(message)s")
+
+    def get_default_tb_filename(stem: str):
+        """
+        Gets default testbench filename
+        """
+        return stem + "_tb.sv"
 
     input_file_path = parser.parse_args().input_file
     input_file_stem = os.path.splitext(input_file_path)[0]
@@ -103,22 +103,11 @@ if __name__ == "__main__":
         os.path.abspath(input_file_path), mode="r", encoding="utf8"
     ) as python_file:
         python = python_file.read()
-        _locals: dict[str, str] = {}
-        exec(python, None, _locals)  # grab's exec's populated scoped variables
 
-        tree = ast.parse(python)
-        function = tree.body[0]
-        assert isinstance(function, ast.FunctionDef)
-
-        context = ir.Context(
-            name=args.name,
-        )
-        if args.test_cases:
-            context.test_cases = ast.literal_eval(args.test_cases)
         test_cases = ast.literal_eval(args.test_cases) if args.test_cases else []
 
-        logging.info(f"Extra test cases: {context.test_cases}")
-        verilog_code_gen, _ = text_to_verilog(
+        logging.info(f"Extra test cases: {test_cases}")
+        module_str, testbench_str = text_to_text(
             code=python,
             function_name=args.name,
             extra_test_cases=test_cases,
@@ -128,13 +117,13 @@ if __name__ == "__main__":
         with open(
             os.path.abspath(args.output), mode="w+", encoding="utf8"
         ) as module_file:
-            module_file.write(verilog_code_gen.get_module_lines().to_string())
+            module_file.write(module_str)
 
         if args.test_cases != "":
             with open(
                 os.path.abspath(args.testbench), mode="w+", encoding="utf8"
             ) as tb_file:
-                tb_file.write(verilog_code_gen.new_testbench_str())
+                tb_file.write(testbench_str)
         elif args.test_cases == "" and args.testbench != get_default_tb_filename(
             input_file_stem
         ):

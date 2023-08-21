@@ -206,7 +206,7 @@ class BaseTestCases:
                 statistics["module_nchars"] = len(
                     module_str.replace("\n", "").replace(" ", "")
                 )
-                tb_str = verilog.new_testbench_str()
+                tb_str = verilog.get_testbench_str()
 
                 logging.debug("Writing module and tb")
 

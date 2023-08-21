@@ -12,7 +12,7 @@ def context_to_verilog(context: ir.Context):
     """
     Converts a context to verilog and its ir
 
-    :return: (context, ir)
+    :return: (codegen, ir)
     """
     ir_root, context = Generator2Graph(context).results
     if context.optimization_level > 0:

@@ -65,18 +65,16 @@ def text_to_text(
     assert_type(code, str)
     assert_type(function_name, str)
     assert function_name in code
-    assert_list_type(extra_test_cases, list)
+    assert_list_type(extra_test_cases, tuple)
     assert_type(file_path, str)
 
-    context = text_to_context(
+    code_gen, _ = text_to_verilog(
         code=code,
         function_name=function_name,
         extra_test_cases=extra_test_cases,
         file_path=file_path,
     )
-    assert isinstance(context, ir.Context)
-    context.test_cases = extra_test_cases if extra_test_cases else []
-    return context_to_verilog(context)
+    return code_gen.get_module_str(), code_gen.get_testbench_str()
 
 
 def text_to_context(

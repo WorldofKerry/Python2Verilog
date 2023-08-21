@@ -56,7 +56,7 @@ def verilogify_function(context: ir.Context):
     ver_code_gen, _ = context_to_verilog(context)
 
     module_str = ver_code_gen.get_module_str()
-    tb_str = ver_code_gen.new_testbench_str()
+    tb_str = ver_code_gen.get_testbench_str()
     if context.write:
         context.module_file.write(module_str)
         context.testbench_file.write(tb_str)
