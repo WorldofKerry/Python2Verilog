@@ -20,6 +20,14 @@ python2verilog.utils.decorator module
    :undoc-members:
    :show-inheritance:
 
+python2verilog.utils.env\_vars module
+-------------------------------------
+
+.. automodule:: python2verilog.utils.env_vars
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 python2verilog.utils.generics module
 ------------------------------------
 

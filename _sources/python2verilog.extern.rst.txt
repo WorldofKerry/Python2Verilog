@@ -1,0 +1,21 @@
+python2verilog.extern package
+=============================
+
+Submodules
+----------
+
+python2verilog.extern.iverilog module
+-------------------------------------
+
+.. automodule:: python2verilog.extern.iverilog
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: python2verilog.extern
+   :members:
+   :undoc-members:
+   :show-inheritance:
