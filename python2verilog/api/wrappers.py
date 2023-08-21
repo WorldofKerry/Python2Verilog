@@ -14,7 +14,6 @@ def context_to_verilog(context: ir.Context):
 
     :return: (context, ir)
     """
-    context.validate()
     ir_root, context = Generator2Graph(context).results
     if context.optimization_level > 0:
         OptimizeGraph(ir_root, threshold=context.optimization_level - 1)

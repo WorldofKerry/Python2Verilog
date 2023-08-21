@@ -26,6 +26,7 @@ class Generator2Graph:
         """
         Initializes the parser, does quick setup work
         """
+        context.validate()
         self._context = assert_type(context, ir.Context)
 
         self._root = self.__parse_statements(

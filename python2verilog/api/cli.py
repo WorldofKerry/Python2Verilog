@@ -60,7 +60,7 @@ def text_to_context(
     """
     Parses python code into the function and testbench
 
-    :return: validated context
+    :return: context
     """
     # pylint: disable=too-many-locals
     assert_type(code, str)
@@ -80,7 +80,7 @@ def text_to_context(
     tree = ast.parse(code)
 
     test_cases = extra_test_cases if extra_test_cases else []
-    print(f"parse_python test cases {test_cases}")
+    logging.info(f"parse_python test cases {test_cases}")
 
     for node in ast.walk(tree):
         logging.debug(f"Walking through {ast.dump(node)}")
