@@ -52,7 +52,7 @@ def verilogify_function(context: ir.Context):
     """
     context.validate()
     assert isinstance(context.py_ast, ast.FunctionDef)
-    ir_root, context = Generator2Graph(context, context.py_ast).results
+    ir_root, context = Generator2Graph(context).results
     if context.optimization_level > 0:
         OptimizeGraph(ir_root, threshold=context.optimization_level - 1)
     ver_code_gen = verilog.CodeGen(ir_root, context)

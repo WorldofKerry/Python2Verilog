@@ -48,7 +48,7 @@ def convert_from_cli(
     context.test_cases = test_cases
     context.validate()
 
-    ir_root, context = Generator2Graph(context, context.py_ast).results
+    ir_root, context = Generator2Graph(context).results
     if optimization_level > 0:
         OptimizeGraph(ir_root, threshold=optimization_level - 1)
     return verilog.CodeGen(ir_root, context), ir_root
@@ -64,7 +64,7 @@ def convert_for_debug(
     Converts python code to verilog and its ir
     """
     context = parse_python(code=code, function_name=name, extra_test_cases=test_cases)
-    ir_root, context = Generator2Graph(context, context.py_ast).results
+    ir_root, context = Generator2Graph(context).results
     if optimization_level > 0:
         OptimizeGraph(ir_root, threshold=optimization_level - 1)
     return verilog.CodeGen(ir_root, context), ir_root
