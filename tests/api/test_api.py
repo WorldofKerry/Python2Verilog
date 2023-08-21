@@ -1,4 +1,5 @@
 import atexit
+from functools import wraps
 import logging
 import os
 from pathlib import Path
@@ -6,8 +7,8 @@ import unittest
 import ast
 import warnings
 
-from python2verilog.api import parse_python, global_scope
-from python2verilog.api.api import new_namespace, verilogify
+from python2verilog.api.cli import parse_python
+from python2verilog.api.decorator import new_namespace, verilogify, global_namespace
 
 
 class TestParsePython(unittest.TestCase):
@@ -66,6 +67,29 @@ inst = deeznuts(420)
 
 
 class TestVerilogify(unittest.TestCase):
+    def writes(func):
+        """
+        Decorator to clean up written .sv files
+        """
+
+        @wraps(func)
+        def wrapper(self, *args, **kwargs):
+            func(self, *args, **kwargs)
+
+            dir = Path(__file__).parent.absolute()
+            filenames = os.listdir(dir)
+            for filename in filenames:
+                if filename.endswith(".sv"):
+                    os.remove(os.path.join(dir, filename))
+
+        return wrapper
+
+    @classmethod
+    @writes
+    def setUp(cls):
+        pass
+
+    @writes
     def test_basic(self):
         @verilogify(write=True)
         def counter0(n):
@@ -87,10 +111,10 @@ class TestVerilogify(unittest.TestCase):
         counter0(10)
         counter1(15, 20)
 
-        for key, value in global_scope.items():
+        for key, value in global_namespace.items():
             print(type(key), type(value))
-        TestVerilogify.cleanup_files()
 
+    @writes
     def test_overwrite_fail(self):
         @verilogify(write=True)
         def counter_overwrite(n):
@@ -116,13 +140,3 @@ class TestVerilogify(unittest.TestCase):
                 raise e
 
         self.assertRaises(FileExistsError, inner)
-
-        TestVerilogify.cleanup_files()
-
-    @staticmethod
-    def cleanup_files():
-        dir = Path(__file__).parent.absolute()
-        filenames = os.listdir(dir)
-        for filename in filenames:
-            if filename.endswith(".sv"):
-                os.remove(os.path.join(dir, filename))

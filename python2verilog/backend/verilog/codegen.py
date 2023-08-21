@@ -176,7 +176,7 @@ class CodeGen:
         """
         return str(self.get_module_lines())
 
-    def new_testbench(self, test_cases: list[tuple[str]]):
+    def new_testbench(self, test_cases: list[tuple]):
         """
         Creates testbench with multiple test cases
 
@@ -292,13 +292,13 @@ class CodeGen:
             return module
         raise RuntimeError("Needs the context")
 
-    def new_testbench_lines(self, test_cases: list[tuple[str]]):
+    def new_testbench_lines(self, test_cases: list[tuple]):
         """
         New Testbench as lines
         """
         return self.new_testbench(test_cases).to_lines()
 
-    def new_testbench_str(self, test_cases: list[tuple[str]]):
+    def new_testbench_str(self, test_cases: list[tuple]):
         """
         New testbench as str
         """

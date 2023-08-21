@@ -2,11 +2,17 @@
 API wrappers
 """
 
-from .api import (
+from .cli import (
     parse_python,
     convert_for_debug,
     convert,
     convert_file_to_file,
-    global_scope,
+)
+
+from .decorator import (
+    global_namespace,
     verilogify,
+    new_namespace,
+    verilogify_namespace,
+    verilogify_function,
 )

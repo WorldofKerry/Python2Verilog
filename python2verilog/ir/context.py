@@ -4,6 +4,7 @@ import ast
 import copy
 from dataclasses import dataclass, field
 import io
+import os
 from types import FunctionType
 from typing import Optional, IO
 import warnings
@@ -22,7 +23,7 @@ class Context(GenericReprAndStr):
 
     # pylint: disable=too-many-instance-attributes
     name: str = ""
-    test_cases: list[int | list] = field(default_factory=list)
+    test_cases: list[tuple] = field(default_factory=list)
 
     py_func: Optional[FunctionType] = None
     py_ast: Optional[ast.FunctionDef] = None
@@ -56,10 +57,11 @@ class Context(GenericReprAndStr):
         """
         Makes sure all important bits are filled before python is parsed
         """
-        assert self.input_types
-        assert self.input_vars
-        assert self.output_types
-        assert self.output_vars
+        if os.environ.get("PYTHON_2_VERILOG_DEBUG", None):
+            assert self.input_types
+            assert self.input_vars
+            assert self.output_types
+            assert self.output_vars
 
     @property
     def input_vars(self):
