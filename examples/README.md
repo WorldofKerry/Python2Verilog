@@ -4,7 +4,7 @@ Two ways of using this library
 
 ## Importing the Package (Recommended)
 
-## Command Line Interface (CLI)
+## Command Line Interface
 
 `python3 -m python2verilog cli.py -n happy_face`
 

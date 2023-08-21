@@ -202,11 +202,11 @@ class BaseTestCases:
 
                 logging.debug("Generating module and tb")
 
-                module_str = verilog.get_module_lines().to_string()
+                module_str = verilog.get_module_str()
                 statistics["module_nchars"] = len(
                     module_str.replace("\n", "").replace(" ", "")
                 )
-                tb_str = verilog.new_testbench(test_cases).to_string()
+                tb_str = verilog.new_testbench_str()
 
                 logging.debug("Writing module and tb")
 

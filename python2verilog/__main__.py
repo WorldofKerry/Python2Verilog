@@ -122,11 +122,7 @@ if __name__ == "__main__":
             with open(
                 os.path.abspath(args.testbench), mode="w+", encoding="utf8"
             ) as tb_file:
-                tb_file.write(
-                    verilog_code_gen.new_testbench(ast.literal_eval(args.test_cases))
-                    .to_lines()
-                    .to_string()
-                )
+                tb_file.write(verilog_code_gen.new_testbench_str())
         elif args.test_cases == "" and args.testbench != get_default_tb_filename(
             input_file_stem
         ):
