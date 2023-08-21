@@ -55,16 +55,16 @@ if __name__ == "__main__":
         "-c",
         "--test-cases",
         type=str,
-        help='A list of test cases for testbench. \
-            Required to output testbench. E.g. `-c "[(1, 2, 3, 4)]"`',
+        help="A list of test cases for testbench. "
+        'Required to output testbench. E.g. `-c "[(1, 2, 3, 4)]"`',
         default="",
     )
     parser.add_argument(
         "-O",
         "--optimization-level",
         type=int,
-        help="Set to a value greater than 0 for optimizations, \
-            higher values will use more logic cells",
+        help="Set to a value greater than 0 for optimizations, "
+        "higher values will use more logic cells",
         default=0,
     )
 
