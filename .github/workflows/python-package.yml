@@ -43,5 +43,5 @@ jobs:
           python3 decorator_advanced.py
           cat decorator_advanced.sv
 
-          python3 -m python2verilog cli_basic.py -n happy_face -c "[(5, 7, 3)]"
+          python3 -m python2verilog cli_basic.py -n draw_circle -c "[(5, 7, 3)]"
           cat cli_basic.sv

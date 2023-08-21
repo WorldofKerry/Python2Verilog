@@ -15,8 +15,6 @@ from python2verilog import ir
 
 from python2verilog.api.text import text_to_verilog
 
-logging.root.setLevel(logging.INFO)
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -70,6 +68,10 @@ if __name__ == "__main__":
         default=0,
     )
 
+    verbose_quiet_group = parser.add_mutually_exclusive_group()
+    verbose_quiet_group.add_argument("-v", "--verbose", action="count", default=0)
+    verbose_quiet_group.add_argument("-q", "--quiet", action="store_const", const=True)
+
     def get_default_tb_filename(stem: str):
         """
         Gets default testbench filename
@@ -77,6 +79,16 @@ if __name__ == "__main__":
         return stem + "_tb.sv"
 
     args = parser.parse_args()
+
+    if not args.quiet:
+        if args.verbose >= 2:
+            logging.root.setLevel(logging.DEBUG)
+        elif args.verbose == 1:
+            logging.root.setLevel(logging.INFO)
+        else:
+            logging.root.setLevel(logging.WARNING)
+        logging.basicConfig(format="%(levelname)s %(filename)s:%(lineno)s %(message)s")
+
     input_file_path = parser.parse_args().input_file
     input_file_stem = os.path.splitext(input_file_path)[0]
     if args.output == "":
@@ -105,7 +117,7 @@ if __name__ == "__main__":
             context.test_cases = ast.literal_eval(args.test_cases)
         test_cases = ast.literal_eval(args.test_cases) if args.test_cases else []
 
-        print(f"TEST CASES: {context.test_cases}")
+        logging.info(f"Extra test cases: {context.test_cases}")
         verilog_code_gen, _ = text_to_verilog(
             code=python,
             function_name=args.name,

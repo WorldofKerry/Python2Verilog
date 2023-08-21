@@ -1,61 +1,22 @@
-def happy_face(s_x, s_y, height) -> tuple[int, int]:
-    # Generate points for the outer circle
-    x = 0
-    y = height
-    d = 3 - 2 * height
-    yield (s_x + x, s_y + y)
-    yield (s_x + x, s_y - y)
-    yield (s_x - x, s_y + y)
-    yield (s_x - x, s_y - y)
-    yield (s_x + y, s_y + x)
-    yield (s_x + y, s_y - x)
-    yield (s_x - y, s_y + x)
-    yield (s_x - y, s_y - x)
-    while y >= x:
-        x = x + 1
-        if d > 0:
-            y = y - 1
-            d = d + 4 * (x - y) + 10
+def draw_circle(centre_x, centre_y, radius):
+    offset_y = 0
+    offset_x = radius
+    crit = 1 - radius
+    while offset_y <= offset_x:
+        yield (centre_x + offset_x, centre_y + offset_y)  #  -- octant 1
+        yield (centre_x + offset_y, centre_y + offset_x)  # -- octant 2
+        yield (centre_x - offset_x, centre_y + offset_y)  # -- octant 4
+        yield (centre_x - offset_y, centre_y + offset_x)  # -- octant 3
+        yield (centre_x - offset_x, centre_y - offset_y)  # -- octant 5
+        yield (centre_x - offset_y, centre_y - offset_x)  # -- octant 6
+        yield (centre_x + offset_x, centre_y - offset_y)  # -- octant 8
+        yield (centre_x + offset_y, centre_y - offset_x)  # -- octant 7
+        offset_y = offset_y + 1
+        if crit <= 0:
+            crit = crit + 2 * offset_y + 1
         else:
-            d = d + 4 * x + 6
-        # yield (x, y, d)
-        yield (s_x + x, s_y + y)
-        yield (s_x + x, s_y - y)
-        yield (s_x - x, s_y + y)
-        yield (s_x - x, s_y - y)
-        yield (s_x + y, s_y + x)
-        yield (s_x + y, s_y - x)
-        yield (s_x - y, s_y + x)
-        yield (s_x - y, s_y - x)
+            offset_x = offset_x - 1
+            crit = crit + 2 * (offset_y - offset_x) + 1
 
-    # Generate points for the eyes
-    rectangle_width = height // 3
-    rectangle_height = height // 3
 
-    # Left eye
-    x = s_x + 10
-    y = s_y + 5
-
-    # Rectangle
-    i = 0
-    j = 0
-    while i < rectangle_width:
-        while j < rectangle_height:
-            yield (x + i, y + j)
-            j += 1
-        j = 0
-        i += 1
-
-    # Right eye
-    x = s_x - 10
-    y = s_y + 5
-
-    # Rectangle
-    i = 0
-    j = 0
-    while i < rectangle_width:
-        while j < rectangle_height:
-            yield (x + i, y + j)
-            j += 1
-        j = 0
-        i += 1
+draw_circle(10, 10, 5)
