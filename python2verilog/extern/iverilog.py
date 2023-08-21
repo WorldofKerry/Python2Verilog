@@ -10,7 +10,7 @@ from typing import Optional
 import warnings
 
 
-def make_iverilog_cmd(top_level_module: str, files: set[str]):
+def make_iverilog_cmd(top_level_module: str, files: list[str]):
     """
     Returns an iverilog command
 
@@ -115,7 +115,7 @@ def run_iverilog_with_fifos(
     """
     iverilog_cmd = make_iverilog_cmd(
         top_level_module=top_level_module,
-        files=set(input_fifos.keys()),
+        files=list(input_fifos.keys()),
     )
     logging.debug(f"Running {iverilog_cmd}")
     return run_cmd_with_fifos(
@@ -135,7 +135,7 @@ def run_iverilog_with_files(
     """
     iverilog_cmd = make_iverilog_cmd(
         top_level_module=top_level_module,
-        files=set(input_files.keys()),
+        files=list(input_files.keys()),
     )
     logging.debug(f"Running {iverilog_cmd}")
     return run_cmd_with_files(
