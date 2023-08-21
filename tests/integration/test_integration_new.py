@@ -231,6 +231,7 @@ class BaseTestCases:
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                 )
+                
                 with open(FILES_IN_ABS_DIR["module_fifo"], mode="w") as module_file:
                     module_file.write(module_str)
 
