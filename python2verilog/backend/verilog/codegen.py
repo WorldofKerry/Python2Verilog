@@ -34,6 +34,7 @@ class CodeGen:
         for item in root_case.case_items:
             self.context.add_state(item.condition.to_string())
 
+        assert isinstance(context.ready_state, str)
         self.context.add_state_weak(context.ready_state)
 
         self.context.add_global_var(
@@ -176,11 +177,11 @@ class CodeGen:
         """
         return str(self.get_module_lines())
 
-    def new_testbench(self, test_cases: list[tuple]):
+    def get_testbench(self):
         """
         Creates testbench with multiple test cases
 
-        Each element of test_cases represents a single test case
+        Each element of self.context.test_cases represents a single test case
         """
         if len(self.context.input_vars) == 0:
             raise RuntimeError(f"Input var names not deduced for {self.context.name}")
@@ -243,7 +244,7 @@ class CodeGen:
         )
         initial_body.append(ver.Statement())
 
-        for i, test_case in enumerate(test_cases):
+        for i, test_case in enumerate(self.context.test_cases):
             # setup for new test case
             initial_body.append(
                 ver.Statement(comment=f"Test case {i}: {str(test_case)}")
@@ -292,17 +293,17 @@ class CodeGen:
             return module
         raise RuntimeError("Needs the context")
 
-    def new_testbench_lines(self, test_cases: list[tuple]):
+    def get_testbench_lines(self):
         """
         New Testbench as lines
         """
-        return self.new_testbench(test_cases).to_lines()
+        return self.get_testbench().to_lines()
 
-    def new_testbench_str(self, test_cases: list[tuple]):
+    def get_testbench_str(self):
         """
         New testbench as str
         """
-        return str(self.new_testbench_lines(test_cases))
+        return str(self.get_testbench_lines())
 
 
 class CaseBuilder:

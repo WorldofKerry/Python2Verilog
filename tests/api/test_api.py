@@ -7,7 +7,7 @@ import unittest
 import ast
 import warnings
 
-from python2verilog.api.cli import parse_python
+from python2verilog.api.text import text_to_context
 from python2verilog.api.decorator import new_namespace, verilogify, global_namespace
 
 
@@ -26,8 +26,8 @@ inst = nuts(50, 51)
 inst = nuts(15, 16)
 inst = deeznuts(420)
 """
-        context, func_ast, func_callable = parse_python(code, "nuts")
-        logging.debug(func_ast)
+        context = text_to_context(code, "nuts")
+        # logging.debug(func_ast)
 
     # def test_this_file(self):
     #     with open(__file__, mode="r") as f:
@@ -48,7 +48,7 @@ inst = nuts(50, 51)
 inst = nuts(15, "16")
 inst = deeznuts(420)
 """
-        self.assertRaises(AssertionError, parse_python, code, "nuts")
+        self.assertRaises(AssertionError, text_to_context, code, "nuts")
 
         code = """
 def nuts(input, other):
@@ -63,7 +63,7 @@ inst = nuts(50, 51)
 inst = nuts(15, 16)
 inst = deeznuts(420)
 """
-        self.assertRaises(AssertionError, parse_python, code, "nuts")
+        self.assertRaises(AssertionError, text_to_context, code, "nuts")
 
 
 class TestVerilogify(unittest.TestCase):

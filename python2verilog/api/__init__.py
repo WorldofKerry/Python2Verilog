@@ -2,11 +2,10 @@
 API wrappers
 """
 
-from .cli import (
-    parse_python,
-    convert_for_debug,
-    convert,
-    convert_file_to_file,
+from .text import (
+    text_to_context,
+    text_to_verilog,
+    text_to_text,
 )
 
 from .decorator import (
@@ -16,3 +15,5 @@ from .decorator import (
     verilogify_namespace,
     verilogify_function,
 )
+
+from .wrappers import context_to_verilog

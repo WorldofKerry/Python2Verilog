@@ -21,17 +21,16 @@ class Generator2Graph:
     def __init__(
         self,
         context: ir.Context,
-        python_func: pyast.FunctionDef,
         done_state_name: str = "_statelmaoready",
     ):
         """
         Initializes the parser, does quick setup work
         """
-        assert_type(python_func, pyast.FunctionDef)
+        context.validate()
         self._context = assert_type(context, ir.Context)
 
         self._root = self.__parse_statements(
-            stmts=list(python_func.body),
+            stmts=list(context.py_ast.body),
             prefix="_state",
             nextt=ir.DoneNode(unique_id=done_state_name, name="done"),
         )

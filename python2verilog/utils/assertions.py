@@ -1,10 +1,10 @@
 """
 Type assertion utilities
 """
-from typing import Optional, Any
+from typing import Optional, Any, Union
 
 
-def assert_list_type(list_: Optional[list], type_: type):
+def assert_list_type(list_: Optional[list], type_):
     """
     Asserts that all elems in list_ are of type_, then returns list_ or [] if list_ is None
     """
@@ -16,7 +16,7 @@ def assert_list_type(list_: Optional[list], type_: type):
     return []
 
 
-def assert_dict_type(dict_: Optional[dict], key_type: type, value_type: type):
+def assert_dict_type(dict_: Optional[dict], key_type, value_type):
     """
     Asserts that all key, values in dict_ are correctly typed,
     returns dict_ or {} if dict_ is None
@@ -30,7 +30,7 @@ def assert_dict_type(dict_: Optional[dict], key_type: type, value_type: type):
     return {}
 
 
-def assert_type(obj: Any, type_: type):
+def assert_type(obj: Any, type_):
     """
     Asserts that obj is of type type_, then returns obj or None if obj is None
     """

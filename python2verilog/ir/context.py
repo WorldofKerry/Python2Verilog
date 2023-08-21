@@ -3,15 +3,19 @@ from __future__ import annotations
 import ast
 import copy
 from dataclasses import dataclass, field
+import inspect
 import io
 import os
 from types import FunctionType
 from typing import Optional, IO
 import warnings
+from python2verilog.utils.env_vars import is_debug_mode
 
 from python2verilog.utils.generics import GenericReprAndStr
 from ..utils.assertions import assert_list_type, assert_type, assert_dict_type
 from ..ir import Var
+
+DEFAULT_STATE_NAME = "___PYTHON_2_VERILOG_STATE___"
 
 
 @dataclass
@@ -26,7 +30,7 @@ class Context(GenericReprAndStr):
     test_cases: list[tuple] = field(default_factory=list)
 
     py_func: Optional[FunctionType] = None
-    py_ast: Optional[ast.FunctionDef] = None
+    _py_ast: Optional[ast.FunctionDef] = None
 
     input_types: list = field(default_factory=list)
     output_types: list = field(default_factory=list)
@@ -34,8 +38,8 @@ class Context(GenericReprAndStr):
     optimization_level: int = 1
 
     write: bool = False
-    module_file: IO = io.StringIO()
-    testbench_file: IO = io.StringIO()
+    _module_file: Optional[io.IOBase] = None
+    _testbench_file: Optional[io.IOBase] = None
 
     _global_vars: list[Var] = field(default_factory=list)
     _input_vars: list[Var] = field(default_factory=list)
@@ -50,18 +54,111 @@ class Context(GenericReprAndStr):
 
     state_var: Var = Var("state")
 
-    entry_state: str = "UNSPECIFIED ENTRY"
-    ready_state: str = "UNSPECIFIED STATE"
+    _entry_state: Optional[str] = None
+    _ready_state: Optional[str] = None
 
-    def validate_preprocessing(self):
+    def validate(self):
         """
-        Makes sure all important bits are filled before python is parsed
+        Validates that all fields of context are populated.
+
+        Checks invariants.
+
+        Only does checks in debug mode.
+
+        :return: self
         """
-        if os.environ.get("PYTHON_2_VERILOG_DEBUG", None):
-            assert self.input_types
-            assert self.input_vars
-            assert self.output_types
-            assert self.output_vars
+        if not is_debug_mode():
+            return self
+
+        assert isinstance(self.py_ast, ast.FunctionDef), type(self.py_func)
+        assert isinstance(self.py_func, FunctionType)
+
+        def check_list(list_: list):
+            return isinstance(list_, list) and len(list_) > 0
+
+        assert check_list(self.input_types), self
+        assert check_list(self.input_vars), self
+
+        assert check_list(self.output_types), self
+        assert check_list(self.output_vars), self
+
+        if self.write:
+            if self._module_file:
+                assert isinstance(self.module_file, io.IOBase), self
+            if self._testbench_file:
+                assert isinstance(self.testbench_file, io.IOBase), self
+
+        if self._entry_state:
+            assert self.entry_state in self.states, self
+        if self._ready_state:
+            assert self.ready_state in self.states, self
+
+        return self
+
+    @property
+    def py_ast(self):
+        """
+        Python ast node rooted at function
+        """
+        assert isinstance(self._py_ast, ast.FunctionDef)
+        return self._py_ast
+
+    @py_ast.setter
+    def py_ast(self, other: ast.FunctionDef):
+        assert isinstance(other, ast.FunctionDef)
+        self._py_ast = other
+
+    @property
+    def testbench_file(self):
+        """
+        Testbench stream
+        """
+        assert isinstance(self._testbench_file, io.IOBase)
+        return self._testbench_file
+
+    @testbench_file.setter
+    def testbench_file(self, other: io.IOBase):
+        assert isinstance(other, io.IOBase)
+        self._testbench_file = other
+
+    @property
+    def module_file(self):
+        """
+        Module stream
+        """
+        assert isinstance(self._module_file, io.IOBase)
+        return self._module_file
+
+    @module_file.setter
+    def module_file(self, other: io.IOBase):
+        assert isinstance(other, io.IOBase)
+        self._module_file = other
+
+    @property
+    def entry_state(self):
+        """
+        The first state that does work in the graph representation
+        """
+        assert isinstance(self._entry_state, str), self
+        return self._entry_state
+
+    @entry_state.setter
+    def entry_state(self, other: str):
+        assert isinstance(other, str)
+        self._entry_state = other
+
+    @property
+    def ready_state(self):
+        """
+        The ready state
+        """
+        assert isinstance(self._ready_state, str), self
+        return self._ready_state
+
+    @ready_state.setter
+    def ready_state(self, other: str):
+        assert isinstance(other, str)
+        self._ready_state = other
 
     @property
     def input_vars(self):
@@ -79,11 +176,18 @@ class Context(GenericReprAndStr):
         """
         Output variables
         """
-        return tuple(self._output_vars)
+        return copy.deepcopy(self._output_vars)
 
     @output_vars.setter
     def output_vars(self, other: list[Var]):
         self._output_vars = assert_list_type(other, Var)
+
+    def default_output_vars(self):
+        """
+        Sets own output vars to default based on number of output variables
+        """
+        assert self.output_types and len(self.output_types) > 0
+        self._output_vars = [Var(str(i)) for i in range(len(self.output_types))]
 
     @property
     def global_vars(self):

@@ -18,8 +18,9 @@ from typing import Optional, Union, overload
 from functools import wraps
 import inspect
 from types import FunctionType
+from python2verilog.api.wrappers import context_to_verilog
 
-from python2verilog.utils.assertions import assert_type
+from python2verilog.utils.assertions import assert_list_type, assert_type
 from python2verilog.utils.decorator import decorator_with_args
 from ..frontend import Generator2Graph
 from .. import ir
@@ -27,105 +28,56 @@ from ..backend import verilog
 from ..optimizer import OptimizeGraph
 
 
-@overload
-def convert(context: str, code: str, optimization_level: int = 1):
-    ...
-
-
-@overload
-def convert(context: ir.Context, code: str, optimization_level: int = 1):
-    ...
-
-
-def convert(context: Union[str, ir.Context], code: str, optimization_level: int = 1):
-    """
-    Converts python code to verilog module and testbench
-    """
-    if isinstance(context, str):
-        context = ir.Context(name=context)
-    ver_code_gen, _ = convert_for_debug(
-        code=code, context=context, optimization_level=optimization_level
-    )
-    return ver_code_gen.get_module_str(), ver_code_gen.new_testbench_str(
-        context.test_cases
-    )
-
-
-def convert_file_to_file(
-    function_name: str,
-    input_path: str,
-    output_module_path: Optional[str] = None,
-    output_testbench_path: Optional[str] = None,
-    overwrite: bool = False,
-    optimization_level: int = 1,
-):
-    """
-    Reads a python file and outputs verilog and testbench to files
-    Default output naming is [python file name stem]_module.sv
-    and [python file name stem]_tb.sv respectively
-    """
-    python_file_stem = os.path.splitext(input_path)[0]
-    if not output_module_path:
-        output_module_path = python_file_stem + "_module.sv"
-    if not output_testbench_path:
-        output_testbench_path = python_file_stem + "_tb.sv"
-
-    with open(input_path, mode="r", encoding="utf8") as python_file:
-        module, testbench = convert(
-            function_name, python_file.read(), optimization_level
-        )
-
-        mode = "w" if overwrite else "x"
-
-        with open(output_module_path, mode=mode, encoding="utf8") as module_file:
-            module_file.write(module)
-
-        with open(output_testbench_path, mode=mode, encoding="utf8") as testbench_file:
-            testbench_file.write(testbench)
-
-
-def convert_from_cli(
+def text_to_verilog(
     code: str,
-    func_name: str,
-    optimization_level: int,
-    test_cases: Optional[list] = None,
+    function_name: str,
+    extra_test_cases: Optional[list] = None,
     file_path: str = "",
 ):
     """
-    Converts from cli
+    Converts from code to verilog code generator
+
+    :return: (context, ir)
     """
-    context, func_ast, _ = parse_python(
+    context = text_to_context(
         code=code,
-        function_name=func_name,
-        extra_test_cases=test_cases,
+        function_name=function_name,
+        extra_test_cases=extra_test_cases,
         file_path=file_path,
     )
     assert isinstance(context, ir.Context)
-    assert isinstance(test_cases, list)
-    context.test_cases = test_cases
-    context.validate_preprocessing()
-
-    ir_root, context = Generator2Graph(context, func_ast).results
-    if optimization_level > 0:
-        OptimizeGraph(ir_root, threshold=optimization_level - 1)
-    return verilog.CodeGen(ir_root, context), ir_root
+    assert isinstance(extra_test_cases, list)
+    context.test_cases = extra_test_cases
+    return context_to_verilog(context)
 
 
-def convert_for_debug(code: str, context: ir.Context, optimization_level: int):
+def text_to_text(
+    code: str,
+    function_name: str,
+    extra_test_cases: Optional[list[tuple]] = None,
+    file_path: str = "",
+):
     """
-    Converts python code to verilog and its ir
+    Converts from code to module and testbench strings
+
+    :return: (module, testbench)
     """
-    context, func_ast, _ = parse_python(
-        code, context.name, extra_test_cases=context.test_cases
+    assert_type(code, str)
+    assert_type(function_name, str)
+    assert function_name in code
+    assert_list_type(extra_test_cases, tuple)
+    assert_type(file_path, str)
+
+    code_gen, _ = text_to_verilog(
+        code=code,
+        function_name=function_name,
+        extra_test_cases=extra_test_cases,
+        file_path=file_path,
     )
-    logging.debug(context.output_types)
-    ir_root, context = Generator2Graph(context, func_ast).results
-    if optimization_level > 0:
-        OptimizeGraph(ir_root, threshold=optimization_level - 1)
-    return verilog.CodeGen(ir_root, context), ir_root
+    return code_gen.get_module_str(), code_gen.get_testbench_str()
 
 
-def parse_python(
+def text_to_context(
     code: str,
     function_name: str,
     file_path: Optional[str] = None,
@@ -133,6 +85,8 @@ def parse_python(
 ):
     """
     Parses python code into the function and testbench
+
+    :return: context
     """
     # pylint: disable=too-many-locals
     assert_type(code, str)
@@ -152,7 +106,6 @@ def parse_python(
     tree = ast.parse(code)
 
     test_cases = extra_test_cases if extra_test_cases else []
-    print(f"parse_python test cases {test_cases}")
 
     for node in ast.walk(tree):
         logging.debug(f"Walking through {ast.dump(node)}")
@@ -169,14 +122,20 @@ def parse_python(
             func_call_str = "(" + func_call_str.split("(", 1)[1]
             func_call_str = func_call_str.rsplit(")", 1)[0] + ")"
 
-            test_case = ast.literal_eval(func_call_str)
-            if not isinstance(test_case, tuple):
-                test_case = (test_case,)
-            test_cases.append(test_case)
+            try:
+                test_case = ast.literal_eval(func_call_str)
+                if not isinstance(test_case, tuple):
+                    test_case = (test_case,)
+                test_cases.append(test_case)
 
-            logging.info(
-                f"Found test case at {get_file_and_line_num(node)} with {test_case}"
-            )
+                logging.info(
+                    f"Found test case at {get_file_and_line_num(node)} with {test_case}"
+                )
+            except ValueError as e:
+                raise ValueError(
+                    f"Attempted to literally eval {func_call_str} at "
+                    f"{file_path}:{node.lineno}, but got non-literals"
+                ) from e
 
     logging.info(f"Test cases: {test_cases}")
 
@@ -241,7 +200,7 @@ def parse_python(
 
     if initialized:
         context.output_types = output_types
-        context.output_vars = [ir.Var(str(i)) for i in range(len(output_types))]
+        context.default_output_vars()
 
     logging.info(f"Output param types: {context.output_types}")
     logging.info(f"Output param names: {context.output_vars}")
@@ -250,6 +209,8 @@ def parse_python(
     assert isinstance(input_types, list)
     context.input_types = input_types
     context.test_cases = test_cases
+    context.py_ast = generator_ast
+    context.py_func = generator_func
 
     # Currently the types are not used
-    return (context, generator_ast, generator_func)
+    return context.validate()
