@@ -13,7 +13,7 @@ import warnings
 from typing import Optional
 from python2verilog import ir
 
-from python2verilog.api.cli import text_to_verilog
+from python2verilog.api.text import text_to_verilog
 
 logging.root.setLevel(logging.INFO)
 

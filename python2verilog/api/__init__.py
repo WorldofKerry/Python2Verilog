@@ -2,7 +2,7 @@
 API wrappers
 """
 
-from .cli import (
+from .text import (
     text_to_context,
 )
 
