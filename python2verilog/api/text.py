@@ -122,14 +122,20 @@ def text_to_context(
             func_call_str = "(" + func_call_str.split("(", 1)[1]
             func_call_str = func_call_str.rsplit(")", 1)[0] + ")"
 
-            test_case = ast.literal_eval(func_call_str)
-            if not isinstance(test_case, tuple):
-                test_case = (test_case,)
-            test_cases.append(test_case)
+            try:
+                test_case = ast.literal_eval(func_call_str)
+                if not isinstance(test_case, tuple):
+                    test_case = (test_case,)
+                test_cases.append(test_case)
 
-            logging.info(
-                f"Found test case at {get_file_and_line_num(node)} with {test_case}"
-            )
+                logging.info(
+                    f"Found test case at {get_file_and_line_num(node)} with {test_case}"
+                )
+            except ValueError as e:
+                raise ValueError(
+                    f"Attempted to literally eval {func_call_str} at "
+                    f"{file_path}:{node.lineno}, but got non-literals"
+                ) from e
 
     logging.info(f"Test cases: {test_cases}")
 
