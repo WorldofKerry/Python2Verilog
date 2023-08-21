@@ -22,12 +22,24 @@ def make_iverilog_cmd(top_level_module: str, files: list[str]):
     return cmd
 
 
-def run_fifo_command(
+def write_data_to_paths(path_to_data: dict[str, str]):
+    """
+    Writes data to respective path
+    """
+    for path, data in path_to_data.items():
+        with open(path, mode="w") as file:
+            file.write(data)
+
+
+def run_cmd_with_fifos(
     command: str, input_fifos: dict[str, str], timeout: typing.Optional[int] = None
 ):
     """
-    :param input_fifos: absolute file path -> data to write
-    :return: (stdout, stderr)
+    Runs a command that uses fifos as input. DO NOT use this function with regular files.
+
+    :param input_fifos: absolute file path of fifos -> data to write
+
+    :return: (stdout, stderr/exception)
     """
     process = subprocess.Popen(
         command,
@@ -37,16 +49,41 @@ def run_fifo_command(
         stderr=subprocess.PIPE,
     )
 
-    for path, data in input_fifos:
-        with open(path, mode="w") as file:
-            file.write(data)
+    write_data_to_paths(input_fifos)
 
-    if timeout:
-        try:
-            process.wait(timeout=timeout)
-        except subprocess.TimeoutExpired as e:
-            logging.error(e)
-            process.terminate()
-            raise e
+    try:
+        process.wait(timeout=timeout)
+        return process.stdout.read(), process.stderr.read()
+    except subprocess.TimeoutExpired as e:
+        logging.error(e)
+        process.terminate()
+        return None, str(e)
 
-    return (process.stdout.read(), process.stderr.read())
+
+def run_cmd_with_files(
+    command: str, input_files: dict[str, str], timeout: typing.Optional[int] = None
+):
+    """
+    Runs a command that uses files as input. DO NOT use this function with regular fifos.
+
+    :param input_files: absolute file path of files -> data to write
+
+    :return: (stdout, stderr/exception)
+    """
+    write_data_to_paths(input_files)
+
+    process = subprocess.Popen(
+        command,
+        shell=True,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    try:
+        process.wait(timeout=timeout)
+        return process.stdout.read(), process.stderr.read()
+    except subprocess.TimeoutExpired as e:
+        logging.error(e)
+        process.terminate()
+        return None, str(e)

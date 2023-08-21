@@ -17,7 +17,7 @@ from abc import abstractmethod
 
 from python2verilog import ir
 from python2verilog.api import convert_for_debug
-from python2verilog.simulation.iverilog import make_iverilog_cmd
+from python2verilog.simulation.iverilog import make_iverilog_cmd, run_cmd_with_fifos
 from python2verilog.utils.assertions import assert_type
 from tools.visualization import make_visual
 from .cases import TEST_CASES
@@ -224,139 +224,112 @@ class BaseTestCases:
                     ) as testbench_file:
                         testbench_file.write(tb_str)
 
-                process = subprocess.Popen(
+                stdout, stderr = run_cmd_with_fifos(
                     iverilog_cmd,
-                    shell=True,
-                    text=True,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
+                    {
+                        FILES_IN_ABS_DIR["module_fifo"]: module_str,
+                        FILES_IN_ABS_DIR["testbench_fifo"]: tb_str,
+                    },
+                    timeout=5,
                 )
-                
-                with open(FILES_IN_ABS_DIR["module_fifo"], mode="w") as module_file:
-                    module_file.write(module_str)
 
-                with open(
-                    FILES_IN_ABS_DIR["testbench_fifo"], mode="w"
-                ) as testbench_file:
-                    testbench_file.write(tb_str)
+                self.assertTrue(
+                    stdout and not stderr,
+                    f"\nVerilog simulation on {function_name}, with:\n{stderr}\n{FILES_IN_ABS_DIR['module']}\n{FILES_IN_ABS_DIR['testbench']}",
+                )
 
-                try:
-                    timeout = max(1, len(expected))
-                    logging.info(f"Running iverilog for {timeout}s")
+                actual_raw: list[list[str]] = []
+                for line in stdout.splitlines():
+                    row = [elem.strip() for elem in line.split(",")]
+                    actual_raw.append(row)
 
-                    process.wait(timeout=timeout)  # May need adjusting
+                if args.write:
+                    with open(FILES_IN_ABS_DIR["actual"], mode="w") as filtered_f:
+                        for output in actual_raw:
+                            filtered_f.write(str(output)[1:-1] + "\n")
 
-                    logging.debug("Getting iverilog stderr")
+                statistics["ver_clks"] = len(actual_raw)
+                self.all_statistics.append(statistics)
 
-                    stderr_str = process.stderr.read()
-                    if stderr_str != "":
-                        logging.critical(
-                            f"\nVerilog simulation on {function_name}, with:\n{stderr_str}\n{FILES_IN_ABS_DIR['module']}\n{FILES_IN_ABS_DIR['testbench']}"
-                        )
-                        self.fail()
+                filtered_actual = []
+                for row in actual_raw:
+                    if row[0] == "1":
+                        try:
+                            filtered_actual.append(
+                                tuple([int(elem) for elem in row[1:]])
+                            )
+                        except ValueError as e:
+                            logging.error(
+                                f"{function_name} {len(filtered_actual)} {row[1:]} {e}\n{FILES_IN_ABS_DIR['module']}\n{FILES_IN_ABS_DIR['testbench']}"
+                            )
 
-                    logging.debug("Getting iverilog stdout")
+                if args.write:
+                    with open(
+                        FILES_IN_ABS_DIR["filtered_actual"], mode="w"
+                    ) as filtered_f:
+                        for output in filtered_actual:
+                            filtered_f.write(str(output)[1:-1] + "\n")
 
-                    actual_str = process.stdout.read()
+                    make_visual(filtered_actual, FILES_IN_ABS_DIR["actual_visual"])
 
-                    actual_raw: list[list[str]] = []
-                    for line in actual_str.splitlines():
-                        row = [elem.strip() for elem in line.split(",")]
-                        actual_raw.append(row)
+                err_msg = "\nactual_coords vs expected_coords"
+                if len(filtered_actual) == len(expected):
+                    err_msg += ", lengths are same, likely a rounding or sign error"
+                err_msg += f"\n{FILES_IN_ABS_DIR['filtered_actual']}\n{FILES_IN_ABS_DIR['expected']}\n{FILES_IN_ABS_DIR['module']}\n{FILES_IN_ABS_DIR['testbench']}"
+                self.assertEqual(
+                    filtered_actual,
+                    expected,
+                    err_msg,
+                )
 
-                    if args.write:
-                        with open(FILES_IN_ABS_DIR["actual"], mode="w") as filtered_f:
-                            for output in actual_raw:
-                                filtered_f.write(str(output)[1:-1] + "\n")
-
-                    statistics["ver_clks"] = len(actual_raw)
-                    self.all_statistics.append(statistics)
-
-                    filtered_actual = []
-                    for row in actual_raw:
-                        if row[0] == "1":
-                            try:
-                                filtered_actual.append(
-                                    tuple([int(elem) for elem in row[1:]])
-                                )
-                            except ValueError as e:
-                                logging.error(
-                                    f"{function_name} {len(filtered_actual)} {row[1:]} {e}\n{FILES_IN_ABS_DIR['module']}\n{FILES_IN_ABS_DIR['testbench']}"
-                                )
-
-                    if args.write:
-                        with open(
-                            FILES_IN_ABS_DIR["filtered_actual"], mode="w"
-                        ) as filtered_f:
-                            for output in filtered_actual:
-                                filtered_f.write(str(output)[1:-1] + "\n")
-
-                        make_visual(filtered_actual, FILES_IN_ABS_DIR["actual_visual"])
-
-                    err_msg = "\nactual_coords vs expected_coords"
-                    if len(filtered_actual) == len(expected):
-                        err_msg += ", lengths are same, likely a rounding or sign error"
-                    err_msg += f"\n{FILES_IN_ABS_DIR['filtered_actual']}\n{FILES_IN_ABS_DIR['expected']}\n{FILES_IN_ABS_DIR['module']}\n{FILES_IN_ABS_DIR['testbench']}"
-                    self.assertEqual(
-                        filtered_actual,
-                        expected,
-                        err_msg,
+                if args.write and args.synthesis:
+                    syn_process = subprocess.Popen(
+                        " ".join(
+                            [
+                                "yosys",
+                                "-QT",
+                                "-fverilog",
+                                FILES_IN_ABS_DIR["module"],
+                                "-pstat",
+                            ]
+                        ),
+                        shell=True,
+                        text=True,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
                     )
+                    syn_process.wait()
+                    stdout = syn_process.stdout.read()
+                    stderr = syn_process.stderr.read()
+                    if stderr:
+                        logging.critical(stderr)
 
-                    if args.write and args.synthesis:
-                        syn_process = subprocess.Popen(
-                            " ".join(
-                                [
-                                    "yosys",
-                                    "-QT",
-                                    "-fverilog",
-                                    FILES_IN_ABS_DIR["module"],
-                                    "-pstat",
-                                ]
-                            ),
-                            shell=True,
-                            text=True,
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE,
-                        )
-                        syn_process.wait()
-                        stdout = syn_process.stdout.read()
-                        stderr = syn_process.stderr.read()
-                        if stderr:
-                            logging.critical(stderr)
+                    stats = stdout[stdout.find("Printing statistics.") :]
 
-                        stats = stdout[stdout.find("Printing statistics.") :]
+                    def snake_case(text):
+                        return re.sub(r"[\W_]+", "_", text).strip("_").lower()
 
-                        def snake_case(text):
-                            return re.sub(r"[\W_]+", "_", text).strip("_").lower()
+                    lines = stats.strip().splitlines()
+                    data = {}
 
-                        lines = stats.strip().splitlines()
-                        data = {}
+                    for line in lines:
+                        if ":" in line:
+                            key, value = line.split(":")
+                            key = snake_case(key).split("number_of_")[-1]
+                            value = int(value.strip())
+                        else:
+                            try:
+                                index = line.find("$") + 10
+                                value = int(line[index:].strip())
+                                key = line[:index].strip()[1:]
+                                data[key] = value
 
-                        for line in lines:
-                            if ":" in line:
-                                key, value = line.split(":")
-                                key = snake_case(key).split("number_of_")[-1]
-                                value = int(value.strip())
-                            else:
-                                try:
-                                    index = line.find("$") + 10
-                                    value = int(line[index:].strip())
-                                    key = line[:index].strip()[1:]
-                                    data[key] = value
+                            except ValueError as _:
+                                continue
 
-                                except ValueError as _:
-                                    continue
-
-                            data[key] = value
-                        for key, value in data.items():
-                            statistics[key] = value
-
-                except subprocess.TimeoutExpired as e:
-                    logging.error(e)
-                    process.terminate()
-                    self.fail(e)
-
+                        data[key] = value
+                    for key, value in data.items():
+                        statistics[key] = value
                 for key in fifos:
                     os.remove(FILES_IN_ABS_DIR[key])
 
