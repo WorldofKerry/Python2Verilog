@@ -15,12 +15,14 @@ The testbenchs' results can also asserted against the Python outputs (not includ
 A use case is for drawing shapes on grids (for VGA output), where the user may prototype the algorithm in Python and then convert it to Verilog for use in an FPGA.
 
 Constrains on Python functions include:
+
 - Supports only `if` and `while` blocks
 - Supports only integral types and operations for input and output
 - Must be a [generator function](https://wiki.python.org/moin/Generators)
 - Must be a [pure function](https://en.wikipedia.org/wiki/Pure_function)
 
 Unsupported Python paradigms include but are not limited to the following:
+
 - Regular functions that use the `return` keyword, instead `yield` once
 - `for` loops, instead rewrite as a while loop
 - Function calls, instead use the converter on each of the subfunctions
