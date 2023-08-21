@@ -107,6 +107,7 @@ def get_func_ast_from_func(func: FunctionType):
 
 
 # pylint: disable=dangerous-default-value
+# pylint: disable=too-many-locals
 @decorator_with_args
 def verilogify(
     func: FunctionType,
