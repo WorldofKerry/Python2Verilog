@@ -246,7 +246,9 @@ class CodeGen:
         for i, test_case in enumerate(self.context.test_cases):
             # New test case and start
             initial_body.append(
-                ver.Statement(comment=f"Test case {i}: {str(test_case)}")
+                ver.Statement(
+                    comment=f"======== Test case {i}: {str(test_case)} ========"
+                )
             )
             for i, var in enumerate(self.context.input_vars):
                 initial_body.append(
