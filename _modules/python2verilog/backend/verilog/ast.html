@@ -36,7 +36,6 @@
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span> <span class="nn">itertools</span>
-<span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
 
 <span class="kn">from</span> <span class="nn">...</span> <span class="kn">import</span> <span class="n">ir</span>
@@ -91,10 +90,8 @@
 <span class="sd">        To Verilog</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">literal</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">Lines</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">literal</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_inline_comment</span><span class="p">()[</span><span class="mi">1</span><span class="p">:]</span>
-            <span class="p">)</span>  <span class="c1"># Removes leading space</span>
-        <span class="k">return</span> <span class="n">Lines</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_inline_comment</span><span class="p">()[</span><span class="mi">1</span><span class="p">:])</span></div>
+            <span class="k">return</span> <span class="n">Lines</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">literal</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_inline_comment</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">Lines</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_inline_comment</span><span class="p">()[</span><span class="mi">1</span><span class="p">:])</span>  <span class="c1"># removes leading space</span></div>
 
 
 <div class="viewcode-block" id="Statement.get_inline_comment">
@@ -280,8 +277,6 @@
         <span class="n">lines</span> <span class="o">+=</span> <span class="s2">&quot;);&quot;</span>
         <span class="n">lines</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">local_params</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">stmt</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">body</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">stmt</span><span class="o">.</span><span class="n">to_lines</span><span class="p">()</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">stmt</span><span class="p">))</span>
             <span class="n">lines</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">stmt</span><span class="o">.</span><span class="n">to_lines</span><span class="p">(),</span> <span class="mi">1</span><span class="p">)</span>
         <span class="n">lines</span> <span class="o">+=</span> <span class="s2">&quot;endmodule&quot;</span>
         <span class="k">return</span> <span class="n">lines</span></div>
@@ -394,6 +389,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">lvalue</span> <span class="o">=</span> <span class="n">lvalue</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">rvalue</span> <span class="o">=</span> <span class="n">rvalue</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">oper</span> <span class="o">=</span> <span class="n">oper</span>
+
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Subsitution.to_lines">
@@ -403,9 +399,8 @@
 <span class="sd">        Converts to Verilog</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">oper</span><span class="p">,</span> <span class="nb">str</span><span class="p">),</span> <span class="s2">&quot;Subclasses need to set self.type&quot;</span>
-        <span class="n">itself</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">lvalue</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">oper</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">rvalue</span><span class="si">}</span><span class="s2">;&quot;</span>
-        <span class="n">lines</span> <span class="o">=</span> <span class="n">Lines</span><span class="p">(</span><span class="n">itself</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">lines</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">literal</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">lvalue</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">oper</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">rvalue</span><span class="si">}</span><span class="s2">;&quot;</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">to_lines</span><span class="p">()</span></div>
 </div>
 
 
@@ -430,7 +425,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lvalue</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">Expression</span><span class="p">,</span> <span class="n">rvalue</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">Expression</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">lvalue</span><span class="p">,</span> <span class="n">rvalue</span><span class="p">,</span> <span class="s2">&quot;=&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">*</span><span class="n">kwargs</span><span class="p">)</span></div>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">lvalue</span><span class="p">,</span> <span class="n">rvalue</span><span class="p">,</span> <span class="s2">&quot;=&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 
 
