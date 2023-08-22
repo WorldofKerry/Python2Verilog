@@ -45,3 +45,5 @@ jobs:
 
           python3 -m python2verilog cli_basic.py -n draw_circle -c "[(5, 7, 3)]"
           cat cli_basic.sv
+
+          ipython -c "%run decorator_advanced.ipynb"
