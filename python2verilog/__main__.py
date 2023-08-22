@@ -13,7 +13,7 @@ import warnings
 from typing import Optional
 from python2verilog import ir
 
-from python2verilog.api.text import text_to_text, text_to_verilog
+from python2verilog.api.wrappers import text_to_text, text_to_verilog
 
 
 if __name__ == "__main__":

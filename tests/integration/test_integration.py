@@ -16,8 +16,7 @@ from matplotlib import pyplot as plt
 from abc import abstractmethod
 
 from python2verilog import ir
-from python2verilog.api.text import text_to_verilog, text_to_context
-from python2verilog.api.wrappers import context_to_verilog
+from python2verilog.api.wrappers import text_to_verilog, text_to_context
 from python2verilog.extern.iverilog import (
     run_iverilog_with_fifos,
     run_iverilog_with_files,

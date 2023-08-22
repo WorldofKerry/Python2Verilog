@@ -7,7 +7,7 @@ import unittest
 import ast
 import warnings
 
-from python2verilog.api.text import text_to_context
+from python2verilog.api.wrappers import text_to_context
 from python2verilog.api.decorator import new_namespace, verilogify, global_namespace
 
 
