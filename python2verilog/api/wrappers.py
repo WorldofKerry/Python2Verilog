@@ -212,3 +212,23 @@ def context_to_verilog(context: ir.Context):
     if context.optimization_level > 0:
         OptimizeGraph(ir_root, threshold=context.optimization_level - 1)
     return verilog.CodeGen(ir_root, context), ir_root
+
+
+def context_to_text_and_file(context: ir.Context):
+    """
+    Covnerts a context to a verilog module and testbench str
+
+    If decorated with write enabled, writes to designated files/streams
+
+    :return: (module, testbench) pair
+    """
+    assert_type(context, ir.Context)
+    ver_code_gen, _ = context_to_verilog(context)
+
+    module_str = ver_code_gen.get_module_str()
+    tb_str = ver_code_gen.get_testbench_str()
+    if context.write:
+        context.module_file.write(module_str)
+        context.testbench_file.write(tb_str)
+
+    return (module_str, tb_str)

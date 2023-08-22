@@ -15,7 +15,7 @@ from pathlib import Path
 from types import FunctionType
 from typing import Callable, Optional, Union
 
-from python2verilog.api.wrappers import context_to_verilog
+from python2verilog.api.wrappers import context_to_text_and_file, context_to_verilog
 from python2verilog.utils.assertions import assert_dict_type, assert_type
 from python2verilog.utils.decorator import decorator_with_args
 
@@ -37,33 +37,13 @@ def new_namespace():
     return namespace
 
 
-def verilogify_function(context: ir.Context):
-    """
-    Verilogifies a function that has be decorated
-
-    If decorated with write enabled, writes to designated files/streams
-
-    :return: (module, testbench) tuple
-    """
-    assert_type(context, ir.Context)
-    ver_code_gen, _ = context_to_verilog(context)
-
-    module_str = ver_code_gen.get_module_str()
-    tb_str = ver_code_gen.get_testbench_str()
-    if context.write:
-        context.module_file.write(module_str)
-        context.testbench_file.write(tb_str)
-
-    return (module_str, tb_str)
-
-
-def verilogify_namespace(namespace: dict[Callable, ir.Context]):
+def namespace_to_file(namespace: dict[Callable, ir.Context]):
     """
     Verilogifies a namespace
     """
-    logging.info(verilogify_namespace.__name__)
+    logging.info(namespace_to_file.__name__)
     for context in namespace.values():
-        _ = verilogify_function(context=context)
+        _ = context_to_text_and_file(context=context)
         logging.info(
             context.name, context.test_cases, context.input_types, context.output_types
         )
@@ -74,7 +54,7 @@ def __global_namespace_exit_handler():
     Handles the conversions in each namespace for program exit
     """
     for namespace in exit_namespaces:
-        verilogify_namespace(namespace)
+        namespace_to_file(namespace)
 
 
 atexit.register(__global_namespace_exit_handler)
