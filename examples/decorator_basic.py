@@ -15,4 +15,5 @@ def fib(n):
         yield c
 
 
-fib(10)
+for i in range(10):
+    fib(i)

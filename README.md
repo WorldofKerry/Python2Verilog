@@ -15,12 +15,14 @@ The testbenchs' results can also asserted against the Python outputs (not includ
 A use case is for drawing shapes on grids (for VGA output), where the user may prototype the algorithm in Python and then convert it to Verilog for use in an FPGA.
 
 Constrains on Python functions include:
+
 - Supports only `if` and `while` blocks
 - Supports only integral types and operations for input and output
 - Must be a [generator function](https://wiki.python.org/moin/Generators)
 - Must be a [pure function](https://en.wikipedia.org/wiki/Pure_function)
 
 Unsupported Python paradigms include but are not limited to the following:
+
 - Regular functions that use the `return` keyword, instead `yield` once
 - `for` loops, instead rewrite as a while loop
 - Function calls, instead use the converter on each of the subfunctions
@@ -29,7 +31,7 @@ Unsupported Python paradigms include but are not limited to the following:
 
 ## Usage
 
-For an online demo, checkout out this [Replit project](https://replit.com/@WorldofKerry/Python2Verilog-Demo)! No guarantees on the up-to-dateness of this demo.
+For an online demo, checkout out this [Replit project](https://replit.com/@WorldofKerry/Python2Verilog-Demo#main.py)! Please view the files in the filesystem, as that's where the output is written to. No guarantees on the up-to-dateness of this demo.
 
 ### Installation
 
@@ -39,13 +41,7 @@ For an online demo, checkout out this [Replit project](https://replit.com/@World
 
 ### Basics
 
-Create a python file containing a generator function with output type hints, named `python.py`.
-
-You can find a sample [here](https://github.com/WorldofKerry/Python2Verilog/blob/main/tests/integration/data/happy_face/python.py), and a directory of samples [here](https://github.com/WorldofKerry/Python2Verilog/tree/main/tests/integration/data)
-
-Run `python3 -m python2verilog python.py` to generate a testbench file at `python.sv`.
-
-Use the arg `--help` for additional options, including outputting a testbench and running optimizers.
+Refer to [`examples/`](examples/)
 
 ## Tested Generations
 
@@ -56,11 +52,11 @@ You may find its output as a [Github Artifact](https://nightly.link/WorldofKerry
 
 To setup pre-commit, run `pre-commit install`.
 
-[Github Issues](https://github.com/WorldofKerry/Python2Verilog/issues) is used for tracking. Milestones and labels are used for milestones and labels respectively 😉
+[Github Issues](https://github.com/WorldofKerry/Python2Verilog/issues) is used for tracking. Milestones and labels are used for milestones and labels respectively.
 
 ### Docs
 
-Sphinx is used. Follow what [Github workflow](.github/workflows/sphinx.yml) uses to generate local copy.
+Sphinx is used. Follow the [Github workflow](.github/workflows/sphinx.yml) to generate a local copy.
 
 ## Testing
 
