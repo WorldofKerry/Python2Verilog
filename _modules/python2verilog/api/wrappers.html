@@ -255,6 +255,31 @@
         <span class="n">OptimizeGraph</span><span class="p">(</span><span class="n">ir_root</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">optimization_level</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">verilog</span><span class="o">.</span><span class="n">CodeGen</span><span class="p">(</span><span class="n">ir_root</span><span class="p">,</span> <span class="n">context</span><span class="p">),</span> <span class="n">ir_root</span></div>
 
+
+
+<div class="viewcode-block" id="context_to_text_and_file">
+<a class="viewcode-back" href="../../../python2verilog.api.html#python2verilog.api.wrappers.context_to_text_and_file">[docs]</a>
+<span class="k">def</span> <span class="nf">context_to_text_and_file</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">Context</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Covnerts a context to a verilog module and testbench str</span>
+
+<span class="sd">    If decorated with write enabled, writes to designated files/streams</span>
+
+<span class="sd">    :return: (module, testbench) pair</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">assert_type</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Context</span><span class="p">)</span>
+    <span class="n">ver_code_gen</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">context_to_verilog</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
+
+    <span class="n">module_str</span> <span class="o">=</span> <span class="n">ver_code_gen</span><span class="o">.</span><span class="n">get_module_str</span><span class="p">()</span>
+    <span class="n">tb_str</span> <span class="o">=</span> <span class="n">ver_code_gen</span><span class="o">.</span><span class="n">get_testbench_str</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">context</span><span class="o">.</span><span class="n">write</span><span class="p">:</span>
+        <span class="n">context</span><span class="o">.</span><span class="n">module_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">module_str</span><span class="p">)</span>
+        <span class="n">context</span><span class="o">.</span><span class="n">module_file</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">context</span><span class="o">.</span><span class="n">testbench_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">tb_str</span><span class="p">)</span>
+        <span class="n">context</span><span class="o">.</span><span class="n">testbench_file</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">(</span><span class="n">module_str</span><span class="p">,</span> <span class="n">tb_str</span><span class="p">)</span></div>
+
 </pre></div>
 
           </div>

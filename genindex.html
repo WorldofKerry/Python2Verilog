@@ -137,10 +137,10 @@
 </li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.graph.Element.children">children (Element property)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.clock_signal">clock_signal (Context attribute)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="python2verilog.ir.html#python2verilog.ir.graph.ClockedEdge">ClockedEdge (class in python2verilog.ir.graph)</a>
 </li>
       <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.codegen.CodeGen">CodeGen (class in python2verilog.backend.verilog.codegen)</a>
@@ -152,6 +152,8 @@
       <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context">Context (class in python2verilog.ir.context)</a>
 </li>
       <li><a href="python2verilog.frontend.html#python2verilog.frontend.generator2ir.Generator2Graph.context">context (Generator2Graph property)</a>
+</li>
+      <li><a href="python2verilog.api.html#python2verilog.api.wrappers.context_to_text_and_file">context_to_text_and_file() (in module python2verilog.api.wrappers)</a>
 </li>
       <li><a href="python2verilog.api.html#python2verilog.api.wrappers.context_to_verilog">context_to_verilog() (in module python2verilog.api.wrappers)</a>
 </li>
@@ -231,7 +233,7 @@
       </ul></li>
       <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.ast.Statement.get_blocked_comment">get_blocked_comment() (Statement method)</a>
 </li>
-      <li><a href="python2verilog.api.html#python2verilog.api.decorator.get_func_ast_from_func">get_func_ast_from_func() (in module python2verilog.api.decorator)</a>
+      <li><a href="python2verilog.api.html#python2verilog.api.decorators.get_func_ast_from_func">get_func_ast_from_func() (in module python2verilog.api.decorators)</a>
 </li>
       <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.ast.Statement.get_inline_comment">get_inline_comment() (Statement method)</a>
 </li>
@@ -337,7 +339,7 @@
 </li>
         <li><a href="python2verilog.api.html#module-python2verilog.api">python2verilog.api</a>
 </li>
-        <li><a href="python2verilog.api.html#module-python2verilog.api.decorator">python2verilog.api.decorator</a>
+        <li><a href="python2verilog.api.html#module-python2verilog.api.decorators">python2verilog.api.decorators</a>
 </li>
         <li><a href="python2verilog.api.html#module-python2verilog.api.wrappers">python2verilog.api.wrappers</a>
 </li>
@@ -406,13 +408,15 @@
         <li><a href="python2verilog.ir.html#python2verilog.ir.graph.Element.name">(Element property)</a>
 </li>
       </ul></li>
-      <li><a href="python2verilog.utils.html#python2verilog.utils.string.Lines.nestify">nestify() (Lines static method)</a>
+      <li><a href="python2verilog.api.html#python2verilog.api.decorators.namespace_to_file">namespace_to_file() (in module python2verilog.api.decorators)</a>
 </li>
-      <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.codegen.CaseBuilder.new_caseitem">new_caseitem() (CaseBuilder method)</a>
+      <li><a href="python2verilog.utils.html#python2verilog.utils.string.Lines.nestify">nestify() (Lines static method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="python2verilog.api.html#python2verilog.api.decorator.new_namespace">new_namespace() (in module python2verilog.api.decorator)</a>
+      <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.codegen.CaseBuilder.new_caseitem">new_caseitem() (CaseBuilder method)</a>
+</li>
+      <li><a href="python2verilog.api.html#python2verilog.api.decorators.new_namespace">new_namespace() (in module python2verilog.api.decorators)</a>
 </li>
       <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.ast.NonBlockingSubsitution">NonBlockingSubsitution (class in python2verilog.backend.verilog.ast)</a>
 
@@ -475,10 +479,10 @@
 </li>
       </ul></li>
       <li>
-    python2verilog.api.decorator
+    python2verilog.api.decorators
 
       <ul>
-        <li><a href="python2verilog.api.html#module-python2verilog.api.decorator">module</a>
+        <li><a href="python2verilog.api.html#module-python2verilog.api.decorators">module</a>
 </li>
       </ul></li>
       <li>
@@ -807,15 +811,11 @@
 </li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.statements.ValidSubsitution">ValidSubsitution (class in python2verilog.ir.statements)</a>
 </li>
-      <li><a href="python2verilog.ir.html#python2verilog.ir.expressions.Var">Var (class in python2verilog.ir.expressions)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="python2verilog.api.html#python2verilog.api.decorator.verilogify">verilogify() (in module python2verilog.api.decorator)</a>
+      <li><a href="python2verilog.ir.html#python2verilog.ir.expressions.Var">Var (class in python2verilog.ir.expressions)</a>
 </li>
-      <li><a href="python2verilog.api.html#python2verilog.api.decorator.verilogify_function">verilogify_function() (in module python2verilog.api.decorator)</a>
-</li>
-      <li><a href="python2verilog.api.html#python2verilog.api.decorator.verilogify_namespace">verilogify_namespace() (in module python2verilog.api.decorator)</a>
+      <li><a href="python2verilog.api.html#python2verilog.api.decorators.verilogify">verilogify() (in module python2verilog.api.decorators)</a>
 </li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.graph.Vertex">Vertex (class in python2verilog.ir.graph)</a>
 </li>

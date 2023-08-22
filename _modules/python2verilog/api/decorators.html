@@ -4,7 +4,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>python2verilog.api.decorator &#8212; python2verilog  documentation</title>
+    <title>python2verilog.api.decorators &#8212; python2verilog  documentation</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=4f649999" />
     <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=039e1c02" />
     <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
@@ -28,13 +28,12 @@
 
           <div class="body" role="main">
             
-  <h1>Source code for python2verilog.api.decorator</h1><div class="highlight"><pre>
+  <h1>Source code for python2verilog.api.decorators</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">Decorators</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">import</span> <span class="nn">ast</span>
-<span class="kn">import</span> <span class="nn">atexit</span>
 <span class="kn">import</span> <span class="nn">inspect</span>
 <span class="kn">import</span> <span class="nn">io</span>
 <span class="kn">import</span> <span class="nn">logging</span>
@@ -46,11 +45,28 @@
 <span class="kn">from</span> <span class="nn">types</span> <span class="kn">import</span> <span class="n">FunctionType</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
-<span class="kn">from</span> <span class="nn">python2verilog.api.wrappers</span> <span class="kn">import</span> <span class="n">context_to_verilog</span>
+<span class="kn">from</span> <span class="nn">python2verilog</span> <span class="kn">import</span> <span class="n">ir</span>
+<span class="kn">from</span> <span class="nn">python2verilog.api.wrappers</span> <span class="kn">import</span> <span class="n">context_to_text_and_file</span><span class="p">,</span> <span class="n">context_to_verilog</span>
 <span class="kn">from</span> <span class="nn">python2verilog.utils.assertions</span> <span class="kn">import</span> <span class="n">assert_dict_type</span><span class="p">,</span> <span class="n">assert_type</span>
 <span class="kn">from</span> <span class="nn">python2verilog.utils.decorator</span> <span class="kn">import</span> <span class="n">decorator_with_args</span>
 
-<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">ir</span>
+<span class="c1"># To support iPython</span>
+<span class="k">try</span><span class="p">:</span>
+
+    <span class="k">def</span> <span class="nf">exit_register</span><span class="p">(</span><span class="n">fun</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="o">*</span><span class="n">_args</span><span class="p">,</span> <span class="o">**</span><span class="n">_kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Decorator that registers at post_execute. After its execution it</span>
+<span class="sd">        unregisters itself for subsequent runs.&quot;&quot;&quot;</span>
+
+        <span class="k">def</span> <span class="nf">callback</span><span class="p">():</span>
+            <span class="n">fun</span><span class="p">()</span>
+            <span class="n">ip</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">unregister</span><span class="p">(</span><span class="s2">&quot;post_execute&quot;</span><span class="p">,</span> <span class="n">callback</span><span class="p">)</span>
+
+        <span class="n">ip</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s2">&quot;post_execute&quot;</span><span class="p">,</span> <span class="n">callback</span><span class="p">)</span>
+
+    <span class="n">ip</span> <span class="o">=</span> <span class="n">get_ipython</span><span class="p">()</span>  <span class="c1"># type: ignore</span>
+
+<span class="k">except</span> <span class="ne">NameError</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">atexit</span> <span class="kn">import</span> <span class="n">register</span> <span class="k">as</span> <span class="n">exit_register</span>  <span class="c1"># type: ignore</span>
 
 <span class="c1"># All functions if a lesser namespace is not given</span>
 <span class="n">global_namespace</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Context</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
@@ -58,7 +74,7 @@
 
 
 <div class="viewcode-block" id="new_namespace">
-<a class="viewcode-back" href="../../../python2verilog.api.html#python2verilog.api.decorator.new_namespace">[docs]</a>
+<a class="viewcode-back" href="../../../python2verilog.api.html#python2verilog.api.decorators.new_namespace">[docs]</a>
 <span class="k">def</span> <span class="nf">new_namespace</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Create new namespace that is handled on program exit</span>
@@ -71,57 +87,32 @@
 
 
 
-<div class="viewcode-block" id="verilogify_function">
-<a class="viewcode-back" href="../../../python2verilog.api.html#python2verilog.api.decorator.verilogify_function">[docs]</a>
-<span class="k">def</span> <span class="nf">verilogify_function</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">Context</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Verilogifies a function that has be decorated</span>
-
-<span class="sd">    If decorated with write enabled, writes to designated files/streams</span>
-
-<span class="sd">    :return: (module, testbench) tuple</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">assert_type</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Context</span><span class="p">)</span>
-    <span class="n">ver_code_gen</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">context_to_verilog</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
-
-    <span class="n">module_str</span> <span class="o">=</span> <span class="n">ver_code_gen</span><span class="o">.</span><span class="n">get_module_str</span><span class="p">()</span>
-    <span class="n">tb_str</span> <span class="o">=</span> <span class="n">ver_code_gen</span><span class="o">.</span><span class="n">get_testbench_str</span><span class="p">()</span>
-    <span class="k">if</span> <span class="n">context</span><span class="o">.</span><span class="n">write</span><span class="p">:</span>
-        <span class="n">context</span><span class="o">.</span><span class="n">module_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">module_str</span><span class="p">)</span>
-        <span class="n">context</span><span class="o">.</span><span class="n">testbench_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">tb_str</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="p">(</span><span class="n">module_str</span><span class="p">,</span> <span class="n">tb_str</span><span class="p">)</span></div>
-
-
-
-<div class="viewcode-block" id="verilogify_namespace">
-<a class="viewcode-back" href="../../../python2verilog.api.html#python2verilog.api.decorator.verilogify_namespace">[docs]</a>
-<span class="k">def</span> <span class="nf">verilogify_namespace</span><span class="p">(</span><span class="n">namespace</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Context</span><span class="p">]):</span>
+<div class="viewcode-block" id="namespace_to_file">
+<a class="viewcode-back" href="../../../python2verilog.api.html#python2verilog.api.decorators.namespace_to_file">[docs]</a>
+<span class="k">def</span> <span class="nf">namespace_to_file</span><span class="p">(</span><span class="n">namespace</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Context</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Verilogifies a namespace</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">verilogify_namespace</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">namespace_to_file</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">context</span> <span class="ow">in</span> <span class="n">namespace</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
-        <span class="n">_</span> <span class="o">=</span> <span class="n">verilogify_function</span><span class="p">(</span><span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">)</span>
+        <span class="n">_</span> <span class="o">=</span> <span class="n">context_to_text_and_file</span><span class="p">(</span><span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">)</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
             <span class="n">context</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">test_cases</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">input_types</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">output_types</span>
         <span class="p">)</span></div>
 
 
 
-<span class="k">def</span> <span class="nf">__global_namespace_exit_handler</span><span class="p">():</span>
+<span class="nd">@exit_register</span>
+<span class="k">def</span> <span class="nf">__namespace_exit_handler</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Handles the conversions in each namespace for program exit</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">for</span> <span class="n">namespace</span> <span class="ow">in</span> <span class="n">exit_namespaces</span><span class="p">:</span>
-        <span class="n">verilogify_namespace</span><span class="p">(</span><span class="n">namespace</span><span class="p">)</span>
-
-
-<span class="n">atexit</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">__global_namespace_exit_handler</span><span class="p">)</span>
+        <span class="n">namespace_to_file</span><span class="p">(</span><span class="n">namespace</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="get_func_ast_from_func">
-<a class="viewcode-back" href="../../../python2verilog.api.html#python2verilog.api.decorator.get_func_ast_from_func">[docs]</a>
+<a class="viewcode-back" href="../../../python2verilog.api.html#python2verilog.api.decorators.get_func_ast_from_func">[docs]</a>
 <span class="k">def</span> <span class="nf">get_func_ast_from_func</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">FunctionType</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Given a function, gets its ast</span>
@@ -143,13 +134,13 @@
 <span class="c1"># pylint: disable=dangerous-default-value</span>
 <span class="c1"># pylint: disable=too-many-locals</span>
 <div class="viewcode-block" id="verilogify">
-<a class="viewcode-back" href="../../../python2verilog.api.html#python2verilog.api.decorator.verilogify">[docs]</a>
+<a class="viewcode-back" href="../../../python2verilog.api.html#python2verilog.api.decorators.verilogify">[docs]</a>
 <span class="nd">@decorator_with_args</span>
 <span class="k">def</span> <span class="nf">verilogify</span><span class="p">(</span>
     <span class="n">func</span><span class="p">:</span> <span class="n">FunctionType</span><span class="p">,</span>
     <span class="n">namespace</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Context</span><span class="p">]</span> <span class="o">=</span> <span class="n">global_namespace</span><span class="p">,</span>
-    <span class="n">module_output</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">,</span> <span class="n">typing</span><span class="o">.</span><span class="n">IO</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">testbench_output</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">,</span> <span class="n">typing</span><span class="o">.</span><span class="n">IO</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">module_output</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">,</span> <span class="n">typing</span><span class="o">.</span><span class="n">IO</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">testbench_output</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">,</span> <span class="n">typing</span><span class="o">.</span><span class="n">IO</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">write</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">):</span>
@@ -162,8 +153,8 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">assert_type</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">FunctionType</span><span class="p">)</span>
     <span class="n">assert_dict_type</span><span class="p">(</span><span class="n">namespace</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Context</span><span class="p">)</span>
-    <span class="n">assert_type</span><span class="p">(</span><span class="n">module_output</span><span class="p">,</span> <span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">,</span> <span class="n">io</span><span class="o">.</span><span class="n">IOBase</span><span class="p">))</span>
-    <span class="n">assert_type</span><span class="p">(</span><span class="n">testbench_output</span><span class="p">,</span> <span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">,</span> <span class="n">io</span><span class="o">.</span><span class="n">IOBase</span><span class="p">))</span>
+    <span class="n">assert_type</span><span class="p">(</span><span class="n">module_output</span><span class="p">,</span> <span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">,</span> <span class="n">io</span><span class="o">.</span><span class="n">IOBase</span><span class="p">,</span> <span class="nb">str</span><span class="p">))</span>
+    <span class="n">assert_type</span><span class="p">(</span><span class="n">testbench_output</span><span class="p">,</span> <span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">,</span> <span class="n">io</span><span class="o">.</span><span class="n">IOBase</span><span class="p">,</span> <span class="nb">str</span><span class="p">))</span>
     <span class="n">assert_type</span><span class="p">(</span><span class="n">write</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span>
     <span class="n">assert_type</span><span class="p">(</span><span class="n">overwrite</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span>
 
@@ -202,6 +193,11 @@
         <span class="n">mode</span> <span class="o">=</span> <span class="s2">&quot;w&quot;</span> <span class="k">if</span> <span class="n">overwrite</span> <span class="k">else</span> <span class="s2">&quot;x&quot;</span>
 
         <span class="c1"># pylint: disable=consider-using-with</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">module_output</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">module_output</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">module_output</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">testbench_output</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">testbench_output</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">testbench_output</span><span class="p">)</span>
+
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">module_output</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">):</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">module_output</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">module_output</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf8&quot;</span><span class="p">)</span>
