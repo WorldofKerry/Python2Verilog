@@ -260,6 +260,11 @@ class CodeGen:
 
             initial_body.append(ver.AtNegedgeStatement(self.context.clock_signal))
 
+            for i, var in enumerate(self.context.input_vars):
+                initial_body.append(
+                    ver.BlockingSubsitution(ir.Expression(var.py_name), ir.Unknown())
+                )
+
             # wait for done signal
             while_body: list[ver.Statement] = []
             while_body.append(

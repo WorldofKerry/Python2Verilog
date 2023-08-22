@@ -5,7 +5,6 @@ Verilog Abstract Syntax Tree Components
 from __future__ import annotations
 
 import itertools
-import logging
 from typing import Optional
 
 from ... import ir
@@ -212,8 +211,6 @@ class Module(ImplementsToLines):
         lines += ");"
         lines.concat(self.local_params, 1)
         for stmt in self.body:
-            if stmt.to_lines() is None:
-                logging.error(type(stmt))
             lines.concat(stmt.to_lines(), 1)
         lines += "endmodule"
         return lines

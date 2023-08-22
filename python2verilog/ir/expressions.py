@@ -60,6 +60,15 @@ class UInt(Expression):
         super().__init__(str(value))
 
 
+class Unknown(Expression):
+    """
+    Unknown or "don't care" value
+    """
+
+    def __init__(self):
+        super().__init__("'x")
+
+
 class Var(Expression):
     """
     Named-variable

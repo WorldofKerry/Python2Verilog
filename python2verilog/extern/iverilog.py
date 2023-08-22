@@ -14,7 +14,7 @@ def make_iverilog_cmd(top_level_module: str, files: list[str]):
 
     :param files: set of absolute paths to files required for simulation
     """
-    cmd = f"iverilog -s {top_level_module} "
+    cmd = f"iverilog -g2005-sv -s {top_level_module} "
     cmd += " ".join(files) + " "
     # pylint: disable=consider-using-with
     cache_file = tempfile.NamedTemporaryFile(mode="r", encoding="utf8")
