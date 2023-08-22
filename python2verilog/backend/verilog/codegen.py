@@ -262,14 +262,18 @@ class CodeGen:
 
             for i, var in enumerate(self.context.input_vars):
                 initial_body.append(
-                    ver.BlockingSubsitution(ir.Expression(var.py_name), ir.Unknown())
+                    ver.BlockingSubsitution(
+                        ir.Expression(var.py_name),
+                        ir.Unknown(),
+                        comment="only need inputs at start",
+                    )
                 )
+            initial_body.append(
+                ver.BlockingSubsitution(self.context.start_signal, ir.UInt(0))
+            )
 
             # wait for done signal
             while_body: list[ver.Statement] = []
-            while_body.append(
-                ver.BlockingSubsitution(self.context.start_signal, ir.UInt(0))
-            )
             while_body.append(make_display_stmt())
             while_body.append(ver.AtNegedgeStatement(self.context.clock_signal))
 

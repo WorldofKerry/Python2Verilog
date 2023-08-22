@@ -49,10 +49,8 @@ class Statement(ImplementsToLines):
         To Verilog
         """
         if self.literal:
-            return Lines(
-                self.literal + self.get_inline_comment()[1:]
-            )  # Removes leading space
-        return Lines(self.get_inline_comment()[1:])
+            return Lines(self.literal + self.get_inline_comment())
+        return Lines(self.get_inline_comment()[1:])  # removes leading space
 
     def get_inline_comment(self):
         """
@@ -304,6 +302,7 @@ class Subsitution(Statement):
         self.lvalue = lvalue
         self.rvalue = rvalue
         self.oper = oper
+
         super().__init__(*args, **kwargs)
 
     def to_lines(self):
@@ -311,9 +310,8 @@ class Subsitution(Statement):
         Converts to Verilog
         """
         assert isinstance(self.oper, str), "Subclasses need to set self.type"
-        itself = f"{self.lvalue} {self.oper} {self.rvalue};"
-        lines = Lines(itself)
-        return lines
+        self.literal = f"{self.lvalue} {self.oper} {self.rvalue};"
+        return super().to_lines()
 
 
 class NonBlockingSubsitution(Subsitution):
@@ -331,7 +329,7 @@ class BlockingSubsitution(Subsitution):
     """
 
     def __init__(self, lvalue: ir.Expression, rvalue: ir.Expression, *args, **kwargs):
-        super().__init__(lvalue, rvalue, "=", *args, *kwargs)
+        super().__init__(lvalue, rvalue, "=", *args, **kwargs)
 
 
 class Declaration(Statement):
