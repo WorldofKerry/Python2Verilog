@@ -3,7 +3,6 @@ Decorators
 """
 
 import ast
-import atexit
 import inspect
 import io
 import logging
@@ -15,11 +14,28 @@ from pathlib import Path
 from types import FunctionType
 from typing import Callable, Optional, Union
 
-from python2verilog.api.wrappers import context_to_verilog
+from python2verilog import ir
+from python2verilog.api.wrappers import context_to_text_and_file, context_to_verilog
 from python2verilog.utils.assertions import assert_dict_type, assert_type
 from python2verilog.utils.decorator import decorator_with_args
 
-from .. import ir
+# To support iPython
+try:
+
+    def exit_register(fun: Callable, *_args, **_kwargs):
+        """Decorator that registers at post_execute. After its execution it
+        unregisters itself for subsequent runs."""
+
+        def callback():
+            fun()
+            ip.events.unregister("post_execute", callback)
+
+        ip.events.register("post_execute", callback)
+
+    ip = get_ipython()  # type: ignore
+
+except NameError:
+    from atexit import register as exit_register  # type: ignore
 
 # All functions if a lesser namespace is not given
 global_namespace: dict[Callable, ir.Context] = {}
@@ -37,47 +53,25 @@ def new_namespace():
     return namespace
 
 
-def verilogify_function(context: ir.Context):
-    """
-    Verilogifies a function that has be decorated
-
-    If decorated with write enabled, writes to designated files/streams
-
-    :return: (module, testbench) tuple
-    """
-    assert_type(context, ir.Context)
-    ver_code_gen, _ = context_to_verilog(context)
-
-    module_str = ver_code_gen.get_module_str()
-    tb_str = ver_code_gen.get_testbench_str()
-    if context.write:
-        context.module_file.write(module_str)
-        context.testbench_file.write(tb_str)
-
-    return (module_str, tb_str)
-
-
-def verilogify_namespace(namespace: dict[Callable, ir.Context]):
+def namespace_to_file(namespace: dict[Callable, ir.Context]):
     """
     Verilogifies a namespace
     """
-    logging.info(verilogify_namespace.__name__)
+    logging.info(namespace_to_file.__name__)
     for context in namespace.values():
-        _ = verilogify_function(context=context)
+        _ = context_to_text_and_file(context=context)
         logging.info(
             context.name, context.test_cases, context.input_types, context.output_types
         )
 
 
-def __global_namespace_exit_handler():
+@exit_register
+def __namespace_exit_handler():
     """
     Handles the conversions in each namespace for program exit
     """
     for namespace in exit_namespaces:
-        verilogify_namespace(namespace)
-
-
-atexit.register(__global_namespace_exit_handler)
+        namespace_to_file(namespace)
 
 
 def get_func_ast_from_func(func: FunctionType):
@@ -103,8 +97,8 @@ def get_func_ast_from_func(func: FunctionType):
 def verilogify(
     func: FunctionType,
     namespace: dict[Callable, ir.Context] = global_namespace,
-    module_output: Optional[Union[os.PathLike, typing.IO]] = None,
-    testbench_output: Optional[Union[os.PathLike, typing.IO]] = None,
+    module_output: Optional[Union[os.PathLike, typing.IO, str]] = None,
+    testbench_output: Optional[Union[os.PathLike, typing.IO, str]] = None,
     write: bool = False,
     overwrite: bool = False,
 ):
@@ -117,8 +111,8 @@ def verilogify(
     """
     assert_type(func, FunctionType)
     assert_dict_type(namespace, Callable, ir.Context)
-    assert_type(module_output, (os.PathLike, io.IOBase))
-    assert_type(testbench_output, (os.PathLike, io.IOBase))
+    assert_type(module_output, (os.PathLike, io.IOBase, str))
+    assert_type(testbench_output, (os.PathLike, io.IOBase, str))
     assert_type(write, bool)
     assert_type(overwrite, bool)
 
@@ -157,6 +151,11 @@ def verilogify(
         mode = "w" if overwrite else "x"
 
         # pylint: disable=consider-using-with
+        if isinstance(module_output, str):
+            module_output = Path(module_output)
+        if isinstance(testbench_output, str):
+            testbench_output = Path(testbench_output)
+
         if isinstance(module_output, os.PathLike):
             try:
                 module_output = open(module_output, mode=mode, encoding="utf8")

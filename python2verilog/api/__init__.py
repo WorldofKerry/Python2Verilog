@@ -2,11 +2,11 @@
 API wrappers
 """
 
-from .decorator import (
+from .decorators import (
+    context_to_text_and_file,
     global_namespace,
+    namespace_to_file,
     new_namespace,
     verilogify,
-    verilogify_function,
-    verilogify_namespace,
 )
 from .wrappers import context_to_verilog, text_to_context, text_to_text, text_to_verilog

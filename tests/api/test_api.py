@@ -4,7 +4,7 @@ import unittest
 from functools import wraps
 from pathlib import Path
 
-from python2verilog.api.decorator import global_namespace, new_namespace, verilogify
+from python2verilog.api.decorators import global_namespace, new_namespace, verilogify
 from python2verilog.api.wrappers import text_to_context
 
 

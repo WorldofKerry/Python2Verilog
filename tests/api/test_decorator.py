@@ -1,7 +1,7 @@
 import unittest
 from io import StringIO
 
-from python2verilog.api.decorator import verilogify, verilogify_function
+from python2verilog.api.decorators import context_to_text_and_file, verilogify
 
 
 class TestVerilogify(unittest.TestCase):
@@ -27,11 +27,9 @@ class TestVerilogify(unittest.TestCase):
 
         self.assertIn(count.__name__, str(namespace[count]))
 
-        module, testbench = verilogify_function(namespace[count])
+        module, testbench = context_to_text_and_file(namespace[count])
         self.assertIn(count.__name__, testbench)
         self.assertIn(count.__name__, module)
 
-        module_stream.seek(0)
-        testbench_stream.seek(0)
         self.assertIn(count.__name__, module_stream.read())
         self.assertIn(count.__name__, testbench_stream.read())
