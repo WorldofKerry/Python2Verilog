@@ -1,11 +1,8 @@
 import atexit
 from functools import wraps
-import logging
 import os
 from pathlib import Path
 import unittest
-import ast
-import warnings
 
 from python2verilog.api.wrappers import text_to_context
 from python2verilog.api.decorator import new_namespace, verilogify, global_namespace
@@ -26,7 +23,7 @@ inst = nuts(50, 51)
 inst = nuts(15, 16)
 inst = deeznuts(420)
 """
-        context = text_to_context(code, "nuts")
+        text_to_context(code, "nuts")
         # logging.debug(func_ast)
 
     # def test_this_file(self):

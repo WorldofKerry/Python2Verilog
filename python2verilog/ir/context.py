@@ -3,12 +3,9 @@ from __future__ import annotations
 import ast
 import copy
 from dataclasses import dataclass, field
-import inspect
 import io
-import os
 from types import FunctionType
-from typing import Optional, IO
-import warnings
+from typing import Optional
 from python2verilog.utils.env_vars import is_debug_mode
 
 from python2verilog.utils.generics import GenericReprAndStr

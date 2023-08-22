@@ -4,7 +4,7 @@ Functions that take text as input
 
 import logging
 import ast
-from typing import Optional, Union, overload
+from typing import Optional, Union
 from types import FunctionType
 from python2verilog.backend import verilog
 from python2verilog.frontend.generator2ir import Generator2Graph

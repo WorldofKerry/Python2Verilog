@@ -9,8 +9,6 @@ import logging
 import argparse
 import os
 import ast
-import warnings
-from typing import Optional
 from python2verilog import ir
 
 from python2verilog.api.wrappers import text_to_text, text_to_verilog

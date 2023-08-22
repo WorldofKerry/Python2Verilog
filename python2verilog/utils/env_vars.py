@@ -3,7 +3,6 @@ Special env variable functions
 """
 
 import os
-import warnings
 
 
 DEBUG_MODE_ENV_VAR = "PYTHON_2_VERILOG_DEBUG"

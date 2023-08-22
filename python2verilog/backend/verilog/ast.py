@@ -4,10 +4,8 @@ Verilog Abstract Syntax Tree Components
 
 from __future__ import annotations
 import itertools
-import warnings
 import logging
 from typing import Optional
-import copy
 
 from ...utils.string import Lines, Indent, ImplementsToLines
 from ...utils.assertions import assert_list_type, assert_type, assert_dict_type

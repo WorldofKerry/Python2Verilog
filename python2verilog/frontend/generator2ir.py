@@ -1,12 +1,7 @@
 """Parses Python Generator Functions to Intermediate Representation"""
 
 from __future__ import annotations
-import copy
-import logging
-import warnings
 import ast as pyast
-import sys
-from typing import Optional
 
 from .. import ir
 from ..utils.string import Lines, Indent

@@ -10,7 +10,6 @@ from python2verilog import ir
 
 
 import unittest
-import warnings
 
 
 class TestAst(unittest.TestCase):

@@ -3,8 +3,6 @@ Verilog Codegen
 """
 
 import itertools
-import logging
-import warnings
 
 from python2verilog.optimizer.optimizer import backwards_replace
 from . import ast as ver

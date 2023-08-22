@@ -8,7 +8,6 @@ Element := Vertex | Edge
 """
 
 from __future__ import annotations
-import copy
 from typing import Optional
 
 from . import expressions as expr

@@ -7,8 +7,6 @@ that are synthesizable
 """
 from __future__ import annotations
 import copy
-from dataclasses import dataclass
-from typing import Optional
 
 from python2verilog.utils.generics import GenericRepr
 from ..utils.assertions import assert_type, assert_list_type

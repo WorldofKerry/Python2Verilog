@@ -2,12 +2,10 @@
 Icarious Verilog CLI Abstractions
 """
 
-import inspect
 import logging
 import subprocess
 import tempfile
 from typing import Optional
-import warnings
 
 
 def make_iverilog_cmd(top_level_module: str, files: list[str]):

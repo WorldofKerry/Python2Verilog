@@ -2,8 +2,6 @@
 Implementation of generic base classes for __repr__ and __str__
 """
 
-import logging
-
 
 def pretty_dict(dic: dict, indent=0):
     """

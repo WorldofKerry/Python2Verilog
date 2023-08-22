@@ -1,5 +1,4 @@
 from io import StringIO
-import logging
 from python2verilog.api.decorator import verilogify, verilogify_function
 import unittest
 

@@ -3,8 +3,6 @@ An Intermediate Representation for HDL based on Verilog
 """
 
 from __future__ import annotations
-import warnings
-import inspect
 from typing import Optional
 
 from python2verilog.ir.expressions import Expression

@@ -1,19 +1,14 @@
 import unittest
 import ast
-import warnings
 import os
 import configparser
 import subprocess
-import csv
-import copy
 import re
 import logging
-import pathlib
 import pandas as pd
 import pytest
 import networkx as nx
 from matplotlib import pyplot as plt
-from abc import abstractmethod
 
 from python2verilog import ir
 from python2verilog.api.wrappers import text_to_verilog, text_to_context
@@ -328,7 +323,7 @@ class BaseTestCases:
                                 key = line[:index].strip()[1:]
                                 data[key] = value
 
-                            except ValueError as _:
+                            except ValueError:
                                 continue
 
                         data[key] = value

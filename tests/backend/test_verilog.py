@@ -1,9 +1,8 @@
-from python2verilog.backend.verilog.ast import *
+from python2verilog.backend.verilog.ast import Instantiation, Module, PosedgeSyncAlways
 from python2verilog.backend.verilog import CodeGen
 from python2verilog import ir
 from python2verilog.frontend import Generator2Graph
 import unittest
-import warnings
 import ast
 
 
@@ -19,7 +18,7 @@ def assert_lines(test_case: unittest.TestCase, first: str, second: str):
 class TestHelpers(unittest.TestCase):
     def test_verilog_helpers(self):
         code = "def func(a, b, c, d) -> tuple[int, int]:\n  yield(a, b)\n  yield(c, d)"
-        tree = ast.parse(code)
+        ast.parse(code)
         # module = Verilog.create_module_from_python(tree.body[0])
         # warnings.warn(module.to_lines()[0].to_string())
 
@@ -36,7 +35,7 @@ class TestVerilog(unittest.TestCase):
 
     def test_always(self):
         always = PosedgeSyncAlways(ir.Expression("_clock"))
-        lines = always.to_lines()
+        always.to_lines()
         # assert_lines(
         #     self,
         #     lines.to_string(),
@@ -75,7 +74,7 @@ def circle_lines(s_x, s_y, height) -> tuple[int, int]:
         yield (s_x - y, s_y - x)
 """
         tree = ast.parse(code)
-        function = tree.body[0]
+        tree.body[0]
         # ir = Generator2List(function)
         # verilog = CodeGen()
         # verilog.from_list_ir(ir.get_root(), ir.get_context())
@@ -88,7 +87,7 @@ def circle_lines(s_x, s_y, height) -> tuple[int, int]:
 
     def test_instantiation(self):
         ports = {"_clock": "CLK", "_valid": "_valid"}
-        inst = Instantiation("module0", "my_module", ports)
+        Instantiation("module0", "my_module", ports)
         # warnings.warn(inst.to_lines())
 
 
