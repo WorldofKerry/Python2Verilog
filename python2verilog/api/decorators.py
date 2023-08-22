@@ -3,7 +3,6 @@ Decorators
 """
 
 import ast
-import atexit
 import inspect
 import io
 import logging
@@ -15,11 +14,28 @@ from pathlib import Path
 from types import FunctionType
 from typing import Callable, Optional, Union
 
+from python2verilog import ir
 from python2verilog.api.wrappers import context_to_text_and_file, context_to_verilog
 from python2verilog.utils.assertions import assert_dict_type, assert_type
 from python2verilog.utils.decorator import decorator_with_args
 
-from .. import ir
+# To support iPython
+try:
+
+    def exit_register(fun: Callable, *_args, **_kwargs):
+        """Decorator that registers at post_execute. After its execution it
+        unregisters itself for subsequent runs."""
+
+        def callback():
+            fun()
+            ip.events.unregister("post_execute", callback)
+
+        ip.events.register("post_execute", callback)
+
+    ip = get_ipython()  # type: ignore
+
+except NameError:
+    from atexit import register as exit_register  # type: ignore
 
 # All functions if a lesser namespace is not given
 global_namespace: dict[Callable, ir.Context] = {}
@@ -49,15 +65,13 @@ def namespace_to_file(namespace: dict[Callable, ir.Context]):
         )
 
 
-def __global_namespace_exit_handler():
+@exit_register
+def __namespace_exit_handler():
     """
     Handles the conversions in each namespace for program exit
     """
     for namespace in exit_namespaces:
         namespace_to_file(namespace)
-
-
-atexit.register(__global_namespace_exit_handler)
 
 
 def get_func_ast_from_func(func: FunctionType):

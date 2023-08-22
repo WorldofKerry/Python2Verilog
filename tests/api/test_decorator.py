@@ -31,7 +31,5 @@ class TestVerilogify(unittest.TestCase):
         self.assertIn(count.__name__, testbench)
         self.assertIn(count.__name__, module)
 
-        module_stream.seek(0)
-        testbench_stream.seek(0)
         self.assertIn(count.__name__, module_stream.read())
         self.assertIn(count.__name__, testbench_stream.read())

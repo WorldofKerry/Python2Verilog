@@ -229,6 +229,8 @@ def context_to_text_and_file(context: ir.Context):
     tb_str = ver_code_gen.get_testbench_str()
     if context.write:
         context.module_file.write(module_str)
+        context.module_file.seek(0)
         context.testbench_file.write(tb_str)
+        context.testbench_file.seek(0)
 
     return (module_str, tb_str)
