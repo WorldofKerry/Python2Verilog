@@ -1,5 +1,6 @@
 import unittest
-from python2verilog.utils.string import Lines, Indent
+
+from python2verilog.utils.string import Indent, Lines
 
 
 class TestLines(unittest.TestCase):

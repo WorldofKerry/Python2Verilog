@@ -8,11 +8,11 @@ Element := Vertex | Edge
 """
 
 from __future__ import annotations
-import copy
+
 from typing import Optional
 
-from . import expressions as expr
 from ..utils.assertions import assert_list_type, assert_type
+from . import expressions as expr
 
 
 class Element:

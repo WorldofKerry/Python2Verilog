@@ -1,9 +1,9 @@
-import os
-import csv
+import argparse
 import configparser
 import csv
+import os
+
 import pandas as pd
-import argparse
 
 
 def count_lines_in_csv(directory: str, file: str) -> int:

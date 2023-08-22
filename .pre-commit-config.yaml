@@ -5,10 +5,23 @@ repos:
       - id: check-yaml
       - id: end-of-file-fixer
       - id: trailing-whitespace
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+        args: ["--profile", "black", "--filter-files"]
+
   - repo: https://github.com/psf/black
     rev: 22.10.0
     hooks:
       - id: black
+
+  - repo: https://github.com/PyCQA/autoflake
+    rev: v2.2.0
+    hooks:
+      - id: autoflake
+
   - repo: https://github.com/pycqa/pylint
     rev: v2.17.4
     hooks:
@@ -23,6 +36,21 @@ repos:
             "-sn", # Don't display the score
             "--rcfile=.pylintrc",
           ]
+
+  - repo: https://github.com/PyCQA/autoflake
+    rev: v2.2.0
+    hooks:
+      - id: autoflake
+
+  - repo: local
+    hooks:
+      - id: mypy
+        name: mypy
+        entry: bash -c "python3 -m mypy python2verilog/"
+        language: system
+        types: [python]
+        pass_filenames: false
+
   # - repo: https://github.com/pre-commit/mirrors-mypy
   #   rev: v1.4.1 # Use the sha / tag you want to point at
   #   hooks:
@@ -35,11 +63,3 @@ repos:
   #           python2verilog/,
   #         ]
   #       pass_filenames: false
-  - repo: local
-    hooks:
-      - id: mypy
-        name: mypy
-        entry: bash -c "python3 -m mypy python2verilog/"
-        language: system
-        types: [python]
-        pass_filenames: false

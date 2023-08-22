@@ -3,13 +3,12 @@ Verilog Codegen
 """
 
 import itertools
-import logging
-import warnings
 
 from python2verilog.optimizer.optimizer import backwards_replace
-from . import ast as ver
+
 from ... import ir
-from ...utils.assertions import assert_type, assert_list_type, assert_dict_type
+from ...utils.assertions import assert_dict_type, assert_list_type, assert_type
+from . import ast as ver
 
 
 class CodeGen:

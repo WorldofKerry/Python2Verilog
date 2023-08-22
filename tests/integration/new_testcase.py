@@ -16,12 +16,11 @@ python3 tests/integration/new_testcase.py -o -v circle_lines
 """
 
 import argparse
-import json
-import sys
-import subprocess
+import configparser
 import logging
 import os
-import configparser
+import subprocess
+import sys
 
 
 def script(args: argparse.Namespace, logger: logging.Logger, shell: function) -> int:

@@ -1,16 +1,14 @@
+import unittest
+
+from python2verilog import ir
+from python2verilog.ir.expressions import Expression
 from python2verilog.ir.statements import (
-    NonBlockingSubsitution,
     BlockingSubsitution,
-    Declaration,
     Case,
     CaseItem,
+    Declaration,
+    NonBlockingSubsitution,
 )
-from python2verilog.ir.expressions import Expression
-from python2verilog import ir
-
-
-import unittest
-import warnings
 
 
 class TestAst(unittest.TestCase):

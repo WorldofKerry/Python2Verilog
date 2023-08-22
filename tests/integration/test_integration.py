@@ -1,29 +1,25 @@
-import unittest
 import ast
-import warnings
-import os
 import configparser
-import subprocess
-import csv
-import copy
-import re
 import logging
-import pathlib
+import os
+import re
+import subprocess
+import unittest
+
+import networkx as nx
 import pandas as pd
 import pytest
-import networkx as nx
 from matplotlib import pyplot as plt
-from abc import abstractmethod
 
 from python2verilog import ir
-from python2verilog.api.text import text_to_verilog, text_to_context
-from python2verilog.api.wrappers import context_to_verilog
+from python2verilog.api.wrappers import text_to_context, text_to_verilog
 from python2verilog.extern.iverilog import (
     run_iverilog_with_fifos,
     run_iverilog_with_files,
 )
 from python2verilog.utils.assertions import assert_type
 from tools.visualization import make_visual
+
 from .cases import TEST_CASES
 
 
@@ -329,7 +325,7 @@ class BaseTestCases:
                                 key = line[:index].strip()[1:]
                                 data[key] = value
 
-                            except ValueError as _:
+                            except ValueError:
                                 continue
 
                         data[key] = value

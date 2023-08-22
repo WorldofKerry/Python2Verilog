@@ -2,8 +2,8 @@
 Special decorator primatives
 """
 
-from types import FunctionType
 from functools import wraps
+from types import FunctionType
 
 
 def decorator_with_args(func):

@@ -1,10 +1,11 @@
-from python2verilog.frontend import Generator2Graph
-import unittest
 import ast
-import warnings
+import unittest
+
 import networkx as nx
 from matplotlib import pyplot as plt
-from python2verilog.ir import *
+
+from python2verilog.frontend import Generator2Graph
+from python2verilog.ir import Context, create_networkx_adjacency_list
 
 
 class TestGenerator2Graph(unittest.TestCase):

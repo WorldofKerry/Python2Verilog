@@ -1,16 +1,12 @@
 """Parses Python Generator Functions to Intermediate Representation"""
 
 from __future__ import annotations
-import copy
-import logging
-import warnings
+
 import ast as pyast
-import sys
-from typing import Optional
 
 from .. import ir
-from ..utils.string import Lines, Indent
-from ..utils.assertions import assert_type, assert_list_type
+from ..utils.assertions import assert_list_type, assert_type
+from ..utils.string import Indent, Lines
 
 
 class Generator2Graph:

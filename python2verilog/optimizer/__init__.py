@@ -2,8 +2,4 @@
 Optimizer Functions
 """
 
-from .optimizer import (
-    backwards_replace,
-    OptimizeGraph,
-    graph_apply_mapping,
-)
+from .optimizer import OptimizeGraph, backwards_replace, graph_apply_mapping

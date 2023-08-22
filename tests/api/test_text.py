@@ -1,6 +1,5 @@
 import logging
 import subprocess
-import warnings
 import unittest
 
 

@@ -2,11 +2,9 @@
 Optimizer for the Graph IR
 """
 
+import copy
 import logging
 import typing
-import warnings
-import random
-import copy
 
 from .. import ir
 

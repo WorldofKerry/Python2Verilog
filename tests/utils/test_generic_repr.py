@@ -1,7 +1,7 @@
-import logging
 import unittest
-from python2verilog.utils.generics import GenericRepr, pretty_dict
+
 from python2verilog.ir import Context, Var
+from python2verilog.utils.generics import GenericRepr, pretty_dict
 
 
 class TestGenericReprAndStr(unittest.TestCase):

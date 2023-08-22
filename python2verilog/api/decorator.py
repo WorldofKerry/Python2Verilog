@@ -2,31 +2,24 @@
 Decorators
 """
 
-import argparse
+import ast
 import atexit
-import copy
-from io import IOBase
+import inspect
 import io
 import logging
 import os
-import ast
 import textwrap
-import types
 import typing
-import warnings
-from pathlib import Path
-from typing import IO, Callable, Optional, Union, overload
 from functools import wraps
-import inspect
+from pathlib import Path
 from types import FunctionType
-from python2verilog.api.wrappers import context_to_verilog
+from typing import Callable, Optional, Union
 
+from python2verilog.api.wrappers import context_to_verilog
 from python2verilog.utils.assertions import assert_dict_type, assert_type
 from python2verilog.utils.decorator import decorator_with_args
-from ..frontend import Generator2Graph
+
 from .. import ir
-from ..backend import verilog
-from ..optimizer import OptimizeGraph
 
 # All functions if a lesser namespace is not given
 global_namespace: dict[Callable, ir.Context] = {}
@@ -89,7 +82,7 @@ atexit.register(__global_namespace_exit_handler)
 
 def get_func_ast_from_func(func: FunctionType):
     """
-    Given a function, gets its ast tree
+    Given a function, gets its ast
 
     :return: ast rooted at function
     """

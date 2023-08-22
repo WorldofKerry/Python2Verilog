@@ -1,7 +1,7 @@
-from io import StringIO
-import logging
-from python2verilog.api.decorator import verilogify, verilogify_function
 import unittest
+from io import StringIO
+
+from python2verilog.api.decorator import verilogify, verilogify_function
 
 
 class TestVerilogify(unittest.TestCase):

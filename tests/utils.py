@@ -1,4 +1,3 @@
-from typing import Optional, Any
 import networkx as nx
 import pytest
 

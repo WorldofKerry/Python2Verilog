@@ -1,6 +1,8 @@
 import unittest
+
 import networkx as nx
 from matplotlib import pyplot as plt
+
 from python2verilog.ir import *
 
 

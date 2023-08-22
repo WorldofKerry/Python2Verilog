@@ -1,8 +1,8 @@
-import subprocess
 import os
-import warnings
 import sys
+
 import pytest
+
 from .utils import Argument
 
 """

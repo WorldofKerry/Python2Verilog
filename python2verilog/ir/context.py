@@ -1,19 +1,21 @@
 """Context for Intermediate Representation"""
 from __future__ import annotations
+
 import ast
 import copy
-from dataclasses import dataclass, field
-import inspect
 import io
-import os
+from dataclasses import dataclass, field
 from types import FunctionType
-from typing import Optional, IO
-import warnings
-from python2verilog.utils.env_vars import is_debug_mode
+from typing import Optional
 
+from python2verilog.ir.expressions import Var
+from python2verilog.utils.assertions import (
+    assert_dict_type,
+    assert_list_type,
+    assert_type,
+)
+from python2verilog.utils.env_vars import is_debug_mode
 from python2verilog.utils.generics import GenericReprAndStr
-from ..utils.assertions import assert_list_type, assert_type, assert_dict_type
-from ..ir import Var
 
 DEFAULT_STATE_NAME = "___PYTHON_2_VERILOG_STATE___"
 
