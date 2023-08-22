@@ -31,20 +31,22 @@
   <h1>Source code for python2verilog.ir.context</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Context for Intermediate Representation&quot;&quot;&quot;</span>
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
 <span class="kn">import</span> <span class="nn">ast</span>
 <span class="kn">import</span> <span class="nn">copy</span>
-<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
-<span class="kn">import</span> <span class="nn">inspect</span>
 <span class="kn">import</span> <span class="nn">io</span>
-<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
 <span class="kn">from</span> <span class="nn">types</span> <span class="kn">import</span> <span class="n">FunctionType</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">IO</span>
-<span class="kn">import</span> <span class="nn">warnings</span>
-<span class="kn">from</span> <span class="nn">python2verilog.utils.env_vars</span> <span class="kn">import</span> <span class="n">is_debug_mode</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
 
+<span class="kn">from</span> <span class="nn">python2verilog.ir.expressions</span> <span class="kn">import</span> <span class="n">Var</span>
+<span class="kn">from</span> <span class="nn">python2verilog.utils.assertions</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">assert_dict_type</span><span class="p">,</span>
+    <span class="n">assert_list_type</span><span class="p">,</span>
+    <span class="n">assert_type</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">python2verilog.utils.env_vars</span> <span class="kn">import</span> <span class="n">is_debug_mode</span>
 <span class="kn">from</span> <span class="nn">python2verilog.utils.generics</span> <span class="kn">import</span> <span class="n">GenericReprAndStr</span>
-<span class="kn">from</span> <span class="nn">..utils.assertions</span> <span class="kn">import</span> <span class="n">assert_list_type</span><span class="p">,</span> <span class="n">assert_type</span><span class="p">,</span> <span class="n">assert_dict_type</span>
-<span class="kn">from</span> <span class="nn">..ir</span> <span class="kn">import</span> <span class="n">Var</span>
 
 <span class="n">DEFAULT_STATE_NAME</span> <span class="o">=</span> <span class="s2">&quot;___PYTHON_2_VERILOG_STATE___&quot;</span>
 

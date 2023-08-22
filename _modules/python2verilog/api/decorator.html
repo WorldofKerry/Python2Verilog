@@ -33,31 +33,24 @@
 <span class="sd">Decorators</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
-<span class="kn">import</span> <span class="nn">argparse</span>
+<span class="kn">import</span> <span class="nn">ast</span>
 <span class="kn">import</span> <span class="nn">atexit</span>
-<span class="kn">import</span> <span class="nn">copy</span>
-<span class="kn">from</span> <span class="nn">io</span> <span class="kn">import</span> <span class="n">IOBase</span>
+<span class="kn">import</span> <span class="nn">inspect</span>
 <span class="kn">import</span> <span class="nn">io</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">ast</span>
 <span class="kn">import</span> <span class="nn">textwrap</span>
-<span class="kn">import</span> <span class="nn">types</span>
 <span class="kn">import</span> <span class="nn">typing</span>
-<span class="kn">import</span> <span class="nn">warnings</span>
-<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">IO</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">overload</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span>
-<span class="kn">import</span> <span class="nn">inspect</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span> <span class="nn">types</span> <span class="kn">import</span> <span class="n">FunctionType</span>
-<span class="kn">from</span> <span class="nn">python2verilog.api.wrappers</span> <span class="kn">import</span> <span class="n">context_to_verilog</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
+<span class="kn">from</span> <span class="nn">python2verilog.api.wrappers</span> <span class="kn">import</span> <span class="n">context_to_verilog</span>
 <span class="kn">from</span> <span class="nn">python2verilog.utils.assertions</span> <span class="kn">import</span> <span class="n">assert_dict_type</span><span class="p">,</span> <span class="n">assert_type</span>
 <span class="kn">from</span> <span class="nn">python2verilog.utils.decorator</span> <span class="kn">import</span> <span class="n">decorator_with_args</span>
-<span class="kn">from</span> <span class="nn">..frontend</span> <span class="kn">import</span> <span class="n">Generator2Graph</span>
+
 <span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">ir</span>
-<span class="kn">from</span> <span class="nn">..backend</span> <span class="kn">import</span> <span class="n">verilog</span>
-<span class="kn">from</span> <span class="nn">..optimizer</span> <span class="kn">import</span> <span class="n">OptimizeGraph</span>
 
 <span class="c1"># All functions if a lesser namespace is not given</span>
 <span class="n">global_namespace</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Context</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
@@ -131,7 +124,7 @@
 <a class="viewcode-back" href="../../../python2verilog.api.html#python2verilog.api.decorator.get_func_ast_from_func">[docs]</a>
 <span class="k">def</span> <span class="nf">get_func_ast_from_func</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">FunctionType</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Given a function, gets its ast tree</span>
+<span class="sd">    Given a function, gets its ast</span>
 
 <span class="sd">    :return: ast rooted at function</span>
 <span class="sd">    &quot;&quot;&quot;</span>
