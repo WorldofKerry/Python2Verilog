@@ -97,8 +97,8 @@ def get_func_ast_from_func(func: FunctionType):
 def verilogify(
     func: FunctionType,
     namespace: dict[Callable, ir.Context] = global_namespace,
-    module_output: Optional[Union[os.PathLike, typing.IO]] = None,
-    testbench_output: Optional[Union[os.PathLike, typing.IO]] = None,
+    module_output: Optional[Union[os.PathLike, typing.IO, str]] = None,
+    testbench_output: Optional[Union[os.PathLike, typing.IO, str]] = None,
     write: bool = False,
     overwrite: bool = False,
 ):
@@ -111,8 +111,8 @@ def verilogify(
     """
     assert_type(func, FunctionType)
     assert_dict_type(namespace, Callable, ir.Context)
-    assert_type(module_output, (os.PathLike, io.IOBase))
-    assert_type(testbench_output, (os.PathLike, io.IOBase))
+    assert_type(module_output, (os.PathLike, io.IOBase, str))
+    assert_type(testbench_output, (os.PathLike, io.IOBase, str))
     assert_type(write, bool)
     assert_type(overwrite, bool)
 
@@ -151,6 +151,11 @@ def verilogify(
         mode = "w" if overwrite else "x"
 
         # pylint: disable=consider-using-with
+        if isinstance(module_output, str):
+            module_output = Path(module_output)
+        if isinstance(testbench_output, str):
+            testbench_output = Path(testbench_output)
+
         if isinstance(module_output, os.PathLike):
             try:
                 module_output = open(module_output, mode=mode, encoding="utf8")
