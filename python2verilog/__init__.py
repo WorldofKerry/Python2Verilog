@@ -2,10 +2,5 @@
 Python 2 Verilog
 """
 
-from . import frontend
-from . import backend
-from . import optimizer
-from . import utils
-from . import ir
-from . import api
-from .api import verilogify, new_namespace, verilogify_function, text_to_text
+from . import api, backend, frontend, ir, optimizer, utils
+from .api import new_namespace, text_to_text, verilogify, verilogify_function

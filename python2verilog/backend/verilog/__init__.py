@@ -2,7 +2,5 @@
 Verilog Backend
 """
 
-from .codegen import (
-    CodeGen,
-)
 from .ast import *
+from .codegen import CodeGen

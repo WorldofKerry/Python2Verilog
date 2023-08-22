@@ -3,13 +3,14 @@ Verilog Abstract Syntax Tree Components
 """
 
 from __future__ import annotations
+
 import itertools
 import logging
 from typing import Optional
 
-from ...utils.string import Lines, Indent, ImplementsToLines
-from ...utils.assertions import assert_list_type, assert_type, assert_dict_type
 from ... import ir
+from ...utils.assertions import assert_dict_type, assert_list_type, assert_type
+from ...utils.string import ImplementsToLines, Indent, Lines
 
 
 class AtPosedge(ir.Expression):

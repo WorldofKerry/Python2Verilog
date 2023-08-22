@@ -4,15 +4,13 @@ Converts Python generator functions to synthesizable Verilog.
 For sample Python inputs,
 visit https://github.com/WorldofKerry/Python2Verilog/tree/main/tests/integration/data
 """
-import logging
-
 import argparse
-import os
 import ast
+import logging
+import os
+
 from python2verilog import ir
-
 from python2verilog.api.wrappers import text_to_text, text_to_verilog
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(

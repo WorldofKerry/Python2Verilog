@@ -1,23 +1,25 @@
-import unittest
 import ast
-import os
 import configparser
-import subprocess
-import re
 import logging
+import os
+import re
+import subprocess
+import unittest
+
+import networkx as nx
 import pandas as pd
 import pytest
-import networkx as nx
 from matplotlib import pyplot as plt
 
 from python2verilog import ir
-from python2verilog.api.wrappers import text_to_verilog, text_to_context
+from python2verilog.api.wrappers import text_to_context, text_to_verilog
 from python2verilog.extern.iverilog import (
     run_iverilog_with_fifos,
     run_iverilog_with_files,
 )
 from python2verilog.utils.assertions import assert_type
 from tools.visualization import make_visual
+
 from .cases import TEST_CASES
 
 

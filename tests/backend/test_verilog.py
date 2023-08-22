@@ -1,9 +1,10 @@
-from python2verilog.backend.verilog.ast import Instantiation, Module, PosedgeSyncAlways
-from python2verilog.backend.verilog import CodeGen
-from python2verilog import ir
-from python2verilog.frontend import Generator2Graph
-import unittest
 import ast
+import unittest
+
+from python2verilog import ir
+from python2verilog.backend.verilog import CodeGen
+from python2verilog.backend.verilog.ast import Instantiation, Module, PosedgeSyncAlways
+from python2verilog.frontend import Generator2Graph
 
 
 def assert_lines(test_case: unittest.TestCase, first: str, second: str):
@@ -93,6 +94,7 @@ def circle_lines(s_x, s_y, height) -> tuple[int, int]:
 
 import networkx as nx
 from matplotlib import pyplot as plt
+
 from python2verilog import ir
 
 

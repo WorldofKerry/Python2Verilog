@@ -1,6 +1,6 @@
+import atexit
 import inspect
 import logging
-import atexit
 from functools import wraps
 from types import FunctionType
 

@@ -6,10 +6,11 @@ that are synthesizable
 
 """
 from __future__ import annotations
+
 import copy
 
-from python2verilog.utils.generics import GenericRepr
-from ..utils.assertions import assert_type, assert_list_type
+from ..utils.assertions import assert_list_type, assert_type
+from ..utils.generics import GenericRepr
 
 
 class Expression(GenericRepr):

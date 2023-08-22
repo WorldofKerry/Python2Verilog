@@ -7,8 +7,9 @@ python3 tools/cytoscape.py tests/integration/data/integration/testing/cytoscape.
 
 import argparse
 import ast
-from dash import Dash, html
+
 import dash_cytoscape as cyto
+from dash import Dash, html
 
 parser = argparse.ArgumentParser(
     description=__doc__, formatter_class=argparse.RawTextHelpFormatter

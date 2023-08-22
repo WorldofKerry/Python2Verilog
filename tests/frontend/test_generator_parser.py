@@ -1,8 +1,10 @@
-from python2verilog.frontend import Generator2Graph
-import unittest
 import ast
+import unittest
+
 import networkx as nx
 from matplotlib import pyplot as plt
+
+from python2verilog.frontend import Generator2Graph
 from python2verilog.ir import Context, create_networkx_adjacency_list
 
 

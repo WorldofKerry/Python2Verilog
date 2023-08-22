@@ -1,5 +1,6 @@
 import unittest
-from python2verilog.utils.env_vars import set_debug_mode, is_debug_mode
+
+from python2verilog.utils.env_vars import is_debug_mode, set_debug_mode
 
 
 class TestEnvVars(unittest.TestCase):

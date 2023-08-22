@@ -1,8 +1,8 @@
 import unittest
 
-from python2verilog.optimizer import graph_apply_mapping
 from python2verilog import ir
 from python2verilog.backend.verilog import CodeGen
+from python2verilog.optimizer import graph_apply_mapping
 
 
 class TestGraphApplyMapping(unittest.TestCase):

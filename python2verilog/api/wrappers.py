@@ -2,15 +2,16 @@
 Functions that take text as input
 """
 
-import logging
 import ast
-from typing import Optional, Union
+import logging
 from types import FunctionType
+from typing import Optional, Union
+
 from python2verilog.backend import verilog
 from python2verilog.frontend.generator2ir import Generator2Graph
 from python2verilog.optimizer.optimizer import OptimizeGraph
-
 from python2verilog.utils.assertions import assert_list_type, assert_type
+
 from .. import ir
 
 

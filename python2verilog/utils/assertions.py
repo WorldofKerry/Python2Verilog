@@ -1,7 +1,7 @@
 """
 Type assertion utilities
 """
-from typing import Optional, Any
+from typing import Any, Optional
 
 
 def assert_list_type(list_: Optional[list], type_):
