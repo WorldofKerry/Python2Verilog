@@ -244,7 +244,7 @@ class CodeGen:
         initial_body.append(ver.Statement())
 
         for i, test_case in enumerate(self.context.test_cases):
-            # setup for new test case
+            # New test case and start
             initial_body.append(
                 ver.Statement(comment=f"Test case {i}: {str(test_case)}")
             )
@@ -258,8 +258,9 @@ class CodeGen:
                 ver.BlockingSubsitution(self.context.start_signal, ir.UInt(1))
             )
 
+            # Post-start
+            initial_body.append(ver.Statement())
             initial_body.append(ver.AtNegedgeStatement(self.context.clock_signal))
-
             for i, var in enumerate(self.context.input_vars):
                 initial_body.append(
                     ver.BlockingSubsitution(
@@ -271,8 +272,9 @@ class CodeGen:
             initial_body.append(
                 ver.BlockingSubsitution(self.context.start_signal, ir.UInt(0))
             )
+            initial_body.append(ver.Statement())
 
-            # wait for done signal
+            # While loop waitng for ready signal
             while_body: list[ver.Statement] = []
             while_body.append(make_display_stmt())
             while_body.append(ver.AtNegedgeStatement(self.context.clock_signal))
