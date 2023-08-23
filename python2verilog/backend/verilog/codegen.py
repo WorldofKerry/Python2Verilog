@@ -121,8 +121,15 @@ class CodeGen:
             ir.Expression(var.ver_name): ir.Expression(var.py_name)
             for var in context.input_vars
         }
-        stmt_stack = []
-        init_body = []
+        stmt_stack: list[ver.Statement] = []
+        init_body: list[ver.Statement] = []
+
+        for var in context.input_vars:
+            init_body.append(
+                ver.NonBlockingSubsitution(
+                    ir.Expression(var.ver_name), ir.Expression(var.py_name)
+                )
+            )
 
         for item in root.case_items:
             if item.condition == ir.Expression(context.entry_state):
@@ -141,13 +148,6 @@ class CodeGen:
                 stmt_stack += stmt.else_body
             else:
                 raise TypeError(f"Unexpected {type(stmt)} {stmt}")
-
-        for var in context.input_vars:
-            init_body.append(
-                ver.NonBlockingSubsitution(
-                    ir.Expression(var.ver_name), ir.Expression(var.py_name)
-                )
-            )
 
         block = ver.IfElse(
             ir.Expression("_start"),
