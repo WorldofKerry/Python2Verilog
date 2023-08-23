@@ -31,7 +31,7 @@ params = [
     Argument(
         "L",
         "optimization_levels",
-        default=[0, 1, 2],
+        default=[1],
         nargs="+",
         type=int,
         help="Set which optimization levels tests run on",

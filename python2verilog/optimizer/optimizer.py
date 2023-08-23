@@ -72,7 +72,7 @@ def graph_apply_mapping(
 
 
 def graph_update_mapping(
-    stmt: ir.Statement, old_mapping: dict[ir.Expression, ir.Expression]
+    stmt: ir.Element, old_mapping: dict[ir.Expression, ir.Expression]
 ):
     """
     Updates mapping with statements' contents
