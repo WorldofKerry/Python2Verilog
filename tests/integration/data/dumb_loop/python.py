@@ -3,5 +3,5 @@ def dumb_loop(n) -> tuple[int]:
     while i < n:
         i += 1
     yield i
-    yield i
-    yield i
+    yield i + 1
+    yield i + 2
