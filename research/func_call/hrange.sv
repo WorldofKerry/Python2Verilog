@@ -5,12 +5,13 @@ module hrange (
     input wire _start,
     input wire _clock,
     input wire _reset,
+    input wire _wait,
     output reg signed [31:0] _0,
     output reg _ready,
     output reg _valid
 );
-    localparam _statelmaoready = 0;
-    localparam _state_1 = 1;
+    localparam _state_1 = 0;
+    localparam _statelmaoready = 1;
     localparam _state_0_while_0 = 2;
     reg signed [31:0] _i;
     reg signed [31:0] _state;

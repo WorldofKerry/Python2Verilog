@@ -53,6 +53,7 @@ class Context(GenericReprAndStr):
     clock_signal: Var = Var("clock")
     start_signal: Var = Var("start")
     reset_signal: Var = Var("reset")
+    wait_signal: Var = Var("wait")
 
     state_var: Var = Var("state")
 

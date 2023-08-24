@@ -212,16 +212,17 @@ class CodeGen:
         decl.append(ver.Declaration("_clock", size=1, is_reg=True))
         decl.append(ver.Declaration("_start", size=1, is_reg=True))
         decl.append(ver.Declaration("_reset", size=1, is_reg=True))
-        decl += [
-            ver.Declaration(var.ver_name, is_signed=True)
-            for var in self.context.output_vars
-        ]
+        decl.append(ver.Declaration("_wait", size=1, is_reg=True))
         decl += [
             ver.Declaration(var.py_name, is_signed=True, is_reg=True)
             for var in self.context.input_vars
         ]
         decl.append(ver.Declaration("_ready", size=1))
         decl.append(ver.Declaration("_valid", size=1))
+        decl += [
+            ver.Declaration(var.ver_name, is_signed=True)
+            for var in self.context.output_vars
+        ]
 
         ports = {decl.name: decl.name for decl in decl}
 

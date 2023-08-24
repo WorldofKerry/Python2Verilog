@@ -3,22 +3,24 @@ module hrange_tb (
     reg _clock;
     reg _start;
     reg _reset;
-    wire signed [31:0] _0;
+    reg _wait;
     reg signed [31:0] base;
     reg signed [31:0] limit;
     reg signed [31:0] step;
     wire _ready;
     wire _valid;
+    wire signed [31:0] _0;
     hrange DUT (
         ._clock(_clock),
         ._start(_start),
         ._reset(_reset),
-        ._0(_0),
+        ._wait(_wait),
         .base(base),
         .limit(limit),
         .step(step),
         ._ready(_ready),
-        ._valid(_valid)
+        ._valid(_valid),
+        ._0(_0)
         );
     always #5 _clock = !_clock;
     initial begin

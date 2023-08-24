@@ -168,6 +168,7 @@ class Module(ImplementsToLines):
             input_lines += "input wire _start"
             input_lines += "input wire _clock"
             input_lines += "input wire _reset"
+            input_lines += "input wire _wait"
         self.input = input_lines
 
         output_lines = Lines()
