@@ -10,9 +10,9 @@ module hrange (
     output reg _ready,
     output reg _valid
 );
-    localparam _state_1 = 0;
-    localparam _statelmaoready = 1;
-    localparam _state_0_while_0 = 2;
+    localparam _statelmaoready = 0;
+    localparam _state_0_while_0 = 1;
+    localparam _state_1 = 2;
     reg signed [31:0] _i;
     reg signed [31:0] _state;
     reg signed [31:0] _base;
@@ -28,33 +28,35 @@ module hrange (
             _state <= _statelmaoready;
         end
 
-        if (_start) begin
-            _base <= base;
-            _limit <= limit;
-            _step <= step;
-            _i <= base;
-            if ((base < limit)) begin
-                _0 <= base;
-                _valid <= 1;
-                _state <= _state_0_while_0;
-            end else begin
-                _ready <= 1;
-                _state <= _statelmaoready;
-            end
-        end else begin
-            case (_state)
-                _state_0_while_0: begin
-                    _i <= $signed(_i + _step);
-                    if (($signed(_i + _step) < _limit)) begin
-                        _0 <= $signed(_i + _step);
-                        _valid <= 1;
-                        _state <= _state_0_while_0;
-                    end else begin
-                        _ready <= 1;
-                        _state <= _statelmaoready;
-                    end
+        if (!(_wait)) begin
+            if (_start) begin
+                _base <= base;
+                _limit <= limit;
+                _step <= step;
+                _i <= base;
+                if ((base < limit)) begin
+                    _0 <= base;
+                    _valid <= 1;
+                    _state <= _state_0_while_0;
+                end else begin
+                    _ready <= 1;
+                    _state <= _statelmaoready;
                 end
-            endcase
+            end else begin
+                case (_state)
+                    _state_0_while_0: begin
+                        _i <= $signed(_i + _step);
+                        if (($signed(_i + _step) < _limit)) begin
+                            _0 <= $signed(_i + _step);
+                            _valid <= 1;
+                            _state <= _state_0_while_0;
+                        end else begin
+                            _ready <= 1;
+                            _state <= _statelmaoready;
+                        end
+                    end
+                endcase
+            end
         end
     end
 endmodule

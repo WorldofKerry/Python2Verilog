@@ -26,6 +26,7 @@ module hrange_tb (
     initial begin
         _clock = 0;
         _start = 0;
+        _wait = 0;
         _reset = 1;
         @(negedge _clock);
         _reset = 0;
@@ -43,6 +44,7 @@ module hrange_tb (
         _start = 0;
 
         while (!(_ready)) begin
+            _wait = $urandom_range(0, 1);
             $display("%0d, %0d", _valid, _0);
             @(negedge _clock);
         end

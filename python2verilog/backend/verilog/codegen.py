@@ -85,7 +85,13 @@ class CodeGen:
                 ),
                 ver.Statement(),
             ]
-            + [CodeGen.__get_start_ifelse(root, context)],
+            + [
+                ver.IfElse(
+                    ir.UnaryOp("!", ir.Expression("_wait")),
+                    then_body=[CodeGen.__get_start_ifelse(root, context)],
+                    else_body=[],
+                )
+            ],
         )
         body: list[ver.Statement] = [
             ver.Declaration(v, is_reg=True, is_signed=True) for v in context.global_vars
@@ -179,11 +185,13 @@ class CodeGen:
         """
         return str(self.get_module_lines())
 
-    def get_testbench(self):
+    def get_testbench(self, random_wait=True):
         """
         Creates testbench with multiple test cases
 
         Each element of self.context.test_cases represents a single test case
+
+        :param random_wait: whether or not to have random _wait signal in the while loop
         """
         if len(self.context.input_vars) == 0:
             raise RuntimeError(f"Input var names not deduced for {self.context.name}")
@@ -232,19 +240,13 @@ class CodeGen:
         setups.append(ver.Statement(literal="always #5 _clock = !_clock;"))
 
         initial_body: list[ver.Statement | ver.While] = []
-        initial_body.append(
-            ver.BlockingSubsitution(self.context.clock_signal, ir.UInt(0))
-        )
-        initial_body.append(
-            ver.BlockingSubsitution(self.context.start_signal, ir.UInt(0))
-        )
-        initial_body.append(
-            ver.BlockingSubsitution(self.context.reset_signal, ir.UInt(1))
-        )
+        initial_body.append(ver.BlockingSub(self.context.clock_signal, ir.UInt(0)))
+        initial_body.append(ver.BlockingSub(self.context.start_signal, ir.UInt(0)))
+        initial_body.append(ver.BlockingSub(self.context.wait_signal, ir.UInt(0)))
+        initial_body.append(ver.BlockingSub(self.context.reset_signal, ir.UInt(1)))
+
         initial_body.append(ver.AtNegedgeStatement(self.context.clock_signal))
-        initial_body.append(
-            ver.BlockingSubsitution(self.context.reset_signal, ir.UInt(0))
-        )
+        initial_body.append(ver.BlockingSub(self.context.reset_signal, ir.UInt(0)))
         initial_body.append(ver.Statement())
 
         for i, test_case in enumerate(self.context.test_cases):
@@ -257,32 +259,30 @@ class CodeGen:
             )
             for i, var in enumerate(self.context.input_vars):
                 initial_body.append(
-                    ver.BlockingSubsitution(
+                    ver.BlockingSub(
                         ir.Expression(var.py_name), ir.Int(int(test_case[i]))
                     )
                 )
-            initial_body.append(
-                ver.BlockingSubsitution(self.context.start_signal, ir.UInt(1))
-            )
+            initial_body.append(ver.BlockingSub(self.context.start_signal, ir.UInt(1)))
 
             # Post-start
             initial_body.append(ver.Statement())
             initial_body.append(ver.AtNegedgeStatement(self.context.clock_signal))
             for i, var in enumerate(self.context.input_vars):
                 initial_body.append(
-                    ver.BlockingSubsitution(
+                    ver.BlockingSub(
                         ir.Expression(var.py_name),
                         ir.Unknown(),
                         comment="only need inputs at start",
                     )
                 )
-            initial_body.append(
-                ver.BlockingSubsitution(self.context.start_signal, ir.UInt(0))
-            )
+            initial_body.append(ver.BlockingSub(self.context.start_signal, ir.UInt(0)))
             initial_body.append(ver.Statement())
 
             # While loop waitng for ready signal
             while_body: list[ver.Statement] = []
+            if random_wait:
+                while_body.append(ver.Statement("_wait = $urandom_range(0, 1);"))
             while_body.append(make_display_stmt())
             while_body.append(ver.AtNegedgeStatement(self.context.clock_signal))
 

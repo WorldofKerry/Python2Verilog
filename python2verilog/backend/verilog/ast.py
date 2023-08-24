@@ -324,7 +324,7 @@ class NonBlockingSubsitution(Subsitution):
         super().__init__(lvalue, rvalue, "<=", *args, **kwargs)
 
 
-class BlockingSubsitution(Subsitution):
+class BlockingSub(Subsitution):
     """
     <lvalue> = <rvalue>
     """

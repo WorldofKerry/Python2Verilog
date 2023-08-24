@@ -105,6 +105,13 @@ class Context(GenericReprAndStr):
         if self._ready_state:
             assert self.ready_state in self.states, self
 
+        assert assert_type(self.wait_signal, Var)
+        assert assert_type(self.clock_signal, Var)
+        assert assert_type(self.ready_signal, Var)
+        assert assert_type(self.valid_signal, Var)
+        assert assert_type(self.reset_signal, Var)
+        assert assert_type(self.start_signal, Var)
+
         return self
 
     @property
