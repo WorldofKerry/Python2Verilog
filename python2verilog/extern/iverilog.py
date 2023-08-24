@@ -45,27 +45,25 @@ def run_cmd_with_fifos(
 
     :return: (stdout, stderr/exception)
     """
-    # pylint: disable=consider-using-with
-    process = subprocess.Popen(
+    with subprocess.Popen(
         command,
         shell=True,
         text=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-    )
+    ) as process:
+        write_data_to_paths(input_fifos)
 
-    write_data_to_paths(input_fifos)
-
-    try:
-        logging.debug(f"Waiting on process for {timeout}s")
-        process.wait(timeout=timeout)
-        assert process.stdout
-        assert process.stderr
-        return process.stdout.read(), process.stderr.read()
-    except subprocess.TimeoutExpired as e:
-        logging.error(e)
-        process.terminate()
-        return None, str(e)
+        try:
+            logging.debug(f"Waiting on process for {timeout}s")
+            process.wait(timeout=timeout)
+            assert process.stdout
+            assert process.stderr
+            return process.stdout.read(), process.stderr.read()
+        except subprocess.TimeoutExpired as e:
+            logging.error(e)
+            process.terminate()
+            return None, str(e)
 
 
 def run_cmd_with_files(
@@ -80,25 +78,23 @@ def run_cmd_with_files(
     """
     write_data_to_paths(input_files)
 
-    # pylint: disable=consider-using-with
-    process = subprocess.Popen(
+    with subprocess.Popen(
         command,
         shell=True,
         text=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-    )
-
-    try:
-        logging.debug(f"Waiting on process for {timeout}s")
-        process.wait(timeout=timeout)
-        assert process.stdout
-        assert process.stderr
-        return process.stdout.read(), process.stderr.read()
-    except subprocess.TimeoutExpired as e:
-        logging.error(e)
-        process.terminate()
-        return None, str(e)
+    ) as process:
+        try:
+            logging.debug(f"Waiting on process for {timeout}s")
+            process.wait(timeout=timeout)
+            assert process.stdout
+            assert process.stderr
+            return process.stdout.read(), process.stderr.read()
+        except subprocess.TimeoutExpired as e:
+            logging.error(e)
+            process.terminate()
+            return None, str(e)
 
 
 def run_iverilog_with_fifos(

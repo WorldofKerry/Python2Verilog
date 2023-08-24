@@ -106,6 +106,7 @@ class BaseTestCases:
 
             config = configparser.ConfigParser()
             config.read(os.path.join(ABS_DIR, "config.ini"))
+
             # The python file shall not be name-mangled
             FILES_IN_ABS_DIR = {
                 key: os.path.join(ABS_DIR, f"{prefix}{value}")
