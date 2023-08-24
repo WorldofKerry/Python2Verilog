@@ -97,6 +97,7 @@ def get_func_ast_from_func(func: FunctionType):
 def verilogify(
     func: FunctionType,
     namespace: dict[Callable, ir.Context] = global_namespace,
+    optimization_level: int = 1,
     module_output: Optional[Union[os.PathLike, typing.IO, str]] = None,
     testbench_output: Optional[Union[os.PathLike, typing.IO, str]] = None,
     write: bool = False,
@@ -146,6 +147,7 @@ def verilogify(
     context.input_vars = [ir.Var(name.arg) for name in func_ast.args.args]
 
     context.write = write
+    context.optimization_level = optimization_level
 
     if write:
         mode = "w" if overwrite else "x"

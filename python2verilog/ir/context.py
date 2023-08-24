@@ -37,7 +37,7 @@ class Context(GenericReprAndStr):
     input_types: list = field(default_factory=list)
     output_types: list = field(default_factory=list)
 
-    optimization_level: int = 1
+    optimization_level: int = -1
 
     write: bool = False
     _module_file: Optional[io.IOBase] = None
@@ -72,8 +72,8 @@ class Context(GenericReprAndStr):
         if not is_debug_mode():
             return self
 
-        assert isinstance(self.py_ast, ast.FunctionDef), type(self.py_func)
-        assert isinstance(self.py_func, FunctionType)
+        assert isinstance(self.py_ast, ast.FunctionDef), self
+        assert isinstance(self.py_func, FunctionType), self
 
         def check_list(list_: list):
             return isinstance(list_, list) and len(list_) > 0
@@ -83,6 +83,9 @@ class Context(GenericReprAndStr):
 
         assert check_list(self.output_types), self
         assert check_list(self.output_vars), self
+
+        assert isinstance(self.optimization_level, int), self
+        assert self.optimization_level >= 0
 
         if self.write:
             if self._module_file:

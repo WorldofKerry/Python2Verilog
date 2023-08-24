@@ -54,7 +54,9 @@ class BaseTestCases:
                     if self.args.first_test:
                         cases = [cases[0]]
                     with self.subTest(msg=name):
-                        logging.info(f"Testing `{name}` at with -O{level} on `{cases}`")
+                        logging.info(
+                            f"Testing function `{name}` with -O{level} on `{cases}`"
+                        )
                         self.run_test(
                             name,
                             cases,
@@ -190,6 +192,7 @@ class BaseTestCases:
                     function_name=function_name,
                     extra_test_cases=test_cases,
                     file_path=FILES_IN_ABS_DIR["python"],
+                    optimization_level=optimization_level,
                 )
 
                 if args.write:
