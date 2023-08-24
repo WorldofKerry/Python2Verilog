@@ -20,6 +20,7 @@ def text_to_verilog(
     function_name: str,
     extra_test_cases: Optional[list] = None,
     file_path: str = "",
+    optimization_level: int = 1,
 ):
     """
     Converts from code to verilog code generator
@@ -34,6 +35,7 @@ def text_to_verilog(
     )
     assert isinstance(context, ir.Context)
     assert isinstance(extra_test_cases, list)
+    context.optimization_level = optimization_level
     context.test_cases = extra_test_cases
     return context_to_verilog(context)
 
@@ -199,7 +201,7 @@ def text_to_context(
     context.py_ast = generator_ast
     context.py_func = generator_func
 
-    return context.validate()
+    return context
 
 
 def context_to_verilog(context: ir.Context):

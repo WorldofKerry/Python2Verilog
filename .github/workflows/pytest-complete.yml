@@ -48,13 +48,13 @@ jobs:
 
       - name: Run Pytest
         run: |
-          # No write
-          python3 -m pytest -vs tests/ --cov=python2verilog/ --cov-report term-missing --log-cli-level=info \
-          --synthesis --optimization-levels 0 1 2 4 8 16 32
-
           # With write
-          python3 -m pytest -vs tests/ --cov=python2verilog/ --cov-report term-missing --log-cli-level=info \
+          python3 -m pytest -vs tests/ --cov=python2verilog/ --cov-report term-missing --log-cli-level=INFO \
           --write --synthesis --optimization-levels 0 1 2 4 8 16 32
+
+          # No write
+          python3 -m pytest -vs tests/ --cov=python2verilog/ --cov-report term-missing --log-cli-level=INFO \
+          --optimization-levels 0 1 2 4 8 16 32
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
