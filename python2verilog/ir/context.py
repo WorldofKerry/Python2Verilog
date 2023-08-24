@@ -59,6 +59,12 @@ class Context(GenericReprAndStr):
     _entry_state: Optional[str] = None
     _ready_state: Optional[str] = None
 
+    def __del__(self):
+        if self._module_file:
+            self._module_file.close()
+        if self._testbench_file:
+            self._testbench_file.close()
+
     def validate(self):
         """
         Validates that all fields of context are populated.
