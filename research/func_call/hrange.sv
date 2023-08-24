@@ -21,10 +21,12 @@ module hrange (
         _valid <= 0;
         _ready <= 0;
         _0 <= $signed(0);
+
+        // Start signal takes precedence over reset
         if (_reset) begin
-            // Start signal takes precedence over reset
             _state <= _statelmaoready;
         end
+
         if (_start) begin
             _base <= base;
             _limit <= limit;

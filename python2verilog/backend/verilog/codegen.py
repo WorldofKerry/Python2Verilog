@@ -71,19 +71,19 @@ class CodeGen:
                 for out in context.output_vars
             ]
             + [
+                ver.Statement(),
+                ver.Statement(comment="Start signal takes precedence over reset"),
                 ver.IfElse(
                     ir.Expression("_reset"),
                     then_body=[
-                        ver.Statement(
-                            comment="Start signal takes precedence over reset"
-                        ),
                         ver.NonBlockingSubsitution(
                             lvalue=context.state_var,
                             rvalue=ir.Expression(context.ready_state),
                         ),
                     ],
                     else_body=[],
-                )
+                ),
+                ver.Statement(),
             ]
             + [CodeGen.__get_start_ifelse(root, context)],
         )
