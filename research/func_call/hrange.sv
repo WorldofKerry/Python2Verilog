@@ -9,9 +9,9 @@ module hrange (
     output reg _ready,
     output reg _valid
 );
-    localparam _state_0_while_0 = 0;
+    localparam _statelmaoready = 0;
     localparam _state_1 = 1;
-    localparam _statelmaoready = 2;
+    localparam _state_0_while_0 = 2;
     reg signed [31:0] _i;
     reg signed [31:0] _state;
     reg signed [31:0] _base;
@@ -22,9 +22,13 @@ module hrange (
         _ready <= 0;
         _0 <= $signed(0);
         if (_reset) begin
+            // Start signal takes precedence over reset
             _state <= _statelmaoready;
         end
         if (_start) begin
+            _base <= base;
+            _limit <= limit;
+            _step <= step;
             _i <= base;
             if ((base < limit)) begin
                 _0 <= base;
@@ -34,9 +38,6 @@ module hrange (
                 _ready <= 1;
                 _state <= _statelmaoready;
             end
-            _base <= base;
-            _limit <= limit;
-            _step <= step;
         end else begin
             case (_state)
                 _state_0_while_0: begin

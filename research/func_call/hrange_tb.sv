@@ -28,14 +28,19 @@ module hrange_tb (
         @(negedge _clock);
         _reset = 0;
 
-        // Test case 0: (0, 10, 2)
+        // ============ Test Case 0 with arguments (0, 10, 2) ============
         base = $signed(0);
         limit = $signed(10);
         step = $signed(2);
         _start = 1;
+
         @(negedge _clock);
+        base = 'x; // only need inputs at start
+        limit = 'x; // only need inputs at start
+        step = 'x; // only need inputs at start
+        _start = 0;
+
         while (!(_ready)) begin
-            _start = 0;
             $display("%0d, %0d", _valid, _0);
             @(negedge _clock);
         end

@@ -74,10 +74,13 @@ class CodeGen:
                 ver.IfElse(
                     ir.Expression("_reset"),
                     then_body=[
+                        ver.Statement(
+                            comment="Start signal takes precedence over reset"
+                        ),
                         ver.NonBlockingSubsitution(
                             lvalue=context.state_var,
                             rvalue=ir.Expression(context.ready_state),
-                        )
+                        ),
                     ],
                     else_body=[],
                 )
