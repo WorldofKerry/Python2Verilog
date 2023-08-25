@@ -5,10 +5,10 @@ Icarious Verilog CLI Abstractions
 import logging
 import subprocess
 import tempfile
-from typing import Optional
+from typing import Iterable, Optional
 
 
-def make_iverilog_cmd(top_level_module: str, files: list[str]):
+def make_iverilog_cmd(top_level_module: str, files: Iterable[str]):
     """
     Returns an iverilog command
 
@@ -109,7 +109,7 @@ def run_iverilog_with_fifos(
     """
     iverilog_cmd = make_iverilog_cmd(
         top_level_module=top_level_module,
-        files=list(input_fifos.keys()),
+        files=input_fifos.keys(),
     )
     logging.debug(f"Running {iverilog_cmd}")
     return run_cmd_with_fifos(

@@ -1,3 +1,3 @@
 """
-Shell-based simulation tools
+Wrappers for third-party / external tools
 """
