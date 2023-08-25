@@ -67,7 +67,7 @@ class BaseTestCases:
                         )
             self.all_statistics.sort(key=lambda e: e["function_name"])
             if self.all_statistics:
-                if self.args.synthesis: 
+                if self.args.synthesis:
                     df = pd.DataFrame(
                         self.all_statistics, columns=self.all_statistics[0].keys()
                     )
