@@ -11,8 +11,8 @@ module hrange (
     output reg _valid
 );
     localparam _statelmaoready = 0;
-    localparam _state_0_while_0 = 1;
-    localparam _state_1 = 2;
+    localparam _state_1 = 1;
+    localparam _state_0_while_0 = 2;
     reg signed [31:0] _i;
     reg signed [31:0] _state;
     reg signed [31:0] _base;
