@@ -66,7 +66,7 @@ class BaseTestCases:
                             f"_{name}_O{level}_",
                             optimization_level=level,
                         )
-            self.all_statistics.sort(key=lambda e: e["function_name"])
+            self.all_statistics.sort(key=lambda e: e["func name"])
             if self.all_statistics:
                 if self.args.synthesis:
                     df = pd.DataFrame(
@@ -160,8 +160,8 @@ class BaseTestCases:
                     expected.append(output)
 
             statistics = {
-                "function_name": f"{function_name} -O{optimization_level}",
-                "py_yields": len(expected),
+                "func name": f"{function_name} -O{optimization_level}",
+                "py yields": len(expected),
             }
             self.all_statistics.append(statistics)
 
@@ -236,7 +236,7 @@ class BaseTestCases:
                     timeout=3,
                 )
             time_took = time.time() - time_started
-            statistics["sim_time"] = time_took
+            statistics["sim time"] = time_took
 
             self.assertTrue(
                 stdout and not stderr,
