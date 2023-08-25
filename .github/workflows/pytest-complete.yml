@@ -49,7 +49,7 @@ jobs:
       - name: Run Pytest
         run: |
           # With write
-          python3 -m pytest -vs tests/ --cov=python2verilog/ --cov-report term-missing --log-cli-level=INFO \
+          python3 -m pytest -vs tests/ --cov=python2verilog/ --cov-report term-missing \
           --write --synthesis --optimization-levels 0 1 2 4 8 16 32
 
           # No write

@@ -67,10 +67,11 @@ class BaseTestCases:
                         )
             self.all_statistics.sort(key=lambda e: e["function_name"])
             if self.all_statistics:
-                df = pd.DataFrame(
-                    self.all_statistics, columns=self.all_statistics[0].keys()
-                )
-                logging.info("\n" + df.to_markdown(index=False))
+                if self.args.synthesis: 
+                    df = pd.DataFrame(
+                        self.all_statistics, columns=self.all_statistics[0].keys()
+                    )
+                    logging.warning("\n" + df.to_markdown(index=False))
             else:
                 logging.error("No stats collected")
 
@@ -161,6 +162,7 @@ class BaseTestCases:
                 "function_name": f"{function_name} -O{optimization_level}",
                 "py_yields": len(expected),
             }
+            self.all_statistics.append(statistics)
 
             logging.debug("generating expected")
 
@@ -251,7 +253,6 @@ class BaseTestCases:
                         filtered_f.write(str(output)[1:-1] + "\n")
 
             statistics["ver_clks"] = len(actual_raw)
-            self.all_statistics.append(statistics)
 
             filtered_actual = []
             for row in actual_raw:
