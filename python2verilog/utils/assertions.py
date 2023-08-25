@@ -3,16 +3,16 @@ Type assertion utilities
 """
 import sys
 import types
-from typing import Any, Optional, Type, TypeAlias, TypeGuard, TypeVar
+from typing import Any, Optional, Type, TypeAlias, TypeGuard, TypeVar, Union
 
 ValueType = TypeVar("ValueType")  # pylint: disable=invalid-name
 KeyType = TypeVar("KeyType")  # pylint: disable=invalid-name
 
 # pylint: disable=used-before-assignment
 if sys.version_info >= (3, 10):
-    _ClassInfo: TypeAlias = type | types.UnionType | tuple[_ClassInfo, ...]
+    _ClassInfo: TypeAlias = Union[type, types.UnionType, tuple["_ClassInfo", ...]]
 else:
-    _ClassInfo: TypeAlias = type | tuple[_ClassInfo, ...]
+    _ClassInfo: TypeAlias = Union[type, tuple["_ClassInfo", ...]]
 
 
 def get_typed_list(list_: Optional[list], type_: Type[ValueType]):
@@ -28,7 +28,7 @@ def get_typed_list(list_: Optional[list], type_: Type[ValueType]):
 
 
 def assert_typed_dict(
-    dict_: dict, key_type: Type[KeyType], value_type: Type[ValueType]
+    dict_: dict, key_type: _ClassInfo, value_type: _ClassInfo
 ) -> TypeGuard[dict[KeyType, ValueType]]:
     """
     Asserts that all key, values in dict_ are correctly typed,
