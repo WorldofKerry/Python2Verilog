@@ -66,13 +66,16 @@ class BaseTestCases:
                             f"_{name}_O{level}_",
                             optimization_level=level,
                         )
-            self.all_statistics.sort(key=lambda e: e["func name"])
+            self.all_statistics.sort(key=lambda e: e["Func Name"])
             if self.all_statistics:
+                df = pd.DataFrame(
+                    self.all_statistics, columns=self.all_statistics[0].keys()
+                )
+                df = df.round(2)
                 if self.args.synthesis:
-                    df = pd.DataFrame(
-                        self.all_statistics, columns=self.all_statistics[0].keys()
-                    )
                     logging.warning("\n" + df.to_markdown(index=False))
+                else:
+                    logging.info("\n" + df.to_markdown(index=False))
             else:
                 logging.error("No stats collected")
 
@@ -160,8 +163,8 @@ class BaseTestCases:
                     expected.append(output)
 
             statistics = {
-                "func name": f"{function_name} -O{optimization_level}",
-                "py yields": len(expected),
+                "Func Name": f"{function_name} -O{optimization_level}",
+                "Py Yields": len(expected),
             }
             self.all_statistics.append(statistics)
 
@@ -236,7 +239,6 @@ class BaseTestCases:
                     timeout=3,
                 )
             time_took = time.time() - time_started
-            statistics["sim time"] = time_took
 
             self.assertTrue(
                 stdout and not stderr,
@@ -253,7 +255,8 @@ class BaseTestCases:
                     for output in actual_raw:
                         filtered_f.write(str(output)[1:-1] + "\n")
 
-            statistics["ver_clks"] = len(actual_raw)
+            statistics["Ver Clks"] = len(actual_raw)
+            statistics["Simu (sec)"] = time_took
 
             filtered_actual = []
             for row in actual_raw:
