@@ -3,19 +3,19 @@ Type assertion utilities
 """
 import sys
 import types
-from typing import Any, Optional, Type, TypeAlias, TypeGuard, TypeVar, Union
+from typing import Any, Optional, Type, TypeAlias, TypeGuard, TypeVar, Union, cast
 
-ValueType = TypeVar("ValueType")  # pylint: disable=invalid-name
-KeyType = TypeVar("KeyType")  # pylint: disable=invalid-name
+_ValueType = TypeVar("_ValueType")  # pylint: disable=invalid-name
+_KeyType = TypeVar("_KeyType")  # pylint: disable=invalid-name
 
 # pylint: disable=used-before-assignment
 if sys.version_info >= (3, 10):
-    _ClassInfo: TypeAlias = Union[type, types.UnionType, tuple["_ClassInfo", ...]]
+    _ClassInfo: TypeAlias = type | types.UnionType | tuple["_ClassInfo", ...]
 else:
     _ClassInfo: TypeAlias = Union[type, tuple["_ClassInfo", ...]]
 
 
-def get_typed_list(list_: Optional[list], type_: Type[ValueType]):
+def get_typed_list(list_: Optional[list], type_: Type[_ValueType]):
     """
     Asserts that all elems in list_ are of type_, then returns list_ or [] if list_ is None
     """
@@ -29,7 +29,7 @@ def get_typed_list(list_: Optional[list], type_: Type[ValueType]):
 
 def assert_typed_dict(
     dict_: dict, key_type: _ClassInfo, value_type: _ClassInfo
-) -> TypeGuard[dict[KeyType, ValueType]]:
+) -> TypeGuard[dict[_KeyType, _ValueType]]:
     """
     Asserts that all key, values in dict_ are correctly typed,
     returns dict_ or {} if dict_ is None
@@ -49,10 +49,10 @@ def assert_typed(obj: Any, type_: _ClassInfo) -> TypeGuard[_ClassInfo]:
     return True
 
 
-def get_typed(obj: ValueType, type_: _ClassInfo):
+def get_typed(obj: _ValueType, type_: _ValueType):
     """
     Asserts that obj is of type type_, then returns obj or None if obj is None
     """
     if obj:
-        assert_typed(obj, type_)
+        assert_typed(obj, cast(_ClassInfo, type_))
     return obj
