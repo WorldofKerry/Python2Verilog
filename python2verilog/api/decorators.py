@@ -16,7 +16,7 @@ from typing import Callable, Optional, Union
 
 from python2verilog import ir
 from python2verilog.api.wrappers import context_to_text_and_file, context_to_verilog
-from python2verilog.utils.assertions import assert_dict_type, assert_type
+from python2verilog.utils.assertions import assert_typed_dict, get_typed
 from python2verilog.utils.decorator import decorator_with_args
 
 # To support iPython
@@ -110,12 +110,12 @@ def verilogify(
     :param module_output: path to write verilog module to, defaults to function_name.sv
     :param testbench_output: path to write verilog testbench to, defaults to function_name_tb.sv
     """
-    assert_type(func, FunctionType)
-    assert_dict_type(namespace, Callable, ir.Context)
-    assert_type(module_output, (os.PathLike, io.IOBase, str))
-    assert_type(testbench_output, (os.PathLike, io.IOBase, str))
-    assert_type(write, bool)
-    assert_type(overwrite, bool)
+    get_typed(func, FunctionType)
+    assert_typed_dict(namespace, Callable, ir.Context)
+    get_typed(module_output, (os.PathLike, io.IOBase, str))
+    get_typed(testbench_output, (os.PathLike, io.IOBase, str))
+    get_typed(write, bool)
+    get_typed(overwrite, bool)
 
     if overwrite and not write:
         raise RuntimeError("Overwrite is true, but write is set to false")

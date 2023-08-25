@@ -1,39 +1,42 @@
 """
 Type assertion utilities
 """
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Optional, TypeGuard, TypeVar
+
+ValueType = TypeVar("ValueType")  # pylint: disable=invalid-name
+KeyType = TypeVar("KeyType")  # pylint: disable=invalid-name
 
 
-def assert_list_type(list_: Optional[list], type_):
+def get_typed_list(list_: Optional[list], type_: ValueType):
     """
     Asserts that all elems in list_ are of type_, then returns list_ or [] if list_ is None
     """
     if list_:
-        assert_type(list_, list)
+        get_typed(list_, list)
         for elem in list_:
-            assert_type(elem, type_)
+            get_typed(elem, type_)
         return list_
     return []
 
 
-def assert_dict_type(dict_: Optional[dict], key_type, value_type):
+def assert_typed_dict(
+    dict_: dict, key_type: KeyType, value_type: ValueType
+) -> TypeGuard[dict[KeyType, ValueType]]:
     """
     Asserts that all key, values in dict_ are correctly typed,
     returns dict_ or {} if dict_ is None
     """
-    if dict_:
-        assert_type(dict_, dict)
-        for key, value in dict_.items():
-            assert_type(key, key_type)
-            assert_type(value, value_type)
-        return dict_
-    return {}
+    get_typed(dict_, dict)
+    for key, value in dict_.items():
+        get_typed(key, key_type)
+        get_typed(value, value_type)
+    return True
 
 
-def assert_type(obj: Any, type_):
+def get_typed(obj: Any, type_: ValueType):
     """
     Asserts that obj is of type type_, then returns obj or None if obj is None
     """
-    if obj:
-        assert isinstance(obj, type_), f"expected {type_} got {type(obj)} instead"
+    if not TYPE_CHECKING:
+        assert isinstance(obj, type_), f"Expected {type_} got {type(obj)} instead"
     return obj

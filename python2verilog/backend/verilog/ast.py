@@ -8,7 +8,7 @@ import itertools
 from typing import Optional
 
 from ... import ir
-from ...utils.assertions import assert_dict_type, assert_list_type, assert_type
+from ...utils.assertions import assert_typed_dict, get_typed, get_typed_list
 from ...utils.string import ImplementsToLines, Indent, Lines
 
 
@@ -41,8 +41,8 @@ class Statement(ImplementsToLines):
     """
 
     def __init__(self, literal: str = "", comment: str = ""):
-        self.literal = assert_type(literal, str)
-        self.comment = assert_type(comment, str)
+        self.literal = get_typed(literal, str)
+        self.comment = get_typed(comment, str)
 
     def to_lines(self):
         """
@@ -188,7 +188,7 @@ class Module(ImplementsToLines):
             self.body = []
 
         if localparams:
-            assert_dict_type(localparams, str, ir.UInt)
+            assert_typed_dict(localparams, str, ir.UInt)
             self.local_params = Lines()
             for key, value in localparams.items():
                 self.local_params.concat(LocalParam(key, value).to_lines())
@@ -224,7 +224,7 @@ class Initial(Statement):
 
     def __init__(self, *args, body: Optional[list[Statement]] = None, **kwargs):
         if body:
-            assert_list_type(body, Statement)
+            get_typed_list(body, Statement)
         self.body = body
         super().__init__(*args, **kwargs)
 
@@ -450,9 +450,9 @@ class IfElse(Statement):
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        self.condition = assert_type(condition, ir.Expression)
-        self.then_body = assert_list_type(then_body, Statement)
-        self.else_body = assert_list_type(else_body, Statement)
+        self.condition = get_typed(condition, ir.Expression)
+        self.then_body = get_typed_list(then_body, Statement)
+        self.else_body = get_typed_list(else_body, Statement)
 
     def to_lines(self):
         lines = Lines()
@@ -485,7 +485,7 @@ class While(Statement):
         assert isinstance(condition, ir.Expression)
         self.condition = condition
         if body:
-            assert_list_type(body, Statement)
+            get_typed_list(body, Statement)
         self.body = body
         super().__init__(*args, **kwargs)
 

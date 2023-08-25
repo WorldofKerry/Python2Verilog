@@ -9,11 +9,7 @@ from types import FunctionType
 from typing import Optional
 
 from python2verilog.ir.expressions import Var
-from python2verilog.utils.assertions import (
-    assert_dict_type,
-    assert_list_type,
-    assert_type,
-)
+from python2verilog.utils.assertions import assert_typed_dict, get_typed, get_typed_list
 from python2verilog.utils.env_vars import is_debug_mode
 from python2verilog.utils.generics import GenericReprAndStr
 
@@ -105,12 +101,12 @@ class Context(GenericReprAndStr):
         if self._ready_state:
             assert self.ready_state in self.states, self
 
-        assert assert_type(self.wait_signal, Var)
-        assert assert_type(self.clock_signal, Var)
-        assert assert_type(self.ready_signal, Var)
-        assert assert_type(self.valid_signal, Var)
-        assert assert_type(self.reset_signal, Var)
-        assert assert_type(self.start_signal, Var)
+        assert get_typed(self.wait_signal, Var)
+        assert get_typed(self.clock_signal, Var)
+        assert get_typed(self.ready_signal, Var)
+        assert get_typed(self.valid_signal, Var)
+        assert get_typed(self.reset_signal, Var)
+        assert get_typed(self.start_signal, Var)
 
         return self
 
@@ -188,7 +184,7 @@ class Context(GenericReprAndStr):
 
     @input_vars.setter
     def input_vars(self, other: list[Var]):
-        self._input_vars = assert_list_type(other, Var)
+        self._input_vars = get_typed_list(other, Var)
 
     @property
     def output_vars(self):
@@ -199,7 +195,7 @@ class Context(GenericReprAndStr):
 
     @output_vars.setter
     def output_vars(self, other: list[Var]):
-        self._output_vars = assert_list_type(other, Var)
+        self._output_vars = get_typed_list(other, Var)
 
     def default_output_vars(self):
         """
@@ -217,13 +213,13 @@ class Context(GenericReprAndStr):
 
     @global_vars.setter
     def global_vars(self, other: list[Var]):
-        self._global_vars = assert_list_type(other, Var)
+        self._global_vars = get_typed_list(other, Var)
 
     def add_global_var(self, var: Var):
         """
         Appends global var
         """
-        self._global_vars.append(assert_type(var, Var))
+        self._global_vars.append(get_typed(var, Var))
 
     @property
     def states(self):

@@ -7,7 +7,7 @@ import itertools
 from python2verilog.optimizer.optimizer import backwards_replace
 
 from ... import ir
-from ...utils.assertions import assert_dict_type, assert_list_type, assert_type
+from ...utils.assertions import assert_typed_dict, get_typed, get_typed_list
 from . import ast as ver
 
 
@@ -20,8 +20,8 @@ class CodeGen:
         """ "
         Builds tree from Graph IR
         """
-        assert_type(root, ir.Vertex)
-        assert_type(context, ir.Context)
+        get_typed(root, ir.Vertex)
+        get_typed(context, ir.Context)
         self.context = context
 
         self.context.output_vars = [

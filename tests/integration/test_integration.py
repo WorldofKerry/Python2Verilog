@@ -17,7 +17,7 @@ from python2verilog.extern.iverilog import (
     run_iverilog_with_fifos,
     run_iverilog_with_files,
 )
-from python2verilog.utils.assertions import assert_type
+from python2verilog.utils.assertions import get_typed
 from tools.visualization import make_visual
 
 from .cases import TEST_CASES
@@ -144,7 +144,7 @@ class BaseTestCases:
                 for output in generator_inst:
                     if isinstance(output, int):
                         output = (output,)
-                    assert_type(output, tuple)
+                    get_typed(output, tuple)
 
                     if size is None:
                         size = len(output)

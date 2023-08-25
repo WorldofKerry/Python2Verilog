@@ -10,7 +10,7 @@ from typing import Optional, Union
 from python2verilog.backend import verilog
 from python2verilog.frontend.generator2ir import Generator2Graph
 from python2verilog.optimizer.optimizer import OptimizeGraph
-from python2verilog.utils.assertions import assert_list_type, assert_type
+from python2verilog.utils.assertions import get_typed, get_typed_list
 
 from .. import ir
 
@@ -51,11 +51,11 @@ def text_to_text(
 
     :return: (module, testbench)
     """
-    assert_type(code, str)
-    assert_type(function_name, str)
+    get_typed(code, str)
+    get_typed(function_name, str)
     assert function_name in code
-    assert_list_type(extra_test_cases, tuple)
-    assert_type(file_path, str)
+    get_typed_list(extra_test_cases, tuple)
+    get_typed(file_path, str)
 
     code_gen, _ = text_to_verilog(
         code=code,
@@ -78,8 +78,8 @@ def text_to_context(
     :return: context
     """
     # pylint: disable=too-many-locals
-    assert_type(code, str)
-    assert_type(function_name, str)
+    get_typed(code, str)
+    get_typed(function_name, str)
 
     def get_file_and_line_num(node: ast.AST):
         """
@@ -224,7 +224,7 @@ def context_to_text_and_file(context: ir.Context):
 
     :return: (module, testbench) pair
     """
-    assert_type(context, ir.Context)
+    get_typed(context, ir.Context)
     ver_code_gen, _ = context_to_verilog(context)
 
     module_str = ver_code_gen.get_module_str()

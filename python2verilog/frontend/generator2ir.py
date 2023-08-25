@@ -5,7 +5,7 @@ from __future__ import annotations
 import ast as pyast
 
 from .. import ir
-from ..utils.assertions import assert_list_type, assert_type
+from ..utils.assertions import get_typed, get_typed_list
 from ..utils.string import Indent, Lines
 
 
@@ -23,7 +23,7 @@ class Generator2Graph:
         Initializes the parser, does quick setup work
         """
         context.validate()
-        self._context = assert_type(context, ir.Context)
+        self._context = get_typed(context, ir.Context)
 
         self._root = self.__parse_statements(
             stmts=context.py_ast.body,
@@ -123,8 +123,8 @@ class Generator2Graph:
         <statement> (e.g. assign, for loop, etc., cannot be equated to)
 
         """
-        assert_type(stmt, pyast.AST)
-        assert_type(nextt, ir.Element)
+        get_typed(stmt, pyast.AST)
+        get_typed(nextt, ir.Element)
         cur_node = None
         if isinstance(stmt, pyast.Assign):
             cur_node = self.__parse_assign(stmt, prefix=prefix)
