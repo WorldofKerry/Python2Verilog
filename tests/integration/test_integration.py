@@ -227,7 +227,7 @@ class BaseTestCases:
                         FILES_IN_ABS_DIR["module"]: module_str,
                         FILES_IN_ABS_DIR["testbench"]: tb_str,
                     },
-                    timeout=60,
+                    timeout=6,
                 )
             else:
                 stdout, stderr = run_iverilog_with_fifos(
