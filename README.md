@@ -29,19 +29,13 @@ Unsupported Python paradigms include but are not limited to the following:
 - Keyword arguments, instead use positional arguments
 - Function calls, instead use the decorator on each of the subfunctions and manually connect together
 
-## Usage
+## Usage and Installation
 
-For an online demo, checkout out this [Replit project](https://replit.com/@WorldofKerry/Python2Verilog-Demo#main.py)! Please view the files in the filesystem, as that's where the output is written to. No guarantees on the up-to-dateness of this demo.
-
-### Installation
+Try it in [Google Collab](https://colab.research.google.com/github/WorldofKerry/Python2Verilog/blob/main/examples/decorator_advanced.ipynb) or check out [`examples/`](examples/)!
 
 `python3 -m pip install --upgrade pip`
 
 `python3 -m pip install python2verilog`
-
-### Basics
-
-Try it in [Google Collab](https://colab.research.google.com/github/WorldofKerry/Python2Verilog/blob/main/examples/decorator_advanced.ipynb) or check out [`examples/`](examples/)!
 
 ## Tested Generations
 
