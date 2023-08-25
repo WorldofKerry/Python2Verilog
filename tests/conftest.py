@@ -62,6 +62,7 @@ def argparse(request):
     for param in params:
         args[param.name] = request.config.getoption(f"--{param.dashed_name}")
 
+    args["optimization_levels"] = set(args["optimization_levels"])
     if max(args["optimization_levels"]) > 8:
         sys.setrecursionlimit(2000)
 

@@ -236,13 +236,16 @@ class BaseTestCases:
                         FILES_IN_ABS_DIR["module_fifo"]: module_str,
                         FILES_IN_ABS_DIR["testbench_fifo"]: tb_str,
                     },
-                    timeout=3,
+                    timeout=2,
                 )
             time_took = time.time() - time_started
 
             self.assertTrue(
                 stdout and not stderr,
-                f"\nVerilog simulation on {function_name}, with:\n{stderr}\n{FILES_IN_ABS_DIR['module']}\n{FILES_IN_ABS_DIR['testbench']}",
+                f"\nVerilog simulation on {function_name}, with:\
+                    \n{stderr}\n{FILES_IN_ABS_DIR['module']}\
+                        \n{FILES_IN_ABS_DIR['testbench']}, \
+                            produced stdout: {stdout}",
             )
 
             actual_raw: list[list[str]] = []

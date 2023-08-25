@@ -61,9 +61,10 @@ def run_cmd_with_fifos(
             assert process.stderr
             return process.stdout.read(), process.stderr.read()
         except subprocess.TimeoutExpired as e:
-            logging.error(e)
-            process.terminate()
-            return None, str(e)
+            logging.warning(e)
+            assert process.stdout
+            assert process.stderr
+            return process.stdout.read(), process.stderr.read()
 
 
 def run_cmd_with_files(
@@ -94,7 +95,9 @@ def run_cmd_with_files(
         except subprocess.TimeoutExpired as e:
             logging.error(e)
             process.terminate()
-            return None, str(e)
+            assert process.stdout
+            assert process.stderr
+            return process.stdout.read(), process.stderr.read()
 
 
 def run_iverilog_with_fifos(
