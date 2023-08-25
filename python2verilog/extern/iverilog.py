@@ -129,7 +129,7 @@ def run_iverilog_with_files(
     """
     iverilog_cmd = make_iverilog_cmd(
         top_level_module=top_level_module,
-        files=list(input_files.keys()),
+        files=input_files.keys(),
     )
     logging.debug(f"Running {iverilog_cmd}")
     return run_cmd_with_files(
