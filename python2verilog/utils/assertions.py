@@ -54,5 +54,13 @@ def get_typed(obj: _ValueType, type_: _ValueType):
     Asserts that obj is of type type_, then returns obj or None if obj is None
     """
     if obj:
-        assert_typed(obj, cast(_ClassInfo, type_))
+        return get_typed_or_none(obj, type_)
+    return None
+
+
+def get_typed_or_none(obj: _ValueType, type_: _ValueType):
+    """
+    Asserts that obj is of type type_
+    """
+    assert_typed(obj, cast(_ClassInfo, type_))
     return obj
