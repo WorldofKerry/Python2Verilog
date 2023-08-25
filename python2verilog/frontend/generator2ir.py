@@ -172,7 +172,7 @@ class Generator2Graph:
             unique_id=f"{prefix}_true_edge", name="True", child=then_node
         )
         if stmt.orelse:
-            else_node = self.__parse_statements(list(stmt.orelse), f"{prefix}_f", nextt)
+            else_node = self.__parse_statements(stmt.orelse, f"{prefix}_f", nextt)
             to_else = ir.ClockedEdge(
                 unique_id=f"{prefix}_false_edge", name="False", child=else_node
             )
@@ -210,7 +210,7 @@ class Generator2Graph:
             true_edge=loop_edge,
             false_edge=done_edge,
         )
-        body_node = self.__parse_statements(list(stmt.body), f"{prefix}_while", ifelse)
+        body_node = self.__parse_statements(stmt.body, f"{prefix}_while", ifelse)
         loop_edge.child = body_node
 
         return ifelse
