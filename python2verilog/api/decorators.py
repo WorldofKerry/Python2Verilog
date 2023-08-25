@@ -111,7 +111,7 @@ def verilogify(
     :param testbench_output: path to write verilog testbench to, defaults to function_name_tb.sv
     """
     get_typed(func, FunctionType)
-    assert_typed_dict(namespace, Callable, ir.Context)
+    assert_typed_dict(namespace, FunctionType, ir.Context)
     get_typed(module_output, (os.PathLike, io.IOBase, str))
     get_typed(testbench_output, (os.PathLike, io.IOBase, str))
     get_typed(write, bool)

@@ -1,13 +1,21 @@
 """
 Type assertion utilities
 """
-from typing import TYPE_CHECKING, Any, Optional, TypeGuard, TypeVar
+import sys
+import types
+from typing import Any, Optional, Type, TypeAlias, TypeGuard, TypeVar
 
 ValueType = TypeVar("ValueType")  # pylint: disable=invalid-name
 KeyType = TypeVar("KeyType")  # pylint: disable=invalid-name
 
+# pylint: disable=used-before-assignment
+if sys.version_info >= (3, 10):
+    _ClassInfo: TypeAlias = type | types.UnionType | tuple[_ClassInfo, ...]
+else:
+    _ClassInfo: TypeAlias = type | tuple[_ClassInfo, ...]
 
-def get_typed_list(list_: Optional[list], type_: ValueType):
+
+def get_typed_list(list_: Optional[list], type_: Type[ValueType]):
     """
     Asserts that all elems in list_ are of type_, then returns list_ or [] if list_ is None
     """
@@ -20,23 +28,31 @@ def get_typed_list(list_: Optional[list], type_: ValueType):
 
 
 def assert_typed_dict(
-    dict_: dict, key_type: KeyType, value_type: ValueType
+    dict_: dict, key_type: Type[KeyType], value_type: Type[ValueType]
 ) -> TypeGuard[dict[KeyType, ValueType]]:
     """
     Asserts that all key, values in dict_ are correctly typed,
     returns dict_ or {} if dict_ is None
     """
-    get_typed(dict_, dict)
+    assert_typed(dict_, dict)
     for key, value in dict_.items():
-        get_typed(key, key_type)
-        get_typed(value, value_type)
+        assert_typed(key, key_type)
+        assert_typed(value, value_type)
     return True
 
 
-def get_typed(obj: Any, type_: ValueType):
+def assert_typed(obj: Any, type_: _ClassInfo) -> TypeGuard[_ClassInfo]:
+    """
+    Type guard for type
+    """
+    assert isinstance(obj, type_), f"Expected {type_} got {type(obj)} instead"
+    return True
+
+
+def get_typed(obj: ValueType, type_: _ClassInfo):
     """
     Asserts that obj is of type type_, then returns obj or None if obj is None
     """
-    if not TYPE_CHECKING:
-        assert isinstance(obj, type_), f"Expected {type_} got {type(obj)} instead"
+    if obj:
+        assert_typed(obj, type_)
     return obj
