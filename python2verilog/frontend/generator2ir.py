@@ -85,7 +85,7 @@ class Generator2Graph:
         )
 
     def __parse_statements(
-        self, stmts: list[pyast.AST], prefix: str, nextt: ir.Element
+        self, stmts: list[pyast.stmt], prefix: str, nextt: ir.Element
     ):
         """
         Returns state of the first stmt in block
@@ -167,7 +167,7 @@ class Generator2Graph:
         """
         assert isinstance(stmt, pyast.If)
 
-        then_node = self.__parse_statements(list(stmt.body), f"{prefix}_t", nextt)
+        then_node = self.__parse_statements(stmt.body, f"{prefix}_t", nextt)
         to_then = ir.ClockedEdge(
             unique_id=f"{prefix}_true_edge", name="True", child=then_node
         )
