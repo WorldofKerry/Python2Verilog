@@ -3,6 +3,8 @@ Icarious Verilog CLI Abstractions
 """
 
 import logging
+import os
+import signal
 import subprocess
 import tempfile
 from typing import Iterable, Optional
@@ -45,12 +47,14 @@ def run_cmd_with_fifos(
 
     :return: (stdout, stderr/exception)
     """
+    # pylint: disable=subprocess-popen-preexec-fn
     with subprocess.Popen(
         command,
         shell=True,
         text=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
+        preexec_fn=os.setsid,
     ) as process:
         write_data_to_paths(input_fifos)
 
@@ -62,8 +66,7 @@ def run_cmd_with_fifos(
             return process.stdout.read(), process.stderr.read()
         except subprocess.TimeoutExpired as e:
             logging.warning(e)
-            process.terminate()
-            process.kill()
+            os.killpg(os.getpgid(process.pid), signal.SIGTERM)
             assert process.stdout
             assert process.stderr
             return process.stdout.read(), process.stderr.read()
@@ -80,13 +83,14 @@ def run_cmd_with_files(
     :return: (stdout, stderr/exception)
     """
     write_data_to_paths(input_files)
-
+    # pylint: disable=subprocess-popen-preexec-fn
     with subprocess.Popen(
         command,
         shell=True,
         text=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
+        preexec_fn=os.setsid,
     ) as process:
         try:
             logging.debug(f"Waiting on process for {timeout}s")
@@ -96,8 +100,7 @@ def run_cmd_with_files(
             return process.stdout.read(), process.stderr.read()
         except subprocess.TimeoutExpired as e:
             logging.warning(e)
-            process.terminate()
-            process.kill()
+            os.killpg(os.getpgid(process.pid), signal.SIGTERM)
             assert process.stdout
             assert process.stderr
             return process.stdout.read(), process.stderr.read()
