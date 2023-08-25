@@ -103,13 +103,15 @@ class TestVerilogify(unittest.TestCase):
                 i += 1
 
         for value in counter0(5):
-            print(value)
+            # print(value)
+            pass
 
         counter0(10)
         counter1(15, 20)
 
         for key, value in global_namespace.items():
-            print(type(key), type(value))
+            # print(type(key), type(value))
+            pass
 
     @writes
     def test_overwrite_fail(self):

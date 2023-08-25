@@ -48,6 +48,7 @@ class BaseTestCases:
             super().__init__(*args, **kwargs)
 
         def test_integration(self):
+            print()
             if self.args.first_test:
                 logging.info("Only first test being ran")
             for level in self.args.optimization_levels:
@@ -55,6 +56,7 @@ class BaseTestCases:
                     if self.args.first_test:
                         cases = [cases[0]]
                     with self.subTest(msg=name):
+                        print(f"subtest::{name}", end="", flush=True)
                         logging.info(
                             f"Testing function `{name}` with -O{level} on `{cases}`"
                         )
@@ -66,6 +68,7 @@ class BaseTestCases:
                             f"_{name}_O{level}_",
                             optimization_level=level,
                         )
+                        print(f" \033[92mPASSED\033[0m")
             self.all_statistics.sort(key=lambda e: e["Func Name"])
             if self.all_statistics:
                 df = pd.DataFrame(
@@ -227,7 +230,7 @@ class BaseTestCases:
                         FILES_IN_ABS_DIR["module"]: module_str,
                         FILES_IN_ABS_DIR["testbench"]: tb_str,
                     },
-                    timeout=60,
+                    timeout=len(expected),
                 )
             else:
                 stdout, stderr = run_iverilog_with_fifos(
@@ -236,7 +239,7 @@ class BaseTestCases:
                         FILES_IN_ABS_DIR["module_fifo"]: module_str,
                         FILES_IN_ABS_DIR["testbench_fifo"]: tb_str,
                     },
-                    timeout=60,
+                    timeout=len(expected),
                 )
             time_took = time.time() - time_started
 
