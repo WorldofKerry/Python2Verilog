@@ -3,7 +3,7 @@ Type assertion utilities
 """
 import sys
 import types
-from typing import Any, Optional, Type, TypeAlias, TypeGuard, TypeVar, Union, cast
+from typing import Any, Optional, Type, TypeAlias, TypeGuard, TypeVar, cast
 
 _ValueType = TypeVar("_ValueType")  # pylint: disable=invalid-name
 _KeyType = TypeVar("_KeyType")  # pylint: disable=invalid-name
@@ -12,7 +12,7 @@ _KeyType = TypeVar("_KeyType")  # pylint: disable=invalid-name
 if sys.version_info >= (3, 10):
     _ClassInfo: TypeAlias = type | types.UnionType | tuple["_ClassInfo", ...]
 else:
-    _ClassInfo: TypeAlias = Union[type, tuple["_ClassInfo", ...]]
+    _ClassInfo: TypeVar("_ClassInfo")
 
 
 def get_typed_list(list_: Optional[list], type_: Type[_ValueType]):
