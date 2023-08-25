@@ -403,7 +403,7 @@ def create_networkx_adjacency_list(node: Element):
 
         visited.add(curr_node)
         children = curr_node.get_all_children()
-        adjacency_list[curr_node] = list(children)
+        adjacency_list[curr_node] = children
 
         for child in children:
             traverse_graph(child, visited)
