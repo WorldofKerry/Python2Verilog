@@ -53,12 +53,20 @@ def get_typed(obj: _ValueType, type_: _ValueType):
     """
     Asserts that obj is of type type_, then returns obj or None if obj is None
     """
-    if obj:
-        return get_typed_or_none(obj, type_)
-    return None
+    get_typed_optional(obj, type_)
 
 
-def get_typed_or_none(obj: _ValueType, type_: _ValueType):
+def get_typed_optional(obj: _ValueType, type_: _ValueType):
+    """
+    Asserts that obj is of type type_, then returns obj or None if obj is None
+    """
+    if obj is not None:
+        get_typed_strict(obj, type_)
+    assert obj is None
+    return obj
+
+
+def get_typed_strict(obj: _ValueType, type_: _ValueType):
     """
     Asserts that obj is of type type_
     """
