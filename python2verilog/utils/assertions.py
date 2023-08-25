@@ -3,13 +3,15 @@ Type assertion utilities
 """
 import sys
 import types
-from typing import Any, Optional, Type, TypeAlias, TypeGuard, TypeVar, cast
+from typing import Any, Optional, Type, TypeGuard, TypeVar, cast
 
 _ValueType = TypeVar("_ValueType")  # pylint: disable=invalid-name
 _KeyType = TypeVar("_KeyType")  # pylint: disable=invalid-name
 
 # pylint: disable=used-before-assignment
 if sys.version_info >= (3, 10):
+    from typing import TypeAlias
+
     _ClassInfo: TypeAlias = type | types.UnionType | tuple["_ClassInfo", ...]
 else:
     _ClassInfo: TypeVar("_ClassInfo")
