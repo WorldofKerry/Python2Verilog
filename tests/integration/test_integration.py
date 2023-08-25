@@ -4,6 +4,7 @@ import logging
 import os
 import re
 import subprocess
+import time
 import unittest
 
 import networkx as nx
@@ -204,9 +205,6 @@ class BaseTestCases:
             logging.debug("Generating module and tb")
 
             module_str = verilog.get_module_str()
-            statistics["module_nchars"] = len(
-                module_str.replace("\n", "").replace(" ", "")
-            )
             tb_str = verilog.get_testbench_str()
 
             logging.debug("Writing module and tb")
@@ -218,6 +216,7 @@ class BaseTestCases:
                 with open(FILES_IN_ABS_DIR["testbench"], mode="w") as testbench_file:
                     testbench_file.write(tb_str)
 
+            time_started = time.time()
             if args.write:
                 stdout, stderr = run_iverilog_with_files(
                     f"{function_name}_tb",
@@ -234,8 +233,10 @@ class BaseTestCases:
                         FILES_IN_ABS_DIR["module_fifo"]: module_str,
                         FILES_IN_ABS_DIR["testbench_fifo"]: tb_str,
                     },
-                    timeout=10,
+                    timeout=3,
                 )
+            time_took = time.time() - time_started
+            statistics["sim_time"] = time_took
 
             self.assertTrue(
                 stdout and not stderr,
