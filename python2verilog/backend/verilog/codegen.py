@@ -185,7 +185,7 @@ class CodeGen:
         """
         return str(self.get_module_lines())
 
-    def get_testbench(self, random_wait: bool = True):
+    def get_testbench(self, random_wait: bool = False):
         """
         Creates testbench with multiple test cases
 
