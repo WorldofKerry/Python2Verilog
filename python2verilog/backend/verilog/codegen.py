@@ -94,10 +94,10 @@ class CodeGen:
             ],
         )
         body: list[ver.Statement] = [
-            ver.Declaration(v, is_reg=True, is_signed=True) for v in context.global_vars
+            ver.Declaration(v, reg=True, signed=True) for v in context.global_vars
         ]
         body += [
-            ver.Declaration(var.ver_name, is_reg=True, is_signed=True)
+            ver.Declaration(var.ver_name, reg=True, signed=True)
             for var in context.input_vars
         ]
 
@@ -217,18 +217,18 @@ class CodeGen:
 
         assert isinstance(self.context, ir.Context)
         decl: list[ver.Declaration] = []
-        decl.append(ver.Declaration("_clock", size=1, is_reg=True))
-        decl.append(ver.Declaration("_start", size=1, is_reg=True))
-        decl.append(ver.Declaration("_reset", size=1, is_reg=True))
-        decl.append(ver.Declaration("_wait", size=1, is_reg=True))
+        decl.append(ver.Declaration("_clock", size=1, reg=True))
+        decl.append(ver.Declaration("_start", size=1, reg=True))
+        decl.append(ver.Declaration("_reset", size=1, reg=True))
+        decl.append(ver.Declaration("_wait", size=1, reg=True))
         decl += [
-            ver.Declaration(var.py_name, is_signed=True, is_reg=True)
+            ver.Declaration(var.py_name, signed=True, reg=True)
             for var in self.context.input_vars
         ]
         decl.append(ver.Declaration("_ready", size=1))
         decl.append(ver.Declaration("_valid", size=1))
         decl += [
-            ver.Declaration(var.ver_name, is_signed=True)
+            ver.Declaration(var.ver_name, signed=True)
             for var in self.context.output_vars
         ]
 

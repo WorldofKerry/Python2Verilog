@@ -343,13 +343,13 @@ class Declaration(Statement):
         name: ir.Expression | str,
         *args,
         size: int = 32,
-        is_reg: bool = False,
-        is_signed: bool = False,
+        reg: bool = False,
+        signed: bool = False,
         **kwargs,
     ):
         self.size = size
-        self.is_reg = is_reg
-        self.is_signed = is_signed
+        self.reg = reg
+        self.signed = signed
         self.name = name
         super().__init__(*args, **kwargs)
 
@@ -358,11 +358,11 @@ class Declaration(Statement):
         To Verilog lines
         """
         string = ""
-        if self.is_reg:
+        if self.reg:
             string += "reg"
         else:
             string += "wire"
-        if self.is_signed:
+        if self.signed:
             string += " signed"
         if self.size > 1:
             string += f" [{self.size-1}:0]"
