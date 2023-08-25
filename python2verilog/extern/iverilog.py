@@ -93,8 +93,7 @@ def run_cmd_with_files(
             assert process.stderr
             return process.stdout.read(), process.stderr.read()
         except subprocess.TimeoutExpired as e:
-            logging.error(e)
-            process.terminate()
+            logging.warning(e)
             assert process.stdout
             assert process.stderr
             return process.stdout.read(), process.stderr.read()
