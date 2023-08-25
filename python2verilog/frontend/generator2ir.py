@@ -26,7 +26,7 @@ class Generator2Graph:
         self._context = assert_type(context, ir.Context)
 
         self._root = self.__parse_statements(
-            stmts=list(context.py_ast.body),
+            stmts=context.py_ast.body,
             prefix="_state",
             nextt=ir.DoneNode(unique_id=done_state_name, name="done"),
         )
