@@ -34,6 +34,7 @@ params = [
         default=[1],
         nargs="+",
         type=int,
+        action="extend",
         help="Set which optimization levels tests run on",
     ),
 ]
