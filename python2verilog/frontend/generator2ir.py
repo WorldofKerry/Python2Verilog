@@ -55,7 +55,7 @@ class Generator2Graph:
         """
         return (self.root, self.context)
 
-    def __parse_targets(self, nodes: list[pyast.AST]):
+    def __parse_targets(self, nodes: list[pyast.expr]):
         """
         Warning: only single target on left-hand-side supported
 
@@ -80,7 +80,7 @@ class Generator2Graph:
         """
         return ir.AssignNode(
             unique_id=prefix,
-            lvalue=self.__parse_targets(list(node.targets)),
+            lvalue=self.__parse_targets(node.targets),
             rvalue=self.__parse_expression(node.value),
         )
 
