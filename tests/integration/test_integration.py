@@ -6,6 +6,7 @@ import re
 import subprocess
 import time
 import unittest
+from typing import Any, Optional
 
 import networkx as nx
 import pandas as pd
@@ -38,6 +39,7 @@ class BaseTestCases:
             self,
             test_cases: dict[str, list[tuple[int, ...]]],
             *args,
+            testbench_args: Optional[dict[Any, Any]] = None,
             **kwargs,
         ):
             """
@@ -45,6 +47,9 @@ class BaseTestCases:
             """
             self.all_statistics: list[dict] = []
             self.test_cases = test_cases
+            if not testbench_args:
+                testbench_args = {}
+            self.testbench_args = testbench_args
             super().__init__(*args, **kwargs)
 
         def test_integration(self):
@@ -67,24 +72,26 @@ class BaseTestCases:
                             "data",
                             f"_{name}_O{level}_",
                             optimization_level=level,
+                            testbench_args=self.testbench_args,
                         )
                         print(f" \033[92mPASSED\033[0m")
             if self.all_statistics:
-                test_that_are_too_slow = []
-                for stat in self.all_statistics:
-                    if (
-                        "-O" in stat["Func Name"]
-                        and "-O0" not in stat["Func Name"]
-                        and "dumb" not in stat["Func Name"]
-                        and "testing" not in stat["Func Name"]
-                    ):
-                        slowness_multiplier = stat["Ver Clks"] / stat["Py Yields"]
-                        if slowness_multiplier > 1.10:
-                            test_that_are_too_slow.append(stat)
-                self.assertFalse(
-                    test_that_are_too_slow,
-                    "\n".join([str(test) for test in test_that_are_too_slow]),
-                )
+                if self.testbench_args["random_wait"] is False:
+                    test_that_are_too_slow = []
+                    for stat in self.all_statistics:
+                        if (
+                            "-O" in stat["Func Name"]
+                            and "-O0" not in stat["Func Name"]
+                            and "dumb" not in stat["Func Name"]
+                            and "testing" not in stat["Func Name"]
+                        ):
+                            slowness_multiplier = stat["Ver Clks"] / stat["Py Yields"]
+                            if slowness_multiplier > 1.10:
+                                test_that_are_too_slow.append(stat)
+                    self.assertFalse(
+                        test_that_are_too_slow,
+                        "\n".join([str(test) for test in test_that_are_too_slow]),
+                    )
                 self.all_statistics.sort(key=lambda e: e["Func Name"])
                 df = pd.DataFrame(
                     self.all_statistics, columns=self.all_statistics[0].keys()
@@ -105,6 +112,7 @@ class BaseTestCases:
             dir: str,
             prefix: str,
             optimization_level: int,
+            testbench_args: dict[Any, Any],
         ):
             """
             Stats will only be gathered on the last test
@@ -226,7 +234,7 @@ class BaseTestCases:
             logging.debug("Generating module and tb")
 
             module_str = verilog.get_module_str()
-            tb_str = verilog.get_testbench_str(random_wait=False)
+            tb_str = verilog.get_testbench_str(**testbench_args)
 
             logging.debug("Writing module and tb")
 
@@ -363,13 +371,27 @@ class BaseTestCases:
 @pytest.mark.usefixtures("argparse")
 class Graph(BaseTestCases.BaseTest):
     def __init__(self, *args, **kwargs):
-        BaseTestCases.BaseTest.__init__(self, TEST_CASES, *args, **kwargs)
+        BaseTestCases.BaseTest.__init__(
+            self, TEST_CASES, *args, testbench_args={"random_wait": False}, **kwargs
+        )
 
 
-# For easier testing
+@pytest.mark.usefixtures("argparse")
+class Graph(BaseTestCases.BaseTest):
+    def __init__(self, *args, **kwargs):
+        BaseTestCases.BaseTest.__init__(
+            self, TEST_CASES, *args, testbench_args={"random_wait": True}, **kwargs
+        )
+
+
+# For easier testing of a specific function
 @pytest.mark.usefixtures("argparse")
 class GraphTesting(BaseTestCases.BaseTest):
     def __init__(self, *args, **kwargs):
         BaseTestCases.BaseTest.__init__(
-            self, {"testing": TEST_CASES["testing"]}, *args, **kwargs
+            self,
+            {"testing": TEST_CASES["testing"]},
+            *args,
+            testbench_args={"random_wait": True},
+            **kwargs,
         )
