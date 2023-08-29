@@ -24,6 +24,8 @@ jobs:
 
       - name: Install dependencies
         run: |
+          sudo apt-get install python3-distutils
+          sudo apt-get install python3-apt
           python3 -m pip install --upgrade pip
           python3 -m pip install -r tests/requirements.txt
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
