@@ -13,7 +13,7 @@ import pytest
 from matplotlib import pyplot as plt
 
 from python2verilog import ir
-from python2verilog.api.wrappers import text_to_context, text_to_verilog
+from python2verilog.api.wrappers import text_to_verilog
 from python2verilog.extern.iverilog import (
     run_iverilog_with_fifos,
     run_iverilog_with_files,
@@ -69,8 +69,23 @@ class BaseTestCases:
                             optimization_level=level,
                         )
                         print(f" \033[92mPASSED\033[0m")
-            self.all_statistics.sort(key=lambda e: e["Func Name"])
             if self.all_statistics:
+                test_that_are_too_slow = []
+                for stat in self.all_statistics:
+                    if (
+                        "-O" in stat["Func Name"]
+                        and "-O0" not in stat["Func Name"]
+                        and "dumb" not in stat["Func Name"]
+                        and "testing" not in stat["Func Name"]
+                    ):
+                        slowness_multiplier = stat["Ver Clks"] / stat["Py Yields"]
+                        if slowness_multiplier > 1.10:
+                            test_that_are_too_slow.append(stat)
+                self.assertFalse(
+                    test_that_are_too_slow,
+                    "\n".join([str(test) for test in test_that_are_too_slow]),
+                )
+                self.all_statistics.sort(key=lambda e: e["Func Name"])
                 df = pd.DataFrame(
                     self.all_statistics, columns=self.all_statistics[0].keys()
                 )
@@ -211,7 +226,7 @@ class BaseTestCases:
             logging.debug("Generating module and tb")
 
             module_str = verilog.get_module_str()
-            tb_str = verilog.get_testbench_str()
+            tb_str = verilog.get_testbench_str(random_wait=False)
 
             logging.debug("Writing module and tb")
 

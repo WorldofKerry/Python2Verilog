@@ -185,7 +185,7 @@ class CodeGen:
         """
         return str(self.get_module_lines())
 
-    def get_testbench(self, random_wait: bool = True):
+    def get_testbench(self, random_wait: bool = False):
         """
         Creates testbench with multiple test cases
 
@@ -310,17 +310,17 @@ class CodeGen:
             return module
         raise RuntimeError("Needs the context")
 
-    def get_testbench_lines(self):
+    def get_testbench_lines(self, random_wait: bool = False):
         """
         New Testbench as lines
         """
-        return self.get_testbench().to_lines()
+        return self.get_testbench(random_wait=random_wait).to_lines()
 
-    def get_testbench_str(self):
+    def get_testbench_str(self, random_wait: bool = False):
         """
         New testbench as str
         """
-        return str(self.get_testbench_lines())
+        return str(self.get_testbench_lines(random_wait=random_wait))
 
 
 class CaseBuilder:
