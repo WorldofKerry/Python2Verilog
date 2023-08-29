@@ -70,7 +70,7 @@ if sys.version_info >= (3, 10):
 
 else:
 
-    def assert_typed_list(list_: Optional[list], type_):
+    def get_typed_list(list_: Optional[list], type_):
         """
         Asserts that all elems in list_ are of type_, then returns list_ or [] if list_ is None
         """
@@ -80,6 +80,19 @@ else:
                 get_typed(elem, type_)
             return list_
         return []
+
+    def get_typed_dict(dict_: Optional[dict], key_type, value_type):
+        """
+        Asserts that all key, values in dict_ are correctly typed,
+        returns dict_ or {} if dict_ is None
+        """
+        if dict_:
+            get_typed(dict_, dict)
+            for key, value in dict_.items():
+                get_typed(key, key_type)
+                get_typed(value, value_type)
+            return dict_
+        return {}
 
     def assert_typed_dict(dict_: Optional[dict], key_type, value_type):
         """
