@@ -6,7 +6,7 @@ import copy
 import io
 from dataclasses import dataclass, field
 from types import FunctionType
-from typing import Optional
+from typing import Any, Optional
 
 from python2verilog.ir.expressions import Var
 from python2verilog.utils.assertions import assert_typed_dict, get_typed, get_typed_list
@@ -25,13 +25,13 @@ class Context(GenericReprAndStr):
 
     # pylint: disable=too-many-instance-attributes
     name: str = ""
-    test_cases: list[tuple] = field(default_factory=list)
+    test_cases: list[tuple[int]] = field(default_factory=list)
 
     py_func: Optional[FunctionType] = None
     _py_ast: Optional[ast.FunctionDef] = None
 
-    input_types: list = field(default_factory=list)
-    output_types: list = field(default_factory=list)
+    input_types: list[type[Any]] = field(default_factory=list)
+    output_types: list[type[Any]] = field(default_factory=list)
 
     optimization_level: int = -1
 
@@ -263,7 +263,9 @@ class Context(GenericReprAndStr):
         assert isinstance(name, str)
         self._states.add(name)
 
-    def __check_types(self, expected_types: list, actual_values: list):
+    def __check_types(
+        self, expected_types: list[type[Any]], actual_values: list[type[Any]]
+    ):
         for expected, actual in zip(expected_types, actual_values):
             assert isinstance(
                 actual, expected

@@ -3,7 +3,10 @@ Implementation of generic base classes for __repr__ and __str__
 """
 
 
-def pretty_dict(dic: dict, indent=0):
+from typing import Any
+
+
+def pretty_dict(dic: dict[Any, Any], indent: int = 0) -> str:
     """
     Returns pretty-formatted stringified dict
     """

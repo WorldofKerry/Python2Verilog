@@ -14,7 +14,7 @@ if sys.version_info >= (3, 10):
 
     _ClassInfo: TypeAlias = type | types.UnionType | tuple["_ClassInfo", ...]
 
-    def get_typed_list(list_: Optional[list], type_: Type[_ValueType]):
+    def get_typed_list(list_: Optional[list[_ValueType]], type_: Type[_ValueType]):
         """
         Asserts that all elems in list_ are of type_, then returns list_ or [] if list_ is None
         """
@@ -26,7 +26,7 @@ if sys.version_info >= (3, 10):
         return []
 
     def assert_typed_dict(
-        dict_: dict, key_type: _KeyType, value_type: _ValueType
+        dict_: dict[_KeyType, _ValueType], key_type: _KeyType, value_type: _ValueType
     ) -> TypeGuard[dict[_KeyType, _ValueType]]:
         """
         Asserts that all key, values in dict_ are correctly typed,

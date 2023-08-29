@@ -12,7 +12,7 @@ import typing
 from functools import wraps
 from pathlib import Path
 from types import FunctionType
-from typing import Callable, Optional, Union
+from typing import Any, Callable, Optional, Union
 
 from python2verilog import ir
 from python2verilog.api.wrappers import context_to_text_and_file, context_to_verilog
@@ -22,7 +22,7 @@ from python2verilog.utils.decorator import decorator_with_args
 # To support iPython
 try:
 
-    def exit_register(fun: Callable, *_args, **_kwargs):
+    def exit_register(fun: Callable[[], Any], *_args, **_kwargs):
         """Decorator that registers at post_execute. After its execution it
         unregisters itself for subsequent runs."""
 
@@ -38,7 +38,7 @@ except NameError:
     from atexit import register as exit_register  # type: ignore
 
 # All functions if a lesser namespace is not given
-global_namespace: dict[Callable, ir.Context] = {}
+global_namespace: dict[Callable[..., Any], ir.Context] = {}
 exit_namespaces = [global_namespace]
 
 
@@ -53,7 +53,7 @@ def new_namespace():
     return namespace
 
 
-def namespace_to_file(namespace: dict[Callable, ir.Context]):
+def namespace_to_file(namespace: dict[FunctionType, ir.Context]):
     """
     Verilogifies a namespace
     """
@@ -96,10 +96,10 @@ def get_func_ast_from_func(func: FunctionType):
 @decorator_with_args
 def verilogify(
     func: FunctionType,
-    namespace: dict[Callable, ir.Context] = global_namespace,
+    namespace: dict[Callable[..., Any], ir.Context] = global_namespace,
     optimization_level: int = 1,
-    module_output: Optional[Union[os.PathLike, typing.IO, str]] = None,
-    testbench_output: Optional[Union[os.PathLike, typing.IO, str]] = None,
+    module_output: Optional[Union[os.PathLike[Any], typing.IO[Any], str]] = None,
+    testbench_output: Optional[Union[os.PathLike[Any], typing.IO[Any], str]] = None,
     write: bool = False,
     overwrite: bool = False,
 ):
@@ -111,7 +111,7 @@ def verilogify(
     :param testbench_output: path to write verilog testbench to, defaults to function_name_tb.sv
     """
     get_typed(func, FunctionType)
-    assert_typed_dict(namespace, FunctionType, ir.Context)
+    assert_typed_dict(namespace, FunctionType, ir.Context)  # type: ignore[misc]
     get_typed(module_output, (os.PathLike, io.IOBase, str))
     get_typed(testbench_output, (os.PathLike, io.IOBase, str))
     get_typed(write, bool)

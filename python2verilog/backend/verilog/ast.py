@@ -188,7 +188,7 @@ class Module(ImplementsToLines):
             self.body = []
 
         if localparams:
-            assert_typed_dict(localparams, str, ir.UInt)
+            assert_typed_dict(localparams, str, ir.UInt)  # type: ignore[misc]
             self.local_params = Lines()
             for key, value in localparams.items():
                 self.local_params.concat(LocalParam(key, value).to_lines())

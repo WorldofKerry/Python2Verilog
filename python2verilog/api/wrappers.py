@@ -5,7 +5,7 @@ Functions that take text as input
 import ast
 import logging
 from types import FunctionType
-from typing import Optional, Union
+from typing import Any, Optional
 
 from python2verilog.backend import verilog
 from python2verilog.frontend.generator2ir import Generator2Graph
@@ -18,7 +18,7 @@ from .. import ir
 def text_to_verilog(
     code: str,
     function_name: str,
-    extra_test_cases: Optional[list] = None,
+    extra_test_cases: Optional[list[tuple[int]]] = None,
     file_path: str = "",
     optimization_level: int = 1,
 ):
@@ -43,7 +43,7 @@ def text_to_verilog(
 def text_to_text(
     code: str,
     function_name: str,
-    extra_test_cases: Optional[list[tuple]] = None,
+    extra_test_cases: Optional[list[tuple[int]]] = None,
     file_path: str = "",
 ):
     """
@@ -54,7 +54,7 @@ def text_to_text(
     get_typed(code, str)
     get_typed(function_name, str)
     assert function_name in code
-    get_typed_list(extra_test_cases, tuple)
+    get_typed_list(extra_test_cases, tuple)  # type: ignore[misc]
     get_typed(file_path, str)
 
     code_gen, _ = text_to_verilog(
@@ -70,7 +70,7 @@ def text_to_context(
     code: str,
     function_name: str,
     file_path: Optional[str] = None,
-    extra_test_cases: Optional[list] = None,
+    extra_test_cases: Optional[list[tuple[int]]] = None,
 ):
     """
     Parses python code into the function and testbench
@@ -136,7 +136,7 @@ def text_to_context(
     logging.info(f"Input param names: {input_names}")
 
     initialized = False
-    input_types: Union[str, list] = "Unknown"
+    input_types: list[type[Any]]
     for test_case in test_cases:
         if not initialized:
             input_types = [type(val) for val in test_case]

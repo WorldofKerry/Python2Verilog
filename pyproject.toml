@@ -23,3 +23,10 @@ log_cli_level = "WARNING"
 log_cli_format = "%(levelname)s %(filename)s:%(lineno)s %(message)s"
 # log_cli_format = "%(asctime)s [%(levelname)8s] %(message)s (%(filename)s:%(lineno)s)"
 # log_cli_date_format = "%Y-%m-%d %H:%M:%S"
+
+[tool.mypy]
+warn_return_any = true
+warn_unused_configs = true
+warn_redundant_casts = true
+disallow_any_generics = true
+# disallow_untyped_defs = true # TODO: require
