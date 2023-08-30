@@ -45,6 +45,7 @@ def text_to_text(
     function_name: str,
     extra_test_cases: Optional[list[tuple[int]]] = None,
     file_path: str = "",
+    optimization_level: int = 1,
 ):
     """
     Converts from code to module and testbench strings
@@ -62,6 +63,7 @@ def text_to_text(
         function_name=function_name,
         extra_test_cases=extra_test_cases,
         file_path=file_path,
+        optimization_level=optimization_level,
     )
     return code_gen.get_module_str(), code_gen.get_testbench_str()
 
