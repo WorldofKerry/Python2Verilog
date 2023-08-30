@@ -7,7 +7,7 @@ import itertools
 from python2verilog.optimizer.optimizer import backwards_replace
 
 from ... import ir
-from ...utils.assertions import assert_dict_type, assert_list_type, assert_type
+from ...utils.assertions import assert_typed_dict, get_typed, get_typed_list
 from . import ast as ver
 
 
@@ -20,8 +20,8 @@ class CodeGen:
         """ "
         Builds tree from Graph IR
         """
-        assert_type(root, ir.Vertex)
-        assert_type(context, ir.Context)
+        get_typed(root, ir.Vertex)
+        get_typed(context, ir.Context)
         self.context = context
 
         self.context.output_vars = [
@@ -71,24 +71,33 @@ class CodeGen:
                 for out in context.output_vars
             ]
             + [
+                ver.Statement(),
+                ver.Statement(comment="Start signal takes precedence over reset"),
                 ver.IfElse(
                     ir.Expression("_reset"),
                     then_body=[
                         ver.NonBlockingSubsitution(
                             lvalue=context.state_var,
                             rvalue=ir.Expression(context.ready_state),
-                        )
+                        ),
                     ],
                     else_body=[],
-                )
+                ),
+                ver.Statement(),
             ]
-            + [CodeGen.__get_start_ifelse(root, context)],
+            + [
+                ver.IfElse(
+                    ir.UnaryOp("!", ir.Expression("_wait")),
+                    then_body=[CodeGen.__get_start_ifelse(root, context)],
+                    else_body=[],
+                )
+            ],
         )
         body: list[ver.Statement] = [
-            ver.Declaration(v, is_reg=True, is_signed=True) for v in context.global_vars
+            ver.Declaration(v, reg=True, signed=True) for v in context.global_vars
         ]
         body += [
-            ver.Declaration(var.ver_name, is_reg=True, is_signed=True)
+            ver.Declaration(var.ver_name, reg=True, signed=True)
             for var in context.input_vars
         ]
 
@@ -121,8 +130,15 @@ class CodeGen:
             ir.Expression(var.ver_name): ir.Expression(var.py_name)
             for var in context.input_vars
         }
-        stmt_stack = []
-        init_body = []
+        stmt_stack: list[ver.Statement] = []
+        init_body: list[ver.Statement] = []
+
+        for var in context.input_vars:
+            init_body.append(
+                ver.NonBlockingSubsitution(
+                    ir.Expression(var.ver_name), ir.Expression(var.py_name)
+                )
+            )
 
         for item in root.case_items:
             if item.condition == ir.Expression(context.entry_state):
@@ -141,13 +157,6 @@ class CodeGen:
                 stmt_stack += stmt.else_body
             else:
                 raise TypeError(f"Unexpected {type(stmt)} {stmt}")
-
-        for var in context.input_vars:
-            init_body.append(
-                ver.NonBlockingSubsitution(
-                    ir.Expression(var.ver_name), ir.Expression(var.py_name)
-                )
-            )
 
         block = ver.IfElse(
             ir.Expression("_start"),
@@ -176,11 +185,13 @@ class CodeGen:
         """
         return str(self.get_module_lines())
 
-    def get_testbench(self):
+    def get_testbench(self, random_wait: bool = False):
         """
         Creates testbench with multiple test cases
 
         Each element of self.context.test_cases represents a single test case
+
+        :param random_wait: whether or not to have random _wait signal in the while loop
         """
         if len(self.context.input_vars) == 0:
             raise RuntimeError(f"Input var names not deduced for {self.context.name}")
@@ -206,19 +217,20 @@ class CodeGen:
 
         assert isinstance(self.context, ir.Context)
         decl: list[ver.Declaration] = []
-        decl.append(ver.Declaration("_clock", size=1, is_reg=True))
-        decl.append(ver.Declaration("_start", size=1, is_reg=True))
-        decl.append(ver.Declaration("_reset", size=1, is_reg=True))
+        decl.append(ver.Declaration("_clock", size=1, reg=True))
+        decl.append(ver.Declaration("_start", size=1, reg=True))
+        decl.append(ver.Declaration("_reset", size=1, reg=True))
+        decl.append(ver.Declaration("_wait", size=1, reg=True))
         decl += [
-            ver.Declaration(var.ver_name, is_signed=True)
-            for var in self.context.output_vars
-        ]
-        decl += [
-            ver.Declaration(var.py_name, is_signed=True, is_reg=True)
+            ver.Declaration(var.py_name, signed=True, reg=True)
             for var in self.context.input_vars
         ]
         decl.append(ver.Declaration("_ready", size=1))
         decl.append(ver.Declaration("_valid", size=1))
+        decl += [
+            ver.Declaration(var.ver_name, signed=True)
+            for var in self.context.output_vars
+        ]
 
         ports = {decl.name: decl.name for decl in decl}
 
@@ -228,19 +240,13 @@ class CodeGen:
         setups.append(ver.Statement(literal="always #5 _clock = !_clock;"))
 
         initial_body: list[ver.Statement | ver.While] = []
-        initial_body.append(
-            ver.BlockingSubsitution(self.context.clock_signal, ir.UInt(0))
-        )
-        initial_body.append(
-            ver.BlockingSubsitution(self.context.start_signal, ir.UInt(0))
-        )
-        initial_body.append(
-            ver.BlockingSubsitution(self.context.reset_signal, ir.UInt(1))
-        )
+        initial_body.append(ver.BlockingSub(self.context.clock_signal, ir.UInt(0)))
+        initial_body.append(ver.BlockingSub(self.context.start_signal, ir.UInt(0)))
+        initial_body.append(ver.BlockingSub(self.context.wait_signal, ir.UInt(0)))
+        initial_body.append(ver.BlockingSub(self.context.reset_signal, ir.UInt(1)))
+
         initial_body.append(ver.AtNegedgeStatement(self.context.clock_signal))
-        initial_body.append(
-            ver.BlockingSubsitution(self.context.reset_signal, ir.UInt(0))
-        )
+        initial_body.append(ver.BlockingSub(self.context.reset_signal, ir.UInt(0)))
         initial_body.append(ver.Statement())
 
         for i, test_case in enumerate(self.context.test_cases):
@@ -253,32 +259,30 @@ class CodeGen:
             )
             for i, var in enumerate(self.context.input_vars):
                 initial_body.append(
-                    ver.BlockingSubsitution(
+                    ver.BlockingSub(
                         ir.Expression(var.py_name), ir.Int(int(test_case[i]))
                     )
                 )
-            initial_body.append(
-                ver.BlockingSubsitution(self.context.start_signal, ir.UInt(1))
-            )
+            initial_body.append(ver.BlockingSub(self.context.start_signal, ir.UInt(1)))
 
             # Post-start
             initial_body.append(ver.Statement())
             initial_body.append(ver.AtNegedgeStatement(self.context.clock_signal))
             for i, var in enumerate(self.context.input_vars):
                 initial_body.append(
-                    ver.BlockingSubsitution(
+                    ver.BlockingSub(
                         ir.Expression(var.py_name),
                         ir.Unknown(),
                         comment="only need inputs at start",
                     )
                 )
-            initial_body.append(
-                ver.BlockingSubsitution(self.context.start_signal, ir.UInt(0))
-            )
+            initial_body.append(ver.BlockingSub(self.context.start_signal, ir.UInt(0)))
             initial_body.append(ver.Statement())
 
             # While loop waitng for ready signal
             while_body: list[ver.Statement] = []
+            if random_wait:
+                while_body.append(ver.Statement("_wait = $urandom_range(0, 1);"))
             while_body.append(make_display_stmt())
             while_body.append(ver.AtNegedgeStatement(self.context.clock_signal))
 
@@ -306,17 +310,17 @@ class CodeGen:
             return module
         raise RuntimeError("Needs the context")
 
-    def get_testbench_lines(self):
+    def get_testbench_lines(self, random_wait: bool = False):
         """
         New Testbench as lines
         """
-        return self.get_testbench().to_lines()
+        return self.get_testbench(random_wait=random_wait).to_lines()
 
-    def get_testbench_str(self):
+    def get_testbench_str(self, random_wait: bool = False):
         """
         New testbench as str
         """
-        return str(self.get_testbench_lines())
+        return str(self.get_testbench_lines(random_wait=random_wait))
 
 
 class CaseBuilder:

@@ -17,31 +17,25 @@ A use case is for drawing shapes on grids (for VGA output), where the user may p
 Constrains on Python functions include:
 
 - Supports only `if` and `while` blocks
-- Supports only integral types and operations for input and output
+- Supports only signed integral input/output and operations
 - Must be a [generator function](https://wiki.python.org/moin/Generators)
 - Must be a [pure function](https://en.wikipedia.org/wiki/Pure_function)
 
 Unsupported Python paradigms include but are not limited to the following:
 
 - Regular functions that use the `return` keyword, instead `yield` once
-- `for` loops, instead rewrite as a while loop
-- Function calls, instead use the converter on each of the subfunctions
+- `for` loops, instead rewrite as a `while` loop
+- Global (nonlocal) variables, instead declare them within the function with minimal overhead
 - Keyword arguments, instead use positional arguments
-- Global (nonlocal) variables, instead declare them within the function
+- Function calls, instead use the decorator on each of the subfunctions and manually connect together
 
-## Usage
+## Usage and Installation
 
-For an online demo, checkout out this [Replit project](https://replit.com/@WorldofKerry/Python2Verilog-Demo#main.py)! Please view the files in the filesystem, as that's where the output is written to. No guarantees on the up-to-dateness of this demo.
-
-### Installation
+Try it in [Google Collab](https://colab.research.google.com/github/WorldofKerry/Python2Verilog/blob/main/examples/decorator_advanced.ipynb) or check out [`examples/`](examples/)!
 
 `python3 -m pip install --upgrade pip`
 
 `python3 -m pip install python2verilog`
-
-### Basics
-
-Try it in [Google Collab](https://colab.research.google.com/github/WorldofKerry/Python2Verilog/blob/main/examples/decorator_advanced.ipynb) or check out [`examples/`](examples/)!
 
 ## Tested Generations
 

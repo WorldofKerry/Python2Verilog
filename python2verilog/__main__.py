@@ -108,6 +108,7 @@ if __name__ == "__main__":
             function_name=args.name,
             extra_test_cases=test_cases,
             file_path=input_file_path,
+            optimization_level=args.optimization_level,
         )
 
         with open(

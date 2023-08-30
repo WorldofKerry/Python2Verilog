@@ -8,7 +8,7 @@ import itertools
 from typing import Optional
 
 from ... import ir
-from ...utils.assertions import assert_dict_type, assert_list_type, assert_type
+from ...utils.assertions import assert_typed_dict, get_typed, get_typed_list
 from ...utils.string import ImplementsToLines, Indent, Lines
 
 
@@ -41,8 +41,8 @@ class Statement(ImplementsToLines):
     """
 
     def __init__(self, literal: str = "", comment: str = ""):
-        self.literal = assert_type(literal, str)
-        self.comment = assert_type(comment, str)
+        self.literal = get_typed(literal, str)
+        self.comment = get_typed(comment, str)
 
     def to_lines(self):
         """
@@ -168,6 +168,7 @@ class Module(ImplementsToLines):
             input_lines += "input wire _start"
             input_lines += "input wire _clock"
             input_lines += "input wire _reset"
+            input_lines += "input wire _wait"
         self.input = input_lines
 
         output_lines = Lines()
@@ -187,7 +188,7 @@ class Module(ImplementsToLines):
             self.body = []
 
         if localparams:
-            assert_dict_type(localparams, str, ir.UInt)
+            assert_typed_dict(localparams, str, ir.UInt)  # type: ignore[misc]
             self.local_params = Lines()
             for key, value in localparams.items():
                 self.local_params.concat(LocalParam(key, value).to_lines())
@@ -223,7 +224,7 @@ class Initial(Statement):
 
     def __init__(self, *args, body: Optional[list[Statement]] = None, **kwargs):
         if body:
-            assert_list_type(body, Statement)
+            get_typed_list(body, Statement)
         self.body = body
         super().__init__(*args, **kwargs)
 
@@ -323,7 +324,7 @@ class NonBlockingSubsitution(Subsitution):
         super().__init__(lvalue, rvalue, "<=", *args, **kwargs)
 
 
-class BlockingSubsitution(Subsitution):
+class BlockingSub(Subsitution):
     """
     <lvalue> = <rvalue>
     """
@@ -342,13 +343,13 @@ class Declaration(Statement):
         name: ir.Expression | str,
         *args,
         size: int = 32,
-        is_reg: bool = False,
-        is_signed: bool = False,
+        reg: bool = False,
+        signed: bool = False,
         **kwargs,
     ):
         self.size = size
-        self.is_reg = is_reg
-        self.is_signed = is_signed
+        self.reg = reg
+        self.signed = signed
         self.name = name
         super().__init__(*args, **kwargs)
 
@@ -357,11 +358,11 @@ class Declaration(Statement):
         To Verilog lines
         """
         string = ""
-        if self.is_reg:
+        if self.reg:
             string += "reg"
         else:
             string += "wire"
-        if self.is_signed:
+        if self.signed:
             string += " signed"
         if self.size > 1:
             string += f" [{self.size-1}:0]"
@@ -449,9 +450,9 @@ class IfElse(Statement):
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        self.condition = assert_type(condition, ir.Expression)
-        self.then_body = assert_list_type(then_body, Statement)
-        self.else_body = assert_list_type(else_body, Statement)
+        self.condition = get_typed(condition, ir.Expression)
+        self.then_body = get_typed_list(then_body, Statement)
+        self.else_body = get_typed_list(else_body, Statement)
 
     def to_lines(self):
         lines = Lines()
@@ -484,7 +485,7 @@ class While(Statement):
         assert isinstance(condition, ir.Expression)
         self.condition = condition
         if body:
-            assert_list_type(body, Statement)
+            get_typed_list(body, Statement)
         self.body = body
         super().__init__(*args, **kwargs)
 

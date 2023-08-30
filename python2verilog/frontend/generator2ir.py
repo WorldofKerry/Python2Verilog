@@ -5,7 +5,7 @@ from __future__ import annotations
 import ast as pyast
 
 from .. import ir
-from ..utils.assertions import assert_list_type, assert_type
+from ..utils.assertions import get_typed, get_typed_list
 from ..utils.string import Indent, Lines
 
 
@@ -23,10 +23,10 @@ class Generator2Graph:
         Initializes the parser, does quick setup work
         """
         context.validate()
-        self._context = assert_type(context, ir.Context)
+        self._context = get_typed(context, ir.Context)
 
         self._root = self.__parse_statements(
-            stmts=list(context.py_ast.body),
+            stmts=context.py_ast.body,
             prefix="_state",
             nextt=ir.DoneNode(unique_id=done_state_name, name="done"),
         )
@@ -55,7 +55,7 @@ class Generator2Graph:
         """
         return (self.root, self.context)
 
-    def __parse_targets(self, nodes: list[pyast.AST]):
+    def __parse_targets(self, nodes: list[pyast.expr]):
         """
         Warning: only single target on left-hand-side supported
 
@@ -80,12 +80,12 @@ class Generator2Graph:
         """
         return ir.AssignNode(
             unique_id=prefix,
-            lvalue=self.__parse_targets(list(node.targets)),
+            lvalue=self.__parse_targets(node.targets),
             rvalue=self.__parse_expression(node.value),
         )
 
     def __parse_statements(
-        self, stmts: list[pyast.AST], prefix: str, nextt: ir.Element
+        self, stmts: list[pyast.stmt], prefix: str, nextt: ir.Element
     ):
         """
         Returns state of the first stmt in block
@@ -123,8 +123,8 @@ class Generator2Graph:
         <statement> (e.g. assign, for loop, etc., cannot be equated to)
 
         """
-        assert_type(stmt, pyast.AST)
-        assert_type(nextt, ir.Element)
+        get_typed(stmt, pyast.AST)
+        get_typed(nextt, ir.Element)
         cur_node = None
         if isinstance(stmt, pyast.Assign):
             cur_node = self.__parse_assign(stmt, prefix=prefix)
@@ -167,12 +167,12 @@ class Generator2Graph:
         """
         assert isinstance(stmt, pyast.If)
 
-        then_node = self.__parse_statements(list(stmt.body), f"{prefix}_t", nextt)
+        then_node = self.__parse_statements(stmt.body, f"{prefix}_t", nextt)
         to_then = ir.ClockedEdge(
             unique_id=f"{prefix}_true_edge", name="True", child=then_node
         )
         if stmt.orelse:
-            else_node = self.__parse_statements(list(stmt.orelse), f"{prefix}_f", nextt)
+            else_node = self.__parse_statements(stmt.orelse, f"{prefix}_f", nextt)
             to_else = ir.ClockedEdge(
                 unique_id=f"{prefix}_false_edge", name="False", child=else_node
             )
@@ -210,7 +210,7 @@ class Generator2Graph:
             true_edge=loop_edge,
             false_edge=done_edge,
         )
-        body_node = self.__parse_statements(list(stmt.body), f"{prefix}_while", ifelse)
+        body_node = self.__parse_statements(stmt.body, f"{prefix}_while", ifelse)
         loop_edge.child = body_node
 
         return ifelse

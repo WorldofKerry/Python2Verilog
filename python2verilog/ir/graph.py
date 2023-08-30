@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from ..utils.assertions import assert_list_type, assert_type
+from ..utils.assertions import get_typed, get_typed_list
 from . import expressions as expr
 
 
@@ -21,8 +21,8 @@ class Element:
     """
 
     def __init__(self, unique_id: str, name: str = ""):
-        self._name = assert_type(name, str)
-        self._id = assert_type(unique_id, str)
+        self._name = get_typed(name, str)
+        self._id = get_typed(unique_id, str)
 
     def to_string(self):
         """
@@ -40,7 +40,7 @@ class Element:
     def __hash__(self) -> int:
         return hash(self._id)
 
-    def __eq__(self, __value: object) -> bool:
+    def __eq__(self, __value: object):
         if isinstance(__value, Element):
             return self._id == __value._id
         return False
@@ -57,7 +57,7 @@ class Element:
         """
         Sets node id
         """
-        self._id = assert_type(value, str)
+        self._id = get_typed(value, str)
 
     def get_all_children(self):
         """
@@ -99,7 +99,7 @@ class BasicElement(Element):
         **kwargs,
     ):
         super().__init__(unique_id, *args, **kwargs)
-        self._child = assert_type(child, Element)
+        self._child = get_typed(child, Element)
         self._optimal_child = None
 
     @property
@@ -111,7 +111,7 @@ class BasicElement(Element):
 
     @child.setter
     def child(self, other: Element):
-        self._child = assert_type(other, Element)
+        self._child = get_typed(other, Element)
 
     def get_all_children(self):
         """
@@ -145,7 +145,7 @@ class BasicElement(Element):
 
     @optimal_child.setter
     def optimal_child(self, other: Element):
-        self._optimal_child = assert_type(other, Element)
+        self._optimal_child = get_typed(other, Element)
 
 
 class Vertex(Element):
@@ -169,9 +169,9 @@ class IfElseNode(Vertex, Element):
         **kwargs,
     ):
         super().__init__(unique_id, *args, **kwargs)
-        self._true_edge = assert_type(true_edge, Edge)
-        self._false_edge = assert_type(false_edge, Edge)
-        self._condition = assert_type(condition, expr.Expression)
+        self._true_edge = get_typed(true_edge, Edge)
+        self._false_edge = get_typed(false_edge, Edge)
+        self._condition = get_typed(condition, expr.Expression)
         self._optimal_true_edge = None
         self._optimal_false_edge = None
 
@@ -197,7 +197,7 @@ class IfElseNode(Vertex, Element):
 
     @true_edge.setter
     def true_edge(self, other: Element):
-        self._true_edge = assert_type(other, Element)
+        self._true_edge = get_typed(other, Element)
 
     @property
     def false_edge(self):
@@ -208,7 +208,7 @@ class IfElseNode(Vertex, Element):
 
     @false_edge.setter
     def false_edge(self, other: Element):
-        self._false_edge = assert_type(other, Element)
+        self._false_edge = get_typed(other, Element)
 
     @property
     def optimal_true_edge(self):
@@ -219,7 +219,7 @@ class IfElseNode(Vertex, Element):
 
     @optimal_true_edge.setter
     def optimal_true_edge(self, other: Element):
-        self._optimal_true_edge = assert_type(other, Element)
+        self._optimal_true_edge = get_typed(other, Element)
 
     @property
     def optimal_false_edge(self):
@@ -232,7 +232,7 @@ class IfElseNode(Vertex, Element):
 
     @optimal_false_edge.setter
     def optimal_false_edge(self, other: Element):
-        self._optimal_false_edge = assert_type(other, Element)
+        self._optimal_false_edge = get_typed(other, Element)
 
     def get_all_children(self):
         """
@@ -281,8 +281,8 @@ class AssignNode(Vertex, BasicElement):
         **kwargs,
     ):
         super().__init__(unique_id, *args, child=child, **kwargs)
-        self._lvalue = assert_type(lvalue, expr.Expression)
-        self._rvalue = assert_type(rvalue, expr.Expression)
+        self._lvalue = get_typed(lvalue, expr.Expression)
+        self._rvalue = get_typed(rvalue, expr.Expression)
 
     @property
     def lvalue(self):
@@ -300,7 +300,7 @@ class AssignNode(Vertex, BasicElement):
 
     @rvalue.setter
     def rvalue(self, rvalue: expr.Expression):
-        self._rvalue = assert_type(rvalue, expr.Expression)
+        self._rvalue = get_typed(rvalue, expr.Expression)
 
     def to_string(self):
         """
@@ -322,7 +322,7 @@ class YieldNode(Vertex, BasicElement):
         edge: Optional[Edge] = None,
     ):
         super().__init__(unique_id, name=name, child=edge)
-        self._stmts = assert_list_type(stmts, expr.Expression)
+        self._stmts = get_typed_list(stmts, expr.Expression)
 
     @property
     def stmts(self):
@@ -403,7 +403,7 @@ def create_networkx_adjacency_list(node: Element):
 
         visited.add(curr_node)
         children = curr_node.get_all_children()
-        adjacency_list[curr_node] = list(children)
+        adjacency_list[curr_node] = children
 
         for child in children:
             traverse_graph(child, visited)

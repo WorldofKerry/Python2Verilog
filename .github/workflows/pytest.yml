@@ -24,8 +24,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install -r tests/requirements.txt
+          python3 -m pip install --upgrade pip
+          python3 -m pip install -r tests/requirements.txt
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: Download Icarus Verilog and Utilities
@@ -41,7 +41,7 @@ jobs:
       - name: Run Pytest
         run: |
           python3 -m pytest -vs tests/ --cov=python2verilog/ --cov-report term-missing --log-cli-level=info \
-          --write --optimization-levels 1 --synthesis
+          --write --optimization-levels 0 1 2 --synthesis
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:

@@ -3,12 +3,14 @@ Icarious Verilog CLI Abstractions
 """
 
 import logging
+import os
+import signal
 import subprocess
 import tempfile
-from typing import Optional
+from typing import Iterable, Optional
 
 
-def make_iverilog_cmd(top_level_module: str, files: list[str]):
+def make_iverilog_cmd(top_level_module: str, files: Iterable[str]):
     """
     Returns an iverilog command
 
@@ -45,27 +47,29 @@ def run_cmd_with_fifos(
 
     :return: (stdout, stderr/exception)
     """
-    # pylint: disable=consider-using-with
-    process = subprocess.Popen(
+    # pylint: disable=subprocess-popen-preexec-fn
+    with subprocess.Popen(
         command,
         shell=True,
         text=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-    )
+        preexec_fn=os.setsid,
+    ) as process:
+        write_data_to_paths(input_fifos)
 
-    write_data_to_paths(input_fifos)
-
-    try:
-        logging.debug(f"Waiting on process for {timeout}s")
-        process.wait(timeout=timeout)
-        assert process.stdout
-        assert process.stderr
-        return process.stdout.read(), process.stderr.read()
-    except subprocess.TimeoutExpired as e:
-        logging.error(e)
-        process.terminate()
-        return None, str(e)
+        try:
+            logging.debug(f"Waiting on process for {timeout}s")
+            process.wait(timeout=timeout)
+            assert process.stdout
+            assert process.stderr
+            return process.stdout.read(), process.stderr.read()
+        except subprocess.TimeoutExpired as e:
+            logging.warning(e)
+            os.killpg(os.getpgid(process.pid), signal.SIGTERM)
+            assert process.stdout
+            assert process.stderr
+            return process.stdout.read(), process.stderr.read()
 
 
 def run_cmd_with_files(
@@ -79,26 +83,27 @@ def run_cmd_with_files(
     :return: (stdout, stderr/exception)
     """
     write_data_to_paths(input_files)
-
-    # pylint: disable=consider-using-with
-    process = subprocess.Popen(
+    # pylint: disable=subprocess-popen-preexec-fn
+    with subprocess.Popen(
         command,
         shell=True,
         text=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-    )
-
-    try:
-        logging.debug(f"Waiting on process for {timeout}s")
-        process.wait(timeout=timeout)
-        assert process.stdout
-        assert process.stderr
-        return process.stdout.read(), process.stderr.read()
-    except subprocess.TimeoutExpired as e:
-        logging.error(e)
-        process.terminate()
-        return None, str(e)
+        preexec_fn=os.setsid,
+    ) as process:
+        try:
+            logging.debug(f"Waiting on process for {timeout}s")
+            process.wait(timeout=timeout)
+            assert process.stdout
+            assert process.stderr
+            return process.stdout.read(), process.stderr.read()
+        except subprocess.TimeoutExpired as e:
+            logging.warning(e)
+            os.killpg(os.getpgid(process.pid), signal.SIGTERM)
+            assert process.stdout
+            assert process.stderr
+            return process.stdout.read(), process.stderr.read()
 
 
 def run_iverilog_with_fifos(
@@ -113,7 +118,7 @@ def run_iverilog_with_fifos(
     """
     iverilog_cmd = make_iverilog_cmd(
         top_level_module=top_level_module,
-        files=list(input_fifos.keys()),
+        files=input_fifos.keys(),
     )
     logging.debug(f"Running {iverilog_cmd}")
     return run_cmd_with_fifos(
@@ -133,7 +138,7 @@ def run_iverilog_with_files(
     """
     iverilog_cmd = make_iverilog_cmd(
         top_level_module=top_level_module,
-        files=list(input_files.keys()),
+        files=input_files.keys(),
     )
     logging.debug(f"Running {iverilog_cmd}")
     return run_cmd_with_files(

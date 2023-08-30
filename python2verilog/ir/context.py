@@ -6,14 +6,10 @@ import copy
 import io
 from dataclasses import dataclass, field
 from types import FunctionType
-from typing import Optional
+from typing import Any, Optional
 
 from python2verilog.ir.expressions import Var
-from python2verilog.utils.assertions import (
-    assert_dict_type,
-    assert_list_type,
-    assert_type,
-)
+from python2verilog.utils.assertions import assert_typed_dict, get_typed, get_typed_list
 from python2verilog.utils.env_vars import is_debug_mode
 from python2verilog.utils.generics import GenericReprAndStr
 
@@ -29,13 +25,13 @@ class Context(GenericReprAndStr):
 
     # pylint: disable=too-many-instance-attributes
     name: str = ""
-    test_cases: list[tuple] = field(default_factory=list)
+    test_cases: list[tuple[int]] = field(default_factory=list)
 
     py_func: Optional[FunctionType] = None
     _py_ast: Optional[ast.FunctionDef] = None
 
-    input_types: list = field(default_factory=list)
-    output_types: list = field(default_factory=list)
+    input_types: list[type[Any]] = field(default_factory=list)
+    output_types: list[type[Any]] = field(default_factory=list)
 
     optimization_level: int = -1
 
@@ -53,11 +49,18 @@ class Context(GenericReprAndStr):
     clock_signal: Var = Var("clock")
     start_signal: Var = Var("start")
     reset_signal: Var = Var("reset")
+    wait_signal: Var = Var("wait")
 
     state_var: Var = Var("state")
 
     _entry_state: Optional[str] = None
     _ready_state: Optional[str] = None
+
+    def __del__(self):
+        if self._module_file:
+            self._module_file.close()
+        if self._testbench_file:
+            self._testbench_file.close()
 
     def validate(self):
         """
@@ -97,6 +100,13 @@ class Context(GenericReprAndStr):
             assert self.entry_state in self.states, self
         if self._ready_state:
             assert self.ready_state in self.states, self
+
+        assert get_typed(self.wait_signal, Var)
+        assert get_typed(self.clock_signal, Var)
+        assert get_typed(self.ready_signal, Var)
+        assert get_typed(self.valid_signal, Var)
+        assert get_typed(self.reset_signal, Var)
+        assert get_typed(self.start_signal, Var)
 
         return self
 
@@ -174,7 +184,7 @@ class Context(GenericReprAndStr):
 
     @input_vars.setter
     def input_vars(self, other: list[Var]):
-        self._input_vars = assert_list_type(other, Var)
+        self._input_vars = get_typed_list(other, Var)
 
     @property
     def output_vars(self):
@@ -185,7 +195,7 @@ class Context(GenericReprAndStr):
 
     @output_vars.setter
     def output_vars(self, other: list[Var]):
-        self._output_vars = assert_list_type(other, Var)
+        self._output_vars = get_typed_list(other, Var)
 
     def default_output_vars(self):
         """
@@ -203,13 +213,13 @@ class Context(GenericReprAndStr):
 
     @global_vars.setter
     def global_vars(self, other: list[Var]):
-        self._global_vars = assert_list_type(other, Var)
+        self._global_vars = get_typed_list(other, Var)
 
     def add_global_var(self, var: Var):
         """
         Appends global var
         """
-        self._global_vars.append(assert_type(var, Var))
+        self._global_vars.append(get_typed(var, Var))
 
     @property
     def states(self):
@@ -253,7 +263,9 @@ class Context(GenericReprAndStr):
         assert isinstance(name, str)
         self._states.add(name)
 
-    def __check_types(self, expected_types: list, actual_values: list):
+    def __check_types(
+        self, expected_types: list[type[Any]], actual_values: list[type[Any]]
+    ):
         for expected, actual in zip(expected_types, actual_values):
             assert isinstance(
                 actual, expected

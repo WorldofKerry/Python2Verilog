@@ -4,7 +4,9 @@ import logging
 import os
 import re
 import subprocess
+import time
 import unittest
+from typing import Any, Optional
 
 import networkx as nx
 import pandas as pd
@@ -12,12 +14,12 @@ import pytest
 from matplotlib import pyplot as plt
 
 from python2verilog import ir
-from python2verilog.api.wrappers import text_to_context, text_to_verilog
+from python2verilog.api.wrappers import text_to_verilog
 from python2verilog.extern.iverilog import (
     run_iverilog_with_fifos,
     run_iverilog_with_files,
 )
-from python2verilog.utils.assertions import assert_type
+from python2verilog.utils.assertions import get_typed
 from tools.visualization import make_visual
 
 from .cases import TEST_CASES
@@ -37,6 +39,7 @@ class BaseTestCases:
             self,
             test_cases: dict[str, list[tuple[int, ...]]],
             *args,
+            testbench_args: Optional[dict[Any, Any]] = None,
             **kwargs,
         ):
             """
@@ -44,9 +47,13 @@ class BaseTestCases:
             """
             self.all_statistics: list[dict] = []
             self.test_cases = test_cases
+            if not testbench_args:
+                testbench_args = {}
+            self.testbench_args = testbench_args
             super().__init__(*args, **kwargs)
 
         def test_integration(self):
+            print()
             if self.args.first_test:
                 logging.info("Only first test being ran")
             for level in self.args.optimization_levels:
@@ -54,6 +61,7 @@ class BaseTestCases:
                     if self.args.first_test:
                         cases = [cases[0]]
                     with self.subTest(msg=name):
+                        print(f"subtest::{name}", end="", flush=True)
                         logging.info(
                             f"Testing function `{name}` with -O{level} on `{cases}`"
                         )
@@ -64,13 +72,37 @@ class BaseTestCases:
                             "data",
                             f"_{name}_O{level}_",
                             optimization_level=level,
+                            testbench_args=self.testbench_args,
                         )
-            self.all_statistics.sort(key=lambda e: e["function_name"])
+                        print(f" \033[92mPASSED\033[0m")
             if self.all_statistics:
+                if self.testbench_args["random_wait"] is False:
+                    test_that_are_too_slow = []
+                    for stat in self.all_statistics:
+                        if (
+                            "-O" in stat["Func Name"]
+                            and "-O0" not in stat["Func Name"]
+                            and "dumb" not in stat["Func Name"]
+                            and "testing" not in stat["Func Name"]
+                        ):
+                            slowness_multiplier = stat["Ver Clks"] / stat["Py Yields"]
+                            if slowness_multiplier > 1.10:
+                                test_that_are_too_slow.append(stat)
+                    self.assertFalse(
+                        test_that_are_too_slow,
+                        "\n".join([str(test) for test in test_that_are_too_slow]),
+                    )
+                self.all_statistics.sort(key=lambda e: e["Func Name"])
                 df = pd.DataFrame(
                     self.all_statistics, columns=self.all_statistics[0].keys()
                 )
-                logging.info("\n" + df.to_markdown(index=False))
+                df = df.round(2)
+                table = f"\n====> Statistics for {__class__.__name__} <====\n"
+                table += df.to_markdown(index=False)
+                if self.args.synthesis:
+                    logging.warning(table)
+                else:
+                    logging.info(table)
             else:
                 logging.error("No stats collected")
 
@@ -82,6 +114,7 @@ class BaseTestCases:
             dir: str,
             prefix: str,
             optimization_level: int,
+            testbench_args: dict[Any, Any],
         ):
             """
             Stats will only be gathered on the last test
@@ -106,6 +139,7 @@ class BaseTestCases:
 
             config = configparser.ConfigParser()
             config.read(os.path.join(ABS_DIR, "config.ini"))
+
             # The python file shall not be name-mangled
             FILES_IN_ABS_DIR = {
                 key: os.path.join(ABS_DIR, f"{prefix}{value}")
@@ -129,226 +163,237 @@ class BaseTestCases:
 
             with open(FILES_IN_ABS_DIR["python"]) as python_file:
                 python_text = python_file.read()
-                _locals = dict()
-                exec(
-                    python_text, None, _locals
-                )  # grab's exec's populated scoped variables
 
-                tree = ast.parse(python_text)
+            _locals = dict()
+            exec(python_text, None, _locals)  # grab's exec's populated scoped variables
 
-                expected = []
-                for test_case in test_cases:
-                    generator_inst = _locals[function_name](*test_case)
-                    size = None
-                    for output in generator_inst:
-                        if isinstance(output, int):
-                            output = (output,)
-                        assert_type(output, tuple)
+            tree = ast.parse(python_text)
 
-                        if size is None:
-                            size = len(output)
+            expected = []
+            for test_case in test_cases:
+                generator_inst = _locals[function_name](*test_case)
+                size = None
+                for output in generator_inst:
+                    if isinstance(output, int):
+                        output = (output,)
+                    get_typed(output, tuple)
+
+                    if size is None:
+                        size = len(output)
+                    else:
+                        assert (
+                            len(output) == size
+                        ), f"All generator yields must be same length tuple, but got {output} of length {len(output)} when previous yields had length {size}"
+
+                    for e in output:
+                        assert isinstance(e, int)
+
+                    expected.append(output)
+
+            statistics = {
+                "Func Name": f"{function_name} -O{optimization_level}",
+                "Py Yields": len(expected),
+            }
+            self.all_statistics.append(statistics)
+
+            logging.debug("generating expected")
+
+            if args.write:
+                with open(FILES_IN_ABS_DIR["expected"], mode="w") as expected_file:
+                    for output in expected:
+                        if len(output) > 1:
+                            expected_file.write(f"{str(output)[1:-1]}\n")
                         else:
-                            assert (
-                                len(output) == size
-                            ), f"All generator yields must be same length tuple, but got {output} of length {len(output)} when previous yields had length {size}"
-
-                        for e in output:
-                            assert isinstance(e, int)
-
-                        expected.append(output)
-
-                statistics = {
-                    "function_name": f"{function_name} -O{optimization_level}",
-                    "py_yields": len(expected),
-                }
-
-                logging.debug("generating expected")
-
-                if args.write:
-                    with open(FILES_IN_ABS_DIR["expected"], mode="w") as expected_file:
-                        for output in expected:
-                            if len(output) > 1:
-                                expected_file.write(f"{str(output)[1:-1]}\n")
-                            else:
-                                expected_file.write(
-                                    f"{str(output)[1:-2]}\n"
-                                )  # remove trailing comma
-                    make_visual(
-                        _locals[function_name](*test_cases[0]),
-                        FILES_IN_ABS_DIR["expected_visual"],
-                    )
-
-                    with open(FILES_IN_ABS_DIR["ast_dump"], mode="w") as ast_dump_file:
-                        ast_dump_file.write(ast.dump(tree, indent="  "))
-
-                logging.debug(f"Finished executing python and created expected")
-
-                logging.debug(
-                    f'For debugging, try running `iverilog -s {function_name}_tb {FILES_IN_ABS_DIR["module"]} {FILES_IN_ABS_DIR["testbench"]} -o iverilog.log && unbuffer vvp iverilog.log && rm iverilog.log`'
+                            expected_file.write(
+                                f"{str(output)[1:-2]}\n"
+                            )  # remove trailing comma
+                make_visual(
+                    _locals[function_name](*test_cases[0]),
+                    FILES_IN_ABS_DIR["expected_visual"],
                 )
 
-                verilog, root = text_to_verilog(
-                    code=python_text,
-                    function_name=function_name,
-                    extra_test_cases=test_cases,
-                    file_path=FILES_IN_ABS_DIR["python"],
-                    optimization_level=optimization_level,
+                with open(FILES_IN_ABS_DIR["ast_dump"], mode="w") as ast_dump_file:
+                    ast_dump_file.write(ast.dump(tree, indent="  "))
+
+            logging.debug(f"Finished executing python and created expected")
+
+            logging.debug(
+                f'For debugging, try running `iverilog -s {function_name}_tb {FILES_IN_ABS_DIR["module"]} {FILES_IN_ABS_DIR["testbench"]} -o iverilog.log && unbuffer vvp iverilog.log && rm iverilog.log`'
+            )
+
+            verilog, root = text_to_verilog(
+                code=python_text,
+                function_name=function_name,
+                extra_test_cases=test_cases,
+                file_path=FILES_IN_ABS_DIR["python"],
+                optimization_level=optimization_level,
+            )
+
+            if args.write:
+                with open(FILES_IN_ABS_DIR["cytoscape"], mode="w") as cyto_file:
+                    cyto_file.write(str(ir.create_cytoscape_elements(root)))
+
+            logging.debug("Generating module and tb")
+
+            module_str = verilog.get_module_str()
+            tb_str = verilog.get_testbench_str(**testbench_args)
+
+            logging.debug("Writing module and tb")
+
+            if args.write:
+                with open(FILES_IN_ABS_DIR["module"], mode="w") as module_file:
+                    module_file.write(module_str)
+
+                with open(FILES_IN_ABS_DIR["testbench"], mode="w") as testbench_file:
+                    testbench_file.write(tb_str)
+
+            time_started = time.time()
+            if args.write:
+                stdout, stderr = run_iverilog_with_files(
+                    f"{function_name}_tb",
+                    {
+                        FILES_IN_ABS_DIR["module"]: module_str,
+                        FILES_IN_ABS_DIR["testbench"]: tb_str,
+                    },
+                    timeout=len(expected),
                 )
-
-                if args.write:
-                    with open(FILES_IN_ABS_DIR["cytoscape"], mode="w") as cyto_file:
-                        cyto_file.write(str(ir.create_cytoscape_elements(root)))
-
-                logging.debug("Generating module and tb")
-
-                module_str = verilog.get_module_str()
-                statistics["module_nchars"] = len(
-                    module_str.replace("\n", "").replace(" ", "")
+            else:
+                stdout, stderr = run_iverilog_with_fifos(
+                    f"{function_name}_tb",
+                    {
+                        FILES_IN_ABS_DIR["module_fifo"]: module_str,
+                        FILES_IN_ABS_DIR["testbench_fifo"]: tb_str,
+                    },
+                    timeout=len(expected),
                 )
-                tb_str = verilog.get_testbench_str()
+            time_took = time.time() - time_started
 
-                logging.debug("Writing module and tb")
+            self.assertTrue(
+                stdout and not stderr,
+                f"\nVerilog simulation on {function_name}, with:\
+                    \n{stderr}\n{FILES_IN_ABS_DIR['module']}\
+                        \n{FILES_IN_ABS_DIR['testbench']}, \
+                            produced stdout: {stdout}",
+            )
 
-                if args.write:
-                    with open(FILES_IN_ABS_DIR["module"], mode="w") as module_file:
-                        module_file.write(module_str)
+            actual_raw: list[list[str]] = []
+            for line in stdout.splitlines():
+                row = [elem.strip() for elem in line.split(",")]
+                actual_raw.append(row)
 
-                    with open(
-                        FILES_IN_ABS_DIR["testbench"], mode="w"
-                    ) as testbench_file:
-                        testbench_file.write(tb_str)
+            if args.write:
+                with open(FILES_IN_ABS_DIR["actual"], mode="w") as filtered_f:
+                    for output in actual_raw:
+                        filtered_f.write(str(output)[1:-1] + "\n")
 
-                if args.write:
-                    stdout, stderr = run_iverilog_with_files(
-                        f"{function_name}_tb",
-                        {
-                            FILES_IN_ABS_DIR["module"]: module_str,
-                            FILES_IN_ABS_DIR["testbench"]: tb_str,
-                        },
-                        timeout=60,
-                    )
-                else:
-                    stdout, stderr = run_iverilog_with_fifos(
-                        f"{function_name}_tb",
-                        {
-                            FILES_IN_ABS_DIR["module_fifo"]: module_str,
-                            FILES_IN_ABS_DIR["testbench_fifo"]: tb_str,
-                        },
-                        timeout=10,
-                    )
+            statistics["Ver Clks"] = len(actual_raw)
+            statistics["Simu (sec)"] = time_took
 
-                self.assertTrue(
-                    stdout and not stderr,
-                    f"\nVerilog simulation on {function_name}, with:\n{stderr}\n{FILES_IN_ABS_DIR['module']}\n{FILES_IN_ABS_DIR['testbench']}",
-                )
+            filtered_actual = []
+            for row in actual_raw:
+                if row[0] == "1":
+                    try:
+                        filtered_actual.append(tuple([int(elem) for elem in row[1:]]))
+                    except ValueError as e:
+                        logging.error(
+                            f"{function_name} {len(filtered_actual)} {row[1:]} {e}\n{FILES_IN_ABS_DIR['module']}\n{FILES_IN_ABS_DIR['testbench']}"
+                        )
 
-                actual_raw: list[list[str]] = []
-                for line in stdout.splitlines():
-                    row = [elem.strip() for elem in line.split(",")]
-                    actual_raw.append(row)
+            if args.write:
+                with open(FILES_IN_ABS_DIR["filtered_actual"], mode="w") as filtered_f:
+                    for output in filtered_actual:
+                        filtered_f.write(str(output)[1:-1] + "\n")
 
-                if args.write:
-                    with open(FILES_IN_ABS_DIR["actual"], mode="w") as filtered_f:
-                        for output in actual_raw:
-                            filtered_f.write(str(output)[1:-1] + "\n")
+                make_visual(filtered_actual, FILES_IN_ABS_DIR["actual_visual"])
 
-                statistics["ver_clks"] = len(actual_raw)
-                self.all_statistics.append(statistics)
+            err_msg = "\nactual_coords vs expected_coords"
+            if len(filtered_actual) == len(expected):
+                err_msg += ", lengths are same, likely a rounding or sign error"
+            err_msg += f"\n{FILES_IN_ABS_DIR['filtered_actual']}\n{FILES_IN_ABS_DIR['expected']}\n{FILES_IN_ABS_DIR['module']}\n{FILES_IN_ABS_DIR['testbench']}"
+            self.assertEqual(
+                filtered_actual,
+                expected,
+                err_msg,
+            )
 
-                filtered_actual = []
-                for row in actual_raw:
-                    if row[0] == "1":
-                        try:
-                            filtered_actual.append(
-                                tuple([int(elem) for elem in row[1:]])
-                            )
-                        except ValueError as e:
-                            logging.error(
-                                f"{function_name} {len(filtered_actual)} {row[1:]} {e}\n{FILES_IN_ABS_DIR['module']}\n{FILES_IN_ABS_DIR['testbench']}"
-                            )
-
-                if args.write:
-                    with open(
-                        FILES_IN_ABS_DIR["filtered_actual"], mode="w"
-                    ) as filtered_f:
-                        for output in filtered_actual:
-                            filtered_f.write(str(output)[1:-1] + "\n")
-
-                    make_visual(filtered_actual, FILES_IN_ABS_DIR["actual_visual"])
-
-                err_msg = "\nactual_coords vs expected_coords"
-                if len(filtered_actual) == len(expected):
-                    err_msg += ", lengths are same, likely a rounding or sign error"
-                err_msg += f"\n{FILES_IN_ABS_DIR['filtered_actual']}\n{FILES_IN_ABS_DIR['expected']}\n{FILES_IN_ABS_DIR['module']}\n{FILES_IN_ABS_DIR['testbench']}"
-                self.assertEqual(
-                    filtered_actual,
-                    expected,
-                    err_msg,
-                )
-
-                if args.write and args.synthesis:
-                    syn_process = subprocess.Popen(
-                        " ".join(
-                            [
-                                "yosys",
-                                "-QT",
-                                "-fverilog",
-                                FILES_IN_ABS_DIR["module"],
-                                "-pstat",
-                            ]
-                        ),
-                        shell=True,
-                        text=True,
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE,
-                    )
+            if args.write and args.synthesis:
+                with subprocess.Popen(
+                    " ".join(
+                        [
+                            "yosys",
+                            "-QT",
+                            "-fverilog",
+                            FILES_IN_ABS_DIR["module"],
+                            "-pstat",
+                        ]
+                    ),
+                    shell=True,
+                    text=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                ) as syn_process:
                     syn_process.wait()
                     stdout = syn_process.stdout.read()
                     stderr = syn_process.stderr.read()
-                    if stderr:
-                        logging.critical(stderr)
 
-                    stats = stdout[stdout.find("Printing statistics.") :]
+                if stderr:
+                    logging.critical(stderr)
 
-                    def snake_case(text):
-                        return re.sub(r"[\W_]+", "_", text).strip("_").lower()
+                stats = stdout[stdout.find("Printing statistics.") :]
 
-                    lines = stats.strip().splitlines()
-                    data = {}
+                def snake_case(text):
+                    return re.sub(r"[\W_]+", "_", text).strip("_").lower()
 
-                    for line in lines:
-                        if ":" in line:
-                            key, value = line.split(":")
-                            key = snake_case(key).split("number_of_")[-1]
-                            value = int(value.strip())
-                        else:
-                            try:
-                                index = line.find("$") + 10
-                                value = int(line[index:].strip())
-                                key = line[:index].strip()[1:]
-                                data[key] = value
+                lines = stats.strip().splitlines()
+                data = {}
 
-                            except ValueError:
-                                continue
+                for line in lines:
+                    if ":" in line:
+                        key, value = line.split(":")
+                        key = snake_case(key).split("number_of_")[-1]
+                        value = int(value.strip())
+                    else:
+                        try:
+                            index = line.find("$") + 10
+                            value = int(line[index:].strip())
+                            key = line[:index].strip()[1:]
+                            data[key] = value
 
-                        data[key] = value
-                    for key, value in data.items():
-                        statistics[key] = value
+                        except ValueError:
+                            continue
 
-                for key in fifos:
-                    os.remove(FILES_IN_ABS_DIR[key])
+                    data[key] = value
+                for key, value in data.items():
+                    statistics[key] = value
+
+            for key in fifos:
+                os.remove(FILES_IN_ABS_DIR[key])
 
 
 @pytest.mark.usefixtures("argparse")
-class Graph(BaseTestCases.BaseTest):
-    def __init__(self, *args, **kwargs):
-        BaseTestCases.BaseTest.__init__(self, TEST_CASES, *args, **kwargs)
-
-
-# For easier testing
-@pytest.mark.usefixtures("argparse")
-class GraphTesting(BaseTestCases.BaseTest):
+class Performance(BaseTestCases.BaseTest):
     def __init__(self, *args, **kwargs):
         BaseTestCases.BaseTest.__init__(
-            self, {"testing": TEST_CASES["testing"]}, *args, **kwargs
+            self, TEST_CASES, *args, testbench_args={"random_wait": False}, **kwargs
+        )
+
+
+@pytest.mark.usefixtures("argparse")
+class Correctness(BaseTestCases.BaseTest):
+    def __init__(self, *args, **kwargs):
+        BaseTestCases.BaseTest.__init__(
+            self, TEST_CASES, *args, testbench_args={"random_wait": True}, **kwargs
+        )
+
+
+# For easier testing of a specific function
+@pytest.mark.usefixtures("argparse")
+class Testing(BaseTestCases.BaseTest):
+    def __init__(self, *args, **kwargs):
+        BaseTestCases.BaseTest.__init__(
+            self,
+            {"testing": TEST_CASES["testing"]},
+            *args,
+            testbench_args={"random_wait": True},
+            **kwargs,
         )

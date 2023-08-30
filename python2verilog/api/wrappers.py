@@ -5,12 +5,12 @@ Functions that take text as input
 import ast
 import logging
 from types import FunctionType
-from typing import Optional, Union
+from typing import Any, Optional
 
 from python2verilog.backend import verilog
 from python2verilog.frontend.generator2ir import Generator2Graph
 from python2verilog.optimizer.optimizer import OptimizeGraph
-from python2verilog.utils.assertions import assert_list_type, assert_type
+from python2verilog.utils.assertions import get_typed, get_typed_list
 
 from .. import ir
 
@@ -18,7 +18,7 @@ from .. import ir
 def text_to_verilog(
     code: str,
     function_name: str,
-    extra_test_cases: Optional[list] = None,
+    extra_test_cases: Optional[list[tuple[int]]] = None,
     file_path: str = "",
     optimization_level: int = 1,
 ):
@@ -43,25 +43,27 @@ def text_to_verilog(
 def text_to_text(
     code: str,
     function_name: str,
-    extra_test_cases: Optional[list[tuple]] = None,
+    extra_test_cases: Optional[list[tuple[int]]] = None,
     file_path: str = "",
+    optimization_level: int = 1,
 ):
     """
     Converts from code to module and testbench strings
 
     :return: (module, testbench)
     """
-    assert_type(code, str)
-    assert_type(function_name, str)
+    get_typed(code, str)
+    get_typed(function_name, str)
     assert function_name in code
-    assert_list_type(extra_test_cases, tuple)
-    assert_type(file_path, str)
+    get_typed_list(extra_test_cases, tuple)  # type: ignore[misc]
+    get_typed(file_path, str)
 
     code_gen, _ = text_to_verilog(
         code=code,
         function_name=function_name,
         extra_test_cases=extra_test_cases,
         file_path=file_path,
+        optimization_level=optimization_level,
     )
     return code_gen.get_module_str(), code_gen.get_testbench_str()
 
@@ -70,7 +72,7 @@ def text_to_context(
     code: str,
     function_name: str,
     file_path: Optional[str] = None,
-    extra_test_cases: Optional[list] = None,
+    extra_test_cases: Optional[list[tuple[int]]] = None,
 ):
     """
     Parses python code into the function and testbench
@@ -78,8 +80,8 @@ def text_to_context(
     :return: context
     """
     # pylint: disable=too-many-locals
-    assert_type(code, str)
-    assert_type(function_name, str)
+    get_typed(code, str)
+    get_typed(function_name, str)
 
     def get_file_and_line_num(node: ast.AST):
         """
@@ -136,7 +138,7 @@ def text_to_context(
     logging.info(f"Input param names: {input_names}")
 
     initialized = False
-    input_types: Union[str, list] = "Unknown"
+    input_types: list[type[Any]]
     for test_case in test_cases:
         if not initialized:
             input_types = [type(val) for val in test_case]
@@ -224,7 +226,7 @@ def context_to_text_and_file(context: ir.Context):
 
     :return: (module, testbench) pair
     """
-    assert_type(context, ir.Context)
+    get_typed(context, ir.Context)
     ver_code_gen, _ = context_to_verilog(context)
 
     module_str = ver_code_gen.get_module_str()

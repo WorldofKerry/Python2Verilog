@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import copy
 
-from ..utils.assertions import assert_list_type, assert_type
+from ..utils.assertions import get_typed, get_typed_list
 from ..utils.generics import GenericRepr
 
 
@@ -32,7 +32,7 @@ class Expression(GenericRepr):
         return self.to_string()
 
     def __eq__(self, other: object):
-        if assert_type(other, Expression):
+        if get_typed(other, Expression):
             return str(self) == str(other)
         return False
 
@@ -86,10 +86,10 @@ class Var(Expression):
         if ver_name == "":
             ver_name = "_" + py_name
 
-        self.ver_name = assert_type(ver_name, str)
-        self.py_name = assert_type(py_name, str)  # Matches I/O of Verilog
-        self.width = assert_type(width, int)
-        self.is_signed = assert_type(is_signed, bool)
+        self.ver_name = get_typed(ver_name, str)
+        self.py_name = get_typed(py_name, str)  # Matches I/O of Verilog
+        self.width = get_typed(width, int)
+        self.is_signed = get_typed(is_signed, bool)
         self.initial_value = initial_value
 
         super().__init__(ver_name)
@@ -128,9 +128,9 @@ class UBinOp(Expression):
     """
 
     def __init__(self, left: Expression, oper: str, right: Expression):
-        self._left = assert_type(left, Expression)
-        self._right = assert_type(right, Expression)
-        self._oper = assert_type(oper, str)
+        self._left = get_typed(left, Expression)
+        self._right = get_typed(right, Expression)
+        self._oper = get_typed(oper, str)
         super().__init__(self.__class__.__name__)
 
     @property
@@ -142,7 +142,7 @@ class UBinOp(Expression):
 
     @left.setter
     def left(self, other: Expression):
-        self._left = assert_type(other, Expression)
+        self._left = get_typed(other, Expression)
 
     @property
     def right(self):
@@ -153,7 +153,7 @@ class UBinOp(Expression):
 
     @right.setter
     def right(self, other: Expression):
-        self._right = assert_type(other, Expression)
+        self._right = get_typed(other, Expression)
 
     def to_string(self):
         return f"({self._left.to_string()} {self._oper} {self._right.to_string()})"
@@ -237,8 +237,8 @@ class UnaryOp(Expression):
     """
 
     def __init__(self, oper: str, expr: Expression):
-        self.oper = assert_type(oper, str)
-        self.expr = assert_type(expr, Expression)
+        self.oper = get_typed(oper, str)
+        self.expr = get_typed(expr, Expression)
         super().__init__(self.__class__.__name__)
 
     def to_string(self):
