@@ -369,7 +369,7 @@ class BaseTestCases:
 
 
 @pytest.mark.usefixtures("argparse")
-class Graph(BaseTestCases.BaseTest):
+class Performance(BaseTestCases.BaseTest):
     def __init__(self, *args, **kwargs):
         BaseTestCases.BaseTest.__init__(
             self, TEST_CASES, *args, testbench_args={"random_wait": False}, **kwargs
@@ -377,7 +377,7 @@ class Graph(BaseTestCases.BaseTest):
 
 
 @pytest.mark.usefixtures("argparse")
-class GraphRandomWait(BaseTestCases.BaseTest):
+class Correctness(BaseTestCases.BaseTest):
     def __init__(self, *args, **kwargs):
         BaseTestCases.BaseTest.__init__(
             self, TEST_CASES, *args, testbench_args={"random_wait": True}, **kwargs
@@ -386,7 +386,7 @@ class GraphRandomWait(BaseTestCases.BaseTest):
 
 # For easier testing of a specific function
 @pytest.mark.usefixtures("argparse")
-class GraphTesting(BaseTestCases.BaseTest):
+class Testing(BaseTestCases.BaseTest):
     def __init__(self, *args, **kwargs):
         BaseTestCases.BaseTest.__init__(
             self,
