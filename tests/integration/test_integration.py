@@ -377,7 +377,7 @@ class Graph(BaseTestCases.BaseTest):
 
 
 @pytest.mark.usefixtures("argparse")
-class Graph(BaseTestCases.BaseTest):
+class GraphRandomWait(BaseTestCases.BaseTest):
     def __init__(self, *args, **kwargs):
         BaseTestCases.BaseTest.__init__(
             self, TEST_CASES, *args, testbench_args={"random_wait": True}, **kwargs
