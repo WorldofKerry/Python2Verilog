@@ -36,9 +36,9 @@
 <section id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading">¶</a></h2>
 </section>
-<section id="python2verilog-backend-verilog-ast-module">
-<h2>python2verilog.backend.verilog.ast module<a class="headerlink" href="#python2verilog-backend-verilog-ast-module" title="Link to this heading">¶</a></h2>
-<p id="module-python2verilog.backend.verilog.ast">Verilog Abstract Syntax Tree Components</p>
+<section id="module-python2verilog.backend.verilog.ast">
+<span id="python2verilog-backend-verilog-ast-module"></span><h2>python2verilog.backend.verilog.ast module<a class="headerlink" href="#module-python2verilog.backend.verilog.ast" title="Link to this heading">¶</a></h2>
+<p>Verilog Abstract Syntax Tree Components</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="python2verilog.backend.verilog.ast.Always">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Always</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">trigger</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.expressions.Expression" title="python2verilog.ir.expressions.Expression"><span class="pre">Expression</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">body</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#python2verilog.backend.verilog.ast.Statement" title="python2verilog.backend.verilog.ast.Statement"><span class="pre">Statement</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/backend/verilog/ast.html#Always"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.backend.verilog.ast.Always" title="Link to this definition">¶</a></dt>
@@ -85,8 +85,8 @@
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="python2verilog.backend.verilog.ast.BlockingSubsitution">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">BlockingSubsitution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lvalue</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.expressions.Expression" title="python2verilog.ir.expressions.Expression"><span class="pre">Expression</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">rvalue</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.expressions.Expression" title="python2verilog.ir.expressions.Expression"><span class="pre">Expression</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/backend/verilog/ast.html#BlockingSubsitution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.backend.verilog.ast.BlockingSubsitution" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="python2verilog.backend.verilog.ast.BlockingSub">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">BlockingSub</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lvalue</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.expressions.Expression" title="python2verilog.ir.expressions.Expression"><span class="pre">Expression</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">rvalue</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.expressions.Expression" title="python2verilog.ir.expressions.Expression"><span class="pre">Expression</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/backend/verilog/ast.html#BlockingSub"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.backend.verilog.ast.BlockingSub" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#python2verilog.backend.verilog.ast.Subsitution" title="python2verilog.backend.verilog.ast.Subsitution"><code class="xref py py-class docutils literal notranslate"><span class="pre">Subsitution</span></code></a></p>
 <p>&lt;lvalue&gt; = &lt;rvalue&gt;</p>
 </dd></dl>
@@ -131,7 +131,7 @@ case (&lt;expression&gt;)</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="python2verilog.backend.verilog.ast.Declaration">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Declaration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.expressions.Expression" title="python2verilog.ir.expressions.Expression"><span class="pre">Expression</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">32</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_reg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_signed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/backend/verilog/ast.html#Declaration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.backend.verilog.ast.Declaration" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Declaration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.expressions.Expression" title="python2verilog.ir.expressions.Expression"><span class="pre">Expression</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">32</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">signed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/backend/verilog/ast.html#Declaration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.backend.verilog.ast.Declaration" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#python2verilog.backend.verilog.ast.Statement" title="python2verilog.backend.verilog.ast.Statement"><code class="xref py py-class docutils literal notranslate"><span class="pre">Statement</span></code></a></p>
 <p>&lt;reg or wire&gt; &lt;modifiers&gt; &lt;[size-1:0]&gt; &lt;name&gt;;</p>
 <dl class="py method">
@@ -286,9 +286,9 @@ while (&lt;condition&gt;) begin</p>
 </dd></dl>
 
 </section>
-<section id="python2verilog-backend-verilog-codegen-module">
-<h2>python2verilog.backend.verilog.codegen module<a class="headerlink" href="#python2verilog-backend-verilog-codegen-module" title="Link to this heading">¶</a></h2>
-<p id="module-python2verilog.backend.verilog.codegen">Verilog Codegen</p>
+<section id="module-python2verilog.backend.verilog.codegen">
+<span id="python2verilog-backend-verilog-codegen-module"></span><h2>python2verilog.backend.verilog.codegen module<a class="headerlink" href="#module-python2verilog.backend.verilog.codegen" title="Link to this heading">¶</a></h2>
+<p>Verilog Codegen</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="python2verilog.backend.verilog.codegen.CaseBuilder">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">CaseBuilder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.graph.Vertex" title="python2verilog.ir.graph.Vertex"><span class="pre">Vertex</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.context.Context" title="python2verilog.ir.context.Context"><span class="pre">Context</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/backend/verilog/codegen.html#CaseBuilder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.backend.verilog.codegen.CaseBuilder" title="Link to this definition">¶</a></dt>
@@ -333,20 +333,25 @@ while (&lt;condition&gt;) begin</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="python2verilog.backend.verilog.codegen.CodeGen.get_testbench">
-<span class="sig-name descname"><span class="pre">get_testbench</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/backend/verilog/codegen.html#CodeGen.get_testbench"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.backend.verilog.codegen.CodeGen.get_testbench" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">get_testbench</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">random_wait</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/backend/verilog/codegen.html#CodeGen.get_testbench"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.backend.verilog.codegen.CodeGen.get_testbench" title="Link to this definition">¶</a></dt>
 <dd><p>Creates testbench with multiple test cases</p>
 <p>Each element of self.context.test_cases represents a single test case</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>random_wait</strong> – whether or not to have random _wait signal in the while loop</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="python2verilog.backend.verilog.codegen.CodeGen.get_testbench_lines">
-<span class="sig-name descname"><span class="pre">get_testbench_lines</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/backend/verilog/codegen.html#CodeGen.get_testbench_lines"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.backend.verilog.codegen.CodeGen.get_testbench_lines" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">get_testbench_lines</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">random_wait</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/backend/verilog/codegen.html#CodeGen.get_testbench_lines"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.backend.verilog.codegen.CodeGen.get_testbench_lines" title="Link to this definition">¶</a></dt>
 <dd><p>New Testbench as lines</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="python2verilog.backend.verilog.codegen.CodeGen.get_testbench_str">
-<span class="sig-name descname"><span class="pre">get_testbench_str</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/backend/verilog/codegen.html#CodeGen.get_testbench_str"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.backend.verilog.codegen.CodeGen.get_testbench_str" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">get_testbench_str</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">random_wait</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/backend/verilog/codegen.html#CodeGen.get_testbench_str"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.backend.verilog.codegen.CodeGen.get_testbench_str" title="Link to this definition">¶</a></dt>
 <dd><p>New testbench as str</p>
 </dd></dl>
 
@@ -359,9 +364,9 @@ while (&lt;condition&gt;) begin</p>
 </dd></dl>
 
 </section>
-<section id="module-contents">
-<h2>Module contents<a class="headerlink" href="#module-contents" title="Link to this heading">¶</a></h2>
-<p id="module-python2verilog.backend.verilog">Verilog Backend</p>
+<section id="module-python2verilog.backend.verilog">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-python2verilog.backend.verilog" title="Link to this heading">¶</a></h2>
+<p>Verilog Backend</p>
 </section>
 </section>
 
@@ -389,7 +394,7 @@ while (&lt;condition&gt;) begin</p>
 <li class="toctree-l3"><a class="reference internal" href="python2verilog.api.html">python2verilog.api package</a></li>
 <li class="toctree-l3 current"><a class="reference internal" href="python2verilog.backend.html">python2verilog.backend package</a><ul class="current">
 <li class="toctree-l4 current"><a class="reference internal" href="python2verilog.backend.html#subpackages">Subpackages</a></li>
-<li class="toctree-l4"><a class="reference internal" href="python2verilog.backend.html#module-contents">Module contents</a></li>
+<li class="toctree-l4"><a class="reference internal" href="python2verilog.backend.html#module-python2verilog.backend">Module contents</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="python2verilog.extern.html">python2verilog.extern package</a></li>
@@ -399,7 +404,7 @@ while (&lt;condition&gt;) begin</p>
 <li class="toctree-l3"><a class="reference internal" href="python2verilog.utils.html">python2verilog.utils package</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="python2verilog.html#module-contents">Module contents</a></li>
+<li class="toctree-l2"><a class="reference internal" href="python2verilog.html#module-python2verilog">Module contents</a></li>
 </ul>
 </li>
 </ul>
@@ -443,7 +448,7 @@ while (&lt;condition&gt;) begin</p>
       &copy;2023, Kerry Wang.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.3</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.4</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
       
       |

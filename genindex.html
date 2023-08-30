@@ -69,15 +69,13 @@
 </li>
       <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.ast.Always">Always (class in python2verilog.backend.verilog.ast)</a>
 </li>
-      <li><a href="python2verilog.utils.html#python2verilog.utils.assertions.assert_dict_type">assert_dict_type() (in module python2verilog.utils.assertions)</a>
+      <li><a href="python2verilog.utils.html#python2verilog.utils.string.Lines.assert_no_newline">assert_no_newline() (Lines static method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="python2verilog.utils.html#python2verilog.utils.assertions.assert_list_type">assert_list_type() (in module python2verilog.utils.assertions)</a>
+      <li><a href="python2verilog.utils.html#python2verilog.utils.assertions.assert_typed">assert_typed() (in module python2verilog.utils.assertions)</a>
 </li>
-      <li><a href="python2verilog.utils.html#python2verilog.utils.string.Lines.assert_no_newline">assert_no_newline() (Lines static method)</a>
-</li>
-      <li><a href="python2verilog.utils.html#python2verilog.utils.assertions.assert_type">assert_type() (in module python2verilog.utils.assertions)</a>
+      <li><a href="python2verilog.utils.html#python2verilog.utils.assertions.assert_typed_dict">assert_typed_dict() (in module python2verilog.utils.assertions)</a>
 </li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.graph.AssignNode">AssignNode (class in python2verilog.ir.graph)</a>
 </li>
@@ -103,7 +101,7 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="python2verilog.ir.html#python2verilog.ir.expressions.BinOp">BinOp (class in python2verilog.ir.expressions)</a>
 </li>
-      <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.ast.BlockingSubsitution">BlockingSubsitution (class in python2verilog.backend.verilog.ast)</a>
+      <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.ast.BlockingSub">BlockingSub (class in python2verilog.backend.verilog.ast)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -223,12 +221,12 @@
 </li>
       <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.codegen.CodeGen.get_module_lines">get_module_lines() (CodeGen method)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.codegen.CodeGen.get_module_str">get_module_str() (CodeGen method)</a>
 </li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.graph.Edge.get_name">get_name() (Edge method)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="python2verilog.ir.html#python2verilog.ir.graph.BasicElement.get_optimal_children">get_optimal_children() (BasicElement method)</a>
 
       <ul>
@@ -242,6 +240,14 @@
       <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.codegen.CodeGen.get_testbench_lines">get_testbench_lines() (CodeGen method)</a>
 </li>
       <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.codegen.CodeGen.get_testbench_str">get_testbench_str() (CodeGen method)</a>
+</li>
+      <li><a href="python2verilog.utils.html#python2verilog.utils.assertions.get_typed">get_typed() (in module python2verilog.utils.assertions)</a>
+</li>
+      <li><a href="python2verilog.utils.html#python2verilog.utils.assertions.get_typed_list">get_typed_list() (in module python2verilog.utils.assertions)</a>
+</li>
+      <li><a href="python2verilog.utils.html#python2verilog.utils.assertions.get_typed_optional">get_typed_optional() (in module python2verilog.utils.assertions)</a>
+</li>
+      <li><a href="python2verilog.utils.html#python2verilog.utils.assertions.get_typed_strict">get_typed_strict() (in module python2verilog.utils.assertions)</a>
 </li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.global_vars">global_vars (Context property)</a>
 </li>
@@ -786,6 +792,8 @@
 <h2 id="W">W</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.wait_signal">wait_signal (Context attribute)</a>
+</li>
       <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.ast.While">While (class in python2verilog.backend.verilog.ast)</a>
 </li>
   </ul></td>
@@ -861,7 +869,7 @@
       &copy;2023, Kerry Wang.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.3</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.4</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
       
     </div>

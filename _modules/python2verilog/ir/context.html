@@ -37,14 +37,10 @@
 <span class="kn">import</span> <span class="nn">io</span>
 <span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
 <span class="kn">from</span> <span class="nn">types</span> <span class="kn">import</span> <span class="n">FunctionType</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">from</span> <span class="nn">python2verilog.ir.expressions</span> <span class="kn">import</span> <span class="n">Var</span>
-<span class="kn">from</span> <span class="nn">python2verilog.utils.assertions</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">assert_dict_type</span><span class="p">,</span>
-    <span class="n">assert_list_type</span><span class="p">,</span>
-    <span class="n">assert_type</span><span class="p">,</span>
-<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">python2verilog.utils.assertions</span> <span class="kn">import</span> <span class="n">assert_typed_dict</span><span class="p">,</span> <span class="n">get_typed</span><span class="p">,</span> <span class="n">get_typed_list</span>
 <span class="kn">from</span> <span class="nn">python2verilog.utils.env_vars</span> <span class="kn">import</span> <span class="n">is_debug_mode</span>
 <span class="kn">from</span> <span class="nn">python2verilog.utils.generics</span> <span class="kn">import</span> <span class="n">GenericReprAndStr</span>
 
@@ -62,13 +58,13 @@
 
     <span class="c1"># pylint: disable=too-many-instance-attributes</span>
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
-    <span class="n">test_cases</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">test_cases</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
 
     <span class="n">py_func</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">FunctionType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">_py_ast</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ast</span><span class="o">.</span><span class="n">FunctionDef</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
-    <span class="n">input_types</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
-    <span class="n">output_types</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">input_types</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">output_types</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
 
     <span class="n">optimization_level</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
 
@@ -86,11 +82,18 @@
     <span class="n">clock_signal</span><span class="p">:</span> <span class="n">Var</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="s2">&quot;clock&quot;</span><span class="p">)</span>
     <span class="n">start_signal</span><span class="p">:</span> <span class="n">Var</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="s2">&quot;start&quot;</span><span class="p">)</span>
     <span class="n">reset_signal</span><span class="p">:</span> <span class="n">Var</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="s2">&quot;reset&quot;</span><span class="p">)</span>
+    <span class="n">wait_signal</span><span class="p">:</span> <span class="n">Var</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="s2">&quot;wait&quot;</span><span class="p">)</span>
 
     <span class="n">state_var</span><span class="p">:</span> <span class="n">Var</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="s2">&quot;state&quot;</span><span class="p">)</span>
 
     <span class="n">_entry_state</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">_ready_state</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="fm">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_module_file</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_module_file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_testbench_file</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_testbench_file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
 <div class="viewcode-block" id="Context.validate">
 <a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.Context.validate">[docs]</a>
@@ -132,6 +135,13 @@
             <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">entry_state</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">states</span><span class="p">,</span> <span class="bp">self</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ready_state</span><span class="p">:</span>
             <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">ready_state</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">states</span><span class="p">,</span> <span class="bp">self</span>
+
+        <span class="k">assert</span> <span class="n">get_typed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wait_signal</span><span class="p">,</span> <span class="n">Var</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">get_typed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">clock_signal</span><span class="p">,</span> <span class="n">Var</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">get_typed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ready_signal</span><span class="p">,</span> <span class="n">Var</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">get_typed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">valid_signal</span><span class="p">,</span> <span class="n">Var</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">get_typed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">reset_signal</span><span class="p">,</span> <span class="n">Var</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">get_typed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">start_signal</span><span class="p">,</span> <span class="n">Var</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="bp">self</span></div>
 
@@ -210,7 +220,7 @@
 
     <span class="nd">@input_vars</span><span class="o">.</span><span class="n">setter</span>
     <span class="k">def</span> <span class="nf">input_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Var</span><span class="p">]):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_input_vars</span> <span class="o">=</span> <span class="n">assert_list_type</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Var</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_input_vars</span> <span class="o">=</span> <span class="n">get_typed_list</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Var</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">output_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -221,7 +231,7 @@
 
     <span class="nd">@output_vars</span><span class="o">.</span><span class="n">setter</span>
     <span class="k">def</span> <span class="nf">output_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Var</span><span class="p">]):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_output_vars</span> <span class="o">=</span> <span class="n">assert_list_type</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Var</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_output_vars</span> <span class="o">=</span> <span class="n">get_typed_list</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Var</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Context.default_output_vars">
 <a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.Context.default_output_vars">[docs]</a>
@@ -242,7 +252,7 @@
 
     <span class="nd">@global_vars</span><span class="o">.</span><span class="n">setter</span>
     <span class="k">def</span> <span class="nf">global_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Var</span><span class="p">]):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_global_vars</span> <span class="o">=</span> <span class="n">assert_list_type</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Var</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_global_vars</span> <span class="o">=</span> <span class="n">get_typed_list</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Var</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Context.add_global_var">
 <a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.Context.add_global_var">[docs]</a>
@@ -250,7 +260,7 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Appends global var</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_global_vars</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">assert_type</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">Var</span><span class="p">))</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_global_vars</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">get_typed</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">Var</span><span class="p">))</span></div>
 
 
     <span class="nd">@property</span>
@@ -304,7 +314,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_states</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">name</span><span class="p">)</span></div>
 
 
-    <span class="k">def</span> <span class="nf">__check_types</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expected_types</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">actual_values</span><span class="p">:</span> <span class="nb">list</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__check_types</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">expected_types</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">Any</span><span class="p">]],</span> <span class="n">actual_values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span>
+    <span class="p">):</span>
         <span class="k">for</span> <span class="n">expected</span><span class="p">,</span> <span class="n">actual</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">expected_types</span><span class="p">,</span> <span class="n">actual_values</span><span class="p">):</span>
             <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
                 <span class="n">actual</span><span class="p">,</span> <span class="n">expected</span>
@@ -387,7 +399,7 @@
       &copy;2023, Kerry Wang.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.3</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.4</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
       
     </div>

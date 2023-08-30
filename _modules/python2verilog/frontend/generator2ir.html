@@ -36,7 +36,7 @@
 <span class="kn">import</span> <span class="nn">ast</span> <span class="k">as</span> <span class="nn">pyast</span>
 
 <span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">ir</span>
-<span class="kn">from</span> <span class="nn">..utils.assertions</span> <span class="kn">import</span> <span class="n">assert_list_type</span><span class="p">,</span> <span class="n">assert_type</span>
+<span class="kn">from</span> <span class="nn">..utils.assertions</span> <span class="kn">import</span> <span class="n">get_typed</span><span class="p">,</span> <span class="n">get_typed_list</span>
 <span class="kn">from</span> <span class="nn">..utils.string</span> <span class="kn">import</span> <span class="n">Indent</span><span class="p">,</span> <span class="n">Lines</span>
 
 
@@ -56,10 +56,10 @@
 <span class="sd">        Initializes the parser, does quick setup work</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">context</span><span class="o">.</span><span class="n">validate</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_context</span> <span class="o">=</span> <span class="n">assert_type</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Context</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_context</span> <span class="o">=</span> <span class="n">get_typed</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Context</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_root</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__parse_statements</span><span class="p">(</span>
-            <span class="n">stmts</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">py_ast</span><span class="o">.</span><span class="n">body</span><span class="p">),</span>
+            <span class="n">stmts</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">py_ast</span><span class="o">.</span><span class="n">body</span><span class="p">,</span>
             <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;_state&quot;</span><span class="p">,</span>
             <span class="n">nextt</span><span class="o">=</span><span class="n">ir</span><span class="o">.</span><span class="n">DoneNode</span><span class="p">(</span><span class="n">unique_id</span><span class="o">=</span><span class="n">done_state_name</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;done&quot;</span><span class="p">),</span>
         <span class="p">)</span>
@@ -88,7 +88,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">__parse_targets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nodes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">pyast</span><span class="o">.</span><span class="n">AST</span><span class="p">]):</span>
+    <span class="k">def</span> <span class="nf">__parse_targets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nodes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">pyast</span><span class="o">.</span><span class="n">expr</span><span class="p">]):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Warning: only single target on left-hand-side supported</span>
 
@@ -113,12 +113,12 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">ir</span><span class="o">.</span><span class="n">AssignNode</span><span class="p">(</span>
             <span class="n">unique_id</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span>
-            <span class="n">lvalue</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__parse_targets</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">targets</span><span class="p">)),</span>
+            <span class="n">lvalue</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__parse_targets</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">targets</span><span class="p">),</span>
             <span class="n">rvalue</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__parse_expression</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="p">),</span>
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__parse_statements</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">stmts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">pyast</span><span class="o">.</span><span class="n">AST</span><span class="p">],</span> <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">nextt</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">Element</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">stmts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">pyast</span><span class="o">.</span><span class="n">stmt</span><span class="p">],</span> <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">nextt</span><span class="p">:</span> <span class="n">ir</span><span class="o">.</span><span class="n">Element</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns state of the first stmt in block</span>
@@ -156,8 +156,8 @@
 <span class="sd">        &lt;statement&gt; (e.g. assign, for loop, etc., cannot be equated to)</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">assert_type</span><span class="p">(</span><span class="n">stmt</span><span class="p">,</span> <span class="n">pyast</span><span class="o">.</span><span class="n">AST</span><span class="p">)</span>
-        <span class="n">assert_type</span><span class="p">(</span><span class="n">nextt</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Element</span><span class="p">)</span>
+        <span class="n">get_typed</span><span class="p">(</span><span class="n">stmt</span><span class="p">,</span> <span class="n">pyast</span><span class="o">.</span><span class="n">AST</span><span class="p">)</span>
+        <span class="n">get_typed</span><span class="p">(</span><span class="n">nextt</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Element</span><span class="p">)</span>
         <span class="n">cur_node</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stmt</span><span class="p">,</span> <span class="n">pyast</span><span class="o">.</span><span class="n">Assign</span><span class="p">):</span>
             <span class="n">cur_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__parse_assign</span><span class="p">(</span><span class="n">stmt</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">)</span>
@@ -200,12 +200,12 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stmt</span><span class="p">,</span> <span class="n">pyast</span><span class="o">.</span><span class="n">If</span><span class="p">)</span>
 
-        <span class="n">then_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__parse_statements</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">stmt</span><span class="o">.</span><span class="n">body</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">_t&quot;</span><span class="p">,</span> <span class="n">nextt</span><span class="p">)</span>
+        <span class="n">then_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__parse_statements</span><span class="p">(</span><span class="n">stmt</span><span class="o">.</span><span class="n">body</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">_t&quot;</span><span class="p">,</span> <span class="n">nextt</span><span class="p">)</span>
         <span class="n">to_then</span> <span class="o">=</span> <span class="n">ir</span><span class="o">.</span><span class="n">ClockedEdge</span><span class="p">(</span>
             <span class="n">unique_id</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">_true_edge&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;True&quot;</span><span class="p">,</span> <span class="n">child</span><span class="o">=</span><span class="n">then_node</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="n">stmt</span><span class="o">.</span><span class="n">orelse</span><span class="p">:</span>
-            <span class="n">else_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__parse_statements</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">stmt</span><span class="o">.</span><span class="n">orelse</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">_f&quot;</span><span class="p">,</span> <span class="n">nextt</span><span class="p">)</span>
+            <span class="n">else_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__parse_statements</span><span class="p">(</span><span class="n">stmt</span><span class="o">.</span><span class="n">orelse</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">_f&quot;</span><span class="p">,</span> <span class="n">nextt</span><span class="p">)</span>
             <span class="n">to_else</span> <span class="o">=</span> <span class="n">ir</span><span class="o">.</span><span class="n">ClockedEdge</span><span class="p">(</span>
                 <span class="n">unique_id</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">_false_edge&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;False&quot;</span><span class="p">,</span> <span class="n">child</span><span class="o">=</span><span class="n">else_node</span>
             <span class="p">)</span>
@@ -243,7 +243,7 @@
             <span class="n">true_edge</span><span class="o">=</span><span class="n">loop_edge</span><span class="p">,</span>
             <span class="n">false_edge</span><span class="o">=</span><span class="n">done_edge</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="n">body_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__parse_statements</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">stmt</span><span class="o">.</span><span class="n">body</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">_while&quot;</span><span class="p">,</span> <span class="n">ifelse</span><span class="p">)</span>
+        <span class="n">body_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__parse_statements</span><span class="p">(</span><span class="n">stmt</span><span class="o">.</span><span class="n">body</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">_while&quot;</span><span class="p">,</span> <span class="n">ifelse</span><span class="p">)</span>
         <span class="n">loop_edge</span><span class="o">.</span><span class="n">child</span> <span class="o">=</span> <span class="n">body_node</span>
 
         <span class="k">return</span> <span class="n">ifelse</span>
@@ -460,7 +460,7 @@
       &copy;2023, Kerry Wang.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.3</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.4</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
       
     </div>
