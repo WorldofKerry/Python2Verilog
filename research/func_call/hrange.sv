@@ -2,17 +2,17 @@ module hrange (
     input wire signed [31:0] base,
     input wire signed [31:0] limit,
     input wire signed [31:0] step,
-    input wire _start,
+    input wire _start,                 // set high to capture inputs (in same cycle) and start generating
+    input wire _wait, // set high to have module pause outputting
     input wire _clock,
     input wire _reset,
-    input wire _wait,
-    output reg signed [31:0] _0,
-    output reg _ready,
-    output reg _valid
+    output reg _ready, // is high if module done outputting
+    output reg _valid, // is high if output is valid
+    output reg signed [31:0] _0
 );
-    localparam _statelmaoready = 0;
-    localparam _state_1 = 1;
-    localparam _state_0_while_0 = 2;
+    localparam _state_0_while_0 = 0;
+    localparam _statelmaoready = 1;
+    localparam _state_1 = 2;
     reg signed [31:0] _i;
     reg signed [31:0] _state;
     reg signed [31:0] _base;
