@@ -48,31 +48,31 @@ module hrange (
                 end
             end
         end else begin
-        if (!(_wait)) begin
-            case (_state)
-                _state_delayed_start: begin
-                    _i <= _base;
-                    if ((_base < limit)) begin
-                        _0 <= _base;
-                        _valid <= 1;
-                        _state <= _state_0_while_0;
-                    end else begin
-                        _ready <= 1;
-                        _state <= _statelmaoready;
+            if (!(_wait)) begin
+                case (_state)
+                    _state_delayed_start: begin
+                        _i <= _base;
+                        if ((_base < limit)) begin
+                            _0 <= _base;
+                            _valid <= 1;
+                            _state <= _state_0_while_0;
+                        end else begin
+                            _ready <= 1;
+                            _state <= _statelmaoready;
+                        end
                     end
-                end
-                _state_0_while_0: begin
-                    _i <= $signed(_i + _step);
-                    if (($signed(_i + _step) < _limit)) begin
-                        _0 <= $signed(_i + _step);
-                        _valid <= 1;
-                        _state <= _state_0_while_0;
-                    end else begin
-                        _ready <= 1;
-                        _state <= _statelmaoready;
+                    _state_0_while_0: begin
+                        _i <= $signed(_i + _step);
+                        if (($signed(_i + _step) < _limit)) begin
+                            _0 <= $signed(_i + _step);
+                            _valid <= 1;
+                            _state <= _state_0_while_0;
+                        end else begin
+                            _ready <= 1;
+                            _state <= _statelmaoready;
+                        end
                     end
-                end
-            endcase
+                endcase
             end
         end
     end
