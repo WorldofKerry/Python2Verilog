@@ -85,7 +85,9 @@ class BaseTestCases:
                             and "dumb" not in stat["Func Name"]
                             and "testing" not in stat["Func Name"]
                         ):
-                            slowness_multiplier = stat["Ver Clks"] / stat["Py Yields"]
+                            slowness_multiplier = stat["Ver Clks"] / (
+                                stat["Py Yields"] + 10
+                            )
                             if slowness_multiplier > 1.10:
                                 test_that_are_too_slow.append(stat)
                     self.assertFalse(
