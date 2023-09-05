@@ -19,6 +19,7 @@ concurrency:
 
 jobs:
   quick:
+    name: testing
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -54,6 +55,7 @@ jobs:
           --write --optimization-levels 0 1 2 --synthesis
 
   full:
+    name: testing
     runs-on: ubuntu-latest
     if: ${{ !github.event.pull_request.draft }}
     strategy:
