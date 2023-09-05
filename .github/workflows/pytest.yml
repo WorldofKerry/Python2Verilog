@@ -1,7 +1,6 @@
-# Runs all pytest tests
-# Locally run `python3 -m pytest`
+# Quickly runs the pytests
 
-name: pytest testing
+name: pytest quick testing
 
 on:
   push:

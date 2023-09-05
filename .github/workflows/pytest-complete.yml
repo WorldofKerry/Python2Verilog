@@ -1,6 +1,6 @@
-# Runs all pytest tests at more optimization levels
+# Runs complete pytest suite with all combinations of args
 
-name: pytest complete testing
+name: pytest
 
 on:
   push:
@@ -14,7 +14,7 @@ on:
       - ready_for_review
 
 jobs:
-  build:
+  main:
     runs-on: ubuntu-latest
     if: ${{ !github.event.pull_request.draft }}
     strategy:
@@ -28,8 +28,7 @@ jobs:
             "--write --synthesis --first-test",
             "--synthesis --first-test",
           ]
-        pytest-opti-levels:
-          ["--optimization-levels 0 1 2 4 8", "--optimization-levels 16 32"]
+        pytest-opti-levels: ["-L 0 1 2 4 8", "-L 16 32"]
 
     steps:
       - uses: actions/checkout@v3
