@@ -227,23 +227,26 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
 
         <span class="n">input_lines</span> <span class="o">=</span> <span class="n">Lines</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">inputt</span> <span class="ow">in</span> <span class="n">inputs</span><span class="p">:</span>
-            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">inputt</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
-            <span class="n">input_lines</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;input wire signed [31:0] </span><span class="si">{</span><span class="n">inputt</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">for</span> <span class="n">input_</span> <span class="ow">in</span> <span class="n">inputs</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">input_</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+            <span class="n">input_lines</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;input wire signed [31:0] </span><span class="si">{</span><span class="n">input_</span><span class="si">}</span><span class="s2">,&quot;</span>
         <span class="k">if</span> <span class="n">add_default_ports</span><span class="p">:</span>
-            <span class="n">input_lines</span> <span class="o">+=</span> <span class="s2">&quot;input wire _start&quot;</span>
-            <span class="n">input_lines</span> <span class="o">+=</span> <span class="s2">&quot;input wire _clock&quot;</span>
-            <span class="n">input_lines</span> <span class="o">+=</span> <span class="s2">&quot;input wire _reset&quot;</span>
-            <span class="n">input_lines</span> <span class="o">+=</span> <span class="s2">&quot;input wire _wait&quot;</span>
+            <span class="n">input_lines</span> <span class="o">+=</span> <span class="s2">&quot;input wire _start, </span><span class="se">\</span>
+<span class="s2">                // set high to capture inputs (in same cycle) and start generating&quot;</span>
+            <span class="n">input_lines</span> <span class="o">+=</span> <span class="p">(</span>
+                <span class="s2">&quot;input wire _wait, // set high to have module pause outputting&quot;</span>
+            <span class="p">)</span>
+            <span class="n">input_lines</span> <span class="o">+=</span> <span class="s2">&quot;input wire _clock,&quot;</span>
+            <span class="n">input_lines</span> <span class="o">+=</span> <span class="s2">&quot;input wire _reset,&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">input</span> <span class="o">=</span> <span class="n">input_lines</span>
 
         <span class="n">output_lines</span> <span class="o">=</span> <span class="n">Lines</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">add_default_ports</span><span class="p">:</span>
+            <span class="n">output_lines</span> <span class="o">+=</span> <span class="s2">&quot;output reg _ready, // is high if module done outputting&quot;</span>
+            <span class="n">output_lines</span> <span class="o">+=</span> <span class="s2">&quot;output reg _valid, // is high if output is valid&quot;</span>
         <span class="k">for</span> <span class="n">output</span> <span class="ow">in</span> <span class="n">outputs</span><span class="p">:</span>
             <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
-            <span class="n">output_lines</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;output reg signed [31:0] </span><span class="si">{</span><span class="n">output</span><span class="si">}</span><span class="s2">&quot;</span>
-        <span class="k">if</span> <span class="n">add_default_ports</span><span class="p">:</span>
-            <span class="n">output_lines</span> <span class="o">+=</span> <span class="s2">&quot;output reg _ready&quot;</span>
-            <span class="n">output_lines</span> <span class="o">+=</span> <span class="s2">&quot;output reg _valid&quot;</span>
+            <span class="n">output_lines</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;output reg signed [31:0] </span><span class="si">{</span><span class="n">output</span><span class="si">}</span><span class="s2">,&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">output</span> <span class="o">=</span> <span class="n">output_lines</span>
 
         <span class="k">if</span> <span class="n">body</span><span class="p">:</span>
@@ -270,9 +273,9 @@
         <span class="n">lines</span> <span class="o">=</span> <span class="n">Lines</span><span class="p">()</span>
         <span class="n">lines</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;module </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> (&quot;</span>
         <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">input</span><span class="p">:</span>
-            <span class="n">lines</span> <span class="o">+=</span> <span class="n">Indent</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">line</span> <span class="o">+</span> <span class="s2">&quot;,&quot;</span>
+            <span class="n">lines</span> <span class="o">+=</span> <span class="n">Indent</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">line</span>
         <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="p">:</span>
-            <span class="n">lines</span> <span class="o">+=</span> <span class="n">Indent</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">line</span> <span class="o">+</span> <span class="s2">&quot;,&quot;</span>
+            <span class="n">lines</span> <span class="o">+=</span> <span class="n">Indent</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">line</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>  <span class="c1"># This means there are ports</span>
             <span class="n">lines</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">lines</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># removes last comma</span>
         <span class="n">lines</span> <span class="o">+=</span> <span class="s2">&quot;);&quot;</span>
