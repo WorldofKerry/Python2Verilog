@@ -21,6 +21,13 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ["3.9", "3.10", "3.11"]
+        pytest-args:
+          [
+            "--write --synthesis",
+            "--synthesis",
+            "--write --synthesis --first-test",
+            "--synthesis --first-test",
+          ]
 
     steps:
       - uses: actions/checkout@v3
@@ -49,11 +56,7 @@ jobs:
       - name: Run Pytest
         run: |
           # With write
-          python3 -m pytest tests/ --cov=python2verilog/ --cov-report term-missing \
-          --write --synthesis --optimization-levels 0 1 2 4 8 16 32
-
-          # No write
-          python3 -m pytest tests/ --cov=python2verilog/ --cov-report term-missing \
+          python3 -m pytest tests/ --cov=python2verilog/ --cov-report term-missing ${{ matrix.pytest-args }} \
           --optimization-levels 0 1 2 4 8 16 32
 
       - name: Upload artifacts
