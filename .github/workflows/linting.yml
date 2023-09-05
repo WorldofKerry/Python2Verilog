@@ -1,7 +1,7 @@
-# Runs Pylint
+# linting with pylint and mypy
 # Locally run `pre-commit install` then commit
 
-name: pylint
+name: linting
 
 on:
   push:
@@ -26,13 +26,19 @@ jobs:
         uses: actions/setup-python@v3
         with:
           python-version: ${{ matrix.python-version }}
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pylint
+          pip install pylint mypy
           pip install -r tests/requirements.txt
-      - name: Analysing the code with pylint
+
+      - name: Pylint
         run: |
           # pylint $(git ls-files '*.py') # ignore test files for now
           # Ignoring: fixme, too-few-public-methods, duplicate-code, unreachable
           pylint python2verilog/ --rcfile=.pylintrc
+
+      - name: Mypy
+        run: |
+          python3 -m mypy python2verilog/

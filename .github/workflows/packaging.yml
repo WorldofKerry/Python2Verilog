@@ -1,6 +1,6 @@
 # Builds python package, installs it, then runs it from the CLI
 
-name: package
+name: packaging
 
 on:
   push:
