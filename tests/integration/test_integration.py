@@ -85,12 +85,15 @@ class BaseTestCases:
                             and "dumb" not in stat["Func Name"]
                             and "testing" not in stat["Func Name"]
                         ):
-                            slowness_multiplier = stat["Ver Clks"] / stat["Py Yields"]
+                            slowness_multiplier = stat["Ver Clks"] / (
+                                stat["Py Yields"] + 4
+                            )  # + x for loop and end overhead
                             if slowness_multiplier > 1.10:
                                 test_that_are_too_slow.append(stat)
                     self.assertFalse(
                         test_that_are_too_slow,
-                        "\n".join([str(test) for test in test_that_are_too_slow]),
+                        "\n"
+                        + "\n".join([str(test) for test in test_that_are_too_slow]),
                     )
                 self.all_statistics.sort(key=lambda e: e["Func Name"])
                 df = pd.DataFrame(
