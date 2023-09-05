@@ -1,7 +1,7 @@
 # Publishes to PyPi
 # Remember to update version in `.pyproject.toml`
 
-name: publish to PyPI
+name: PyPI publish
 
 on:
   release:

@@ -1,7 +1,7 @@
 # Runs Pylint
 # Locally run `pre-commit install` then commit
 
-name: pylint linting
+name: pylint
 
 on:
   push:
