@@ -10,6 +10,7 @@ on:
 
 jobs:
   build:
+    name: docs
     runs-on: ubuntu-latest
     permissions:
       contents: write

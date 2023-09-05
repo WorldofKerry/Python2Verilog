@@ -108,6 +108,7 @@ jobs:
           path: tests/integration/data
 
   build:
+    name: pytest testing
     # Makes sure all runs of matrix are success
     if: ${{ always() }}
     runs-on: ubuntu-latest
