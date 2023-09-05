@@ -9,8 +9,7 @@ on:
     branches: ["main"]
 
 jobs:
-  build:
-    name: packaging
+  packaging:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
