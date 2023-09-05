@@ -161,23 +161,26 @@ class Module(ImplementsToLines):
         self.name = name
 
         input_lines = Lines()
-        for inputt in inputs:
-            assert isinstance(inputt, str)
-            input_lines += f"input wire signed [31:0] {inputt}"
+        for input_ in inputs:
+            assert isinstance(input_, str)
+            input_lines += f"input wire signed [31:0] {input_},"
         if add_default_ports:
-            input_lines += "input wire _start"
-            input_lines += "input wire _clock"
-            input_lines += "input wire _reset"
-            input_lines += "input wire _wait"
+            input_lines += "input wire _start, \
+                // set high to capture inputs (in same cycle) and start generating"
+            input_lines += (
+                "input wire _wait, // set high to have module pause outputting"
+            )
+            input_lines += "input wire _clock,"
+            input_lines += "input wire _reset,"
         self.input = input_lines
 
         output_lines = Lines()
+        if add_default_ports:
+            output_lines += "output reg _ready, // is high if module done outputting"
+            output_lines += "output reg _valid, // is high if output is valid"
         for output in outputs:
             assert isinstance(output, str)
-            output_lines += f"output reg signed [31:0] {output}"
-        if add_default_ports:
-            output_lines += "output reg _ready"
-            output_lines += "output reg _valid"
+            output_lines += f"output reg signed [31:0] {output},"
         self.output = output_lines
 
         if body:
@@ -202,9 +205,9 @@ class Module(ImplementsToLines):
         lines = Lines()
         lines += f"module {self.name} ("
         for line in self.input:
-            lines += Indent(1) + line + ","
+            lines += Indent(1) + line
         for line in self.output:
-            lines += Indent(1) + line + ","
+            lines += Indent(1) + line
         if len(lines) > 1:  # This means there are ports
             lines[-1] = lines[-1][0:-1]  # removes last comma
         lines += ");"
