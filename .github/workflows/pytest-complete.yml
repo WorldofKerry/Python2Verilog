@@ -20,7 +20,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11"]
         pytest-args:
           [
             "--write --synthesis",
@@ -29,6 +28,7 @@ jobs:
             "--synthesis --first-test",
           ]
         pytest-opti-levels: ["-L 0 1 2 4 8", "-L 16", "-L 32"]
+        python-version: ["3.9", "3.10", "3.11"]
 
     steps:
       - uses: actions/checkout@v3
