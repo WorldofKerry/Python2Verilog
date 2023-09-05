@@ -6,13 +6,10 @@
 
 # python2verilog
 
-Converts a subset of python functions into synthesizable sequential SystemVerilog.
-
-A testbench can also be generated if the user provides testcases or uses the function in their Python code.
-
-The testbenchs' results can also asserted against the Python outputs (not included in package but as apart of this repo due to third-party simulation tools).
-
-A use case is for drawing shapes on grids (for VGA output), where the user may prototype the algorithm in Python and then convert it to Verilog for use in an FPGA.
+- This tool facilitates the conversion of select Python functions into synthesizable sequential SystemVerilog code
+- It can automatically generate a corresponding testbench if the user provides test cases or incorporates the function within their Python code
+- Ideal for working with higher-level abstractions, enabling developers to prototype algorithms in Python
+- Eliminates the need to interface HDL code with a CPU for certain tasks, enhancing simplicity and efficiency
 
 Constrains on Python functions include:
 
