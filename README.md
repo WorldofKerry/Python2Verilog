@@ -7,9 +7,8 @@
 # python2verilog
 
 - This tool facilitates the conversion of select Python functions into synthesizable sequential SystemVerilog code
-- It can automatically generate a corresponding testbench if the user provides test cases or incorporates the function within their Python code
-- Ideal for working with higher-level abstractions, enabling developers to prototype algorithms in Python
-- Eliminates the need to interface HDL code with a CPU for certain tasks, enhancing simplicity and efficiency
+- Testbenchs can be automatically generated if the user uses the function within their Python code or provides explicit test cases
+- Ideal for quickly translating "CPU code" into hardware descriptions for use on FPGAs, without having to interface with a CPU
 
 Constrains on Python functions include:
 
