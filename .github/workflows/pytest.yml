@@ -109,7 +109,6 @@ jobs:
     # Makes sure all runs of matrix are success
     if: ${{ always() }}
     runs-on: ubuntu-latest
-    name: Final Results
     needs: [quick, full]
     steps:
       - run: exit 1
