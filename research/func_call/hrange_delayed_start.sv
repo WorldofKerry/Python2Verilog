@@ -28,11 +28,15 @@ module hrange (
             _state <= _statelmaoready;
         end
 
-        if (!(_wait)) begin
-            if (_start) begin
-                _base <= base;
-                _limit <= limit;
-                _step <= step;
+        if (_start) begin
+            _base <= base;
+            _limit <= limit;
+            _step <= step;
+            if (_wait) begin
+                // delayed start
+                _state = _state_delayed_start;
+            end else begin
+                // quick start
                 _i <= base;
                 if ((base < limit)) begin
                     _0 <= base;
@@ -42,8 +46,21 @@ module hrange (
                     _ready <= 1;
                     _state <= _statelmaoready;
                 end
-            end else begin
+            end
+        end else begin
+            if (!(_wait)) begin
                 case (_state)
+                    _state_delayed_start: begin
+                        _i <= _base;
+                        if ((_base < limit)) begin
+                            _0 <= _base;
+                            _valid <= 1;
+                            _state <= _state_0_while_0;
+                        end else begin
+                            _ready <= 1;
+                            _state <= _statelmaoready;
+                        end
+                    end
                     _state_0_while_0: begin
                         _i <= $signed(_i + _step);
                         if (($signed(_i + _step) < _limit)) begin
