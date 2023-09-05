@@ -9,7 +9,6 @@
 - This tool facilitates the conversion of select Python functions into synthesizable sequential SystemVerilog code
 - It can automatically generate a corresponding testbench if the user provides test cases or incorporates the function within their Python code
 - Ideal for working with higher-level abstractions, enabling developers to prototype algorithms in Python
-- Smooth transition of Python prototypes to Verilog for FPGA implementation
 - Eliminates the need to interface HDL code with a CPU for certain tasks, enhancing simplicity and efficiency
 
 Constrains on Python functions include:
