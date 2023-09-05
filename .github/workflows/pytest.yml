@@ -19,7 +19,6 @@ concurrency:
 
 jobs:
   quick:
-    name: testing
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -54,8 +53,7 @@ jobs:
           python3 -m pytest -vs tests/ --cov=python2verilog/ --cov-report term-missing --log-cli-level=info \
           --write --optimization-levels 0 1 2 --synthesis
 
-  full:
-    name: testing
+  build:
     runs-on: ubuntu-latest
     if: ${{ !github.event.pull_request.draft }}
     strategy:
