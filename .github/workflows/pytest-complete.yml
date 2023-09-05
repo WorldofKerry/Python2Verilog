@@ -63,4 +63,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: tests-data
-          path: tests/
+          path: tests/integration/data
