@@ -1,7 +1,6 @@
-# Runs all pytest tests
-# Locally run `python3 -m pytest`
+# Quickly runs the pytests
 
-name: pytest testing
+name: pytest quick testing
 
 on:
   push:
@@ -42,8 +41,3 @@ jobs:
         run: |
           python3 -m pytest -vs tests/ --cov=python2verilog/ --cov-report term-missing --log-cli-level=info \
           --write --optimization-levels 0 1 2 --synthesis
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: tests-data
-          path: tests/

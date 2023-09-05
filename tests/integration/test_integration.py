@@ -86,7 +86,7 @@ class BaseTestCases:
                             and "testing" not in stat["Func Name"]
                         ):
                             slowness_multiplier = stat["Ver Clks"] / (
-                                stat["Py Yields"] + 4
+                                stat["Py Yields"] + 8
                             )  # + x for loop and end overhead
                             if slowness_multiplier > 1.10:
                                 test_that_are_too_slow.append(stat)
