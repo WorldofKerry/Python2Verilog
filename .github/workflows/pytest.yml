@@ -104,3 +104,18 @@ jobs:
         with:
           name: tests-data
           path: tests/integration/data
+
+  results:
+    # Makes sure all runs of matrix are success
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    name: Final Results
+    needs: [build]
+    steps:
+      - run: exit 1
+        # see https://stackoverflow.com/a/67532120/4907315
+        if: >-
+          ${{
+                contains(needs.*.result, 'failure')
+            || contains(needs.*.result, 'cancelled')
+          }}
