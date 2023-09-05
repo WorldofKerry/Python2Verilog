@@ -110,7 +110,7 @@ jobs:
     if: ${{ always() }}
     runs-on: ubuntu-latest
     name: Final Results
-    needs: [build]
+    needs: [quick, build]
     steps:
       - run: exit 1
         # see https://stackoverflow.com/a/67532120/4907315
