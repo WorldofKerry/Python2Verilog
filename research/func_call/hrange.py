@@ -15,5 +15,12 @@ def hrange(base, limit, step):
         i += step
 
 
-output = list(hrange(0, 10, 2))
+# @verilogify(write=True, overwrite=True, optimization_level=1)
+def dup_range(base, limit, step):
+    for i in hrange(base, limit, step):
+        yield i
+        yield i
+
+
+output = list(dup_range(0, 10, 2))
 print(output)
