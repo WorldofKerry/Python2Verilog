@@ -105,7 +105,7 @@ jobs:
           name: tests-data
           path: tests/integration/data
 
-  testing:
+  build:
     # Makes sure all runs of matrix are success
     if: ${{ always() }}
     runs-on: ubuntu-latest
