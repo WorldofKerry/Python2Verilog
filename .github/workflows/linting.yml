@@ -15,7 +15,6 @@ on:
       - ready_for_review
 jobs:
   linting:
-    name: required
     runs-on: ubuntu-latest
     if: ${{ !github.event.pull_request.draft }}
     strategy:
