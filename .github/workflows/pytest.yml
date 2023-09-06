@@ -108,7 +108,7 @@ jobs:
           path: tests/integration/data
 
   testing:
-    # Makes sure all runs of matrix are success
+    # Joins the matrix runs and makes sure all successful
     if: ${{ always() }}
     runs-on: ubuntu-latest
     needs: [quick, full]
