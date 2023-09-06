@@ -1,6 +1,6 @@
-# Builds package
+# Builds python package, installs it, then runs it from the CLI
 
-name: python package
+name: packaging
 
 on:
   push:
@@ -8,8 +8,12 @@ on:
   pull_request:
     branches: ["main"]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  build:
+  packaging:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
