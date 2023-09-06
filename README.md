@@ -36,7 +36,7 @@ Try it in [Google Collab](https://colab.research.google.com/github/WorldofKerry/
 ## Tested Generations
 
 The Github Actions run all the tests with writing enabled.
-You may find its output as a [Github Artifact](https://nightly.link/WorldofKerry/Python2Verilog/workflows/pytest/main/tests-data.zip) availible for download.
+You may find its output as a [Github Artifact](https://nightly.link/WorldofKerry/Python2Verilog/workflows/pytest-complete/main/tests-data.zip) availible for download.
 
 ## For Developers
 
