@@ -10,6 +10,7 @@ on:
 
 jobs:
   packaging:
+    name: required
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
