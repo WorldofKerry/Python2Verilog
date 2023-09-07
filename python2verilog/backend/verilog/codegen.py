@@ -269,6 +269,13 @@ class CodeGen:
                     )
                 )
             initial_body.append(ver.BlockingSub(self.context.start_signal, ir.UInt(1)))
+            initial_body.append(
+                ver.BlockingSub(
+                    self.context.wait_signal,
+                    ir.UInt(0),
+                    comment="TODO: wait on start allowed",
+                )
+            )
 
             # Post-start
             initial_body.append(ver.Statement())
