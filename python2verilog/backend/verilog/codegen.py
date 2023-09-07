@@ -231,7 +231,7 @@ class CodeGen:
             ver.Declaration(var.py_name, signed=True, reg=True)
             for var in self.context.input_vars
         ]
-        decl.append(ver.Declaration("_ready", size=1))
+        decl.append(ver.Declaration("_done", size=1))
         decl.append(ver.Declaration("_valid", size=1))
         decl += [
             ver.Declaration(var.ver_name, signed=True)

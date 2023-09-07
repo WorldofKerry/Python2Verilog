@@ -45,7 +45,7 @@ class Context(GenericReprAndStr):
     _states: set[str] = field(default_factory=set)
 
     valid_signal: Var = Var("valid")
-    ready_signal: Var = Var("ready")
+    ready_signal: Var = Var("done")
     clock_signal: Var = Var("clock")
     start_signal: Var = Var("start")
     reset_signal: Var = Var("reset")
