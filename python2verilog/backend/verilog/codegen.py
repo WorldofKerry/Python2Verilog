@@ -286,9 +286,16 @@ class CodeGen:
 
             # While loop waitng for ready signal
             while_body: list[ver.Statement] = []
+            # while_body.append(
+            #     ver.IfElse(
+            #         condition=ir.Expression("!_wait"),
+            #         then_body=[make_display_stmt()],
+            #         else_body=[],
+            #     )
+            # )
+            while_body.append(make_display_stmt())
             if random_wait:
                 while_body.append(ver.Statement("_wait = $urandom_range(0, 1);"))
-            while_body.append(make_display_stmt())
             while_body.append(ver.AtNegedgeStatement(self.context.clock_signal))
 
             initial_body.append(

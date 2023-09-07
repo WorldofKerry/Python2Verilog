@@ -96,7 +96,6 @@ class BaseTestCases:
                 df = pd.DataFrame(
                     self.all_statistics, columns=self.all_statistics[0].keys()
                 )
-                df = df.round(2)
                 title = f" Statistics for {__class__.__name__} "
                 table = df.to_markdown()
                 table_width = len(table.partition("\n")[0])
@@ -166,13 +165,14 @@ class BaseTestCases:
                     os.remove(FILES_IN_ABS_DIR[key])
                 os.mkfifo(FILES_IN_ABS_DIR[key])
 
-            logging.debug(f"executing python")
-
             with open(FILES_IN_ABS_DIR["python"]) as python_file:
                 python_text = python_file.read()
 
+            logging.debug(f"executing python")
             _locals = dict()
             exec(python_text, None, _locals)  # grab's exec's populated scoped variables
+
+            logging.debug("parsing to AST")
 
             tree = ast.parse(python_text)
 
@@ -180,7 +180,8 @@ class BaseTestCases:
             for test_case in test_cases:
                 generator_inst = _locals[function_name](*test_case)
                 size = None
-                for output in generator_inst:
+
+                for iter_, output in enumerate(generator_inst):
                     if isinstance(output, int):
                         output = (output,)
                     get_typed(output, tuple)
@@ -197,6 +198,11 @@ class BaseTestCases:
 
                     expected.append(output)
 
+                    if iter_ >= 100000:
+                        err_msg = f"capped generator outputs to {iter_} iterations"
+                        logging.error(err_msg)
+                        raise RuntimeError(err_msg)
+
             statistics = {
                 "Func Name": f"{function_name} -O{optimization_level}",
                 "Py Yields": len(expected),
@@ -206,6 +212,7 @@ class BaseTestCases:
             logging.debug("generating expected")
 
             if args.write:
+                logging.debug("writing expected")
                 with open(FILES_IN_ABS_DIR["expected"], mode="w") as expected_file:
                     for output in expected:
                         if len(output) > 1:
@@ -214,11 +221,14 @@ class BaseTestCases:
                             expected_file.write(
                                 f"{str(output)[1:-2]}\n"
                             )  # remove trailing comma
+
+                logging.debug("making visual and writing it")
                 make_visual(
                     _locals[function_name](*test_cases[0]),
                     FILES_IN_ABS_DIR["expected_visual"],
                 )
 
+                logging.info("writing ast dump")
                 with open(FILES_IN_ABS_DIR["ast_dump"], mode="w") as ast_dump_file:
                     ast_dump_file.write(ast.dump(tree, indent="  "))
 
@@ -262,7 +272,7 @@ class BaseTestCases:
                         FILES_IN_ABS_DIR["module"]: module_str,
                         FILES_IN_ABS_DIR["testbench"]: tb_str,
                     },
-                    timeout=len(expected),
+                    timeout=len(expected) / 1000 + 1,
                 )
             else:
                 stdout, stderr = run_iverilog_with_fifos(
@@ -271,9 +281,9 @@ class BaseTestCases:
                         FILES_IN_ABS_DIR["module_fifo"]: module_str,
                         FILES_IN_ABS_DIR["testbench_fifo"]: tb_str,
                     },
-                    timeout=len(expected),
+                    timeout=len(expected) / 1000 + 1,
                 )
-            time_took = time.time() - time_started
+            time_delta_ms = (time.time() - time_started) * 1000
 
             self.assertTrue(
                 stdout and not stderr,
@@ -294,7 +304,7 @@ class BaseTestCases:
                         filtered_f.write(str(output)[1:-1] + "\n")
 
             statistics["Ver Clks"] = len(actual_raw)
-            statistics["Simu (sec)"] = time_took
+            statistics["Simu (ms)"] = time_delta_ms
 
             filtered_actual = []
             for row in actual_raw:

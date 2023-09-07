@@ -165,8 +165,10 @@ class Module(ImplementsToLines):
             assert isinstance(input_, str)
             input_lines += f"input wire signed [31:0] {input_},"
         if add_default_ports:
-            input_lines += "input wire _start, \
-                // set high to capture inputs (in same cycle) and start generating"
+            input_lines += (
+                "input wire _start, "
+                + "// set high to capture inputs (in same cycle) and start generating"
+            )
             input_lines += (
                 "input wire _wait, // set high to have module pause outputting"
             )
