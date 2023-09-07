@@ -65,11 +65,13 @@ class CodeGen:
             body=[
                 ver.IfElse(
                     ir.UnaryOp("!", context.wait_signal),
-                    [ver.NonBlockingSubsitution(context.valid_signal, ir.UInt(0))]
-                    + [
-                        ver.NonBlockingSubsitution(out, ir.Int(-420))
-                        for out in context.output_vars
-                    ],
+                    list(
+                        [ver.NonBlockingSubsitution(context.valid_signal, ir.UInt(0))]
+                        + [
+                            ver.NonBlockingSubsitution(out, ir.Int(-420))
+                            for out in context.output_vars
+                        ]
+                    ),
                     [],
                 ),
                 ver.NonBlockingSubsitution(context.done_signal, ir.UInt(0)),
@@ -91,9 +93,10 @@ class CodeGen:
             ]
             + CodeGen.__make_start_if_else(root, context),
         )
-        body: list[ver.Statement] = [
-            ver.Declaration(v, reg=True, signed=True) for v in context.global_vars
-        ]
+        body: list[ver.Statement] = []
+
+        body += [ver.Declaration(v, reg=True, signed=True) for v in context.global_vars]
+
         body += [
             ver.Declaration(var.ver_name, reg=True, signed=True)
             for var in context.input_vars

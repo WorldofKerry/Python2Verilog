@@ -272,7 +272,7 @@ class BaseTestCases:
                         FILES_IN_ABS_DIR["module"]: module_str,
                         FILES_IN_ABS_DIR["testbench"]: tb_str,
                     },
-                    timeout=len(expected) / 1000 + 1,
+                    timeout=len(expected),
                 )
             else:
                 stdout, stderr = run_iverilog_with_fifos(
@@ -281,7 +281,7 @@ class BaseTestCases:
                         FILES_IN_ABS_DIR["module_fifo"]: module_str,
                         FILES_IN_ABS_DIR["testbench_fifo"]: tb_str,
                     },
-                    timeout=len(expected) / 1000 + 1,
+                    timeout=len(expected),
                 )
             time_delta_ms = (time.time() - time_started) * 1000
 
@@ -310,9 +310,7 @@ class BaseTestCases:
             for row in actual_raw:
                 if row[0] == "1":
                     try:
-                        filtered_actual.append(
-                            tuple([int(elem) for elem in row[2:]])
-                        )  # [valid, wait, ...]
+                        filtered_actual.append(tuple([int(elem) for elem in row[2:]]))
                     except ValueError as e:
                         logging.error(
                             f"{function_name} {len(filtered_actual)} {row} {e}\n{FILES_IN_ABS_DIR['module']}\n{FILES_IN_ABS_DIR['testbench']}"
@@ -407,7 +405,7 @@ class Correctness(BaseTestCases.BaseTest):
 
 # For easier testing of a specific function
 @pytest.mark.usefixtures("argparse")
-class Debugging(BaseTestCases.BaseTest):
+class Testing(BaseTestCases.BaseTest):
     def __init__(self, *args, **kwargs):
         BaseTestCases.BaseTest.__init__(
             self,
