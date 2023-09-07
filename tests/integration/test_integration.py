@@ -310,10 +310,12 @@ class BaseTestCases:
             for row in actual_raw:
                 if row[0] == "1":
                     try:
-                        filtered_actual.append(tuple([int(elem) for elem in row[1:]]))
+                        filtered_actual.append(
+                            tuple([int(elem) for elem in row[2:]])
+                        )  # [valid, wait, ...]
                     except ValueError as e:
                         logging.error(
-                            f"{function_name} {len(filtered_actual)} {row[1:]} {e}\n{FILES_IN_ABS_DIR['module']}\n{FILES_IN_ABS_DIR['testbench']}"
+                            f"{function_name} {len(filtered_actual)} {row} {e}\n{FILES_IN_ABS_DIR['module']}\n{FILES_IN_ABS_DIR['testbench']}"
                         )
 
             if args.write:

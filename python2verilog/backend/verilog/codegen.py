@@ -87,9 +87,10 @@ class CodeGen:
             ]
             + CodeGen.__make_start_if_else(root, context),
         )
-        body: list[ver.Statement] = [
-            ver.Declaration(v, reg=True, signed=True) for v in context.global_vars
-        ]
+        body: list[ver.Statement] = []
+
+        body += [ver.Declaration(v, reg=True, signed=True) for v in context.global_vars]
+
         body += [
             ver.Declaration(var.ver_name, reg=True, signed=True)
             for var in context.input_vars
@@ -212,9 +213,9 @@ class CodeGen:
 
             $display("%0d, ...", _valid, ...);
             """
-            string = '$display("%0d, '
+            string = '$display("%0d, %0d, '
             string += "%0d, " * (len(self.context.output_vars) - 1)
-            string += '%0d", _valid'
+            string += '%0d", _valid, _wait'
             for var in self.context.output_vars:
                 string += f", {var}"
             string += ");"
