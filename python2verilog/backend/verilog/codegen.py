@@ -85,19 +85,7 @@ class CodeGen:
                 ),
                 ver.Statement(),
             ]
-            + [
-                ver.Statement(
-                    comment="If (not waiting) or (not valid), then continue computation"
-                ),
-                ver.IfElse(
-                    ir.UnaryOp(
-                        "!",
-                        ir.BinOp(context.wait_signal, "&&", context.valid_signal),
-                    ),
-                    then_body=CodeGen.__make_start_if_else(root, context),
-                    else_body=[],
-                ),
-            ],
+            + CodeGen.__make_start_if_else(root, context),
         )
         body: list[ver.Statement] = [
             ver.Declaration(v, reg=True, signed=True) for v in context.global_vars
@@ -166,9 +154,21 @@ class CodeGen:
         if_else = ver.IfElse(
             ir.Expression("_start"),
             then_body,
-            [root],
+            [
+                ver.Statement(
+                    comment="If (not waiting) or (not valid), then continue computation"
+                ),
+                ver.IfElse(
+                    ir.UnaryOp(
+                        "!",
+                        ir.BinOp(context.wait_signal, "&&", context.valid_signal),
+                    ),
+                    then_body=[root],
+                    else_body=[],
+                ),
+            ],
         )
-        return [ver.Statement(comment="start if else"), if_else]
+        return [if_else]
 
     @property
     def module(self):
@@ -269,13 +269,6 @@ class CodeGen:
                     )
                 )
             initial_body.append(ver.BlockingSub(self.context.start_signal, ir.UInt(1)))
-            initial_body.append(
-                ver.BlockingSub(
-                    self.context.wait_signal,
-                    ir.UInt(0),
-                    comment="TODO: wait on start allowed",
-                )
-            )
 
             # Post-start
             initial_body.append(ver.Statement())
