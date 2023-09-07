@@ -100,12 +100,22 @@ class BaseTestCases:
                     self.all_statistics, columns=self.all_statistics[0].keys()
                 )
                 df = df.round(2)
-                table = f"\n====> Statistics for {__class__.__name__} <====\n"
-                table += df.to_markdown(index=False)
+                title = f" Statistics for {__class__.__name__} "
+                table = df.to_markdown()
+                table_width = len(table.partition("\n")[0])
+                pad = table_width - len(title)
+                result = (
+                    "\n"
+                    + "=" * (pad // 2)
+                    + title
+                    + "=" * (pad // 2 + pad % 2)
+                    + "\n"
+                    + table
+                )
                 if self.args.synthesis:
-                    logging.warning(table)
+                    logging.warning(result)
                 else:
-                    logging.info(table)
+                    logging.info(result)
             else:
                 logging.error("No stats collected")
 
