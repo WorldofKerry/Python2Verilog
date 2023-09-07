@@ -61,7 +61,7 @@ class CodeGen:
             outputs.append(var.ver_name)
 
         always = ver.PosedgeSyncAlways(
-            ir.Expression("_clock"),
+            context.clock_signal,
             body=[
                 ver.NonBlockingSubsitution(context.valid_signal, ir.UInt(0)),
                 ver.NonBlockingSubsitution(context.ready_signal, ir.UInt(0)),
@@ -74,7 +74,7 @@ class CodeGen:
                 ver.Statement(),
                 ver.Statement(comment="Start signal takes precedence over reset"),
                 ver.IfElse(
-                    ir.Expression("_reset"),
+                    context.reset_signal,
                     then_body=[
                         ver.NonBlockingSubsitution(
                             lvalue=context.state_var,
@@ -92,7 +92,7 @@ class CodeGen:
                 ver.IfElse(
                     ir.UnaryOp(
                         "!",
-                        ir.BinOp(ir.Expression("_wait"), "&&", ir.Expression("_valid")),
+                        ir.BinOp(context.wait_signal, "&&", context.valid_signal),
                     ),
                     then_body=CodeGen.__make_start_if_else(root, context),
                     else_body=[],
