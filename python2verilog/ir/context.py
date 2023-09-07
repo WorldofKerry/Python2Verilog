@@ -45,7 +45,7 @@ class Context(GenericReprAndStr):
     _states: set[str] = field(default_factory=set)
 
     valid_signal: Var = Var("valid")
-    ready_signal: Var = Var("ready")
+    done_signal: Var = Var("done")
     clock_signal: Var = Var("clock")
     start_signal: Var = Var("start")
     reset_signal: Var = Var("reset")
@@ -54,7 +54,7 @@ class Context(GenericReprAndStr):
     state_var: Var = Var("state")
 
     _entry_state: Optional[str] = None
-    _ready_state: Optional[str] = None
+    _done_state: Optional[str] = None
 
     def __del__(self):
         if self._module_file:
@@ -98,12 +98,12 @@ class Context(GenericReprAndStr):
 
         if self._entry_state:
             assert self.entry_state in self.states, self
-        if self._ready_state:
-            assert self.ready_state in self.states, self
+        if self._done_state:
+            assert self.done_state in self.states, self
 
         assert get_typed(self.wait_signal, Var)
         assert get_typed(self.clock_signal, Var)
-        assert get_typed(self.ready_signal, Var)
+        assert get_typed(self.done_signal, Var)
         assert get_typed(self.valid_signal, Var)
         assert get_typed(self.reset_signal, Var)
         assert get_typed(self.start_signal, Var)
@@ -163,17 +163,17 @@ class Context(GenericReprAndStr):
         self._entry_state = other
 
     @property
-    def ready_state(self):
+    def done_state(self):
         """
-        The ready state
+        The done state
         """
-        assert isinstance(self._ready_state, str), self
-        return self._ready_state
+        assert isinstance(self._done_state, str), self
+        return self._done_state
 
-    @ready_state.setter
-    def ready_state(self, other: str):
+    @done_state.setter
+    def done_state(self, other: str):
         assert isinstance(other, str)
-        self._ready_state = other
+        self._done_state = other
 
     @property
     def input_vars(self):

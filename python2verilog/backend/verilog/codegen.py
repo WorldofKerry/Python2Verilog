@@ -33,11 +33,11 @@ class CodeGen:
         for item in root_case.case_items:
             self.context.add_state(item.condition.to_string())
 
-        assert isinstance(context.ready_state, str)
-        self.context.add_state_weak(context.ready_state)
+        assert isinstance(context.done_state, str)
+        self.context.add_state_weak(context.done_state)
 
         self.context.add_global_var(
-            ir.Var("state", initial_value=self.context.ready_state)
+            ir.Var("state", initial_value=self.context.done_state)
         )
 
         self._module = CodeGen.__new_module(root_case, self.context)
@@ -63,12 +63,16 @@ class CodeGen:
         always = ver.PosedgeSyncAlways(
             context.clock_signal,
             body=[
-                ver.NonBlockingSubsitution(context.valid_signal, ir.UInt(0)),
-                ver.NonBlockingSubsitution(context.ready_signal, ir.UInt(0)),
-            ]
-            + [
-                ver.NonBlockingSubsitution(out, ir.Int(0))
-                for out in context.output_vars
+                ver.IfElse(
+                    ir.UnaryOp("!", context.wait_signal),
+                    [ver.NonBlockingSubsitution(context.valid_signal, ir.UInt(0))]
+                    + [
+                        ver.NonBlockingSubsitution(out, ir.Int(-420))
+                        for out in context.output_vars
+                    ],
+                    [],
+                ),
+                ver.NonBlockingSubsitution(context.done_signal, ir.UInt(0)),
             ]
             + [
                 ver.Statement(),
@@ -78,7 +82,7 @@ class CodeGen:
                     then_body=[
                         ver.NonBlockingSubsitution(
                             lvalue=context.state_var,
-                            rvalue=ir.Expression(context.ready_state),
+                            rvalue=ir.Expression(context.done_state),
                         ),
                     ],
                     else_body=[],
@@ -212,9 +216,9 @@ class CodeGen:
 
             $display("%0d, ...", _valid, ...);
             """
-            string = '$display("%0d, '
+            string = '$display("%0d, %0d, '
             string += "%0d, " * (len(self.context.output_vars) - 1)
-            string += '%0d", _valid'
+            string += '%0d", _valid, _wait'
             for var in self.context.output_vars:
                 string += f", {var}"
             string += ");"
@@ -230,7 +234,7 @@ class CodeGen:
             ver.Declaration(var.py_name, signed=True, reg=True)
             for var in self.context.input_vars
         ]
-        decl.append(ver.Declaration("_ready", size=1))
+        decl.append(ver.Declaration("_done", size=1))
         decl.append(ver.Declaration("_valid", size=1))
         decl += [
             ver.Declaration(var.ver_name, signed=True)
@@ -295,12 +299,20 @@ class CodeGen:
             # )
             while_body.append(make_display_stmt())
             if random_wait:
-                while_body.append(ver.Statement("_wait = $urandom_range(0, 1);"))
+                while_body.append(ver.Statement("_wait = $urandom_range(0, 1) !== 0;"))
+            # while_body.append(
+            #     ver.IfElse(
+            #         condition=ir.Expression("!_wait"),
+            #         then_body=[make_display_stmt()],
+            #         else_body=[],
+            #     )
+            # )
             while_body.append(ver.AtNegedgeStatement(self.context.clock_signal))
+            # while_body.append(ver.AtPosedgeStatement(self.context.clock_signal))
 
             initial_body.append(
                 ver.While(
-                    condition=ir.UnaryOp("!", self.context.ready_signal),
+                    condition=ir.UnaryOp("!", self.context.done_signal),
                     body=while_body,
                 )
             )
@@ -345,7 +357,7 @@ class CaseBuilder:
         self.visited: set[str] = set()
         self.context = context
         self.case = ver.Case(expression=ir.Expression("_state"), case_items=[])
-        self.added_ready_node = False
+        self.added_done_node = False
 
         # Member Funcs
         instance = itertools.count()
@@ -353,13 +365,13 @@ class CaseBuilder:
 
         # Work
         self.case.case_items.append(self.new_caseitem(root))
-        if not self.added_ready_node:
+        if not self.added_done_node:
             self.case.case_items.append(
                 ver.CaseItem(
-                    ir.Expression(context.ready_state),
+                    ir.Expression(context.done_state),
                     statements=[
                         ver.NonBlockingSubsitution(
-                            lvalue=ir.State("_ready"), rvalue=ir.UInt(1)
+                            lvalue=ir.State("_done"), rvalue=ir.UInt(1)
                         )
                     ],
                 )
@@ -385,12 +397,12 @@ class CaseBuilder:
 
         if isinstance(vertex, ir.DoneNode):
             stmts += [
-                ver.NonBlockingSubsitution(self.context.ready_signal, ir.UInt(1)),
+                ver.NonBlockingSubsitution(self.context.done_signal, ir.UInt(1)),
                 ver.NonBlockingSubsitution(
-                    self.case.condition, ir.Expression(self.context.ready_state)
+                    self.case.condition, ir.Expression(self.context.done_state)
                 ),
             ]
-            self.added_ready_node = True
+            self.added_done_node = True
 
         elif isinstance(vertex, ir.AssignNode):
             stmts.append(ver.NonBlockingSubsitution(vertex.lvalue, vertex.rvalue))
@@ -416,7 +428,7 @@ class CaseBuilder:
 
             if isinstance(vertex.optimal_child.optimal_child, ir.DoneNode):
                 outputs.append(
-                    ver.NonBlockingSubsitution(self.context.ready_signal, ir.UInt(1))
+                    ver.NonBlockingSubsitution(self.context.done_signal, ir.UInt(1))
                 )
 
             state_change.append(

@@ -178,7 +178,7 @@ class Module(ImplementsToLines):
 
         output_lines = Lines()
         if add_default_ports:
-            output_lines += "output reg _ready, // is high if module done outputting"
+            output_lines += "output reg _done, // is high if module done outputting"
             output_lines += "output reg _valid, // is high if output is valid"
         for output in outputs:
             assert isinstance(output, str)

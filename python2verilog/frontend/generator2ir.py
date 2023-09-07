@@ -32,7 +32,7 @@ class Generator2Graph:
         )
 
         self._context.entry_state = self._root.unique_id
-        self._context.ready_state = done_state_name
+        self._context.done_state = done_state_name
 
     @property
     def root(self):
