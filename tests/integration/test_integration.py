@@ -60,7 +60,6 @@ class BaseTestCases:
                     if self.args.first_test:
                         cases = [cases[0]]
                     with self.subTest(msg=name):
-                        logging.warning(f"subtest {name}")
                         logging.info(
                             f"Testing function `{name}` with -O{level} on `{cases}`"
                         )
@@ -110,12 +109,9 @@ class BaseTestCases:
                     + "\n"
                     + table
                 )
-                if self.args.synthesis:
-                    logging.warning(result)
-                else:
-                    logging.info(result)
+                logging.warning(result)
             else:
-                logging.error("No stats collected")
+                logging.critical("No stats found")
 
         def run_test(
             self,

@@ -50,10 +50,9 @@ jobs:
 
       - name: Run Pytest
         run: |
-          python3 -m pytest -vs tests/ --cov=python2verilog/ --cov-report term-missing \
-          --optimization-levels 0 2
-          python3 -m pytest -vs tests/ --cov=python2verilog/ --cov-report term-missing \
-          --write --optimization-levels 1 --synthesis
+          python3 -m pytest -v tests/ --cov=python2verilog/ --cov-report term-missing
+          python3 -m pytest -v tests/ --cov=python2verilog/ --cov-report term-missing \
+          --write --synthesis --optimization-levels 0 1 2
 
   full:
     runs-on: ubuntu-latest
