@@ -89,12 +89,21 @@ class CodeGen:
         )
         body: list[ver.Statement] = []
 
+        body += [
+            ver.Statement(),
+            ver.Declaration(context.prev_ready_signal),
+            ver.Statement(),
+            ver.Statement(comment="Global variables"),
+        ]
+
         body += [ver.Declaration(v, reg=True, signed=True) for v in context.global_vars]
 
         body += [
             ver.Declaration(var.ver_name, reg=True, signed=True)
             for var in context.input_vars
         ]
+
+        body.append(ver.Statement())
 
         body.append(always)
 
@@ -162,7 +171,7 @@ class CodeGen:
                 ver.IfElse(
                     ir.UnaryOp(
                         "!",
-                        ir.BinOp(context.wait_signal, "&&", context.valid_signal),
+                        ir.BinOp(context.ready_signal, "&&", context.valid_signal),
                     ),
                     then_body=[root],
                     else_body=[],
@@ -215,7 +224,7 @@ class CodeGen:
             """
             string = '$display("%0d, %0d, '
             string += "%0d, " * (len(self.context.output_vars) - 1)
-            string += '%0d", _valid, _wait'
+            string += '%0d", _valid, _ready'
             for var in self.context.output_vars:
                 string += f", {var}"
             string += ");"
@@ -226,7 +235,7 @@ class CodeGen:
         decl.append(ver.Declaration("_clock", size=1, reg=True))
         decl.append(ver.Declaration("_start", size=1, reg=True))
         decl.append(ver.Declaration("_reset", size=1, reg=True))
-        decl.append(ver.Declaration("_wait", size=1, reg=True))
+        decl.append(ver.Declaration("_ready", size=1, reg=True))
         decl += [
             ver.Declaration(var.py_name, signed=True, reg=True)
             for var in self.context.input_vars
@@ -248,7 +257,7 @@ class CodeGen:
         initial_body: list[ver.Statement | ver.While] = []
         initial_body.append(ver.BlockingSub(self.context.clock_signal, ir.UInt(0)))
         initial_body.append(ver.BlockingSub(self.context.start_signal, ir.UInt(0)))
-        initial_body.append(ver.BlockingSub(self.context.wait_signal, ir.UInt(0)))
+        initial_body.append(ver.BlockingSub(self.context.ready_signal, ir.UInt(0)))
         initial_body.append(ver.BlockingSub(self.context.reset_signal, ir.UInt(1)))
 
         initial_body.append(ver.AtNegedgeStatement(self.context.clock_signal))
@@ -296,7 +305,7 @@ class CodeGen:
             # )
             while_body.append(make_display_stmt())
             if random_wait:
-                while_body.append(ver.Statement("_wait = $urandom_range(0, 1);"))
+                while_body.append(ver.Statement("_ready = $urandom_range(0, 1);"))
             while_body.append(ver.AtNegedgeStatement(self.context.clock_signal))
 
             initial_body.append(

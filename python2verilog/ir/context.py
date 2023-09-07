@@ -49,8 +49,8 @@ class Context(GenericReprAndStr):
     clock_signal: Var = Var("clock")
     start_signal: Var = Var("start")
     reset_signal: Var = Var("reset")
-    wait_signal: Var = Var("wait")
-    prev_wait_signal: Var = Var("prev_wait")
+    ready_signal: Var = Var("ready")
+    prev_ready_signal: Var = Var("prev_ready")
 
     state_var: Var = Var("state")
 
@@ -102,8 +102,8 @@ class Context(GenericReprAndStr):
         if self._ready_state:
             assert self.ready_state in self.states, self
 
-        assert get_typed(self.wait_signal, Var)
-        assert get_typed(self.prev_wait_signal, Var)
+        assert get_typed(self.ready_signal, Var)
+        assert get_typed(self.prev_ready_signal, Var)
         assert get_typed(self.clock_signal, Var)
         assert get_typed(self.done_signal, Var)
         assert get_typed(self.valid_signal, Var)

@@ -170,7 +170,7 @@ class Module(ImplementsToLines):
                 + "// set high to capture inputs (in same cycle) and start generating"
             )
             input_lines += (
-                "input wire _wait, // set high to have module pause outputting"
+                "input wire _ready, // set high to have module pause outputting"
             )
             input_lines += "input wire _clock,"
             input_lines += "input wire _reset,"
