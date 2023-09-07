@@ -272,7 +272,7 @@ class BaseTestCases:
                         FILES_IN_ABS_DIR["module"]: module_str,
                         FILES_IN_ABS_DIR["testbench"]: tb_str,
                     },
-                    timeout=len(expected) / 1000 + 1,
+                    timeout=len(expected),
                 )
             else:
                 stdout, stderr = run_iverilog_with_fifos(
@@ -281,7 +281,7 @@ class BaseTestCases:
                         FILES_IN_ABS_DIR["module_fifo"]: module_str,
                         FILES_IN_ABS_DIR["testbench_fifo"]: tb_str,
                     },
-                    timeout=len(expected) / 1000 + 1,
+                    timeout=len(expected),
                 )
             time_delta_ms = (time.time() - time_started) * 1000
 
