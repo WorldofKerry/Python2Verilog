@@ -53,7 +53,6 @@ class BaseTestCases:
             super().__init__(*args, **kwargs)
 
         def test_integration(self):
-            print()
             if self.args.first_test:
                 logging.info("Only first test being ran")
             for level in self.args.optimization_levels:
@@ -61,7 +60,7 @@ class BaseTestCases:
                     if self.args.first_test:
                         cases = [cases[0]]
                     with self.subTest(msg=name):
-                        logging.info(f"    ==> subtest::{name}")
+                        logging.warning(f"subtest {name}")
                         logging.info(
                             f"Testing function `{name}` with -O{level} on `{cases}`"
                         )
