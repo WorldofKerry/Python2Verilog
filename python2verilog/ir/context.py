@@ -45,7 +45,7 @@ class Context(GenericReprAndStr):
     _states: set[str] = field(default_factory=set)
 
     valid_signal: Var = Var("valid")
-    ready_signal: Var = Var("done")
+    done_signal: Var = Var("done")
     clock_signal: Var = Var("clock")
     start_signal: Var = Var("start")
     reset_signal: Var = Var("reset")
@@ -105,7 +105,7 @@ class Context(GenericReprAndStr):
         assert get_typed(self.wait_signal, Var)
         assert get_typed(self.prev_wait_signal, Var)
         assert get_typed(self.clock_signal, Var)
-        assert get_typed(self.ready_signal, Var)
+        assert get_typed(self.done_signal, Var)
         assert get_typed(self.valid_signal, Var)
         assert get_typed(self.reset_signal, Var)
         assert get_typed(self.start_signal, Var)

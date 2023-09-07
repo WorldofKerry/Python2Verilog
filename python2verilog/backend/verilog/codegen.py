@@ -64,7 +64,7 @@ class CodeGen:
             context.clock_signal,
             body=[
                 ver.NonBlockingSubsitution(context.valid_signal, ir.UInt(0)),
-                ver.NonBlockingSubsitution(context.ready_signal, ir.UInt(0)),
+                ver.NonBlockingSubsitution(context.done_signal, ir.UInt(0)),
             ]
             + [
                 ver.NonBlockingSubsitution(out, ir.Int(0))
@@ -301,7 +301,7 @@ class CodeGen:
 
             initial_body.append(
                 ver.While(
-                    condition=ir.UnaryOp("!", self.context.ready_signal),
+                    condition=ir.UnaryOp("!", self.context.done_signal),
                     body=while_body,
                 )
             )
@@ -386,7 +386,7 @@ class CaseBuilder:
 
         if isinstance(vertex, ir.DoneNode):
             stmts += [
-                ver.NonBlockingSubsitution(self.context.ready_signal, ir.UInt(1)),
+                ver.NonBlockingSubsitution(self.context.done_signal, ir.UInt(1)),
                 ver.NonBlockingSubsitution(
                     self.case.condition, ir.Expression(self.context.ready_state)
                 ),
@@ -417,7 +417,7 @@ class CaseBuilder:
 
             if isinstance(vertex.optimal_child.optimal_child, ir.DoneNode):
                 outputs.append(
-                    ver.NonBlockingSubsitution(self.context.ready_signal, ir.UInt(1))
+                    ver.NonBlockingSubsitution(self.context.done_signal, ir.UInt(1))
                 )
 
             state_change.append(
