@@ -61,7 +61,7 @@ class BaseTestCases:
                     if self.args.first_test:
                         cases = [cases[0]]
                     with self.subTest(msg=name):
-                        print(f"subtest::{name}", end="", flush=True)
+                        logging.info(f"    ==> subtest::{name}")
                         logging.info(
                             f"Testing function `{name}` with -O{level} on `{cases}`"
                         )
@@ -74,7 +74,6 @@ class BaseTestCases:
                             optimization_level=level,
                             testbench_args=self.testbench_args,
                         )
-                        print(f" \033[92mPASSED\033[0m")
             if self.all_statistics:
                 if self.testbench_args["random_wait"] is False:
                     test_that_are_too_slow = []
