@@ -86,11 +86,17 @@ class CodeGen:
                 ver.Statement(),
             ]
             + [
+                ver.Statement(
+                    comment="If (not waiting) or (not valid), then continue computation"
+                ),
                 ver.IfElse(
-                    ir.UnaryOp("!", ir.Expression("_wait")),
-                    then_body=[CodeGen.__get_start_ifelse(root, context)],
+                    ir.UnaryOp(
+                        "!",
+                        ir.BinOp(ir.Expression("_wait"), "&&", ir.Expression("_valid")),
+                    ),
+                    then_body=CodeGen.__make_start_if_else(root, context),
                     else_body=[],
-                )
+                ),
             ],
         )
         body: list[ver.Statement] = [
@@ -114,15 +120,14 @@ class CodeGen:
         )
 
     @staticmethod
-    def __get_start_ifelse(root: ver.Case, context: ir.Context):
+    def __make_start_if_else(
+        root: ver.Case, context: ir.Context
+    ) -> list[ver.Statement]:
         """
         if (_start) begin
-            <var> = <value>;
             ...
         end else begin
-            case(...)
             ...
-            endcase
         end
         """
         # The first case can be included here
@@ -158,12 +163,12 @@ class CodeGen:
             else:
                 raise TypeError(f"Unexpected {type(stmt)} {stmt}")
 
-        block = ver.IfElse(
+        if_else = ver.IfElse(
             ir.Expression("_start"),
             init_body,
             [root],
         )
-        return block
+        return [ver.Statement(comment="start if else"), if_else]
 
     @property
     def module(self):
