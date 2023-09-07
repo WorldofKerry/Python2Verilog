@@ -135,20 +135,20 @@ class CodeGen:
             ir.Expression(var.ver_name): ir.Expression(var.py_name)
             for var in context.input_vars
         }
-        stmt_stack: list[ver.Statement] = []
-        init_body: list[ver.Statement] = []
 
+        then_body: list[ver.Statement] = []
         for var in context.input_vars:
-            init_body.append(
+            then_body.append(
                 ver.NonBlockingSubsitution(
                     ir.Expression(var.ver_name), ir.Expression(var.py_name)
                 )
             )
 
+        stmt_stack: list[ver.Statement] = []  # backwards replace using dfs
         for item in root.case_items:
             if item.condition == ir.Expression(context.entry_state):
                 stmt_stack += item.statements
-                init_body += item.statements
+                then_body += item.statements
                 root.case_items.remove(item)
                 break
 
@@ -165,7 +165,7 @@ class CodeGen:
 
         if_else = ver.IfElse(
             ir.Expression("_start"),
-            init_body,
+            then_body,
             [root],
         )
         return [ver.Statement(comment="start if else"), if_else]
