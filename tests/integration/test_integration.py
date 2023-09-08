@@ -321,7 +321,12 @@ class BaseTestCases:
             if args.write:
                 with open(FILES_IN_ABS_DIR["filtered_actual"], mode="w") as filtered_f:
                     for output in filtered_actual:
-                        filtered_f.write(str(output)[1:-1] + "\n")
+                        if len(output) > 1:
+                            filtered_f.write(f"{str(output)[1:-1]}\n")
+                        else:
+                            filtered_f.write(
+                                f"{str(output)[1:-2]}\n"
+                            )  # remove trailing comma
 
                 make_visual(filtered_actual, FILES_IN_ABS_DIR["actual_visual"])
 

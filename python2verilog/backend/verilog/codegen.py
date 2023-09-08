@@ -63,12 +63,19 @@ class CodeGen:
         always = ver.PosedgeSyncAlways(
             context.clock_signal,
             body=[
-                ver.NonBlockingSubsitution(context.valid_signal, ir.UInt(0)),
+                ver.NonBlockingSubsitution(
+                    context.prev_ready_signal, context.ready_signal
+                ),
                 ver.NonBlockingSubsitution(context.done_signal, ir.UInt(0)),
-            ]
-            + [
-                ver.NonBlockingSubsitution(out, ir.Int(0))
-                for out in context.output_vars
+                ver.IfElse(
+                    context.ready_signal,
+                    [
+                        ver.NonBlockingSubsitution(out, ir.Int(0))
+                        for out in context.output_vars
+                    ]
+                    + [ver.NonBlockingSubsitution(context.valid_signal, ir.UInt(0))],
+                    [],
+                ),
             ]
             + [
                 ver.Statement(),
@@ -91,7 +98,7 @@ class CodeGen:
 
         body += [
             ver.Statement(),
-            ver.Declaration(context.prev_ready_signal),
+            ver.Declaration(context.prev_ready_signal, size=1, reg=True),
             ver.Statement(),
             ver.Statement(comment="Global variables"),
         ]
@@ -169,12 +176,13 @@ class CodeGen:
                     comment="If (not waiting) or (not valid), then continue computation"
                 ),
                 ver.IfElse(
-                    ir.UnaryOp(
-                        "!",
-                        ir.BinOp(context.ready_signal, "&&", context.valid_signal),
+                    ir.BinOp(
+                        context.ready_signal,
+                        "||",
+                        ir.UnaryOp("!", context.valid_signal),
                     ),
-                    then_body=[root],
-                    else_body=[],
+                    [root],
+                    [],
                 ),
             ],
         )
@@ -257,7 +265,7 @@ class CodeGen:
         initial_body: list[ver.Statement | ver.While] = []
         initial_body.append(ver.BlockingSub(self.context.clock_signal, ir.UInt(0)))
         initial_body.append(ver.BlockingSub(self.context.start_signal, ir.UInt(0)))
-        initial_body.append(ver.BlockingSub(self.context.ready_signal, ir.UInt(0)))
+        initial_body.append(ver.BlockingSub(self.context.ready_signal, ir.UInt(1)))
         initial_body.append(ver.BlockingSub(self.context.reset_signal, ir.UInt(1)))
 
         initial_body.append(ver.AtNegedgeStatement(self.context.clock_signal))
@@ -296,16 +304,16 @@ class CodeGen:
 
             # While loop waitng for ready signal
             while_body: list[ver.Statement] = []
-            # while_body.append(
-            #     ver.IfElse(
-            #         condition=ir.Expression("!_wait"),
-            #         then_body=[make_display_stmt()],
-            #         else_body=[],
-            #     )
-            # )
-            while_body.append(make_display_stmt())
+            # while_body.append(make_display_stmt())
             if random_wait:
                 while_body.append(ver.Statement("_ready = $urandom_range(0, 1);"))
+            while_body.append(
+                ver.IfElse(
+                    condition=ir.Expression("_ready"),
+                    then_body=[make_display_stmt()],
+                    else_body=[],
+                )
+            )
             while_body.append(ver.AtNegedgeStatement(self.context.clock_signal))
 
             initial_body.append(
