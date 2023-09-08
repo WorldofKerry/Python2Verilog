@@ -28,6 +28,7 @@ class Context(GenericReprAndStr):
     test_cases: list[tuple[int]] = field(default_factory=list)
 
     py_func: Optional[FunctionType] = None
+    py_string: Optional[str] = None
     _py_ast: Optional[ast.FunctionDef] = None
 
     input_types: list[type[Any]] = field(default_factory=list)

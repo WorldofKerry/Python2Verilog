@@ -205,6 +205,7 @@ def text_to_context(
     context.test_cases = test_cases
     context.py_ast = generator_ast
     context.py_func = generator_func
+    context.py_string = func_str
 
     return context
 

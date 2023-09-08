@@ -6,6 +6,7 @@ import itertools
 import typing
 
 from python2verilog.optimizer.optimizer import backwards_replace
+from python2verilog.utils.string import Lines
 
 from ... import ir
 from ...utils.assertions import assert_typed_dict, get_typed, get_typed_list
@@ -117,12 +118,19 @@ class CodeGen:
 
         state_vars = {key: ir.UInt(index) for index, key in enumerate(context.states)}
 
+        python_test_code = Lines()
+        for case in context.test_cases:
+            python_test_code += f"print(list({context.name}(*{case})))"
         return ver.Module(
             name=context.name,
             inputs=inputs,
             outputs=outputs,
             body=body,
             localparams=state_vars,
+            header_comment=Lines(
+                f"/*\n\n# Python Function\n{context.py_string}\n\n"
+                f"# Test Cases\n{python_test_code}\n*/\n\n"
+            ),
         )
 
     @staticmethod
