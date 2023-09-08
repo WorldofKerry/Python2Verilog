@@ -174,7 +174,7 @@ class CodeGen:
             then_body,
             [
                 ver.Statement(
-                    comment="If (not waiting) or (not valid), then continue computation"
+                    comment="If ready or not valid, then continue computation"
                 ),
                 ver.IfElse(
                     ir.BinOp(
