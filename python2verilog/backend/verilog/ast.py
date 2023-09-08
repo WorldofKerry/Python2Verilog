@@ -157,6 +157,7 @@ class Module(ImplementsToLines):
         body: Optional[list[Statement]] = None,
         is_not_testbench=True,
         localparams: Optional[dict[ir.Expression, ir.UInt]] = None,
+        header_comment: Optional[Lines] = None,
     ):
         self.name = name
 
@@ -210,11 +211,16 @@ class Module(ImplementsToLines):
         else:
             self.local_params = Lines()
 
+        self.header_comment = header_comment
+
     def to_lines(self):
         """
         To Verilog
         """
-        lines = Lines()
+        if self.header_comment:
+            lines = Lines(self.header_comment.lines)
+        else:
+            lines = Lines()
         lines += f"module {self.name} ("
         for line in self.input:
             lines += Indent(1) + line

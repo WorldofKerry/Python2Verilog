@@ -11,8 +11,8 @@ class TestLines(unittest.TestCase):
 
         lines = Lines("abc 123")
         self.assertEqual("abc 123\n", str(lines))
-        self.assertRaises(AssertionError, Lines, "abc 123\n")
-        self.assertRaises(AssertionError, Lines, "\n")
+        self.assertEqual("abc 123\n", str(Lines("abc 123\n")))
+        self.assertEqual("\n", str(Lines("\n")))
         self.assertRaises(AssertionError, Lines, {})
 
         lines = Lines(["abc 123"])
