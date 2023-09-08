@@ -307,10 +307,10 @@ class CodeGen:
             while_body: list[ver.Statement] = []
             # while_body.append(make_display_stmt())
             if random_wait:
-                while_body.append(ver.Statement("_ready = $urandom_range(0, 1);"))
+                while_body.append(ver.Statement("_ready = $urandom_range(0, 4) === 0;"))
             while_body.append(
                 ver.Statement(
-                    comment="`if (_ready && _valid)` is also valid as a conditional"
+                    comment="`if (_ready && _valid)` also works as a conditional"
                 )
             )
             while_body.append(
