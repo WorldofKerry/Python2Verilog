@@ -297,7 +297,7 @@ class CodeGen:
                     ver.BlockingSub(
                         ir.Expression(var.py_name),
                         ir.Unknown(),
-                        comment="only need inputs at start",
+                        comment="only need inputs when start is set",
                     )
                 )
             initial_body.append(ver.BlockingSub(self.context.start_signal, ir.UInt(0)))
@@ -308,6 +308,11 @@ class CodeGen:
             # while_body.append(make_display_stmt())
             if random_wait:
                 while_body.append(ver.Statement("_ready = $urandom_range(0, 1);"))
+            while_body.append(
+                ver.Statement(
+                    comment="`if (_ready && _valid)` is also valid as a conditional"
+                )
+            )
             while_body.append(
                 ver.IfElse(
                     condition=ir.Expression("_ready"),

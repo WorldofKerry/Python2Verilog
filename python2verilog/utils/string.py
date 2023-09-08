@@ -78,6 +78,13 @@ class Lines:
         self.lines.append(other)
         return self
 
+    def blank(self):
+        """
+        Adds a blank line
+        """
+        self.lines.append("")
+        return self
+
     def concat(self, other: Lines, indent: int = 0):
         """
         Concats two Lines
