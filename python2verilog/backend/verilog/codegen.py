@@ -336,7 +336,7 @@ class CodeGen:
                 [],
                 [],
                 body=setups + [initial_loop],
-                add_default_ports=False,
+                is_not_testbench=False,
             )
             return module
         raise RuntimeError("Needs the context")

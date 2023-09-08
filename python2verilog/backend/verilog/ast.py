@@ -155,18 +155,18 @@ class Module(ImplementsToLines):
         inputs: list[str],
         outputs: list[str],
         body: Optional[list[Statement]] = None,
-        add_default_ports=True,
+        is_not_testbench=True,
         localparams: Optional[dict[ir.Expression, ir.UInt]] = None,
     ):
         self.name = name
 
         input_lines = Lines()
-        input_lines += "// Function parameters:"
-        for input_ in inputs:
-            assert isinstance(input_, str)
-            input_lines += f"input wire signed [31:0] {input_},"
-        input_lines += ""
-        if add_default_ports:
+        if is_not_testbench:
+            input_lines += "// Function parameters:"
+            for input_ in inputs:
+                assert isinstance(input_, str)
+                input_lines += f"input wire signed [31:0] {input_},"
+            input_lines += ""
             input_lines += "input wire _clock, // clock for sync"
             input_lines += (
                 "input wire _reset, // set high to reset, i.e. done will be high"
@@ -184,15 +184,15 @@ class Module(ImplementsToLines):
         self.input = input_lines
 
         output_lines = Lines()
-        if add_default_ports:
+        if is_not_testbench:
             output_lines += "output reg _valid, // is high if output is valid"
             output_lines += ""
             output_lines += "output reg _done, // is high if module done outputting"
-        output_lines += ""
-        output_lines += "// Output values as a tuple with respective index(es)"
-        for output in outputs:
-            assert isinstance(output, str)
-            output_lines += f"output reg signed [31:0] {output},"
+            output_lines += ""
+            output_lines += "// Output values as a tuple with respective index(es)"
+            for output in outputs:
+                assert isinstance(output, str)
+                output_lines += f"output reg signed [31:0] {output},"
         self.output = output_lines
 
         if body:
