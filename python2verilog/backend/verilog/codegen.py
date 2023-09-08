@@ -3,6 +3,7 @@ Verilog Codegen
 """
 
 import itertools
+import typing
 
 from python2verilog.optimizer.optimizer import backwards_replace
 
@@ -63,17 +64,20 @@ class CodeGen:
         always = ver.PosedgeSyncAlways(
             context.clock_signal,
             body=[
-                ver.NonBlockingSubsitution(
-                    context.prev_ready_signal, context.ready_signal
-                ),
                 ver.NonBlockingSubsitution(context.done_signal, ir.UInt(0)),
+                ver.Statement(),
                 ver.IfElse(
                     context.ready_signal,
-                    [
-                        ver.NonBlockingSubsitution(out, ir.Int(0))
-                        for out in context.output_vars
-                    ]
-                    + [ver.NonBlockingSubsitution(context.valid_signal, ir.UInt(0))],
+                    typing.cast(
+                        list[ver.Statement],
+                        [
+                            ver.NonBlockingSubsitution(out, ir.Int(0))
+                            for out in context.output_vars
+                        ]
+                        + [
+                            ver.NonBlockingSubsitution(context.valid_signal, ir.UInt(0))
+                        ],
+                    ),
                     [],
                 ),
             ]
@@ -97,9 +101,6 @@ class CodeGen:
         body: list[ver.Statement] = []
 
         body += [
-            ver.Statement(),
-            ver.Declaration(context.prev_ready_signal, size=1, reg=True),
-            ver.Statement(),
             ver.Statement(comment="Global variables"),
         ]
 

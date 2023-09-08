@@ -161,25 +161,35 @@ class Module(ImplementsToLines):
         self.name = name
 
         input_lines = Lines()
+        input_lines += "// Function parameters:"
         for input_ in inputs:
             assert isinstance(input_, str)
             input_lines += f"input wire signed [31:0] {input_},"
+        input_lines += ""
         if add_default_ports:
+            input_lines += "input wire _clock, // clock for sync"
+            input_lines += (
+                "input wire _reset, // set high to reset, i.e. done will be high"
+            )
             input_lines += (
                 "input wire _start, "
                 + "// set high to capture inputs (in same cycle) and start generating"
             )
+            input_lines += ""
+            input_lines += "// Implements a ready/valid handshake based on"
+            input_lines += "// http://www.cjdrake.com/readyvalid-protocol-primer.html"
             input_lines += (
-                "input wire _ready, // set high to have module pause outputting"
+                "input wire _ready, // set high when caller is ready for output"
             )
-            input_lines += "input wire _clock,"
-            input_lines += "input wire _reset,"
         self.input = input_lines
 
         output_lines = Lines()
         if add_default_ports:
-            output_lines += "output reg _done, // is high if module done outputting"
             output_lines += "output reg _valid, // is high if output is valid"
+            output_lines += ""
+            output_lines += "output reg _done, // is high if module done outputting"
+        output_lines += ""
+        output_lines += "// Output values as a tuple with respective index(es)"
         for output in outputs:
             assert isinstance(output, str)
             output_lines += f"output reg signed [31:0] {output},"
