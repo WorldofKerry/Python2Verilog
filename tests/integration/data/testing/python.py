@@ -16,14 +16,9 @@ def testing(n) -> tuple[int]:
     # yield (3,)
 
     i = 0
-    yield i
     while i < n:
-        if 1:
-            i += 1
-            yield i
-        else:
-            i += 2
-
+        yield i
+        i = i + 1
     # i = 0
     # while i < n:
     #     # i = 4

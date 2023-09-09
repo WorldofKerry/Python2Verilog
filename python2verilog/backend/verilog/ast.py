@@ -155,32 +155,45 @@ class Module(ImplementsToLines):
         inputs: list[str],
         outputs: list[str],
         body: Optional[list[Statement]] = None,
-        add_default_ports=True,
+        is_not_testbench=True,
         localparams: Optional[dict[ir.Expression, ir.UInt]] = None,
+        header_comment: Optional[Lines] = None,
     ):
         self.name = name
 
         input_lines = Lines()
-        for input_ in inputs:
-            assert isinstance(input_, str)
-            input_lines += f"input wire signed [31:0] {input_},"
-        if add_default_ports:
-            input_lines += "input wire _start, \
-                // set high to capture inputs (in same cycle) and start generating"
+        if is_not_testbench:
+            input_lines += "// Function parameters:"
+            for input_ in inputs:
+                assert isinstance(input_, str)
+                input_lines += f"input wire signed [31:0] {input_},"
+            input_lines.blank()
+            input_lines += "input wire _clock, // clock for sync"
             input_lines += (
-                "input wire _wait, // set high to have module pause outputting"
+                "input wire _reset, // set high to reset, i.e. done will be high"
             )
-            input_lines += "input wire _clock,"
-            input_lines += "input wire _reset,"
+            input_lines += (
+                "input wire _start, "
+                + "// set high to capture inputs (in same cycle) and start generating"
+            )
+            input_lines.blank()
+            input_lines += "// Implements a ready/valid handshake based on"
+            input_lines += "// http://www.cjdrake.com/readyvalid-protocol-primer.html"
+            input_lines += (
+                "input wire _ready, // set high when caller is ready for output"
+            )
         self.input = input_lines
 
         output_lines = Lines()
-        if add_default_ports:
-            output_lines += "output reg _ready, // is high if module done outputting"
+        if is_not_testbench:
             output_lines += "output reg _valid, // is high if output is valid"
-        for output in outputs:
-            assert isinstance(output, str)
-            output_lines += f"output reg signed [31:0] {output},"
+            output_lines.blank()
+            output_lines += "output reg _done, // is high if module done outputting"
+            output_lines.blank()
+            output_lines += "// Output values as a tuple with respective index(es)"
+            for output in outputs:
+                assert isinstance(output, str)
+                output_lines += f"output reg signed [31:0] {output},"
         self.output = output_lines
 
         if body:
@@ -198,11 +211,16 @@ class Module(ImplementsToLines):
         else:
             self.local_params = Lines()
 
+        self.header_comment = header_comment
+
     def to_lines(self):
         """
         To Verilog
         """
-        lines = Lines()
+        if self.header_comment:
+            lines = Lines(self.header_comment.lines)
+        else:
+            lines = Lines()
         lines += f"module {self.name} ("
         for line in self.input:
             lines += Indent(1) + line

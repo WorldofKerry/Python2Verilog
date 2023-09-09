@@ -17,10 +17,11 @@ class Lines:
 
     def __init__(self, data: list[str] | str | None = None):
         if data is None:
-            self.lines = []
+            self.lines: list[str] = []
         elif isinstance(data, str):
-            self.assert_no_newline(data)
-            self.lines = [data]
+            self.lines = []
+            for line in data.splitlines():
+                self.lines.append(line)
         elif isinstance(data, list):
             for line in data:
                 assert isinstance(line, str), "Input must be a list of strings"
@@ -76,6 +77,13 @@ class Lines:
         assert isinstance(other, str)
         self.assert_no_newline(other)
         self.lines.append(other)
+        return self
+
+    def blank(self):
+        """
+        Adds a blank line
+        """
+        self.lines.append("")
         return self
 
     def concat(self, other: Lines, indent: int = 0):

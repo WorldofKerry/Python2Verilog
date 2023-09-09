@@ -114,13 +114,13 @@ def text_to_context(
             func_call_str = func_call_str.rsplit(")", 1)[0] + ")"
 
             try:
-                test_case = ast.literal_eval(func_call_str)
-                if not isinstance(test_case, tuple):
-                    test_case = (test_case,)
-                test_cases.append(test_case)
+                output = ast.literal_eval(func_call_str)
+                if not isinstance(output, tuple):
+                    output = (output,)
+                test_cases.append(output)
 
                 logging.info(
-                    f"Found test case at {get_file_and_line_num(node)} with {test_case}"
+                    f"Found test case at {get_file_and_line_num(node)} with {output}"
                 )
             except ValueError as e:
                 raise ValueError(
@@ -139,12 +139,12 @@ def text_to_context(
 
     initialized = False
     input_types: list[type[Any]]
-    for test_case in test_cases:
+    for output in test_cases:
         if not initialized:
-            input_types = [type(val) for val in test_case]
+            input_types = [type(val) for val in output]
             initialized = True
 
-        for i, (expected_type, actual_value) in enumerate(zip(input_types, test_case)):
+        for i, (expected_type, actual_value) in enumerate(zip(input_types, output)):
             assert expected_type == type(
                 actual_value
             ), f"Expected parameter `{input_names[i]}` to be \
@@ -165,8 +165,8 @@ def text_to_context(
 
     initialized = False
 
-    for test_case in test_cases:
-        generator = generator_func(*test_case)
+    for output in test_cases:
+        generator = generator_func(*output)
 
         if not initialized:
             result = next(generator)
@@ -175,17 +175,20 @@ def text_to_context(
             output_types = [type(val) for val in result]
             initialized = True
 
-        for test_case in generator:
-            if not isinstance(test_case, tuple):
-                test_case = (test_case,)
+        for iter_, output in enumerate(generator):
+            if not isinstance(output, tuple):
+                output = (output,)
 
-            for i, (expected_type, actual_value) in enumerate(
-                zip(input_types, test_case)
-            ):
+            for i, (expected_type, actual_value) in enumerate(zip(input_types, output)):
                 assert expected_type == type(
                     actual_value
                 ), f"Expected parameter `{input_names[i]}` to be \
                     {expected_type} but got {type(actual_value)} instead"
+
+            if iter_ >= 100000:
+                err_msg = f"capped generator outputs to {iter_} iterations"
+                logging.error(err_msg)
+                raise RuntimeError(err_msg)
 
     context = ir.Context(name=function_name)
 
@@ -202,6 +205,7 @@ def text_to_context(
     context.test_cases = test_cases
     context.py_ast = generator_ast
     context.py_func = generator_func
+    context.py_string = func_str
 
     return context
 

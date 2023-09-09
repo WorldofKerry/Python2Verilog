@@ -26,6 +26,8 @@ def make_visual(generator_inst, directory: str):
             data_triple_list.append((*yields[:2], 1))
         else:
             data_triple_list.append((yields[0], idx, 1))
+        if idx > 1000:
+            break
 
     data_triple = np.array(data_triple_list)
 
