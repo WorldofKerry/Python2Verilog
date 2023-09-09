@@ -28,6 +28,9 @@ module hrange (
             _state <= _statelmaoready;
         end
 
+        // if (_valid && _wait)
+        //     continue;
+
         if (_start) begin
             _base <= base;
             _limit <= limit;
