@@ -28,6 +28,7 @@ class Context(GenericReprAndStr):
     test_cases: list[tuple[int]] = field(default_factory=list)
 
     py_func: Optional[FunctionType] = None
+    py_string: Optional[str] = None
     _py_ast: Optional[ast.FunctionDef] = None
 
     input_types: list[type[Any]] = field(default_factory=list)
@@ -45,11 +46,11 @@ class Context(GenericReprAndStr):
     _states: set[str] = field(default_factory=set)
 
     valid_signal: Var = Var("valid")
-    ready_signal: Var = Var("ready")
+    done_signal: Var = Var("done")
     clock_signal: Var = Var("clock")
     start_signal: Var = Var("start")
     reset_signal: Var = Var("reset")
-    wait_signal: Var = Var("wait")
+    ready_signal: Var = Var("ready")
 
     state_var: Var = Var("state")
 
@@ -101,9 +102,9 @@ class Context(GenericReprAndStr):
         if self._ready_state:
             assert self.ready_state in self.states, self
 
-        assert get_typed(self.wait_signal, Var)
-        assert get_typed(self.clock_signal, Var)
         assert get_typed(self.ready_signal, Var)
+        assert get_typed(self.clock_signal, Var)
+        assert get_typed(self.done_signal, Var)
         assert get_typed(self.valid_signal, Var)
         assert get_typed(self.reset_signal, Var)
         assert get_typed(self.start_signal, Var)

@@ -60,8 +60,8 @@ if __name__ == "__main__":
         "--optimization-level",
         type=int,
         help="Set to a value greater than 0 for optimizations, "
-        "higher values will use more logic cells",
-        default=0,
+        "higher values will use more logic cells and do more work per clock cycle",
+        default=1,
     )
 
     verbose_quiet_group = parser.add_mutually_exclusive_group()
