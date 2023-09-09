@@ -3,22 +3,22 @@ module hrange_tb (
     reg _clock;
     reg _start;
     reg _reset;
-    reg _wait;
+    reg _ready;
     reg signed [31:0] base;
     reg signed [31:0] limit;
     reg signed [31:0] step;
-    wire _ready;
+    wire _done;
     wire _valid;
     wire signed [31:0] _0;
     hrange DUT (
         ._clock(_clock),
         ._start(_start),
         ._reset(_reset),
-        ._wait(_wait),
+        ._ready(_ready),
         .base(base),
         .limit(limit),
         .step(step),
-        ._ready(_ready),
+        ._done(_done),
         ._valid(_valid),
         ._0(_0)
         );
@@ -26,29 +26,28 @@ module hrange_tb (
     initial begin
         _clock = 0;
         _start = 0;
-        _wait = 0;
+        _ready = 1;
         _reset = 1;
         @(negedge _clock);
         _reset = 0;
-
         // ============ Test Case 0 with arguments (0, 10, 2) ============
         base = $signed(0);
         limit = $signed(10);
         step = $signed(2);
         _start = 1;
-
         @(negedge _clock);
-        base = 'x; // only need inputs at start
-        limit = 'x; // only need inputs at start
-        step = 'x; // only need inputs at start
+        base = 'x; // only need inputs when start is set
+        limit = 'x; // only need inputs when start is set
+        step = 'x; // only need inputs when start is set
         _start = 0;
-
-        while (!(_ready)) begin
-            $display("%0d, %0d", _valid, _0);
+        while (!(_done)) begin
+            // `if (_ready && _valid)` also works as a conditional
+            if (_ready) begin
+                $display("%0d, %0d, %0d", _valid, _ready, _0);
+            end
             @(negedge _clock);
         end
-        $display("%0d, %0d", _valid, _0);
-
+        $display("%0d, %0d, %0d", _valid, _ready, _0);
         $finish;
     end
 endmodule

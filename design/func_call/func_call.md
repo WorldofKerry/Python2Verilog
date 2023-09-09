@@ -19,6 +19,15 @@ def dup_range(base, limit, step):
 
 ```cpp
 // ...
+hrange _inst(
+    .base(_hrange_inst_base),
+    .limit(_hrange_inst_limit),
+    .step(_hrange_inst_step),
+    ._0(_hrange_inst__0),
+    ._ready(_hrange_inst__ready),
+    // ...
+)
+// ...
 case (_state) begin
     _state_1: begin
         _hrange_inst_base <= _base;
