@@ -53,7 +53,6 @@ class BaseTestCases:
             super().__init__(*args, **kwargs)
 
         def test_integration(self):
-            print()
             if self.args.first_test:
                 logging.info("Only first test being ran")
             for level in self.args.optimization_levels:
@@ -61,7 +60,6 @@ class BaseTestCases:
                     if self.args.first_test:
                         cases = [cases[0]]
                     with self.subTest(msg=name):
-                        print(f"subtest::{name}", end="", flush=True)
                         logging.info(
                             f"Testing function `{name}` with -O{level} on `{cases}`"
                         )
@@ -74,7 +72,6 @@ class BaseTestCases:
                             optimization_level=level,
                             testbench_args=self.testbench_args,
                         )
-                        print(f" \033[92mPASSED\033[0m")
             if self.all_statistics:
                 if self.testbench_args["random_wait"] is False:
                     test_that_are_too_slow = []
@@ -99,15 +96,21 @@ class BaseTestCases:
                 df = pd.DataFrame(
                     self.all_statistics, columns=self.all_statistics[0].keys()
                 )
-                df = df.round(2)
-                table = f"\n====> Statistics for {__class__.__name__} <====\n"
-                table += df.to_markdown(index=False)
-                if self.args.synthesis:
-                    logging.warning(table)
-                else:
-                    logging.info(table)
+                title = f" Statistics for {__class__.__name__} "
+                table = df.to_markdown()
+                table_width = len(table.partition("\n")[0])
+                pad = table_width - len(title)
+                result = (
+                    "\n"
+                    + "=" * (pad // 2)
+                    + title
+                    + "=" * (pad // 2 + pad % 2)
+                    + "\n"
+                    + table
+                )
+                logging.warning(result)
             else:
-                logging.error("No stats collected")
+                logging.critical("No stats found")
 
         def run_test(
             self,
@@ -162,13 +165,14 @@ class BaseTestCases:
                     os.remove(FILES_IN_ABS_DIR[key])
                 os.mkfifo(FILES_IN_ABS_DIR[key])
 
-            logging.debug(f"executing python")
-
             with open(FILES_IN_ABS_DIR["python"]) as python_file:
                 python_text = python_file.read()
 
+            logging.debug(f"executing python")
             _locals = dict()
             exec(python_text, None, _locals)  # grab's exec's populated scoped variables
+
+            logging.debug("parsing to AST")
 
             tree = ast.parse(python_text)
 
@@ -176,7 +180,8 @@ class BaseTestCases:
             for test_case in test_cases:
                 generator_inst = _locals[function_name](*test_case)
                 size = None
-                for output in generator_inst:
+
+                for iter_, output in enumerate(generator_inst):
                     if isinstance(output, int):
                         output = (output,)
                     get_typed(output, tuple)
@@ -193,6 +198,11 @@ class BaseTestCases:
 
                     expected.append(output)
 
+                    if iter_ >= 100000:
+                        err_msg = f"capped generator outputs to {iter_} iterations"
+                        logging.error(err_msg)
+                        raise RuntimeError(err_msg)
+
             statistics = {
                 "Func Name": f"{function_name} -O{optimization_level}",
                 "Py Yields": len(expected),
@@ -202,6 +212,7 @@ class BaseTestCases:
             logging.debug("generating expected")
 
             if args.write:
+                logging.debug("writing expected")
                 with open(FILES_IN_ABS_DIR["expected"], mode="w") as expected_file:
                     for output in expected:
                         if len(output) > 1:
@@ -210,11 +221,14 @@ class BaseTestCases:
                             expected_file.write(
                                 f"{str(output)[1:-2]}\n"
                             )  # remove trailing comma
+
+                logging.debug("making visual and writing it")
                 make_visual(
                     _locals[function_name](*test_cases[0]),
                     FILES_IN_ABS_DIR["expected_visual"],
                 )
 
+                logging.info("writing ast dump")
                 with open(FILES_IN_ABS_DIR["ast_dump"], mode="w") as ast_dump_file:
                     ast_dump_file.write(ast.dump(tree, indent="  "))
 
@@ -269,7 +283,7 @@ class BaseTestCases:
                     },
                     timeout=len(expected),
                 )
-            time_took = time.time() - time_started
+            time_delta_ms = (time.time() - time_started) * 1000
 
             self.assertTrue(
                 stdout and not stderr,
@@ -290,22 +304,29 @@ class BaseTestCases:
                         filtered_f.write(str(output)[1:-1] + "\n")
 
             statistics["Ver Clks"] = len(actual_raw)
-            statistics["Simu (sec)"] = time_took
+            statistics["Simu (ms)"] = time_delta_ms
 
             filtered_actual = []
             for row in actual_raw:
                 if row[0] == "1":
                     try:
-                        filtered_actual.append(tuple([int(elem) for elem in row[1:]]))
+                        filtered_actual.append(
+                            tuple([int(elem) for elem in row[2:]])
+                        )  # [valid, wait, ...]
                     except ValueError as e:
                         logging.error(
-                            f"{function_name} {len(filtered_actual)} {row[1:]} {e}\n{FILES_IN_ABS_DIR['module']}\n{FILES_IN_ABS_DIR['testbench']}"
+                            f"{function_name} {len(filtered_actual)} {row} {e}\n{FILES_IN_ABS_DIR['module']}\n{FILES_IN_ABS_DIR['testbench']}"
                         )
 
             if args.write:
                 with open(FILES_IN_ABS_DIR["filtered_actual"], mode="w") as filtered_f:
                     for output in filtered_actual:
-                        filtered_f.write(str(output)[1:-1] + "\n")
+                        if len(output) > 1:
+                            filtered_f.write(f"{str(output)[1:-1]}\n")
+                        else:
+                            filtered_f.write(
+                                f"{str(output)[1:-2]}\n"
+                            )  # remove trailing comma
 
                 make_visual(filtered_actual, FILES_IN_ABS_DIR["actual_visual"])
 

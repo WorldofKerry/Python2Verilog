@@ -3,8 +3,10 @@ Verilog Codegen
 """
 
 import itertools
+import typing
 
 from python2verilog.optimizer.optimizer import backwards_replace
+from python2verilog.utils.string import Lines
 
 from ... import ir
 from ...utils.assertions import assert_typed_dict, get_typed, get_typed_list
@@ -61,20 +63,30 @@ class CodeGen:
             outputs.append(var.ver_name)
 
         always = ver.PosedgeSyncAlways(
-            ir.Expression("_clock"),
+            context.clock_signal,
             body=[
-                ver.NonBlockingSubsitution(context.valid_signal, ir.UInt(0)),
-                ver.NonBlockingSubsitution(context.ready_signal, ir.UInt(0)),
-            ]
-            + [
-                ver.NonBlockingSubsitution(out, ir.Int(0))
-                for out in context.output_vars
+                ver.NonBlockingSubsitution(context.done_signal, ir.UInt(0)),
+                ver.Statement(),
+                ver.IfElse(
+                    context.ready_signal,
+                    typing.cast(
+                        list[ver.Statement],
+                        [
+                            ver.NonBlockingSubsitution(out, ir.Int(0))
+                            for out in context.output_vars
+                        ]
+                        + [
+                            ver.NonBlockingSubsitution(context.valid_signal, ir.UInt(0))
+                        ],
+                    ),
+                    [],
+                ),
             ]
             + [
                 ver.Statement(),
                 ver.Statement(comment="Start signal takes precedence over reset"),
                 ver.IfElse(
-                    ir.Expression("_reset"),
+                    context.reset_signal,
                     then_body=[
                         ver.NonBlockingSubsitution(
                             lvalue=context.state_var,
@@ -85,44 +97,51 @@ class CodeGen:
                 ),
                 ver.Statement(),
             ]
-            + [
-                ver.IfElse(
-                    ir.UnaryOp("!", ir.Expression("_wait")),
-                    then_body=[CodeGen.__get_start_ifelse(root, context)],
-                    else_body=[],
-                )
-            ],
+            + CodeGen.__make_start_if_else(root, context),
         )
-        body: list[ver.Statement] = [
-            ver.Declaration(v, reg=True, signed=True) for v in context.global_vars
+        body: list[ver.Statement] = []
+
+        body += [
+            ver.Statement(comment="Global variables"),
         ]
+
+        body += [ver.Declaration(v, reg=True, signed=True) for v in context.global_vars]
+
         body += [
             ver.Declaration(var.ver_name, reg=True, signed=True)
             for var in context.input_vars
         ]
 
+        body.append(ver.Statement())
+
         body.append(always)
 
         state_vars = {key: ir.UInt(index) for index, key in enumerate(context.states)}
 
+        python_test_code = Lines()
+        for case in context.test_cases:
+            python_test_code += f"print(list({context.name}(*{case})))"
         return ver.Module(
             name=context.name,
             inputs=inputs,
             outputs=outputs,
             body=body,
             localparams=state_vars,
+            header_comment=Lines(
+                f"/*\n\n# Python Function\n{context.py_string}\n\n"
+                f"# Test Cases\n{python_test_code}\n*/\n\n"
+            ),
         )
 
     @staticmethod
-    def __get_start_ifelse(root: ver.Case, context: ir.Context):
+    def __make_start_if_else(
+        root: ver.Case, context: ir.Context
+    ) -> list[ver.Statement]:
         """
         if (_start) begin
-            <var> = <value>;
             ...
         end else begin
-            case(...)
             ...
-            endcase
         end
         """
         # The first case can be included here
@@ -130,20 +149,20 @@ class CodeGen:
             ir.Expression(var.ver_name): ir.Expression(var.py_name)
             for var in context.input_vars
         }
-        stmt_stack: list[ver.Statement] = []
-        init_body: list[ver.Statement] = []
 
+        then_body: list[ver.Statement] = []
         for var in context.input_vars:
-            init_body.append(
+            then_body.append(
                 ver.NonBlockingSubsitution(
                     ir.Expression(var.ver_name), ir.Expression(var.py_name)
                 )
             )
 
+        stmt_stack: list[ver.Statement] = []  # backwards replace using dfs
         for item in root.case_items:
             if item.condition == ir.Expression(context.entry_state):
                 stmt_stack += item.statements
-                init_body += item.statements
+                then_body += item.statements
                 root.case_items.remove(item)
                 break
 
@@ -158,12 +177,25 @@ class CodeGen:
             else:
                 raise TypeError(f"Unexpected {type(stmt)} {stmt}")
 
-        block = ver.IfElse(
+        if_else = ver.IfElse(
             ir.Expression("_start"),
-            init_body,
-            [root],
+            then_body,
+            [
+                ver.Statement(
+                    comment="If ready or not valid, then continue computation"
+                ),
+                ver.IfElse(
+                    ir.BinOp(
+                        context.ready_signal,
+                        "||",
+                        ir.UnaryOp("!", context.valid_signal),
+                    ),
+                    [root],
+                    [],
+                ),
+            ],
         )
-        return block
+        return [if_else]
 
     @property
     def module(self):
@@ -207,9 +239,9 @@ class CodeGen:
 
             $display("%0d, ...", _valid, ...);
             """
-            string = '$display("%0d, '
+            string = '$display("%0d, %0d, '
             string += "%0d, " * (len(self.context.output_vars) - 1)
-            string += '%0d", _valid'
+            string += '%0d", _valid, _ready'
             for var in self.context.output_vars:
                 string += f", {var}"
             string += ");"
@@ -220,12 +252,12 @@ class CodeGen:
         decl.append(ver.Declaration("_clock", size=1, reg=True))
         decl.append(ver.Declaration("_start", size=1, reg=True))
         decl.append(ver.Declaration("_reset", size=1, reg=True))
-        decl.append(ver.Declaration("_wait", size=1, reg=True))
+        decl.append(ver.Declaration("_ready", size=1, reg=True))
         decl += [
             ver.Declaration(var.py_name, signed=True, reg=True)
             for var in self.context.input_vars
         ]
-        decl.append(ver.Declaration("_ready", size=1))
+        decl.append(ver.Declaration("_done", size=1))
         decl.append(ver.Declaration("_valid", size=1))
         decl += [
             ver.Declaration(var.ver_name, signed=True)
@@ -242,7 +274,7 @@ class CodeGen:
         initial_body: list[ver.Statement | ver.While] = []
         initial_body.append(ver.BlockingSub(self.context.clock_signal, ir.UInt(0)))
         initial_body.append(ver.BlockingSub(self.context.start_signal, ir.UInt(0)))
-        initial_body.append(ver.BlockingSub(self.context.wait_signal, ir.UInt(0)))
+        initial_body.append(ver.BlockingSub(self.context.ready_signal, ir.UInt(1)))
         initial_body.append(ver.BlockingSub(self.context.reset_signal, ir.UInt(1)))
 
         initial_body.append(ver.AtNegedgeStatement(self.context.clock_signal))
@@ -273,7 +305,7 @@ class CodeGen:
                     ver.BlockingSub(
                         ir.Expression(var.py_name),
                         ir.Unknown(),
-                        comment="only need inputs at start",
+                        comment="only need inputs when start is set",
                     )
                 )
             initial_body.append(ver.BlockingSub(self.context.start_signal, ir.UInt(0)))
@@ -281,14 +313,26 @@ class CodeGen:
 
             # While loop waitng for ready signal
             while_body: list[ver.Statement] = []
+            # while_body.append(make_display_stmt())
             if random_wait:
-                while_body.append(ver.Statement("_wait = $urandom_range(0, 1);"))
-            while_body.append(make_display_stmt())
+                while_body.append(ver.Statement("_ready = $urandom_range(0, 4) === 0;"))
+            while_body.append(
+                ver.Statement(
+                    comment="`if (_ready && _valid)` also works as a conditional"
+                )
+            )
+            while_body.append(
+                ver.IfElse(
+                    condition=ir.Expression("_ready"),
+                    then_body=[make_display_stmt()],
+                    else_body=[],
+                )
+            )
             while_body.append(ver.AtNegedgeStatement(self.context.clock_signal))
 
             initial_body.append(
                 ver.While(
-                    condition=ir.UnaryOp("!", self.context.ready_signal),
+                    condition=ir.UnaryOp("!", self.context.done_signal),
                     body=while_body,
                 )
             )
@@ -305,7 +349,7 @@ class CodeGen:
                 [],
                 [],
                 body=setups + [initial_loop],
-                add_default_ports=False,
+                is_not_testbench=False,
             )
             return module
         raise RuntimeError("Needs the context")
@@ -373,7 +417,7 @@ class CaseBuilder:
 
         if isinstance(vertex, ir.DoneNode):
             stmts += [
-                ver.NonBlockingSubsitution(self.context.ready_signal, ir.UInt(1)),
+                ver.NonBlockingSubsitution(self.context.done_signal, ir.UInt(1)),
                 ver.NonBlockingSubsitution(
                     self.case.condition, ir.Expression(self.context.ready_state)
                 ),
@@ -404,7 +448,7 @@ class CaseBuilder:
 
             if isinstance(vertex.optimal_child.optimal_child, ir.DoneNode):
                 outputs.append(
-                    ver.NonBlockingSubsitution(self.context.ready_signal, ir.UInt(1))
+                    ver.NonBlockingSubsitution(self.context.done_signal, ir.UInt(1))
                 )
 
             state_change.append(

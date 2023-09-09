@@ -143,6 +143,7 @@ def verilogify(
     context = ir.Context(name=func.__name__)
     context.py_ast = func_ast
     context.py_func = func
+    context.py_string = inspect.getsource(func)
 
     context.input_vars = [ir.Var(name.arg) for name in func_ast.args.args]
 
