@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from python2verilog.api import verilogify
+from python2verilog import Modes, verilogify
 
 
 def make_visual(generator_inst, directory: str):
@@ -59,7 +59,7 @@ def make_visual(generator_inst, directory: str):
         )
 
 
-@verilogify(write=True)
+@verilogify(Modes=Modes.OVERWRITE)
 def draw_circle(centre_x, centre_y, radius):
     offset_y = 0
     offset_x = radius
