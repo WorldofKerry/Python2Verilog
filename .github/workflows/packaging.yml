@@ -1,4 +1,4 @@
-# Builds python package, installs it, then runs it from the CLI
+# Builds python package, installs it, then runs examples from the CLI
 
 name: packaging
 
@@ -36,11 +36,14 @@ jobs:
           mkdir build && cd build
           python3 -m pip install ..
 
-      - name: Run Examples
+      - name: Install requirements for examples
         working-directory: examples
         run: |
           python3 -m pip install -r requirements.txt
 
+      - name: Run examples
+        working-directory: examples
+        run: |
           python3 decorator_basic.py
           cat decorator_basic.sv
 

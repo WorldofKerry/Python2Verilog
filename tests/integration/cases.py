@@ -5,7 +5,7 @@ TEST_CASES = {
     "rectangle_filled": [(32, 84, 5, 7), (64, 78, 23, 27)],
     "rectangle_lines": [(32, 84, 5, 7), (84, 96, 46, 89)],
     "fib": [(10,), (35,)],
-    "dumb_loop": [(8,), (512,)],
+    "multiplier": [(2, 8), (1, 512)],
     "floor_div": [(7,), (25,)],
     "operators": [
         (0, 0),  # warning only this one is ran with --first-test

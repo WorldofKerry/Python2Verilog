@@ -71,13 +71,7 @@ class CodeGen:
                     context.ready_signal,
                     typing.cast(
                         list[ver.Statement],
-                        [
-                            ver.NonBlockingSubsitution(out, ir.Int(0))
-                            for out in context.output_vars
-                        ]
-                        + [
-                            ver.NonBlockingSubsitution(context.valid_signal, ir.UInt(0))
-                        ],
+                        [ver.NonBlockingSubsitution(context.valid_signal, ir.UInt(0))],
                     ),
                     [],
                 ),
@@ -127,7 +121,7 @@ class CodeGen:
             outputs=outputs,
             body=body,
             localparams=state_vars,
-            header_comment=Lines(
+            header=Lines(
                 f"/*\n\n# Python Function\n{context.py_string}\n\n"
                 f"# Test Cases\n{python_test_code}\n*/\n\n"
             ),
@@ -332,11 +326,22 @@ class CodeGen:
 
             initial_body.append(
                 ver.While(
-                    condition=ir.UnaryOp("!", self.context.done_signal),
+                    # condition=ir.UnaryOp("!", self.context.done_signal),
+                    condition=ir.BinOp(
+                        ir.UnaryOp("!", self.context.done_signal),
+                        "||",
+                        ir.UnaryOp("!", self.context.ready_signal),
+                    ),
                     body=while_body,
                 )
             )
-            initial_body.append(make_display_stmt())
+            initial_body.append(
+                ver.IfElse(
+                    condition=ir.Expression("_ready"),
+                    then_body=[make_display_stmt()],
+                    else_body=[],
+                )
+            )
             initial_body.append(ver.Statement())
 
         initial_body.append(ver.Statement(literal="$finish;"))

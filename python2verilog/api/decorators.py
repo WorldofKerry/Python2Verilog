@@ -2,6 +2,8 @@
 Decorators
 """
 
+from __future__ import annotations
+
 import ast
 import inspect
 import io
@@ -15,8 +17,9 @@ from types import FunctionType
 from typing import Any, Callable, Optional, Union
 
 from python2verilog import ir
-from python2verilog.api.wrappers import context_to_text_and_file, context_to_verilog
-from python2verilog.utils.assertions import assert_typed_dict, get_typed
+from python2verilog.api.modes import Modes
+from python2verilog.api.wrappers import context_to_text_and_file
+from python2verilog.utils.assertions import assert_typed, assert_typed_dict, get_typed
 from python2verilog.utils.decorator import decorator_with_args
 
 # To support iPython
@@ -100,8 +103,7 @@ def verilogify(
     optimization_level: int = 1,
     module_output: Optional[Union[os.PathLike[Any], typing.IO[Any], str]] = None,
     testbench_output: Optional[Union[os.PathLike[Any], typing.IO[Any], str]] = None,
-    write: bool = False,
-    overwrite: bool = False,
+    mode: Modes = Modes.NO_WRITE,
 ):
     """
     :param namespace: the namespace to put this function, for linking purposes
@@ -114,11 +116,8 @@ def verilogify(
     assert_typed_dict(namespace, FunctionType, ir.Context)  # type: ignore[misc]
     get_typed(module_output, (os.PathLike, io.IOBase, str))
     get_typed(testbench_output, (os.PathLike, io.IOBase, str))
-    get_typed(write, bool)
-    get_typed(overwrite, bool)
+    assert_typed(mode, Modes)
 
-    if overwrite and not write:
-        raise RuntimeError("Overwrite is true, but write is set to false")
     if func in namespace:
         raise RuntimeError(f"{func.__name__} has already been decorated")
 
@@ -147,26 +146,31 @@ def verilogify(
 
     context.input_vars = [ir.Var(name.arg) for name in func_ast.args.args]
 
-    context.write = write
+    context.mode = mode
     context.optimization_level = optimization_level
 
-    if write:
-        mode = "w" if overwrite else "x"
-
+    if Modes.write(mode):
         # pylint: disable=consider-using-with
         if isinstance(module_output, str):
             module_output = Path(module_output)
         if isinstance(testbench_output, str):
             testbench_output = Path(testbench_output)
 
+        # Write module
         if isinstance(module_output, os.PathLike):
             try:
-                module_output = open(module_output, mode=mode, encoding="utf8")
+                module_output = open(
+                    module_output, mode=Modes.open_text_mode(mode), encoding="utf8"
+                )
             except FileExistsError as e:
                 raise FileExistsError("Try setting overwrite to True") from e
+
+        # Write testbench
         if isinstance(testbench_output, os.PathLike):
             try:
-                testbench_output = open(testbench_output, mode=mode, encoding="utf8")
+                testbench_output = open(
+                    testbench_output, mode=Modes.open_text_mode(mode), encoding="utf8"
+                )
             except FileExistsError as e:
                 raise FileExistsError("Try setting overwrite to True") from e
 

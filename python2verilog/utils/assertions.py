@@ -114,3 +114,10 @@ else:
         if obj:
             assert isinstance(obj, type_), f"expected {type_} got {type(obj)} instead"
         return obj
+
+    def assert_typed(obj: Any, type_) -> bool:
+        """
+        Type guard for type
+        """
+        assert isinstance(obj, type_), f"Expected {type_} got {type(obj)} instead"
+        return True

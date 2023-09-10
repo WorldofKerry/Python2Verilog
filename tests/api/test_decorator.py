@@ -1,7 +1,7 @@
 import unittest
 from io import StringIO
 
-from python2verilog.api.decorators import context_to_text_and_file, verilogify
+from python2verilog.api.decorators import Modes, context_to_text_and_file, verilogify
 
 
 class TestVerilogify(unittest.TestCase):
@@ -13,7 +13,7 @@ class TestVerilogify(unittest.TestCase):
 
         @verilogify(
             namespace=namespace,
-            write=True,
+            mode=Modes.WRITE,
             module_output=module_stream,
             testbench_output=testbench_stream,
         )

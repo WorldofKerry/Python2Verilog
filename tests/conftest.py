@@ -11,18 +11,21 @@ Use dashes instead of underscores in CLI
 """
 params = [
     Argument(
+        "F",
         "first_test",
         default=False,
         action="store_true",
         help="Set to only run first case in each test",
     ),
     Argument(
+        "R",
         "write",
         default=False,
         action="store_true",
         help="Set to write test output files to disk (instead of only in memory)",
     ),
     Argument(
+        "S",
         "synthesis",
         default=False,
         action="store_true",
