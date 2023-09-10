@@ -1,4 +1,3 @@
-python2verilog
 matplotlib
 numpy
 jupyter
