@@ -19,7 +19,7 @@ def hrange(base, limit, step):
     while i < limit:
         yield i
         i += step
-hrange(10)
+print(list(hrange(0, 10, 3)))
 ```
 
 ## Specifications
