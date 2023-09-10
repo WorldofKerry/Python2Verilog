@@ -63,7 +63,7 @@ Sphinx is used for the docs. Follow the [sphinx workflow](.github/workflows/sphi
 
 ### Requirements
 
-For most up-to-date information, refer to the [pytest workflow](.github/workflows/python-package.yml).
+For most up-to-date information, refer to the [pytest workflow](.github/workflows/pytest.yml) or the [packaging workflow](.github/workflows/packaging.yml).
 
 A Ubuntu environment (WSL2 works too, make sure to have the repo on the Ubuntu partition, as [`os.mkfifo`](https://docs.python.org/3/library/os.html#os.mkfifo) is used to avoid writing to disk)
 
