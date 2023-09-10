@@ -55,7 +55,7 @@ You may find the output of the [integration testing](tests/integration/data/) as
 
 To setup pre-commit, run `pre-commit install`.
 
-[Github Issues](https://github.com/WorldofKerry/Python2Verilog/issues) is used for tracking.
+[Github Issues](https://github.com/WorldofKerry/Python2Verilog/issues) are used for tracking.
 
 Sphinx is used for the docs. Follow the [sphinx workflow](.github/workflows/sphinx.yml) to generate a local copy.
 
