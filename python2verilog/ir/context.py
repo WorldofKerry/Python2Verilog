@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 from types import FunctionType
 from typing import Any, Optional
 
+from python2verilog.api.modes import Modes
 from python2verilog.ir.expressions import Var
 from python2verilog.utils.assertions import assert_typed_dict, get_typed, get_typed_list
 from python2verilog.utils.env_vars import is_debug_mode
@@ -36,7 +37,7 @@ class Context(GenericReprAndStr):
 
     optimization_level: int = -1
 
-    write: bool = False
+    mode: Modes = Modes.NO_WRITE
     _module_file: Optional[io.IOBase] = None
     _testbench_file: Optional[io.IOBase] = None
 
@@ -91,7 +92,7 @@ class Context(GenericReprAndStr):
         assert isinstance(self.optimization_level, int), self
         assert self.optimization_level >= 0
 
-        if self.write:
+        if self.mode:
             if self._module_file:
                 assert isinstance(self.module_file, io.IOBase), self
             if self._testbench_file:
@@ -142,7 +143,7 @@ class Context(GenericReprAndStr):
         """
         Module stream
         """
-        assert isinstance(self._module_file, io.IOBase)
+        assert isinstance(self._module_file, io.IOBase), type(self._module_file)
         return self._module_file
 
     @module_file.setter

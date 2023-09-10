@@ -23,6 +23,6 @@ def decorator_with_args(func):
             # actual decorated function
             return func(args[0])
         # decorator arguments
-        return lambda realf: func(realf, *args, **kwargs)
+        return lambda real_func: func(real_func, *args, **kwargs)
 
     return new_dec

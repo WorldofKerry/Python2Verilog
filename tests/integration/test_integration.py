@@ -79,7 +79,7 @@ class BaseTestCases:
                         if (
                             "-O" in stat["Func Name"]
                             and "-O0" not in stat["Func Name"]
-                            and "dumb" not in stat["Func Name"]
+                            and "multiplier" not in stat["Func Name"]
                             and "testing" not in stat["Func Name"]
                         ):
                             slowness_multiplier = stat["Ver Clks"] / (
@@ -178,6 +178,7 @@ class BaseTestCases:
 
             expected = []
             for test_case in test_cases:
+                logging.debug(f"test case: {test_case}")
                 generator_inst = _locals[function_name](*test_case)
                 size = None
 

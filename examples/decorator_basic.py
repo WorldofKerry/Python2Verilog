@@ -1,7 +1,7 @@
-from python2verilog.api import verilogify
+from python2verilog.api import Modes, verilogify
 
 
-@verilogify(write=True, overwrite=True)
+@verilogify(mode=Modes.OVERWRITE)
 def fib(n):
     a = 0
     b = 1

@@ -157,7 +157,7 @@ class Module(ImplementsToLines):
         body: Optional[list[Statement]] = None,
         is_not_testbench=True,
         localparams: Optional[dict[ir.Expression, ir.UInt]] = None,
-        header_comment: Optional[Lines] = None,
+        header: Optional[Lines] = None,
     ):
         self.name = name
 
@@ -211,7 +211,7 @@ class Module(ImplementsToLines):
         else:
             self.local_params = Lines()
 
-        self.header_comment = header_comment
+        self.header_comment = header
 
     def to_lines(self):
         """

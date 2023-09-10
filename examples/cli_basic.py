@@ -22,10 +22,11 @@ def draw_circle(centre_x, centre_y, radius):
 draw_circle(10, 10, 5)
 
 """
-The following is not allowed:
+Non-literal input arguments are not allowed
+For example,
 
 var = 10
 draw_circle(var, 10, 5)
 
-Use @verilogify decorator instead
+Use @verilogify decorator instead for dynamic inputs
 """
