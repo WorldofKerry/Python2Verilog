@@ -49,24 +49,23 @@ Try it in [Google Collab](https://colab.research.google.com/github/WorldofKerry/
 
 ## Tested Generations
 
-The Github Actions run all the tests with writing enabled.
-You may find its output as a [Github Artifact](https://nightly.link/WorldofKerry/Python2Verilog/workflows/pytest-complete/main/tests-data.zip) availible for download.
+You may find the output of the [integration testing](tests/integration/data/) as a [Github Artifact](https://nightly.link/WorldofKerry/Python2Verilog/workflows/pytest-complete/main/tests-data.zip) available for download.
 
 ## For Developers
 
 To setup pre-commit, run `pre-commit install`.
 
-[Github Issues](https://github.com/WorldofKerry/Python2Verilog/issues) is used for tracking. Milestones and labels are used for milestones and labels respectively.
+[Github Issues](https://github.com/WorldofKerry/Python2Verilog/issues) is used for tracking.
 
 ### Docs
 
-Sphinx is used. Follow the [Github workflow](.github/workflows/sphinx.yml) to generate a local copy.
+Sphinx is used. Follow the [sphinx workflow](.github/workflows/sphinx.yml) to generate a local copy.
 
 ## Testing
 
 ### Requirements
 
-For most up-to-date information, refer to the pytest [github workflow](.github/workflows/python-package.yml).
+For most up-to-date information, refer to the [pytest workflow](.github/workflows/python-package.yml).
 
 A Ubuntu environment (WSL2 works too, make sure to have the repo on the Ubuntu partition, as [`os.mkfifo`](https://docs.python.org/3/library/os.html#os.mkfifo) is used to avoid writing to disk)
 
@@ -77,13 +76,13 @@ For automatic Verilog simulation and testing, install [Icarus Verilog](https://g
 
 The online simulator [EDA Playground](https://edaplayground.com/) can be used as a subsitute if you manually copy-paste the module and testbench files to it.
 
-### Creating New Test
+### Creating New Integration Test
 
 To create a new test case and set up configs, run `python3 tests/integration/new_test_case.py <test-name>`.
 
 ### Running Tests
 
-To run tests, use `python3 -m pytest -sv`.
+To run tests, use `python3 -m pytest --write`.
 
 Additional CLI flags can be found in [tests/conftest.py](tests/conftest.py).
 
