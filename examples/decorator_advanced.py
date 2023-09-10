@@ -59,7 +59,7 @@ def make_visual(generator_inst, directory: str):
         )
 
 
-@verilogify(modes=Modes.OVERWRITE)
+@verilogify(mode=Modes.OVERWRITE)
 def draw_circle(centre_x, centre_y, radius):
     offset_y = 0
     offset_x = radius
