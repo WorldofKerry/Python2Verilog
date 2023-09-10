@@ -4,7 +4,12 @@ import unittest
 from functools import wraps
 from pathlib import Path
 
-from python2verilog.api.decorators import global_namespace, new_namespace, verilogify
+from python2verilog.api.decorators import (
+    Modes,
+    global_namespace,
+    new_namespace,
+    verilogify,
+)
 from python2verilog.api.wrappers import text_to_context
 
 
@@ -88,7 +93,7 @@ class TestVerilogify(unittest.TestCase):
 
     @writes
     def test_basic(self):
-        @verilogify(write=True)
+        @verilogify(mode=Modes.WRITE)
         def counter0(n):
             i = 0
             while i < n:
@@ -115,7 +120,7 @@ class TestVerilogify(unittest.TestCase):
 
     @writes
     def test_overwrite_fail(self):
-        @verilogify(write=True)
+        @verilogify(mode=Modes.WRITE)
         def counter_overwrite(n):
             i = 0
             while i < n:
@@ -127,7 +132,7 @@ class TestVerilogify(unittest.TestCase):
         def inner():
             try:
 
-                @verilogify(write=True, namespace=new_namespace())
+                @verilogify(mode=Modes.WRITE, namespace=new_namespace())
                 def counter_overwrite(n):
                     i = 0
                     while i < n:

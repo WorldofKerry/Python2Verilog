@@ -9,4 +9,5 @@ from .decorators import (
     new_namespace,
     verilogify,
 )
+from .modes import Modes
 from .wrappers import context_to_verilog, text_to_context, text_to_text, text_to_verilog
