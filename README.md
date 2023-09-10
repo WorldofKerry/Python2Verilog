@@ -57,9 +57,7 @@ To setup pre-commit, run `pre-commit install`.
 
 [Github Issues](https://github.com/WorldofKerry/Python2Verilog/issues) is used for tracking.
 
-### Docs
-
-Sphinx is used. Follow the [sphinx workflow](.github/workflows/sphinx.yml) to generate a local copy.
+Sphinx is used for the docs. Follow the [sphinx workflow](.github/workflows/sphinx.yml) to generate a local copy.
 
 ## Testing
 
@@ -76,7 +74,7 @@ For automatic Verilog simulation and testing, install [Icarus Verilog](https://g
 
 The online simulator [EDA Playground](https://edaplayground.com/) can be used as a subsitute if you manually copy-paste the module and testbench files to it.
 
-### Creating New Integration Test
+### Creating A New Integration Test
 
 To create a new test case and set up configs, run `python3 tests/integration/new_test_case.py <test-name>`.
 
