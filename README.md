@@ -10,6 +10,20 @@
 - Testbenchs can be automatically generated if the user uses the function within their Python code or provides explicit test cases
 - Ideal for quickly translating "CPU code" into hardware descriptions for use on FPGAs, without having to interface with a CPU
 
+```python
+from python2verilog import verilogify, Modes
+
+@verilogify(mode=Modes.WRITE)
+def hrange(base, limit, step):
+    i = base
+    while i < limit:
+        yield i
+        i += step
+hrange(10)
+```
+
+## Specifications
+
 Constrains on Python functions include:
 
 - Supports only `if` and `while` blocks
