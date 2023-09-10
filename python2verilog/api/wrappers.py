@@ -8,7 +8,7 @@ from types import FunctionType
 from typing import Any, Optional
 
 from python2verilog import ir
-from python2verilog.api.decorators import Modes
+from python2verilog.api.modes import Modes
 from python2verilog.backend import verilog
 from python2verilog.frontend.generator2ir import Generator2Graph
 from python2verilog.optimizer.optimizer import OptimizeGraph

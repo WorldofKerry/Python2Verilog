@@ -2,7 +2,6 @@
 Python 2 Verilog
 """
 
-from . import api, backend, frontend, ir, optimizer, utils
 from .api import (
     Modes,
     context_to_text_and_file,
