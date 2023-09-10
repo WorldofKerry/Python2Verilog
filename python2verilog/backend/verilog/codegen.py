@@ -127,7 +127,7 @@ class CodeGen:
             outputs=outputs,
             body=body,
             localparams=state_vars,
-            header_comment=Lines(
+            header=Lines(
                 f"/*\n\n# Python Function\n{context.py_string}\n\n"
                 f"# Test Cases\n{python_test_code}\n*/\n\n"
             ),
