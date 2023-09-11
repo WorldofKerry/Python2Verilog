@@ -47,7 +47,7 @@ module dup_range_tb (
             end
             @(negedge _clock);
         end
-        if (_ready) begin
+        if (_ready && _valid) begin
             $display("%0d, %0d, %0d", _valid, _ready, _0);
         end
         $finish;
