@@ -126,17 +126,21 @@ Members:
 
 ## Timeline
 
-### Phase 1
+### Milestone 1 - Concreteness
 
 1. Finish Verilog pseudocode and verify - 1 point
 1. Work out how the intermdiate representation will look for `dup_range` - 1 point
 
-### Phase 2
+### Milestone 2 - Preparation
 
 1. Update tests to support multiple functions in one file - 2 points
 1. Reword `Var` class to handle different types (or inherit from it) - 3 points
 
-### Phase 3
+### Milestone 3 - Function Calls
 
 1. (Optional) improve graph visualzation tooling if debugging becomes inefficient - 2 points
 1. Add the two new nodes and generator instance variable - 3 points
+   1. including handling it in the Verilog codegen
+1. Add function parse ability to frontend - 2 points
+   1. start with only supporting `inst = gen(a, b, c); for x, y in inst: ...`
+   1. (Optional) add support for `yield from` and `for x, y in gen(a, b, c)`
