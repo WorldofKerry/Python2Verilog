@@ -1,7 +1,7 @@
 /*
 
 # Python Function
-@verilogify(write=True, overwrite=True, optimization_level=1)
+@verilogify(mode=Modes.OVERWRITE)
 def hrange(base, limit, step):
     i = base
     while i < limit:
@@ -35,7 +35,7 @@ module hrange (
     output reg signed [31:0] _0
 );
     localparam _state_1 = 0;
-    localparam _statelmaoready = 1;
+    localparam _state_fake = 1;
     localparam _state_0_while_0 = 2;
     // Global variables
     reg signed [31:0] _i;
@@ -46,12 +46,11 @@ module hrange (
     always @(posedge _clock) begin
         _done <= 0;
         if (_ready) begin
-            _0 <= $signed(0);
             _valid <= 0;
         end
         // Start signal takes precedence over reset
         if (_reset) begin
-            _state <= _statelmaoready;
+            _state <= _state_fake;
         end
         if (_start) begin
             _base <= base;
@@ -64,7 +63,7 @@ module hrange (
                 _state <= _state_0_while_0;
             end else begin
                 _done <= 1;
-                _state <= _statelmaoready;
+                _state <= _state_fake;
             end
         end else begin
             // If ready or not valid, then continue computation
@@ -78,7 +77,7 @@ module hrange (
                             _state <= _state_0_while_0;
                         end else begin
                             _done <= 1;
-                            _state <= _statelmaoready;
+                            _state <= _state_fake;
                         end
                     end
                 endcase

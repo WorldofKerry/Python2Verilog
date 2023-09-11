@@ -40,14 +40,16 @@ module hrange_tb (
         limit = 'x; // only need inputs when start is set
         step = 'x; // only need inputs when start is set
         _start = 0;
-        while (!(_done)) begin
+        while ($signed(!(_done) || !(_ready))) begin
             // `if (_ready && _valid)` also works as a conditional
             if (_ready) begin
                 $display("%0d, %0d, %0d", _valid, _ready, _0);
             end
             @(negedge _clock);
         end
-        $display("%0d, %0d, %0d", _valid, _ready, _0);
+        if (_ready) begin
+            $display("%0d, %0d, %0d", _valid, _ready, _0);
+        end
         $finish;
     end
 endmodule

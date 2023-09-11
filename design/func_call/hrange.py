@@ -4,10 +4,10 @@ from pathlib import Path
 P2V_PATH = Path(__file__).parent.absolute().resolve().parent.parent
 sys.path.insert(0, str(P2V_PATH))
 
-from python2verilog import verilogify
+from python2verilog import Modes, verilogify
 
 
-@verilogify(write=True, overwrite=True, optimization_level=1)
+@verilogify(mode=Modes.OVERWRITE)
 def hrange(base, limit, step):
     i = base
     while i < limit:
