@@ -415,7 +415,7 @@ class CaseBuilder:
         """
         Processes a node
         """
-        assert isinstance(vertex, ir.Vertex)
+        assert isinstance(vertex, ir.Vertex), str(vertex)
         self.visited.add(vertex.unique_id)
 
         stmts: list[ver.Statement] = []

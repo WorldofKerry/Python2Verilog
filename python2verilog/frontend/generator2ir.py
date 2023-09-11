@@ -25,6 +25,21 @@ class Generator2Graph:
         context.validate()
         self._context = get_typed(context, ir.Context)
 
+        # Populate function calls
+        for node in context.py_ast.body:
+            for assign in pyast.walk(node):
+                if isinstance(assign, pyast.Assign):
+                    for child in pyast.walk(assign):
+                        if isinstance(child, pyast.Call):
+                            assert len(assign.targets) == 1
+                            target = assign.targets[0]
+                            if assign.targets[0] not in self._context.instances:
+                                for context in self._context.namespace:
+                                    if context.name == assign.value.func.id:
+                                        instance = context.create_instance(target.id)
+                                        self._context.instances[target.id] = instance
+                                        print("instantiated", target.id)
+
         self._root = self.__parse_statements(
             stmts=context.py_ast.body,
             prefix="_state",
@@ -128,7 +143,6 @@ class Generator2Graph:
         <statement> (e.g. assign, for loop, etc., cannot be equated to)
 
         """
-        print(pyast.dump(stmt)[:80])
         get_typed(stmt, pyast.AST)
         get_typed(nextt, ir.Element)
         if isinstance(stmt, pyast.Assign):
@@ -189,43 +203,102 @@ class Generator2Graph:
         loop_edge = ir.ClockedEdge(unique_id=f"{prefix}_edge", name="True")
         done_edge = ir.ClockedEdge(unique_id=f"{prefix}_f", name="False", child=nextt)
 
-        stmt.iter
-        # if target.id not in self._context.instances:
-        #     raise RuntimeError(f"No iterator instance {self._context.instances}")
-        # instance = self._context.instances[target.id]
+        target = stmt.iter
+        if target.id not in self._context.instances:
+            raise RuntimeError(f"No iterator instance {self._context.instances}")
+        instance = self._context.instances[target.id]
 
-        # def unique_node_gen():
-        #     counter = 0
-        #     while True:
-        #         yield f"{prefix}_call_{counter}"
+        def unique_node_gen():
+            counter = 0
+            while True:
+                yield f"{prefix}_call_{counter}"
 
-        # def unique_edge_gen():
-        #     counter = 0
-        #     while True:
-        #         yield f"{prefix}_call_{counter}_e"
+        def unique_edge_gen():
+            counter = 0
+            while True:
+                yield f"{prefix}_call_{counter}_e"
 
-        # unique_node = unique_node_gen()
-        # unique_edge = unique_edge_gen()
+        unique_node = unique_node_gen()
+        unique_edge = unique_edge_gen()
 
-        # head = ir.AssignNode(
-        #     unique_id=next(unique_node),
-        #     lvalue=instance.ready_signal,
-        #     rvalue=ir.UInt(0),
-        # )
-        # node = head
-        # node.child = ir.NonClockedEdge(unique_id=next(unique_edge))
+        head = ir.AssignNode(
+            unique_id=next(unique_node),
+            lvalue=instance.ready_signal,
+            rvalue=ir.UInt(1),
+        )
+        node = head
+        node.child = ir.NonClockedEdge(unique_id=next(unique_edge))
+        node = node.child
+        node.child = ir.AssignNode(
+            unique_id=next(unique_node),
+            lvalue=instance.start_signal,
+            rvalue=ir.UInt(0),
+        )
+        node = node.child
+        node.child = ir.NonClockedEdge(unique_id=next(unique_edge))
+        node = node.child
 
-        ifelse = ir.IfElseNode(
-            unique_id=f"{prefix}_for",
-            condition=ir.Expression("lmao"),
-            true_edge=loop_edge,
-            false_edge=done_edge,
+        edge_to_head = ir.ClockedEdge(unique_id=next(unique_edge), child=head)
+        second_ifelse0 = ir.IfElseNode(
+            unique_id=f"{prefix}_for_done_0",
+            condition=instance.done_signal,
+            true_edge=done_edge,
+            false_edge=loop_edge,
+        )
+        edge_to_second_ifelse0 = ir.NonClockedEdge(
+            unique_id=next(unique_edge), child=second_ifelse0
+        )
+        second_ifelse1 = ir.IfElseNode(
+            unique_id=f"{prefix}_for_done_1",
+            condition=instance.done_signal,
+            true_edge=done_edge,
+            false_edge=edge_to_head,
         )
 
-        body_node = self.__parse_statements(stmt.body, f"{prefix}_for", ifelse)
+        # capture output
+        if not isinstance(stmt.target, pyast.Tuple):
+            outputs = [ir.Var(stmt.target.id)]
+        else:
+            outputs = stmt.target  # TODO: spread on left-side of in
+        assert len(outputs) == len(instance.outputs)
+        capture_head = ir.AssignNode(
+            unique_id=next(unique_node), lvalue=instance.ready_signal, rvalue=ir.UInt(0)
+        )
+        capture_node = capture_head
+        for caller, callee in zip(outputs, instance.outputs):
+            capture_node.child = ir.NonClockedEdge(unique_id=next(unique_edge))
+            capture_node = capture_node.child
+            capture_node.child = ir.AssignNode(
+                unique_id=next(unique_node), lvalue=caller, rvalue=callee
+            )
+            capture_node = capture_node.child
+        capture_node.child = edge_to_second_ifelse0
+        capture_node = capture_head
+        while capture_node:
+            print(capture_node)
+            try:
+                capture_node = capture_node.child
+            except:
+                break
+
+        edge_to_second_ifelse1 = ir.NonClockedEdge(
+            unique_id=next(unique_edge), child=second_ifelse1
+        )
+        edge_to_capture_head = ir.NonClockedEdge(
+            unique_id=next(unique_edge), child=capture_head
+        )
+        first_ifelse = ir.IfElseNode(
+            unique_id=f"{prefix}_for_loop",
+            condition=ir.UBinOp(instance.ready_signal, "&&", instance.valid_signal),
+            true_edge=edge_to_capture_head,  # replaced with linked list for output
+            false_edge=edge_to_second_ifelse1,
+        )
+        node.child = first_ifelse
+
+        body_node = self.__parse_statements(stmt.body, f"{prefix}_for", first_ifelse)
         loop_edge.child = body_node
 
-        return ifelse
+        return head
 
     def __parse_ifelse(self, stmt: pyast.If, nextt: ir.Element, prefix: str):
         """
@@ -402,11 +475,7 @@ class Generator2Graph:
         # print(pyast.dump(assign))
         assert len(assign.targets) == 1
         target = assign.targets[0]
-        if target.id not in self._context.instances:
-            for context in self._context.namespace:
-                if context.name == assign.value.func.id:
-                    instance = context.create_instance(target.id)
-                    self._context.instances[target.id] = instance
+        instance = self._context.instances[target.id]
 
         def unique_node_gen():
             counter = 0
