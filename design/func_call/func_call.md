@@ -124,7 +124,7 @@ Members:
 - name
 - python function "pointer", for key in the namespace
 
-## Tickets
+## Timeline
 
 ### Phase 1
 
