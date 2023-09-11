@@ -47,7 +47,7 @@ module dup_range(
     )
     // ...
     case (_state) begin
-        _state_1: begin # instantiation node
+        _state_1: begin // instantiation node
             _hrange_inst_base <= _base;
             _hrange_inst_limit <= _limit;
             _hrange_inst_base <= _step;
@@ -55,7 +55,7 @@ module dup_range(
             _hrange_inst__ready <= 0; // optimizer pass can set this to 1
             _state <= _state_2;
         end
-        _state_2: begin # iterate node
+        _state_2: begin // iterate node
             _hrange_inst__ready <= 1;
             if (_hrange_inst__ready && _hrange_inst__valid) begin
                 _value <= _hrange_inst__0;
