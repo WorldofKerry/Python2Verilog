@@ -129,12 +129,12 @@ Members:
 ### Milestone 1 - Concreteness
 
 1. Finish Verilog pseudocode and verify - 1 point
-1. Work out how the intermdiate representation will look for `dup_range` - 1 point
+1. Draw intermdiate representation for `dup_range` - 1 point
 
 ### Milestone 2 - Preparation
 
 1. Update tests to support multiple functions in one file - 2 points
-1. Reword `Var` class to handle different types (or inherit from it) - 3 points
+1. Reword `Var` class to handle different types (or allow for inheritance) - 3 points
 
 ### Milestone 3 - Function Calls
 
