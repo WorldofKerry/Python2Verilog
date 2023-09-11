@@ -179,7 +179,7 @@ class CodeGen:
                     comment="If ready or not valid, then continue computation"
                 ),
                 ver.IfElse(
-                    ir.BinOp(
+                    ir.UBinOp(
                         context.ready_signal,
                         "||",
                         ir.UnaryOp("!", context.valid_signal),
@@ -326,8 +326,7 @@ class CodeGen:
 
             initial_body.append(
                 ver.While(
-                    # condition=ir.UnaryOp("!", self.context.done_signal),
-                    condition=ir.BinOp(
+                    condition=ir.UBinOp(
                         ir.UnaryOp("!", self.context.done_signal),
                         "||",
                         ir.UnaryOp("!", self.context.ready_signal),
@@ -467,7 +466,6 @@ class CaseBuilder:
                     self.new_caseitem(vertex.optimal_child.optimal_child)
                 )
 
-            # stmts += outputs + self.do_edge(vertex.optimal_child)
             stmts += outputs + state_change
 
         else:
