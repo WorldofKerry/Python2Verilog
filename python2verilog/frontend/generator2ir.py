@@ -128,6 +128,7 @@ class Generator2Graph:
         <statement> (e.g. assign, for loop, etc., cannot be equated to)
 
         """
+        print(pyast.dump(stmt)[:80])
         get_typed(stmt, pyast.AST)
         get_typed(nextt, ir.Element)
         if isinstance(stmt, pyast.Assign):
@@ -183,15 +184,36 @@ class Generator2Graph:
             _state <= _state_fake;
         end
         """
-        # print(pyast.dump(stmt))
+        print(pyast.dump(stmt))
 
         loop_edge = ir.ClockedEdge(unique_id=f"{prefix}_edge", name="True")
         done_edge = ir.ClockedEdge(unique_id=f"{prefix}_f", name="False", child=nextt)
 
-        # callee = [None]
-        # for context in self._context.namespace:
-        #     print(context.name)
-        # print("callee", callee[0])
+        stmt.iter
+        # if target.id not in self._context.instances:
+        #     raise RuntimeError(f"No iterator instance {self._context.instances}")
+        # instance = self._context.instances[target.id]
+
+        # def unique_node_gen():
+        #     counter = 0
+        #     while True:
+        #         yield f"{prefix}_call_{counter}"
+
+        # def unique_edge_gen():
+        #     counter = 0
+        #     while True:
+        #         yield f"{prefix}_call_{counter}_e"
+
+        # unique_node = unique_node_gen()
+        # unique_edge = unique_edge_gen()
+
+        # head = ir.AssignNode(
+        #     unique_id=next(unique_node),
+        #     lvalue=instance.ready_signal,
+        #     rvalue=ir.UInt(0),
+        # )
+        # node = head
+        # node.child = ir.NonClockedEdge(unique_id=next(unique_edge))
 
         ifelse = ir.IfElseNode(
             unique_id=f"{prefix}_for",
@@ -199,8 +221,6 @@ class Generator2Graph:
             true_edge=loop_edge,
             false_edge=done_edge,
         )
-
-        # print(self._context.namespace)
 
         body_node = self.__parse_statements(stmt.body, f"{prefix}_for", ifelse)
         loop_edge.child = body_node
@@ -379,7 +399,7 @@ class Generator2Graph:
         """
         instance = func(args, ...)
         """
-        print(pyast.dump(assign))
+        # print(pyast.dump(assign))
         assert len(assign.targets) == 1
         target = assign.targets[0]
         if target.id not in self._context.instances:

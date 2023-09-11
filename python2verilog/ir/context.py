@@ -61,7 +61,7 @@ class Context(GenericReprAndStr):
 
     # Function calls
     namespace: list[Context] = field(default_factory=list)  # callable functions
-    instances: dict[Instance] = field(default_factory=dict)  # generator instances
+    instances: dict[str, Instance] = field(default_factory=dict)  # generator instances
 
     def __del__(self):
         if self._module_file:
