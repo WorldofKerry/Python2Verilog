@@ -47,7 +47,7 @@ module dup_range(
     )
     // ...
     case (_state) begin
-        _state_1: begin
+        _state_1: begin # instantiation node
             _hrange_inst_base <= _base;
             _hrange_inst_limit <= _limit;
             _hrange_inst_base <= _step;
@@ -55,7 +55,7 @@ module dup_range(
             _hrange_inst__ready <= 0; // optimizer pass can set this to 1
             _state <= _state_2;
         end
-        _state_2: begin
+        _state_2: begin # iterate node
             _hrange_inst__ready <= 1;
             if (_hrange_inst__ready && _hrange_inst__valid) begin
                 _value <= _hrange_inst__0;
@@ -78,7 +78,48 @@ module dup_range(
             _state <= _state_2;
         end
         _state_done: // ...
-    end
-    // ...
-endmodule
+        // ...
+    endmodule
 ```
+
+## Proposal
+
+Two new nodes will need to be added to the intermediate representation, to represent instantiating and iterating a generator respectively.
+
+A new variable type will have to be added for generator instances
+
+### Instantiation Node
+
+Represents the instantiation of a generator in Python, e.g. `inst = hrange(a, b, c)`.
+Represents a module that has been "started" in Verilog.
+
+Also encapsulates the arguments passed in by the callee.
+
+Members:
+
+- Instance name
+- Arguments Passed
+- Callee function/module name
+
+### Iterate Node
+
+For a instance `inst` of generator `hrange`, and caller variables `a` and `b`, this node represents a
+
+- `a, b = next(inst)` call on a generator instance, or a
+- `for a, b in inst`, or a
+- portion of a `yield from inst`
+
+Members:
+
+- Instance name, e.g. `inst`
+- Output mapping, e.g. in the above example `a` maps to `_0` of `hrange`
+
+### Generator Instance Variable
+
+Abstraction for a variable that holds a generator instance.
+Represented by a module in Verilog.
+
+Members:
+
+- name
+- python function "pointer", for key in the namespace
