@@ -112,7 +112,7 @@ For a instance `inst` of generator `hrange`, and caller variables `a` and `b`, t
 Members:
 
 - Instance name, e.g. `inst`
-- Output mapping, e.g. in the above example `a` maps to `_0` of `hrange`
+- Output mapping, e.g. in the above example `a` maps to [`_0`](./hrange.sv) of `hrange`
 
 ### Generator Instance Variable
 
