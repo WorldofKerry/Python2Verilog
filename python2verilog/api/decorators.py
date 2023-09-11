@@ -107,10 +107,9 @@ def verilogify(
 ):
     """
     :param namespace: the namespace to put this function, for linking purposes
-    :param write: if True, files will be written to the specified paths
-    :param overwrite: If True, existing files will be overwritten
     :param module_output: path to write verilog module to, defaults to function_name.sv
     :param testbench_output: path to write verilog testbench to, defaults to function_name_tb.sv
+    :param mode: if WRITE or OVERWRITE, files will be written to the specified paths
     """
     get_typed(func, FunctionType)
     assert_typed_dict(namespace, FunctionType, ir.Context)  # type: ignore[misc]
