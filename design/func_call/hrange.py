@@ -16,11 +16,28 @@ def hrange(base, limit, step):
 
 
 # @verilogify(write=True, overwrite=True, optimization_level=1)
-def dup_range(base, limit, step):
+def dup_range_goal(base, limit, step):
     for i in hrange(base, limit, step):
         yield i
         yield i
 
 
+@verilogify(
+    mode=Modes.OVERWRITE,
+    module_output="./design/func_call/dup_range.sv",
+    testbench_output="./design/func_call/dup_range_tb.sv",
+    optimization_level=0,
+)
+def dup_range(base, limit, step):
+    counter = base
+    inst = 0  # fake generator
+    while counter < limit:
+        value = inst  # fake iter
+        yield value
+        yield value
+        counter += step
+
+
+output = list(dup_range_goal(0, 10, 2))
 output = list(dup_range(0, 10, 2))
 print(output)
