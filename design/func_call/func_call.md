@@ -123,3 +123,20 @@ Members:
 
 - name
 - python function "pointer", for key in the namespace
+
+## Tickets
+
+### Phase 1
+
+1. Finish Verilog pseudocode and verify - 1 point
+1. Work out how the intermdiate representation will look for `dup_range` - 1 point
+
+### Phase 2
+
+1. Update tests to support multiple functions in one file - 2 points
+1. Reword `Var` class to handle different types (or inherit from it) - 3 points
+
+### Phase 3
+
+1. (Optional) improve graph visualzation tooling if debugging becomes inefficient - 2 points
+1. Add the two new nodes and generator instance variable - 3 points
