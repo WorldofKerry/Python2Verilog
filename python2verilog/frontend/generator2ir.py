@@ -136,6 +136,8 @@ class Generator2Graph:
             cur_node.child = edge
         elif isinstance(stmt, pyast.While):
             cur_node = self.__parse_while(stmt, nextt=nextt, prefix=prefix)
+        elif isinstance(stmt, pyast.For):
+            cur_node = self.__parse_for(stmt, nextt=nextt, prefix=prefix)
         elif isinstance(stmt, pyast.If):
             cur_node = self.__parse_ifelse(stmt=stmt, nextt=nextt, prefix=prefix)
         elif isinstance(stmt, pyast.Expr):
@@ -161,9 +163,27 @@ class Generator2Graph:
             )
         return cur_node
 
+    def __parse_for(self, stmt: pyast.For, nextt: ir.Element, prefix: str):
+        """
+        For ... in ...:
+        """
+        loop_edge = ir.ClockedEdge(unique_id=f"{prefix}_edge", name="True")
+        done_edge = ir.ClockedEdge(unique_id=f"{prefix}_f", name="False", child=nextt)
+
+        ifelse = ir.IfElseNode(
+            unique_id=f"{prefix}_for",
+            condition=ir.Expression("!_done"),
+            true_edge=loop_edge,
+            false_edge=done_edge,
+        )
+        body_node = self.__parse_statements(stmt.body, f"{prefix}_for", ifelse)
+        loop_edge.child = body_node
+
+        return ifelse
+
     def __parse_ifelse(self, stmt: pyast.If, nextt: ir.Element, prefix: str):
         """
-        If statement
+        If else block
         """
         assert isinstance(stmt, pyast.If)
 
@@ -323,9 +343,17 @@ class Generator2Graph:
                     f"({self.__parse_expression(expr.values[0]).to_string()}) \
                     && ({self.__parse_expression(expr.values[1]).to_string()})"
                 )
+        if isinstance(expr, pyast.Call):
+            return self.__parse_call(expr)
         raise TypeError(
             "Error: unexpected expression type", type(expr), pyast.dump(expr)
         )
+
+    def __parse_call(self, node: pyast.Call):
+        """
+        func(args, ...)
+        """
+        return ir.Expression(f"{pyast.dump(node)}")
 
     def __parse_subscript(self, node: pyast.Subscript):
         """

@@ -1,22 +1,25 @@
 /*
 
 # Python Function
-@verilogify(mode=Modes.OVERWRITE)
-def hrange(base, limit, step):
-    i = base
-    while i < limit:
+@verilogify(
+    mode=Modes.OVERWRITE,
+    module_output="./design/func_call/dup_range_goal.sv",
+    testbench_output="./design/func_call/dup_range_goal_tb.sv",
+    optimization_level=0,
+)
+def dup_range_goal(base, limit, step):
+    inst = hrange(base, limit, step)
+    for i in inst:
         yield i
-        i += step
+        yield i
 
 
 # Test Cases
-print(list(hrange(*(0, 10, 2))))
-print(list(hrange(*(0, 10, 2))))
-print(list(hrange(*(0, 10, 2))))
+print(list(dup_range_goal(*(0, 10, 2))))
 
 */
 
-module hrange (
+module dup_range_goal (
     // Function parameters:
     input wire signed [31:0] base,
     input wire signed [31:0] limit,
@@ -36,11 +39,13 @@ module hrange (
     // Output values as a tuple with respective index(es)
     output reg signed [31:0] _0
 );
-    localparam _state_0_while_0 = 0;
-    localparam _state_1 = 1;
-    localparam _state_fake = 2;
+    localparam _state_0_for_1 = 0;
+    localparam _state_0_for = 1;
+    localparam _state_0_for_0 = 2;
+    localparam _state_fake = 3;
+    localparam _state_1 = 4;
     // Global variables
-    reg signed [31:0] _i;
+    reg signed [31:0] _inst;
     reg signed [31:0] _state;
     reg signed [31:0] _base;
     reg signed [31:0] _limit;
@@ -58,27 +63,30 @@ module hrange (
             _base <= base;
             _limit <= limit;
             _step <= step;
-            _i <= base;
-            if ((base < limit)) begin
-                _0 <= base;
-                _valid <= 1;
-                _state <= _state_0_while_0;
-            end else begin
-                _done <= 1;
-                _state <= _state_fake;
-            end
+            _inst <= Call(func=Name(id='hrange', ctx=Load()), args=[Name(id='base', ctx=Load()), Name(id='limit', ctx=Load()), Name(id='step', ctx=Load())], keywords=[]);
+            _state <= _state_0_for;
         end else begin
             // If ready or not valid, then continue computation
             if ($signed(_ready || !(_valid))) begin
                 case (_state)
-                    _state_0_while_0: begin
-                        _i <= $signed(_i + _step);
-                        if (($signed(_i + _step) < _limit)) begin
-                            _0 <= $signed(_i + _step);
-                            _valid <= 1;
-                            _state <= _state_0_while_0;
+                    _state_0_for_0: begin
+                        _0 <= _i;
+                        _valid <= 1;
+                        _state <= _state_0_for;
+                    end
+                    _state_0_for_1: begin
+                        _0 <= _i;
+                        _valid <= 1;
+                        _state <= _state_0_for_0;
+                    end
+                    _state_fake: begin
+                        _done <= 1;
+                        _state <= _state_fake;
+                    end
+                    _state_0_for: begin
+                        if (!_done) begin
+                            _state <= _state_0_for_1;
                         end else begin
-                            _done <= 1;
                             _state <= _state_fake;
                         end
                     end
