@@ -81,12 +81,13 @@ class Generator2Graph:
         # Check if contains function call
         for child in pyast.walk(node):
             if isinstance(child, pyast.Call):
-                return self.__parse_assign_to_call(node)
-        return ir.AssignNode(
+                return self.__parse_assign_to_call(node, prefix)
+        assign = ir.AssignNode(
             unique_id=prefix,
             lvalue=self.__parse_targets(node.targets),
             rvalue=self.__parse_expression(node.value),
         )
+        return (assign, assign)
 
     def __parse_statements(
         self, stmts: list[pyast.stmt], prefix: str, nextt: ir.Element
@@ -129,11 +130,10 @@ class Generator2Graph:
         """
         get_typed(stmt, pyast.AST)
         get_typed(nextt, ir.Element)
-        cur_node = None
         if isinstance(stmt, pyast.Assign):
-            cur_node = self.__parse_assign(stmt, prefix=prefix)
+            cur_node, end_node = self.__parse_assign(stmt, prefix=prefix)
             edge = ir.ClockedEdge(unique_id=f"{prefix}_e", child=nextt)
-            cur_node.child = edge
+            end_node.child = edge
         elif isinstance(stmt, pyast.Yield):
             cur_node = self.__parse_yield(stmt, prefix=prefix)
             edge = ir.ClockedEdge(unique_id=f"{prefix}_e", child=nextt)
@@ -375,26 +375,61 @@ class Generator2Graph:
             "Error: unexpected expression type", type(expr), pyast.dump(expr)
         )
 
-    def __parse_assign_to_call(self, node: pyast.Assign):
+    def __parse_assign_to_call(self, assign: pyast.Assign, prefix: str):
         """
         instance = func(args, ...)
         """
-        print(pyast.dump(node))
-        assert len(node.targets) == 1
-        target = node.targets[0]
+        print(pyast.dump(assign))
+        assert len(assign.targets) == 1
+        target = assign.targets[0]
         if target.id not in self._context.instances:
-            # create new instance
-            self._context.instances.append(target.id)
+            for context in self._context.namespace:
+                if context.name == assign.value.func.id:
+                    instance = context.create_instance(target.id)
+                    self._context.instances[target.id] = instance
 
-        for context in self._context.namespace:
-            if context.name == node.value.func.id:
-                print(context.create_instance(target.id))
+        def unique_node_gen():
+            counter = 0
+            while True:
+                yield f"{prefix}_call_{counter}"
 
-        return ir.AssignNode(
-            unique_id="nani??",
-            lvalue=self.context.state_var,
-            rvalue=self.context.state_var,
+        def unique_edge_gen():
+            counter = 0
+            while True:
+                yield f"{prefix}_call_{counter}_e"
+
+        unique_node = unique_node_gen()
+        unique_edge = unique_edge_gen()
+
+        head = ir.AssignNode(
+            unique_id=next(unique_node),
+            lvalue=instance.ready_signal,
+            rvalue=ir.UInt(0),
         )
+        node = head
+        node.child = ir.NonClockedEdge(unique_id=next(unique_edge))
+        node = node.child
+        node.child = ir.AssignNode(
+            unique_id=next(unique_node),
+            lvalue=instance.start_signal,
+            rvalue=ir.UInt(1),
+        )
+        node = node.child
+
+        arguments = list(map(lambda name: ir.Var(name.id), assign.value.args))
+        assert len(arguments) == len(instance.inputs)
+
+        for arg, param in zip(arguments, instance.inputs):
+            node.child = ir.NonClockedEdge(unique_id=next(unique_edge))
+            node = node.child
+            node.child = ir.AssignNode(
+                unique_id=next(unique_node),
+                lvalue=param,
+                rvalue=arg,
+            )
+            node = node.child
+
+        return (head, node)
 
     def __parse_subscript(self, node: pyast.Subscript):
         """

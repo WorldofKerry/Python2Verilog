@@ -40,10 +40,10 @@ module dup_range_goal (
     output reg signed [31:0] _0
 );
     localparam _state_0_for_1 = 0;
-    localparam _state_0_for = 1;
-    localparam _state_0_for_0 = 2;
-    localparam _state_fake = 3;
-    localparam nani?? = 4;
+    localparam _state_0_for_0 = 1;
+    localparam _state_1_call_0 = 2;
+    localparam _state_0_for = 3;
+    localparam _state_fake = 4;
     // Global variables
     reg signed [31:0] _state;
     reg signed [31:0] _base;
@@ -62,7 +62,11 @@ module dup_range_goal (
             _base <= base;
             _limit <= limit;
             _step <= step;
-            _state <= _state;
+            _inst_hrange__ready <= 0;
+            _inst_hrange__start <= 1;
+            _inst_hrange_base <= base;
+            _inst_hrange_limit <= limit;
+            _inst_hrange_step <= step;
             _state <= _state_0_for;
         end else begin
             // If ready or not valid, then continue computation

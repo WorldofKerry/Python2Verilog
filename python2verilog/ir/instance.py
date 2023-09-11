@@ -21,4 +21,5 @@ class Instance:
     start_signal: Var
     reset_signal: Var
     ready_signal: Var
+    inputs: list[Var]
     outputs: list[Var]

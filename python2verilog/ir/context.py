@@ -61,7 +61,7 @@ class Context(GenericReprAndStr):
 
     # Function calls
     namespace: list[Context] = field(default_factory=list)  # callable functions
-    instances: list[str] = field(default_factory=list)  # generator instances
+    instances: dict[Instance] = field(default_factory=dict)  # generator instances
 
     def __del__(self):
         if self._module_file:
@@ -306,7 +306,12 @@ class Context(GenericReprAndStr):
         inst_default_signals = list(
             map(lambda var: Var(f"{name}_{self.name}__{var.py_name}"), default_signals)
         )
+        inst_input_vars = list(
+            map(lambda var: Var(f"{name}_{self.name}_{var.py_name}"), self.input_vars)
+        )
         inst_output_vars = list(
             map(lambda var: Var(f"{name}_{self.name}_{var.py_name}"), self.output_vars)
         )
-        return Instance(self.name, *inst_default_signals, inst_output_vars)
+        return Instance(
+            self.name, *inst_default_signals, inst_input_vars, inst_output_vars
+        )
