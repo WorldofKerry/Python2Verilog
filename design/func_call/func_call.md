@@ -52,7 +52,7 @@ module dup_range(
             _hrange_inst_limit <= _limit;
             _hrange_inst_base <= _step;
             _hrange_inst__start <= 1;
-            _hrange_inst__ready <= 0; // optimizer pass can set this to 1
+            _hrange_inst__ready <= 0;
             _state <= _state_2;
         end
         _state_2: begin // iterate node

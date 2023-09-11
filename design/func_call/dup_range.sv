@@ -146,7 +146,7 @@ module dup_range (
                         _hrange_inst_limit <= _limit;
                         _hrange_inst_step <= _step;
                         _hrange_inst__start <= 1;
-                        _hrange_inst__ready <= 0; // optimizer pass can set this to 1
+                        _hrange_inst__ready <= 0; // optimizer pass should combine this state with next
                         _state <= _state_0_while_3;
                     end
                 endcase
