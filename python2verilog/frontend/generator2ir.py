@@ -74,10 +74,14 @@ class Generator2Graph:
             raise TypeError(f"Unsupported lvalue type {type(node)} {pyast.dump(node)}")
         return self.__parse_expression(node)
 
-    def __parse_assign(self, node: pyast.Assign, prefix: str):
+    def __parse_assign(self, node: pyast.Assign, prefix: str) -> ir.BasicElement:
         """
         <target0, target1, ...> = <value>;
         """
+        # Check if contains function call
+        for child in pyast.walk(node):
+            if isinstance(child, pyast.Call):
+                return self.__parse_assign_to_call(node)
         return ir.AssignNode(
             unique_id=prefix,
             lvalue=self.__parse_targets(node.targets),
@@ -166,16 +170,38 @@ class Generator2Graph:
     def __parse_for(self, stmt: pyast.For, nextt: ir.Element, prefix: str):
         """
         For ... in ...:
+
+        _hrange_inst__start <= 0;
+        _hrange_inst__ready <= 1;
+        if (_hrange_inst__ready && _hrange_inst__valid) begin
+            _value <= _hrange_inst__0;
+            _hrange_inst__ready <= 0;
+            _state <= _state_0_while_2;
+        end
+        if (_hrange_inst__done) begin
+            _hrange_inst__ready <= 0;
+            _state <= _state_fake;
+        end
         """
+        # print(pyast.dump(stmt))
+
         loop_edge = ir.ClockedEdge(unique_id=f"{prefix}_edge", name="True")
         done_edge = ir.ClockedEdge(unique_id=f"{prefix}_f", name="False", child=nextt)
 
+        # callee = [None]
+        # for context in self._context.namespace:
+        #     print(context.name)
+        # print("callee", callee[0])
+
         ifelse = ir.IfElseNode(
             unique_id=f"{prefix}_for",
-            condition=ir.Expression("!_done"),
+            condition=ir.Expression("lmao"),
             true_edge=loop_edge,
             false_edge=done_edge,
         )
+
+        # print(self._context.namespace)
+
         body_node = self.__parse_statements(stmt.body, f"{prefix}_for", ifelse)
         loop_edge.child = body_node
 
@@ -317,7 +343,7 @@ class Generator2Graph:
             "Error: unexpected binop type", type(expr.op), pyast.dump(expr.op)
         )
 
-    def __parse_expression(self, expr: pyast.AST):
+    def __parse_expression(self, expr: pyast.AST) -> ir.Expression:
         """
         <expression> (e.g. constant, name, subscript, etc., those that return a value)
         """
@@ -343,17 +369,32 @@ class Generator2Graph:
                     f"({self.__parse_expression(expr.values[0]).to_string()}) \
                     && ({self.__parse_expression(expr.values[1]).to_string()})"
                 )
-        if isinstance(expr, pyast.Call):
-            return self.__parse_call(expr)
+        # if isinstance(expr, pyast.Call):
+        #     return self.__parse_call(expr)
         raise TypeError(
             "Error: unexpected expression type", type(expr), pyast.dump(expr)
         )
 
-    def __parse_call(self, node: pyast.Call):
+    def __parse_assign_to_call(self, node: pyast.Assign):
         """
-        func(args, ...)
+        instance = func(args, ...)
         """
-        return ir.Expression(f"{pyast.dump(node)}")
+        print(pyast.dump(node))
+        assert len(node.targets) == 1
+        target = node.targets[0]
+        if target.id not in self._context.instances:
+            # create new instance
+            self._context.instances.append(target.id)
+
+        for context in self._context.namespace:
+            if context.name == node.value.func.id:
+                print(context.create_instance(target.id))
+
+        return ir.AssignNode(
+            unique_id="nani??",
+            lvalue=self.context.state_var,
+            rvalue=self.context.state_var,
+        )
 
     def __parse_subscript(self, node: pyast.Subscript):
         """

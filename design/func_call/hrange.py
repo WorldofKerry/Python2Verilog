@@ -28,12 +28,12 @@ def dup_range_goal(base, limit, step):
         yield i
 
 
-@verilogify(
-    mode=Modes.OVERWRITE,
-    module_output="./design/func_call/dup_range.sv",
-    testbench_output="./design/func_call/dup_range_tb.sv",
-    optimization_level=0,
-)
+# @verilogify(
+#     mode=Modes.OVERWRITE,
+#     module_output="./design/func_call/dup_range.sv",
+#     testbench_output="./design/func_call/dup_range_tb.sv",
+#     optimization_level=0,
+# )
 def dup_range(base, limit, step):
     counter = base
     inst = 0  # fake generator

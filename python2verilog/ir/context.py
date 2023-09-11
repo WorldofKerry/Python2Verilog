@@ -10,6 +10,7 @@ from typing import Any, Optional
 
 from python2verilog.api.modes import Modes
 from python2verilog.ir.expressions import Var
+from python2verilog.ir.instance import Instance
 from python2verilog.utils.assertions import assert_typed_dict, get_typed, get_typed_list
 from python2verilog.utils.env_vars import is_debug_mode
 from python2verilog.utils.generics import GenericReprAndStr
@@ -57,6 +58,10 @@ class Context(GenericReprAndStr):
 
     _entry_state: Optional[str] = None
     _ready_state: Optional[str] = None
+
+    # Function calls
+    namespace: list[Context] = field(default_factory=list)  # callable functions
+    instances: list[str] = field(default_factory=list)  # generator instances
 
     def __del__(self):
         if self._module_file:
@@ -285,3 +290,23 @@ class Context(GenericReprAndStr):
         Checks if outputs to functions' types matches previous outputs
         """
         self.__check_types(self.output_types, output)
+
+    def create_instance(self, name: str) -> Instance:
+        """
+        Create generator instance
+        """
+        default_signals = [
+            self.valid_signal,
+            self.done_signal,
+            self.clock_signal,
+            self.start_signal,
+            self.reset_signal,
+            self.ready_signal,
+        ]
+        inst_default_signals = list(
+            map(lambda var: Var(f"{name}_{self.name}__{var.py_name}"), default_signals)
+        )
+        inst_output_vars = list(
+            map(lambda var: Var(f"{name}_{self.name}_{var.py_name}"), self.output_vars)
+        )
+        return Instance(self.name, *inst_default_signals, inst_output_vars)

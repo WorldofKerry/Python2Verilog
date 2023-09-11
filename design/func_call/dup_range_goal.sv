@@ -43,9 +43,8 @@ module dup_range_goal (
     localparam _state_0_for = 1;
     localparam _state_0_for_0 = 2;
     localparam _state_fake = 3;
-    localparam _state_1 = 4;
+    localparam nani?? = 4;
     // Global variables
-    reg signed [31:0] _inst;
     reg signed [31:0] _state;
     reg signed [31:0] _base;
     reg signed [31:0] _limit;
@@ -63,7 +62,7 @@ module dup_range_goal (
             _base <= base;
             _limit <= limit;
             _step <= step;
-            _inst <= Call(func=Name(id='hrange', ctx=Load()), args=[Name(id='base', ctx=Load()), Name(id='limit', ctx=Load()), Name(id='step', ctx=Load())], keywords=[]);
+            _state <= _state;
             _state <= _state_0_for;
         end else begin
             // If ready or not valid, then continue computation
@@ -84,7 +83,7 @@ module dup_range_goal (
                         _state <= _state_fake;
                     end
                     _state_0_for: begin
-                        if (!_done) begin
+                        if (lmao) begin
                             _state <= _state_0_for_1;
                         end else begin
                             _state <= _state_fake;

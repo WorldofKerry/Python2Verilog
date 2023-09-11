@@ -148,6 +148,8 @@ def verilogify(
     context.mode = mode
     context.optimization_level = optimization_level
 
+    context.namespace = namespace.values()
+
     if Modes.write(mode):
         # pylint: disable=consider-using-with
         if isinstance(module_output, str):

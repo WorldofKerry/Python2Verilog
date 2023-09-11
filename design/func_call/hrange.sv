@@ -36,9 +36,9 @@ module hrange (
     // Output values as a tuple with respective index(es)
     output reg signed [31:0] _0
 );
-    localparam _state_0_while_0 = 0;
-    localparam _state_1 = 1;
-    localparam _state_fake = 2;
+    localparam _state_fake = 0;
+    localparam _state_0_while_0 = 1;
+    localparam _state_1 = 2;
     // Global variables
     reg signed [31:0] _i;
     reg signed [31:0] _state;
