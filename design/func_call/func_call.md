@@ -11,7 +11,7 @@ How can this abstraction be converted to hardware?
 Let there be a function `hrange`, which is a more basic implementation of the built-in `range` function. This function is already [convertible by the tool](./hrange.sv).
 
 ```python
-@verilogify(write=True, overwrite=True, optimization_level=1)
+@verilogify(mode=Modes.OVERWRITE)
 def hrange(base, limit, step):
     i = base
     while i < limit:
@@ -22,7 +22,7 @@ def hrange(base, limit, step):
 Lets make another function called `dup_range` that calls `hrange`, and uses its outputs in its own yields.
 
 ```python
-@verilogify(write=True, overwrite=True, optimization_level=1)
+@verilogify(mode=Modes.OVERWRITE)
 def dup_range(base, limit, step):
     inst = hrange(base, limit, step) # 1
     for value in inst: # 2
