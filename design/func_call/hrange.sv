@@ -44,6 +44,7 @@ module hrange (
     reg signed [31:0] _limit;
     reg signed [31:0] _step;
     always @(posedge _clock) begin
+        // $display("hrange state %d, output %d, valid %d, ready %d, i %d, step %d, start %d", _state, _0, _valid, _ready, _i, _step, _start);
         _done <= 0;
         if (_ready) begin
             _valid <= 0;

@@ -144,3 +144,9 @@ Members:
 1. Add function parse ability to frontend - 2 points
    1. start with only supporting `inst = gen(a, b, c); for x, y in inst: ...`
    1. (Optional) add support for `yield from` and `for x, y in gen(a, b, c)`
+
+## Finish Verilog pseudocode and verify
+
+```bash
+iverilog -s dup_range_tb ./design/func_call/dup_range.sv ./design/func_call/dup_range_tb.sv ./design/func_call/hrange.sv -g2005-sv -o output.log && vvp output.log
+```

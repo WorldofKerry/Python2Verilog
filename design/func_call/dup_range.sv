@@ -52,12 +52,38 @@ module dup_range (
     localparam _state_0_while_1 = 7;
     // Global variables
     reg signed [31:0] _value;
-    reg signed [31:0] _inst;
     reg signed [31:0] _counter;
     reg signed [31:0] _state;
     reg signed [31:0] _base;
     reg signed [31:0] _limit;
     reg signed [31:0] _step;
+
+    // _hrange_inst
+    hrange _inst (
+        ._clock(_clock),
+        ._start(_hrange_inst__start),
+        ._reset(1'b0),
+        ._ready(_hrange_inst__ready),
+        .base(_hrange_inst_base),
+        .limit(_hrange_inst_limit),
+        .step(_hrange_inst_step),
+        ._done(_hrange_inst__done),
+        ._valid(_hrange_inst__valid),
+        ._0(_hrange_inst__0)
+    );
+    // Standard
+    reg _hrange_inst__start;
+    reg _hrange_inst__reset;
+    reg _hrange_inst__ready;
+    reg _hrange_inst__done;
+    reg _hrange_inst__valid;
+    // Inputs
+    reg signed [31:0] _hrange_inst_base;
+    reg signed [31:0] _hrange_inst_limit;
+    reg signed [31:0] _hrange_inst_step;
+    // Outputs
+    wire signed [31:0] _hrange_inst__0;
+
     always @(posedge _clock) begin
         _done <= 0;
         if (_ready) begin
@@ -92,8 +118,17 @@ module dup_range (
                         _state <= _state_0_while_1;
                     end
                     _state_0_while_3: begin
-                        _value <= _inst;
-                        _state <= _state_0_while_2;
+                        _hrange_inst__start <= 0;
+                        _hrange_inst__ready <= 1;
+                        if (_hrange_inst__ready && _hrange_inst__valid) begin
+                            _value <= _hrange_inst__0;
+                            _hrange_inst__ready <= 0;
+                            _state <= _state_0_while_2;
+                        end
+                        if (_hrange_inst__done) begin
+                            _state <= _state_fake;
+                            _hrange_inst__ready <= 0;
+                        end
                     end
                     _state_fake: begin
                         _done <= 1;
@@ -107,8 +142,12 @@ module dup_range (
                         end
                     end
                     _state_1: begin
-                        _inst <= $signed(0);
-                        _state <= _state_0_while;
+                        _hrange_inst_base <= _base;
+                        _hrange_inst_limit <= _limit;
+                        _hrange_inst_step <= _step;
+                        _hrange_inst__start <= 1;
+                        _hrange_inst__ready <= 0; // optimizer pass can set this to 1
+                        _state <= _state_0_while_3;
                     end
                 endcase
             end

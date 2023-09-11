@@ -42,7 +42,7 @@ module dup_range_tb (
         _start = 0;
         while ($signed(!(_done) || !(_ready))) begin
             // `if (_ready && _valid)` also works as a conditional
-            if (_ready) begin
+            if (_ready && _valid) begin
                 $display("%0d, %0d, %0d", _valid, _ready, _0);
             end
             @(negedge _clock);
