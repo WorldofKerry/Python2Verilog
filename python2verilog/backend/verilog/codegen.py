@@ -437,17 +437,24 @@ class CaseBuilder:
 
         # Work
         self.case.case_items.append(self.new_caseitem(root))
-        if not self.added_ready_node:
+        have_done_state = False
+        for caseitem in self.case.case_items:
+            if "_state_fake" == str(caseitem.condition):
+                have_done_state = True
+        if not have_done_state:
             self.case.case_items.append(
                 ver.CaseItem(
                     ir.Expression(context.ready_state),
                     statements=[
                         ver.NonBlockingSubsitution(
-                            lvalue=ir.State("_ready"), rvalue=ir.UInt(1)
+                            lvalue=ir.State("_done"), rvalue=ir.UInt(1)
                         )
                     ],
                 )
             )
+
+        # If optimizer removes done node
+        # if ir.Expression(context)
 
     def new_caseitem(self, root: ir.Vertex):
         """

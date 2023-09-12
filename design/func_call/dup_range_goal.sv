@@ -5,7 +5,7 @@
     mode=Modes.OVERWRITE,
     module_output="./design/func_call/dup_range_goal.sv",
     testbench_output="./design/func_call/dup_range_goal_tb.sv",
-    optimization_level=0,
+    optimization_level=1,
 )
 def dup_range_goal(base, limit, step):
     inst = hrange(base, limit, step)
@@ -39,11 +39,11 @@ module dup_range_goal (
     // Output values as a tuple with respective index(es)
     output reg signed [31:0] _0
 );
-    localparam _state_0_for_0 = 0;
-    localparam _state_0_call_0 = 1;
-    localparam _state_1_call_0 = 2;
-    localparam _state_0_for_1 = 3;
-    localparam _state_fake = 4;
+    localparam _state_fake = 0;
+    localparam _state_0_for_1 = 1;
+    localparam _state_0_call_0 = 2;
+    localparam _state_0_for_0 = 3;
+    localparam _state_1_call_0 = 4;
     // Global variables
     reg signed [31:0] _i;
     reg signed [31:0] _state;

@@ -37,8 +37,8 @@ module hrange (
     output reg signed [31:0] _0
 );
     localparam _state_1 = 0;
-    localparam _state_0_while_0 = 1;
-    localparam _state_fake = 2;
+    localparam _state_fake = 1;
+    localparam _state_0_while_0 = 2;
     // Global variables
     reg signed [31:0] _i;
     reg signed [31:0] _state;
@@ -82,6 +82,9 @@ module hrange (
                             _done <= 1;
                             _state <= _state_fake;
                         end
+                    end
+                    _state_fake: begin
+                        _done <= 1;
                     end
                 endcase
             end
