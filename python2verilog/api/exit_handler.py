@@ -7,14 +7,13 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 from typing import Any, Callable
-import warnings
 
 from python2verilog import ir
+from python2verilog.api.file_namespaces import file_namespaces
 from python2verilog.api.modes import Modes
 from python2verilog.api.wrappers import context_to_text
 from python2verilog.utils.assertions import assert_typed, assert_typed_dict, get_typed
 from python2verilog.utils.decorator import decorator_with_args
-
 
 try:
     # For iPython
