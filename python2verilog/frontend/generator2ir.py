@@ -25,7 +25,7 @@ class Generator2Graph:
     def __init__(
         self,
         context: ir.Context,
-        done_state_name: str = "_state_fake",
+        done_state_name: str = "_state_done",
     ):
         """
         Initializes the parser, does quick setup work

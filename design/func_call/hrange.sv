@@ -37,9 +37,9 @@ module hrange (
     output reg signed [31:0] _0,
     output reg signed [31:0] _1
 );
-    localparam _state_1 = 0;
-    localparam _state_fake = 1;
-    localparam _state_0_while_0 = 2;
+    localparam _state_0_while_0 = 0;
+    localparam _state_1 = 1;
+    localparam _state_done = 2;
     // Global variables
     reg signed [31:0] _i;
     reg signed [31:0] _state;
@@ -54,7 +54,7 @@ module hrange (
         end
         // Start signal takes precedence over reset
         if (_reset) begin
-            _state <= _state_fake;
+            _state <= _state_done;
         end
         if (_start) begin
             _base <= base;
@@ -68,7 +68,7 @@ module hrange (
                 _state <= _state_0_while_0;
             end else begin
                 _done <= 1;
-                _state <= _state_fake;
+                _state <= _state_done;
             end
         end else begin
             // If ready or not valid, then continue computation
@@ -83,10 +83,10 @@ module hrange (
                             _state <= _state_0_while_0;
                         end else begin
                             _done <= 1;
-                            _state <= _state_fake;
+                            _state <= _state_done;
                         end
                     end
-                    _state_fake: begin
+                    _state_done: begin
                         _done <= 1;
                     end
                 endcase

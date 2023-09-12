@@ -166,7 +166,9 @@ class CodeGen:
         body.append(ver.Statement(comment="Core"))
         body.append(always)
 
-        state_vars = {key: ir.UInt(index) for index, key in enumerate(context.states)}
+        state_vars = {
+            key: ir.UInt(index) for index, key in enumerate(sorted(context.states))
+        }
 
         python_test_code = Lines()
         for case in context.test_cases:
@@ -464,7 +466,7 @@ class CaseBuilder:
         self.case.case_items.append(self.new_caseitem(root))
         have_done_state = False
         for caseitem in self.case.case_items:
-            if "_state_fake" == str(caseitem.condition):
+            if "_state_done" == str(caseitem.condition):
                 have_done_state = True
         if not have_done_state:
             self.case.case_items.append(

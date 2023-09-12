@@ -121,7 +121,7 @@ class Context(GenericReprAndStr):
         if self._ready_state:
             assert self.ready_state in self.states, self
 
-        for value in self.signals.items():
+        for value in self.signals.values():
             assert get_typed(value, Var)
 
         return self
