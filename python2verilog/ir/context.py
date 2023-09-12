@@ -7,7 +7,6 @@ import io
 from dataclasses import dataclass, field
 from types import FunctionType
 from typing import Any, Optional
-import warnings
 
 from python2verilog.api.modes import Modes
 from python2verilog.ir.expressions import Var

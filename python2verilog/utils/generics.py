@@ -4,7 +4,6 @@ Implementation of generic base classes for __repr__ and __str__
 
 
 from typing import Any, Optional
-import warnings
 
 
 def pretty_dict(
