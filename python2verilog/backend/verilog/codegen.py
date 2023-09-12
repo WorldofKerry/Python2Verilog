@@ -33,7 +33,9 @@ class CodeGen:
         root_case = CaseBuilder(root, context).case
 
         for item in root_case.case_items:
-            self.context.add_state(item.condition.to_string())
+            self.context.add_state_weak(
+                item.condition.to_string()
+            )  # change to not weak
 
         assert isinstance(context.done_state, str)
         self.context.add_state_weak(context.done_state)
