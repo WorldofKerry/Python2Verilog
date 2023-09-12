@@ -5,9 +5,15 @@ P2V_PATH = Path(__file__).parent.absolute().resolve().parent.parent
 sys.path.insert(0, str(P2V_PATH))
 
 from python2verilog import Modes, verilogify
+from python2verilog.api.namespace import new_namespace
+
+goal_namespace = new_namespace(Path(__file__).parent / "dup_range_goal")
 
 
-@verilogify(mode=Modes.OVERWRITE)
+@verilogify(
+    mode=Modes.OVERWRITE,
+    namespace=goal_namespace,
+)
 def hrange(base, limit, step):
     i = base
     while i < limit:
@@ -17,8 +23,7 @@ def hrange(base, limit, step):
 
 @verilogify(
     mode=Modes.OVERWRITE,
-    module_output="./design/func_call/dup_range_goal.sv",
-    testbench_output="./design/func_call/dup_range_goal_tb.sv",
+    namespace=goal_namespace,
     optimization_level=1,
 )
 def dup_range_goal(base, limit, step):

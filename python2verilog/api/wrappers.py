@@ -226,11 +226,9 @@ def context_to_verilog(context: ir.Context):
     return verilog.CodeGen(ir_root, context), ir_root
 
 
-def context_to_text_and_file(context: ir.Context):
+def context_to_text(context: ir.Context) -> tuple[str, str]:
     """
     Covnerts a context to a verilog module and testbench str
-
-    If decorated with write enabled, writes to designated files/streams
 
     :return: (module, testbench) pair
     """
@@ -239,10 +237,30 @@ def context_to_text_and_file(context: ir.Context):
 
     module_str = ver_code_gen.get_module_str()
     tb_str = ver_code_gen.get_testbench_str()
-    if Modes.write(context.mode):
-        context.module_file.write(module_str)
-        context.module_file.seek(0)
-        context.testbench_file.write(tb_str)
-        context.testbench_file.seek(0)
 
     return (module_str, tb_str)
+
+
+# def context_to_text(
+#     context: ir.Context, path: Optional[Path | str] = None
+# ) -> tuple[str, str]:
+#     """
+#     Covnerts a context to a verilog module and testbench str
+
+#     :return: (module, testbench) pair
+#     """
+#     get_typed(context, ir.Context)
+#     ver_code_gen, _ = context_to_verilog(context)
+
+#     module_str = ver_code_gen.get_module_str()
+#     tb_str = ver_code_gen.get_testbench_str()
+#     if path is None:
+#         path = inspect.stack()[1].filename
+#     namespace = Path(path).suffix("")
+#     with open(namespace + ".sv", mode="w")
+#     context.module_file.write(module_str)
+#     context.module_file.seek(0)
+#     context.testbench_file.write(tb_str)
+#     context.testbench_file.seek(0)
+
+#     return (module_str, tb_str)

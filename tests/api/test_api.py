@@ -125,7 +125,7 @@ class TestVerilogify(unittest.TestCase):
 
                 @verilogify(
                     mode=Modes.WRITE,
-                    namespace=new_namespace(Path(__file__) / "other.py"),
+                    namespace=new_namespace(Path(__file__).parent / "other"),
                 )
                 def counter_overwrite(n):
                     i = 0

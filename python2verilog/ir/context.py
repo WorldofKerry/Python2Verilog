@@ -45,8 +45,6 @@ class Context(GenericReprAndStr):
     optimization_level: int = -1
 
     mode: Modes = Modes.NO_WRITE
-    _module_file: Optional[io.IOBase] = None
-    _testbench_file: Optional[io.IOBase] = None
 
     _global_vars: list[Var] = field(default_factory=list)
     _input_vars: list[Var] = field(default_factory=list)
@@ -77,12 +75,6 @@ class Context(GenericReprAndStr):
         del dic["namespace"]
         return dic
 
-    def __del__(self):
-        if self._module_file:
-            self._module_file.close()
-        if self._testbench_file:
-            self._testbench_file.close()
-
     def validate(self):
         """
         Validates that all fields of context are populated.
@@ -110,12 +102,6 @@ class Context(GenericReprAndStr):
 
         assert isinstance(self.optimization_level, int), self
         assert self.optimization_level >= 0
-
-        if self.mode:
-            if self._module_file:
-                assert isinstance(self.module_file, io.IOBase), self
-            if self._testbench_file:
-                assert isinstance(self.testbench_file, io.IOBase), self
 
         if self._entry_state:
             assert self.entry_state in self.states, self
