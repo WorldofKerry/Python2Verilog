@@ -9,6 +9,7 @@ from typing import Any, Optional
 
 from python2verilog import ir
 from python2verilog.api.modes import Modes
+from python2verilog.api.namespace import get_namespace
 from python2verilog.backend import verilog
 from python2verilog.frontend.generator2ir import Generator2Graph
 from python2verilog.optimizer.optimizer import OptimizeGraph
@@ -73,7 +74,7 @@ def text_to_text(
 def text_to_context(
     code: str,
     function_name: str,
-    file_path: Optional[str] = None,
+    file_path: str,
     extra_test_cases: Optional[list[tuple[int]]] = None,
 ):
     """
@@ -210,6 +211,7 @@ def text_to_context(
     context.py_ast = generator_ast
     context.py_func = generator_func
     context.py_string = func_str
+    context.namespace = get_namespace(file_path)
 
     return context
 

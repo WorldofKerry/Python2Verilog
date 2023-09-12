@@ -23,7 +23,7 @@ inst = nuts(50, 51)
 inst = nuts(15, 16)
 inst = deeznuts(420)
 """
-        text_to_context(code, "nuts")
+        text_to_context(code, "nuts", __file__)
         # logging.debug(func_ast)
 
     # def test_this_file(self):
@@ -45,7 +45,7 @@ inst = nuts(50, 51)
 inst = nuts(15, "16")
 inst = deeznuts(420)
 """
-        self.assertRaises(AssertionError, text_to_context, code, "nuts")
+        self.assertRaises(AssertionError, text_to_context, code, "nuts", __file__)
 
         code = """
 def nuts(input, other):
@@ -60,7 +60,7 @@ inst = nuts(50, 51)
 inst = nuts(15, 16)
 inst = deeznuts(420)
 """
-        self.assertRaises(AssertionError, text_to_context, code, "nuts")
+        self.assertRaises(AssertionError, text_to_context, code, "nuts", __file__)
 
 
 class TestVerilogify(unittest.TestCase):
