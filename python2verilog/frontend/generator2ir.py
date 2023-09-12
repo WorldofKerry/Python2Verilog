@@ -33,7 +33,7 @@ class Generator2Graph:
         self._context = get_typed(context, ir.Context)
 
         # Populate function calls
-        # TODO: lazy-load or infer types
+        # pylint: disable=too-many-nested-blocks
         for node in context.py_ast.body:
             for assign in pyast.walk(node):
                 if isinstance(assign, pyast.Assign):
@@ -196,6 +196,7 @@ class Generator2Graph:
         """
         For ... in ...:
         """
+        # pylint: disable=too-many-locals
         loop_edge = ir.ClockedEdge(unique_id=f"{prefix}_edge", name="True")
         done_edge = ir.ClockedEdge(unique_id=f"{prefix}_f", name="False", child=nextt)
 
