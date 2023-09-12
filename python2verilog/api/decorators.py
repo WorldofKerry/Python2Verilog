@@ -14,67 +14,14 @@ import typing
 from functools import wraps
 from pathlib import Path
 from types import FunctionType
-from typing import Any, Callable, Optional, Union
+from typing import Any, Optional, Union
 
 from python2verilog import ir
 from python2verilog.api.modes import Modes
+from python2verilog.api.namespace import global_namespace
 from python2verilog.api.wrappers import context_to_text_and_file
 from python2verilog.utils.assertions import assert_typed, assert_typed_dict, get_typed
 from python2verilog.utils.decorator import decorator_with_args
-
-# To support iPython
-try:
-
-    def exit_register(fun: Callable[[], Any], *_args, **_kwargs):
-        """Decorator that registers at post_execute. After its execution it
-        unregisters itself for subsequent runs."""
-
-        def callback():
-            fun()
-            ip.events.unregister("post_execute", callback)
-
-        ip.events.register("post_execute", callback)
-
-    ip = get_ipython()  # type: ignore
-
-except NameError:
-    from atexit import register as exit_register  # type: ignore
-
-# All functions if a lesser namespace is not given
-global_namespace: dict[str, ir.Context] = {}
-exit_namespaces = [global_namespace]
-
-
-def new_namespace():
-    """
-    Create new namespace that is handled on program exit
-
-    :return: newly created namespace
-    """
-    namespace = {}
-    exit_namespaces.append(namespace)
-    return namespace
-
-
-def namespace_to_file(namespace: dict[FunctionType, ir.Context]):
-    """
-    Verilogifies a namespace
-    """
-    logging.info(namespace_to_file.__name__)
-    for context in namespace.values():
-        _ = context_to_text_and_file(context=context)
-        logging.info(
-            context.name, context.test_cases, context.input_types, context.output_types
-        )
-
-
-@exit_register
-def __namespace_exit_handler():
-    """
-    Handles the conversions in each namespace for program exit
-    """
-    for namespace in exit_namespaces:
-        namespace_to_file(namespace)
 
 
 def get_func_ast_from_func(func: FunctionType):
@@ -99,7 +46,7 @@ def get_func_ast_from_func(func: FunctionType):
 @decorator_with_args
 def verilogify(
     func: FunctionType,
-    namespace: dict[str, ir.Context] = global_namespace,
+    namespace: Optional[dict[str, ir.Context]] = None,
     optimization_level: int = 1,
     module_output: Optional[Union[os.PathLike[Any], typing.IO[Any], str]] = None,
     testbench_output: Optional[Union[os.PathLike[Any], typing.IO[Any], str]] = None,
@@ -112,10 +59,13 @@ def verilogify(
     :param mode: if WRITE or OVERWRITE, files will be written to the specified paths
     """
     get_typed(func, FunctionType)
-    assert_typed_dict(namespace, str, ir.Context)  # type: ignore[misc]
     get_typed(module_output, (os.PathLike, io.IOBase, str))
     get_typed(testbench_output, (os.PathLike, io.IOBase, str))
     assert_typed(mode, Modes)
+
+    if namespace is None:
+        namespace = global_namespace
+    assert_typed_dict(namespace, str, ir.Context)  # type: ignore[misc]
 
     if func.__name__ in namespace:
         raise RuntimeError(f"{func.__name__} has already been decorated")

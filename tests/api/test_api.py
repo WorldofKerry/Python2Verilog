@@ -4,12 +4,7 @@ import unittest
 from functools import wraps
 from pathlib import Path
 
-from python2verilog.api.decorators import (
-    Modes,
-    global_namespace,
-    new_namespace,
-    verilogify,
-)
+from python2verilog.api import Modes, new_namespace, verilogify
 from python2verilog.api.wrappers import text_to_context
 
 
@@ -113,10 +108,6 @@ class TestVerilogify(unittest.TestCase):
 
         counter0(10)
         counter1(15, 20)
-
-        for key, value in global_namespace.items():
-            # print(type(key), type(value))
-            pass
 
     @writes
     def test_overwrite_fail(self):
