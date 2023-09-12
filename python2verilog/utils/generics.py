@@ -3,26 +3,18 @@ Implementation of generic base classes for __repr__ and __str__
 """
 
 
-from typing import Any, Optional
+from typing import Any
 
 
-def pretty_dict(
-    dic: dict[Any, Any], indent: int = 0, visited: Optional[set] = None
-) -> str:
+def pretty_dict(dic: dict[Any, Any], indent: int = 0) -> str:
     """
     Returns pretty-formatted stringified dict
     """
-    if not visited:
-        visited = set()
-    if str(dic) in visited:
-        return ""
-    visited.add(str(dic))
-    # warnings.warn(str(visited))
     result = "{\n"
     for key, value in dic.items():
         result += "\t" * (indent + 1) + str(key) + ": "
         if isinstance(value, dict):
-            result += pretty_dict(value, indent + 1, visited)
+            result += pretty_dict(value, indent + 1)
         else:
             result += str(value) + ",\n"
     return result + "\t" * (indent) + "}\n"
