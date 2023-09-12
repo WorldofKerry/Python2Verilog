@@ -55,5 +55,7 @@ def __namespace_exit_handler():
     """
     Handles the conversions in each namespace for program exit
     """
+    # print("exit handler")
     for stem, namespace in file_namespaces.items():
+        # print(stem, namespace)
         namespace_to_file(stem, namespace)

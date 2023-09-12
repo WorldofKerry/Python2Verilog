@@ -23,7 +23,13 @@ inst = nuts(50, 51)
 inst = nuts(15, 16)
 inst = deeznuts(420)
 """
-        text_to_context(code, "nuts", __file__)
+        text_to_context(
+            code,
+            "nuts",
+            Path(__file__).parent / "bruh_nuts",
+            write=True,
+            optimization_level=1,
+        )
         # logging.debug(func_ast)
 
     # def test_this_file(self):
@@ -33,7 +39,7 @@ inst = deeznuts(420)
 
     def test_mix_types(self):
         code = """
-def nuts(input, other):
+def nuts2(input, other):
   yield input, input
   yield input + 1, input
 
@@ -41,14 +47,16 @@ def deeznuts(input):
   yield input
   yield input + 1
 
-inst = nuts(50, 51)
-inst = nuts(15, "16")
+inst = nuts2(50, 51)
+inst = nuts2(15, "16")
 inst = deeznuts(420)
 """
-        self.assertRaises(AssertionError, text_to_context, code, "nuts", __file__)
+        self.assertRaises(
+            AssertionError, text_to_context, code, "nuts2", __file__, True, 1
+        )
 
         code = """
-def nuts(input, other):
+def nuts3(input, other):
   yield input, input
   yield input + 1, "bruv"
 
@@ -56,11 +64,13 @@ def deeznuts(input):
   yield input
   yield input + 1
 
-inst = nuts(50, 51)
-inst = nuts(15, 16)
+inst = nuts3(50, 51)
+inst = nuts3(15, 16)
 inst = deeznuts(420)
 """
-        self.assertRaises(AssertionError, text_to_context, code, "nuts", __file__)
+        self.assertRaises(
+            AssertionError, text_to_context, code, "nuts3", __file__, True, 1
+        )
 
 
 class TestVerilogify(unittest.TestCase):

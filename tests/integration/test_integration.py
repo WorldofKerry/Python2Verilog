@@ -245,6 +245,7 @@ class BaseTestCases:
                 extra_test_cases=test_cases,
                 file_path=FILES_IN_ABS_DIR["python"],
                 optimization_level=optimization_level,
+                write=False,
             )
 
             if args.write:

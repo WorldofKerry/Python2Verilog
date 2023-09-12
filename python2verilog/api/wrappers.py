@@ -21,6 +21,7 @@ from python2verilog.utils.assertions import get_typed, get_typed_list
 def text_to_verilog(
     code: str,
     function_name: str,
+    write: bool,
     extra_test_cases: Optional[list[tuple[int]]] = None,
     file_path: str = "",
     optimization_level: int = 1,
@@ -35,6 +36,8 @@ def text_to_verilog(
         function_name=function_name,
         extra_test_cases=extra_test_cases,
         file_path=file_path,
+        write=write,
+        optimization_level=optimization_level,
     )
     assert isinstance(context, ir.Context)
     assert isinstance(extra_test_cases, list)
@@ -48,6 +51,7 @@ def text_to_text(
     function_name: str,
     extra_test_cases: Optional[list[tuple[int]]] = None,
     file_path: str = "",
+    write: bool = True,
     optimization_level: int = 1,
 ):
     """
@@ -67,6 +71,7 @@ def text_to_text(
         extra_test_cases=extra_test_cases,
         file_path=file_path,
         optimization_level=optimization_level,
+        write=write,
     )
     return code_gen.get_module_str(), code_gen.get_testbench_str()
 
@@ -75,6 +80,8 @@ def text_to_context(
     code: str,
     function_name: str,
     file_path: str,
+    write: bool,
+    optimization_level: int,
     extra_test_cases: Optional[list[tuple[int]]] = None,
 ):
     """
@@ -91,7 +98,7 @@ def text_to_context(
         Gets file and line number
         """
         if file_path:
-            string = file_path
+            string = str(file_path)
         else:
             string = "line"
         string += f":{node.lineno}"
@@ -211,7 +218,10 @@ def text_to_context(
     context.py_ast = generator_ast
     context.py_func = generator_func
     context.py_string = func_str
+    context.optimization_level = optimization_level
+    context.mode = Modes.OVERWRITE if write else Modes.NO_WRITE
     context.namespace = get_namespace(file_path)
+    context.namespace[function_name] = context
 
     return context
 

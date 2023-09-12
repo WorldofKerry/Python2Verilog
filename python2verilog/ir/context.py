@@ -101,7 +101,7 @@ class Context(GenericReprAndStr):
         assert check_list(self.output_vars), self
 
         assert isinstance(self.optimization_level, int), self
-        assert self.optimization_level >= 0
+        assert self.optimization_level >= 0, f"{self.optimization_level} {self.name}"
 
         if self._entry_state:
             assert self.entry_state in self.states, self
