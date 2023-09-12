@@ -1,4 +1,4 @@
-module hrange_tb (
+module dup_range_tb (
 );
     reg _clock;
     reg _start;
@@ -10,7 +10,7 @@ module hrange_tb (
     wire _done;
     wire _valid;
     wire signed [31:0] _0;
-    hrange DUT (
+    dup_range DUT (
         ._clock(_clock),
         ._start(_start),
         ._reset(_reset),
@@ -42,12 +42,12 @@ module hrange_tb (
         _start = 0;
         while ($signed(!(_done) || !(_ready))) begin
             // `if (_ready && _valid)` also works as a conditional
-            if (_ready) begin
+            if (_ready && _valid) begin
                 $display("%0d, %0d, %0d", _valid, _ready, _0);
             end
             @(negedge _clock);
         end
-        if (_ready) begin
+        if (_ready && _valid) begin
             $display("%0d, %0d, %0d", _valid, _ready, _0);
         end
         $finish;

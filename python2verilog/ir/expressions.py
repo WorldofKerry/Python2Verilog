@@ -162,6 +162,9 @@ class UBinOp(Expression):
 class BinOp(UBinOp):
     """
     $signed(<left> <op> <right>)
+
+    For mixed unsigned and signed operations, the following page explains well
+    https://www.01signal.com/verilog-design/arithmetic/signed-wire-reg/
     """
 
     def to_string(self):
