@@ -6,15 +6,11 @@ from __future__ import annotations
 
 import ast
 import inspect
-import io
 import logging
-import os
 import textwrap
-import typing
 from functools import wraps
-from pathlib import Path
 from types import FunctionType
-from typing import Any, Optional, Union
+from typing import Optional
 
 from python2verilog import ir
 from python2verilog.api.modes import Modes
@@ -47,19 +43,13 @@ def verilogify(
     func: FunctionType,
     namespace: Optional[dict[str, ir.Context]] = None,
     optimization_level: int = 1,
-    module_output: Optional[Union[os.PathLike[Any], typing.IO[Any], str]] = None,
-    testbench_output: Optional[Union[os.PathLike[Any], typing.IO[Any], str]] = None,
     mode: Modes = Modes.NO_WRITE,
 ):
     """
     :param namespace: the namespace to put this function, for linking purposes
-    :param module_output: path to write verilog module to, defaults to function_name.sv
-    :param testbench_output: path to write verilog testbench to, defaults to function_name_tb.sv
     :param mode: if WRITE or OVERWRITE, files will be written to the specified paths
     """
     get_typed(func, FunctionType)
-    get_typed(module_output, (os.PathLike, io.IOBase, str))
-    get_typed(testbench_output, (os.PathLike, io.IOBase, str))
     assert_typed(mode, Modes)
 
     # Get caller filename for default output paths
@@ -73,13 +63,6 @@ def verilogify(
 
     if func.__name__ in namespace:
         raise RuntimeError(f"{func.__name__} has already been decorated")
-
-    input_file_stem = os.path.splitext(filename)[0]  # path with no extension
-
-    if not module_output:
-        module_output = Path(input_file_stem + ".sv")
-    if not testbench_output:
-        testbench_output = Path(input_file_stem + "_tb.sv")
 
     tree = ast.parse(textwrap.dedent(inspect.getsource(func)))
     assert len(tree.body) == 1
@@ -99,34 +82,6 @@ def verilogify(
     context.optimization_level = optimization_level
 
     context.namespace = namespace
-
-    if Modes.write(mode):
-        # pylint: disable=consider-using-with
-        if isinstance(module_output, str):
-            module_output = Path(module_output)
-        if isinstance(testbench_output, str):
-            testbench_output = Path(testbench_output)
-
-        # Write module
-        if isinstance(module_output, os.PathLike):
-            try:
-                module_output = open(
-                    module_output, mode=Modes.open_text_mode(mode), encoding="utf8"
-                )
-            except FileExistsError as e:
-                raise FileExistsError("Try setting overwrite to True") from e
-
-        # Write testbench
-        if isinstance(testbench_output, os.PathLike):
-            try:
-                testbench_output = open(
-                    testbench_output, mode=Modes.open_text_mode(mode), encoding="utf8"
-                )
-            except FileExistsError as e:
-                raise FileExistsError("Try setting overwrite to True") from e
-
-        context.module_file = module_output
-        context.testbench_file = testbench_output
 
     @wraps(func)
     def generator_wrapper(*args, **kwargs):
