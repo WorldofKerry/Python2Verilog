@@ -34,6 +34,7 @@ class Generator2Graph:
         self._context = get_typed(context, ir.Context)
 
         # Populate function calls
+        # TODO: lazy-load or infer types
         for node in context.py_ast.body:
             for assign in pyast.walk(node):
                 if isinstance(assign, pyast.Assign):
@@ -49,7 +50,6 @@ class Generator2Graph:
                                     if cxt.name == assign.value.func.id:
                                         instance = cxt.create_instance(target.id)
                                         self._context.instances[target.id] = instance
-                                        print("instantiated", target.id)
 
         self._root = self.__parse_statements(
             stmts=context.py_ast.body,
@@ -198,21 +198,7 @@ class Generator2Graph:
     def __parse_for(self, stmt: pyast.For, nextt: ir.Element, prefix: str):
         """
         For ... in ...:
-
-        _hrange_inst__start <= 0;
-        _hrange_inst__ready <= 1;
-        if (_hrange_inst__ready && _hrange_inst__valid) begin
-            _value <= _hrange_inst__0;
-            _hrange_inst__ready <= 0;
-            _state <= _state_0_while_2;
-        end
-        if (_hrange_inst__done) begin
-            _hrange_inst__ready <= 0;
-            _state <= _state_fake;
-        end
         """
-        print(pyast.dump(stmt))
-
         loop_edge = ir.ClockedEdge(unique_id=f"{prefix}_edge", name="True")
         done_edge = ir.ClockedEdge(unique_id=f"{prefix}_f", name="False", child=nextt)
 
