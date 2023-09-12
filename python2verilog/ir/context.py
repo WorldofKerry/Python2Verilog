@@ -52,12 +52,6 @@ class Context(GenericReprAndStr):
     _output_vars: list[Var] = field(default_factory=list)
     _states: set[str] = field(default_factory=set)
 
-    valid_signal: Var = Var("valid")
-    done_signal: Var = Var("done")
-    clock_signal: Var = Var("clock")
-    start_signal: Var = Var("start")
-    reset_signal: Var = Var("reset")
-    ready_signal: Var = Var("ready")
     signals: ProtocolSignals = ProtocolSignals(
         start_signal=Var("start"),
         done_signal=Var("done"),
@@ -127,12 +121,8 @@ class Context(GenericReprAndStr):
         if self._ready_state:
             assert self.ready_state in self.states, self
 
-        assert get_typed(self.ready_signal, Var)
-        assert get_typed(self.clock_signal, Var)
-        assert get_typed(self.done_signal, Var)
-        assert get_typed(self.valid_signal, Var)
-        assert get_typed(self.reset_signal, Var)
-        assert get_typed(self.start_signal, Var)
+        for value in self.signals.items():
+            assert get_typed(value, Var)
 
         return self
 
