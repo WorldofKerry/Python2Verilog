@@ -39,20 +39,35 @@ module dup_range_goal (
     // Output values as a tuple with respective index(es)
     output reg signed [31:0] _0
 );
-    localparam _state_1_while = 0;
-    localparam _state_1_while_0 = 1;
-    localparam _state_0 = 2;
-    localparam _state_fake = 3;
-    localparam _state_1_while_1 = 4;
+    localparam _state_fake = 0;
+    localparam _state_0 = 1;
+    localparam _state_1_while_1 = 2;
+    localparam _state_1_while = 3;
+    localparam _state_1_while_0 = 4;
     // Global variables
     reg signed [31:0] _i;
     reg signed [31:0] _state;
     reg signed [31:0] _base;
     reg signed [31:0] _limit;
     reg signed [31:0] _step;
-    hrange inst (
-        ._inst_hrange_base(_0)
+    // ================ Function Instance ================
+    hrange _inst (
+        .base(_inst_hrange_base),
+        .limit(_inst_hrange_limit),
+        .step(_inst_hrange_step),
+        ._0(_inst_hrange_0),
+        ._valid(_inst_hrange__valid),
+        ._done(_inst_hrange__done),
+        ._clock(_inst_hrange__clock),
+        ._start(_inst_hrange__start),
+        ._reset(1'b0),
+        ._ready(_inst_hrange__reset)
         );
+    reg [31:0] _inst_hrange_base;
+    reg [31:0] _inst_hrange_limit;
+    reg [31:0] _inst_hrange_step;
+    wire [31:0] _inst_hrange_0;
+    // Core
     always @(posedge _clock) begin
         _done <= 0;
         if (_ready) begin

@@ -18,7 +18,7 @@ class Instance:
 
     # pylint: disable=too-many-instance-attributes
     module_name: str
-    instance_name: str
+    var: Var
     valid_signal: Var
     done_signal: Var
     clock_signal: Var

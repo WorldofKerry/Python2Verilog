@@ -11,6 +11,8 @@ def hrange(base, limit, step):
 
 # Test Cases
 print(list(hrange(*(0, 10, 2))))
+print(list(hrange(*(0, 10, 2))))
+print(list(hrange(*(0, 10, 2))))
 
 */
 
@@ -34,15 +36,16 @@ module hrange (
     // Output values as a tuple with respective index(es)
     output reg signed [31:0] _0
 );
-    localparam _state_1 = 0;
-    localparam _state_fake = 1;
-    localparam _state_0_while_0 = 2;
+    localparam _state_fake = 0;
+    localparam _state_0_while_0 = 1;
+    localparam _state_1 = 2;
     // Global variables
     reg signed [31:0] _i;
     reg signed [31:0] _state;
     reg signed [31:0] _base;
     reg signed [31:0] _limit;
     reg signed [31:0] _step;
+    // Core
     always @(posedge _clock) begin
         _done <= 0;
         if (_ready) begin

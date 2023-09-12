@@ -313,5 +313,9 @@ class Context(GenericReprAndStr):
             map(lambda var: Var(f"{name}_{self.name}_{var.py_name}"), self.output_vars)
         )
         return Instance(
-            self.name, name, *inst_default_signals, inst_input_vars, inst_output_vars
+            self.name,
+            Var(name),
+            *inst_default_signals,
+            inst_input_vars,
+            inst_output_vars,
         )

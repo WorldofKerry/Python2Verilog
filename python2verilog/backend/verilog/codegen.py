@@ -106,24 +106,48 @@ class CodeGen:
             for var in context.input_vars
         ]
 
-        body.append(ver.Statement())
-
         for instance in context.instances.values():
+            body.append(
+                ver.Statement(
+                    comment="================ Function Instance ================"
+                )
+            )
+            module = context.namespace[instance.module_name]
+            defaults = {
+                module.valid_signal: instance.valid_signal,
+                module.done_signal: instance.done_signal,
+                module.clock_signal: instance.clock_signal,
+                module.start_signal: instance.start_signal,
+                module.reset_signal: "1'b0",
+                module.ready_signal: instance.reset_signal,
+            }
             body.append(
                 ver.Instantiation(
                     instance.module_name,
-                    instance.instance_name,
+                    str(instance.var),
                     {
+                        key.py_name: str(value)
+                        for key, value in zip(
+                            module.input_vars,
+                            instance.inputs,
+                        )
+                    }
+                    | {
                         str(key): str(value)
                         for key, value in zip(
-                            instance.inputs,
-                            context.namespace[instance.module_name].output_vars,
+                            module.output_vars,
+                            instance.outputs,
                         )
-                    },
+                    }
+                    | {str(key): str(value) for key, value in defaults.items()},
                 )
             )
-            body.append(ver.Statement())
+            for var in instance.inputs:
+                body.append(ver.Declaration(name=var.ver_name, reg=True))
+            for var in instance.outputs:
+                body.append(ver.Declaration(name=var.ver_name))
 
+        body.append(ver.Statement(comment="Core"))
         body.append(always)
 
         state_vars = {key: ir.UInt(index) for index, key in enumerate(context.states)}
