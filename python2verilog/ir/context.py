@@ -14,6 +14,7 @@ from typing import Any, Optional
 
 from python2verilog.api.modes import Modes
 from python2verilog.ir.expressions import Var
+from python2verilog.ir.graph import DoneNode
 from python2verilog.ir.instance import Instance
 from python2verilog.ir.signals import ProtocolSignals
 from python2verilog.utils.assertions import assert_typed_dict, get_typed, get_typed_list
@@ -61,8 +62,8 @@ class Context(GenericReprAndStr):
 
     state_var: Var = Var("state")
 
+    _done_state: str = "_state_done"
     _entry_state: Optional[str] = None
-    _ready_state: Optional[str] = None
 
     # Function calls
     namespace: dict[str, Context] = field(default_factory=dict)  # callable functions
@@ -118,8 +119,6 @@ class Context(GenericReprAndStr):
 
         if self._entry_state:
             assert self.entry_state in self.states, self
-        if self._ready_state:
-            assert self.ready_state in self.states, self
 
         for value in self.signals.values():
             assert get_typed(value, Var)
@@ -179,17 +178,17 @@ class Context(GenericReprAndStr):
         self._entry_state = other
 
     @property
-    def ready_state(self):
+    def done_state(self):
         """
         The ready state
         """
-        assert isinstance(self._ready_state, str), self
-        return self._ready_state
+        assert isinstance(self._done_state, str), self
+        return self._done_state
 
-    @ready_state.setter
-    def ready_state(self, other: str):
+    @done_state.setter
+    def done_state(self, other: str):
         assert isinstance(other, str)
-        self._ready_state = other
+        self._done_state = other
 
     @property
     def input_vars(self):

@@ -35,11 +35,11 @@ class CodeGen:
         for item in root_case.case_items:
             self.context.add_state(item.condition.to_string())
 
-        assert isinstance(context.ready_state, str)
-        self.context.add_state_weak(context.ready_state)
+        assert isinstance(context.done_state, str)
+        self.context.add_state_weak(context.done_state)
 
         self.context.add_global_var(
-            ir.Var("state", initial_value=self.context.ready_state)
+            ir.Var("state", initial_value=self.context.done_state)
         )
 
         self._module = CodeGen.__new_module(root_case, self.context)
@@ -88,7 +88,7 @@ class CodeGen:
                     then_body=[
                         ver.NonBlockingSubsitution(
                             lvalue=context.state_var,
-                            rvalue=ir.Expression(context.ready_state),
+                            rvalue=ir.Expression(context.done_state),
                         ),
                     ],
                     else_body=[],
@@ -466,12 +466,12 @@ class CaseBuilder:
         self.case.case_items.append(self.new_caseitem(root))
         have_done_state = False
         for caseitem in self.case.case_items:
-            if "_state_done" == str(caseitem.condition):
+            if context.done_state == str(caseitem.condition):
                 have_done_state = True
         if not have_done_state:
             self.case.case_items.append(
                 ver.CaseItem(
-                    ir.Expression(context.ready_state),
+                    ir.Expression(context.done_state),
                     statements=[
                         ver.NonBlockingSubsitution(
                             lvalue=ir.State("_done"), rvalue=ir.UInt(1)
@@ -507,7 +507,7 @@ class CaseBuilder:
                     self.context.signals.done_signal, ir.UInt(1)
                 ),
                 ver.NonBlockingSubsitution(
-                    self.case.condition, ir.Expression(self.context.ready_state)
+                    self.case.condition, ir.Expression(self.context.done_state)
                 ),
             ]
             self.added_ready_node = True

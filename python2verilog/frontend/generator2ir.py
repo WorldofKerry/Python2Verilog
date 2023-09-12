@@ -25,7 +25,6 @@ class Generator2Graph:
     def __init__(
         self,
         context: ir.Context,
-        done_state_name: str = "_state_done",
     ):
         """
         Initializes the parser, does quick setup work
@@ -53,11 +52,10 @@ class Generator2Graph:
         self._root = self.__parse_statements(
             stmts=context.py_ast.body,
             prefix="_state",
-            nextt=ir.DoneNode(unique_id=done_state_name, name="done"),
+            nextt=ir.DoneNode(unique_id=context.done_state, name="done"),
         )
 
         self._context.entry_state = self._root.unique_id
-        self._context.ready_state = done_state_name
 
     @property
     def root(self):
