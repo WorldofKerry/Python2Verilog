@@ -40,7 +40,7 @@ module dup_range_goal_tb (
         limit = 'x; // only need inputs when start is set
         step = 'x; // only need inputs when start is set
         _start = 0;
-        while ($signed(!(_done) || !(_ready))) begin
+        while ((!(_done) || !(_ready))) begin
             // `if (_ready && _valid)` also works as a conditional
             if (_ready) begin
                 $display("%0d, %0d, %0d", _valid, _ready, _0);

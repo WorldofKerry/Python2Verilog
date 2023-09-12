@@ -96,7 +96,7 @@ module dup_range_goal (
             _state <= _state_0_call_0;
         end else begin
             // If ready or not valid, then continue computation
-            if ($signed(_ready || !(_valid))) begin
+            if ((_ready || !(_valid))) begin
                 case (_state)
                     _state_done: begin
                         _done <= 1;

@@ -72,7 +72,7 @@ module hrange (
             end
         end else begin
             // If ready or not valid, then continue computation
-            if ($signed(_ready || !(_valid))) begin
+            if ((_ready || !(_valid))) begin
                 case (_state)
                     _state_0_while_0: begin
                         _i <= $signed(_i + _step);
