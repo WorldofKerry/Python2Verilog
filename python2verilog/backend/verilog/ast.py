@@ -233,6 +233,7 @@ class Module(ImplementsToLines):
         for stmt in self.body:
             lines.concat(stmt.to_lines(), 1)
         lines += "endmodule"
+        lines += ""
         return lines
 
 

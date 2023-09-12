@@ -9,6 +9,14 @@ from ..utils.assertions import get_typed, get_typed_list
 from ..utils.string import Indent, Lines
 
 
+def name_to_var(name: pyast.expr) -> ir.Var:
+    """
+    Converts a pyast.Name to a ir.Var using its id
+    """
+    assert isinstance(name, pyast.Name)
+    return ir.Var(name.id)
+
+
 class Generator2Graph:
     """
     Parses python generator functions to Verilog AST
@@ -33,6 +41,7 @@ class Generator2Graph:
                         if isinstance(child, pyast.Call):
                             assert len(assign.targets) == 1
                             target = assign.targets[0]
+                            assert isinstance(target, pyast.Name)
                             if assign.targets[0] not in self._context.instances:
                                 for cxt in self._context.namespace:
                                     assert isinstance(assign.value, pyast.Call)
@@ -208,6 +217,7 @@ class Generator2Graph:
         done_edge = ir.ClockedEdge(unique_id=f"{prefix}_f", name="False", child=nextt)
 
         target = stmt.iter
+        assert isinstance(target, pyast.Name)
         if target.id not in self._context.instances:
             raise RuntimeError(f"No iterator instance {self._context.instances}")
         instance = self._context.instances[target.id]
@@ -230,7 +240,7 @@ class Generator2Graph:
             lvalue=instance.ready_signal,
             rvalue=ir.UInt(1),
         )
-        node = head
+        node: ir.BasicElement = head
         node.child = ir.NonClockedEdge(unique_id=next(unique_edge))
         node = node.child
         node.child = ir.AssignNode(
@@ -261,14 +271,15 @@ class Generator2Graph:
 
         # capture output
         if not isinstance(stmt.target, pyast.Tuple):
+            assert isinstance(stmt.target, pyast.Name)
             outputs = [ir.Var(stmt.target.id)]
         else:
-            outputs = [ir.Var(target.id) for target in stmt.target.elts]
+            outputs = list(map(name_to_var, stmt.target.elts))
         assert len(outputs) == len(instance.outputs)
         capture_head = ir.AssignNode(
             unique_id=next(unique_node), lvalue=instance.ready_signal, rvalue=ir.UInt(0)
         )
-        capture_node = capture_head
+        capture_node: ir.BasicElement = capture_head
         for caller, callee in zip(outputs, instance.outputs):
             capture_node.child = ir.NonClockedEdge(unique_id=next(unique_edge))
             capture_node = capture_node.child
@@ -375,9 +386,11 @@ class Generator2Graph:
             )
         raise TypeError(f"Expected tuple {type(node.value)}")
 
-    def __parse_binop(self, expr: pyast.BinOp):
+    def __parse_binop(self, expr: pyast.BinOp) -> ir.Expression:
         """
         <left> <op> <right>
+
+        With special case for floor division
         """
         if isinstance(expr.op, pyast.Add):
             return ir.Add(
@@ -469,13 +482,16 @@ class Generator2Graph:
             "Error: unexpected expression type", type(expr), pyast.dump(expr)
         )
 
-    def __parse_assign_to_call(self, assign: pyast.Assign, prefix: str):
+    def __parse_assign_to_call(
+        self, assign: pyast.Assign, prefix: str
+    ) -> tuple[ir.BasicElement, ir.BasicElement]:
         """
         instance = func(args, ...)
         """
         # print(pyast.dump(assign))
         assert len(assign.targets) == 1
         target = assign.targets[0]
+        assert isinstance(target, pyast.Name)
         instance = self._context.instances[target.id]
 
         def unique_node_gen():
@@ -496,7 +512,7 @@ class Generator2Graph:
             lvalue=instance.ready_signal,
             rvalue=ir.UInt(0),
         )
-        node = head
+        node: ir.BasicElement = head
         node.child = ir.NonClockedEdge(unique_id=next(unique_edge))
         node = node.child
         node.child = ir.AssignNode(
@@ -506,7 +522,9 @@ class Generator2Graph:
         )
         node = node.child
 
-        arguments = list(map(lambda name: ir.Var(name.id), assign.value.args))
+        assert isinstance(assign.value, pyast.Call)
+
+        arguments = list(map(name_to_var, assign.value.args))
         assert len(arguments) == len(instance.inputs)
 
         for arg, param in zip(arguments, instance.inputs):
@@ -521,7 +539,7 @@ class Generator2Graph:
 
         return (head, node)
 
-    def __parse_subscript(self, node: pyast.Subscript):
+    def __parse_subscript(self, node: pyast.Subscript) -> ir.Expression:
         """
         <value>[<slice>]
         Note: built from right to left, e.g. [z] -> [y][z] -> [x][y][z] -> matrix[x][y][z]
@@ -531,7 +549,7 @@ class Generator2Graph:
                 [{self.__parse_expression(node.slice).to_string()}]"
         )
 
-    def __parse_compare(self, node: pyast.Compare):
+    def __parse_compare(self, node: pyast.Compare) -> ir.UBinOp:
         """
         <left> <op> <comparators>
         """

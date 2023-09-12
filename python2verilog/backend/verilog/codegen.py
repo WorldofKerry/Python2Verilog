@@ -128,21 +128,24 @@ class CodeGen:
                 ver.Instantiation(
                     instance.module_name,
                     str(instance.var),
-                    {
-                        key.py_name: str(value)
-                        for key, value in zip(
-                            module.input_vars,
-                            instance.inputs,
-                        )
-                    }
-                    | {
-                        str(key): str(value)
-                        for key, value in zip(
-                            module.output_vars,
-                            instance.outputs,
-                        )
-                    }
-                    | {str(key): str(value) for key, value in defaults.items()},
+                    typing.cast(
+                        dict[ir.Expression | str, ir.Expression | str],
+                        {
+                            key.py_name: str(value)
+                            for key, value in zip(
+                                module.input_vars,
+                                instance.inputs,
+                            )
+                        }
+                        | {
+                            str(key): str(value)
+                            for key, value in zip(
+                                module.output_vars,
+                                instance.outputs,
+                            )
+                        }
+                        | {str(key): str(value) for key, value in defaults.items()},
+                    ),
                 )
             )
             for var in instance.inputs:
