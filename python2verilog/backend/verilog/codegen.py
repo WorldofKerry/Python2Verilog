@@ -108,6 +108,22 @@ class CodeGen:
 
         body.append(ver.Statement())
 
+        for instance in context.instances.values():
+            body.append(
+                ver.Instantiation(
+                    instance.module_name,
+                    instance.instance_name,
+                    {
+                        str(key): str(value)
+                        for key, value in zip(
+                            instance.inputs,
+                            context.namespace[instance.module_name].output_vars,
+                        )
+                    },
+                )
+            )
+            body.append(ver.Statement())
+
         body.append(always)
 
         state_vars = {key: ir.UInt(index) for index, key in enumerate(context.states)}

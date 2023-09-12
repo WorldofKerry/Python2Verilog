@@ -148,7 +148,7 @@ def verilogify(
     context.mode = mode
     context.optimization_level = optimization_level
 
-    context.namespace = namespace.values()
+    context.namespace = {cxt.name: cxt for cxt in namespace.values()}
 
     if Modes.write(mode):
         # pylint: disable=consider-using-with

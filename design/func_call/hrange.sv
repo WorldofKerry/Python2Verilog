@@ -11,8 +11,6 @@ def hrange(base, limit, step):
 
 # Test Cases
 print(list(hrange(*(0, 10, 2))))
-print(list(hrange(*(0, 10, 2))))
-print(list(hrange(*(0, 10, 2))))
 
 */
 
@@ -36,9 +34,9 @@ module hrange (
     // Output values as a tuple with respective index(es)
     output reg signed [31:0] _0
 );
-    localparam _state_0_while_0 = 0;
-    localparam _state_1 = 1;
-    localparam _state_fake = 2;
+    localparam _state_1 = 0;
+    localparam _state_fake = 1;
+    localparam _state_0_while_0 = 2;
     // Global variables
     reg signed [31:0] _i;
     reg signed [31:0] _state;

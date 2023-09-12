@@ -11,10 +11,14 @@ from python2verilog.ir.expressions import Var
 class Instance:
     """
     Instance
+
+    :param module_name: generator function name
+    :param instance_name: variable name assigned to generator instance
     """
 
     # pylint: disable=too-many-instance-attributes
-    func_name: str
+    module_name: str
+    instance_name: str
     valid_signal: Var
     done_signal: Var
     clock_signal: Var
