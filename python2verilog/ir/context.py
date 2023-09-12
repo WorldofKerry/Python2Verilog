@@ -1,4 +1,8 @@
-"""Context for Intermediate Representation"""
+"""
+The context of a generator
+
+Includes the function, its representation and its usage information
+"""
 from __future__ import annotations
 
 import ast

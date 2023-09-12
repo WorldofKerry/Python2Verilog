@@ -1,5 +1,7 @@
 """
-Generator Instance
+An instance of a generator
+
+Can be created from a context
 """
 
 from dataclasses import dataclass
@@ -13,7 +15,7 @@ class Instance:
     Instance
 
     :param module_name: generator function name
-    :param instance_name: variable name assigned to generator instance
+    :param var: variable name assigned to generator instance
     """
 
     # pylint: disable=too-many-instance-attributes
