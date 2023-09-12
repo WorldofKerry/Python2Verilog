@@ -39,12 +39,13 @@ module dup_range_goal (
     // Output values as a tuple with respective index(es)
     output reg signed [31:0] _0
 );
-    localparam _state_fake = 0;
-    localparam _state_0_for_0 = 1;
-    localparam _state_0_call_0 = 2;
+    localparam _state_0_for_0 = 0;
+    localparam _state_0_call_0 = 1;
+    localparam _state_1_call_0 = 2;
     localparam _state_0_for_1 = 3;
-    localparam _state_1_call_0 = 4;
+    localparam _state_fake = 4;
     // Global variables
+    reg signed [31:0] _i;
     reg signed [31:0] _state;
     reg signed [31:0] _base;
     reg signed [31:0] _limit;
@@ -57,7 +58,7 @@ module dup_range_goal (
         ._0(_inst_hrange_0),
         ._valid(_inst_hrange__valid),
         ._done(_inst_hrange__done),
-        ._clock(_inst_hrange__clock),
+        ._clock(_clock),
         ._start(_inst_hrange__start),
         ._reset(1'b0),
         ._ready(_inst_hrange__ready)
@@ -66,9 +67,8 @@ module dup_range_goal (
     reg [31:0] _inst_hrange_limit;
     reg [31:0] _inst_hrange_step;
     wire [31:0] _inst_hrange_0;
-    reg _inst_hrange__valid;
-    reg _inst_hrange__done;
-    reg _inst_hrange__clock;
+    wire _inst_hrange__valid;
+    wire _inst_hrange__done;
     reg _inst_hrange__start;
     reg _inst_hrange__ready;
     // Core
@@ -102,7 +102,7 @@ module dup_range_goal (
                     _state_0_for_0: begin
                         _0 <= _i;
                         _valid <= 1;
-                        _state <= _state_0_for_loop;
+                        _state <= _state_0_call_0;
                     end
                     _state_0_for_1: begin
                         _0 <= _i;

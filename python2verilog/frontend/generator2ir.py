@@ -272,6 +272,9 @@ class Generator2Graph:
                 unique_id=next(unique_node), lvalue=caller, rvalue=callee
             )
             capture_node = capture_node.child
+            if not self._context.is_declared(str(caller)):
+                self._context.add_global_var(caller)
+
         capture_node.child = edge_to_second_ifelse0
         capture_node = capture_head
         while capture_node:
@@ -295,7 +298,7 @@ class Generator2Graph:
         )
         node.child = first_ifelse
 
-        body_node = self.__parse_statements(stmt.body, f"{prefix}_for", first_ifelse)
+        body_node = self.__parse_statements(stmt.body, f"{prefix}_for", head)
         loop_edge.child = body_node
 
         return head
