@@ -44,12 +44,11 @@ class Generator2Graph:
                             target = assign.targets[0]
                             assert isinstance(target, pyast.Name)
                             if assign.targets[0] not in self._context.instances:
-                                for cxt in self._context.namespace:
-                                    assert isinstance(assign.value, pyast.Call)
-                                    assert isinstance(assign.value.func, pyast.Name)
-                                    if cxt.name == assign.value.func.id:
-                                        instance = cxt.create_instance(target.id)
-                                        self._context.instances[target.id] = instance
+                                assert isinstance(assign.value, pyast.Call)
+                                assert isinstance(assign.value.func, pyast.Name)
+                                cxt = self._context.namespace[assign.value.func.id]
+                                instance = cxt.create_instance(target.id)
+                                self._context.instances[target.id] = instance
 
         self._root = self.__parse_statements(
             stmts=context.py_ast.body,

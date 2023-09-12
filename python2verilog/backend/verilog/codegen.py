@@ -112,10 +112,7 @@ class CodeGen:
                     comment="================ Function Instance ================"
                 )
             )
-            for temp in context.namespace:
-                if temp.name == instance.module_name:
-                    module = temp
-            # module = context.namespace[instance.module_name]
+            module = context.namespace[instance.module_name]
             defaults = {
                 module.valid_signal: instance.valid_signal,
                 module.done_signal: instance.done_signal,
