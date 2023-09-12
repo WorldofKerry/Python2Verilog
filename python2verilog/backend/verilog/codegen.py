@@ -114,12 +114,12 @@ class CodeGen:
             )
             module = context.namespace[instance.module_name]
             defaults = {
-                module.valid_signal: instance.valid_signal,
-                module.done_signal: instance.done_signal,
+                module.valid_signal: instance.signals.valid_signal,
+                module.done_signal: instance.signals.done_signal,
                 module.clock_signal: context.clock_signal,
-                module.start_signal: instance.start_signal,
-                module.reset_signal: "1'b0",
-                module.ready_signal: instance.ready_signal,
+                module.start_signal: instance.signals.start_signal,
+                module.reset_signal: instance.signals.reset_signal,
+                module.ready_signal: instance.signals.ready_signal,
             }
             body.append(
                 ver.Instantiation(
@@ -149,10 +149,14 @@ class CodeGen:
                 body.append(ver.Declaration(name=var.ver_name, reg=True))
             for var in instance.outputs:
                 body.append(ver.Declaration(name=var.ver_name))
-            body.append(ver.Declaration(name=instance.valid_signal, size=1))
-            body.append(ver.Declaration(name=instance.done_signal, size=1))
-            body.append(ver.Declaration(name=instance.start_signal, size=1, reg=True))
-            body.append(ver.Declaration(name=instance.ready_signal, size=1, reg=True))
+            body.append(ver.Declaration(name=instance.signals.valid_signal, size=1))
+            body.append(ver.Declaration(name=instance.signals.done_signal, size=1))
+            body.append(
+                ver.Declaration(name=instance.signals.start_signal, size=1, reg=True)
+            )
+            body.append(
+                ver.Declaration(name=instance.signals.ready_signal, size=1, reg=True)
+            )
 
         body.append(ver.Statement(comment="Core"))
         body.append(always)

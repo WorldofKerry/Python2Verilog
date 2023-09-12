@@ -39,11 +39,11 @@ module dup_range_goal (
     // Output values as a tuple with respective index(es)
     output reg signed [31:0] _0
 );
-    localparam _state_1_call_0 = 0;
-    localparam _state_0_call_0 = 1;
+    localparam _state_0_call_0 = 0;
+    localparam _state_0_for_1 = 1;
     localparam _state_fake = 2;
     localparam _state_0_for_0 = 3;
-    localparam _state_0_for_1 = 4;
+    localparam _state_1_call_0 = 4;
     // Global variables
     reg signed [31:0] _i;
     reg signed [31:0] _j;
@@ -62,7 +62,7 @@ module dup_range_goal (
         ._done(_inst_hrange__done),
         ._clock(_clock),
         ._start(_inst_hrange__start),
-        ._reset(1'b0),
+        ._reset(_inst_hrange__reset),
         ._ready(_inst_hrange__ready)
         );
     reg [31:0] _inst_hrange_base;

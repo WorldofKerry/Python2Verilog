@@ -8,13 +8,14 @@ from __future__ import annotations
 import ast
 import copy
 import io
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 from types import FunctionType
 from typing import Any, Optional
 
 from python2verilog.api.modes import Modes
 from python2verilog.ir.expressions import Var
 from python2verilog.ir.instance import Instance
+from python2verilog.ir.signals import ProtocolSignals
 from python2verilog.utils.assertions import assert_typed_dict, get_typed, get_typed_list
 from python2verilog.utils.env_vars import is_debug_mode
 from python2verilog.utils.generics import GenericReprAndStr
@@ -57,6 +58,12 @@ class Context(GenericReprAndStr):
     start_signal: Var = Var("start")
     reset_signal: Var = Var("reset")
     ready_signal: Var = Var("ready")
+    signals: ProtocolSignals = ProtocolSignals(
+        start_signal=Var("start"),
+        done_signal=Var("done"),
+        ready_signal=Var("ready"),
+        valid_signal=Var("valid"),
+    )
 
     state_var: Var = Var("state")
 
@@ -308,27 +315,28 @@ class Context(GenericReprAndStr):
         """
         Create generator instance
         """
-        default_signals = [
-            self.valid_signal,
-            self.done_signal,
-            self.clock_signal,
-            self.start_signal,
-            self.reset_signal,
-            self.ready_signal,
-        ]
-        inst_default_signals = list(
-            map(lambda var: Var(f"{name}_{self.name}__{var.py_name}"), default_signals)
-        )
         inst_input_vars = list(
             map(lambda var: Var(f"{name}_{self.name}_{var.py_name}"), self.input_vars)
         )
         inst_output_vars = list(
             map(lambda var: Var(f"{name}_{self.name}_{var.py_name}"), self.output_vars)
         )
+        args = {
+            field.name: Var(
+                f"{name}_{self.name}__{getattr(self.signals, field.name).py_name}"
+            )
+            for field in fields(self.signals)
+        }
+        print(args)
+
+        signals = ProtocolSignals(**args)
+
+        print(signals)
+
         return Instance(
             self.name,
             Var(name),
-            *inst_default_signals,
             inst_input_vars,
             inst_output_vars,
+            signals,
         )

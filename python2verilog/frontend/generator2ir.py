@@ -205,7 +205,7 @@ class Generator2Graph:
         assert isinstance(target, pyast.Name)
         if target.id not in self._context.instances:
             raise RuntimeError(f"No iterator instance {self._context.instances}")
-        instance = self._context.instances[target.id]
+        inst = self._context.instances[target.id]
 
         def unique_node_gen():
             counter = 0
@@ -222,7 +222,7 @@ class Generator2Graph:
 
         head = ir.AssignNode(
             unique_id=next(unique_node),
-            lvalue=instance.ready_signal,
+            lvalue=inst.signals.ready_signal,
             rvalue=ir.UInt(1),
         )
         node: ir.BasicElement = head
@@ -230,7 +230,7 @@ class Generator2Graph:
         node = node.child
         node.child = ir.AssignNode(
             unique_id=next(unique_node),
-            lvalue=instance.start_signal,
+            lvalue=inst.signals.start_signal,
             rvalue=ir.UInt(0),
         )
         node = node.child
@@ -240,7 +240,7 @@ class Generator2Graph:
         edge_to_head = ir.ClockedEdge(unique_id=next(unique_edge), child=head)
         second_ifelse0 = ir.IfElseNode(
             unique_id=f"{prefix}_for_done_0",
-            condition=instance.done_signal,
+            condition=inst.signals.done_signal,
             true_edge=done_edge,
             false_edge=loop_edge,
         )
@@ -249,7 +249,7 @@ class Generator2Graph:
         )
         second_ifelse1 = ir.IfElseNode(
             unique_id=f"{prefix}_for_done_1",
-            condition=instance.done_signal,
+            condition=inst.signals.done_signal,
             true_edge=done_edge,
             false_edge=edge_to_head,
         )
@@ -260,12 +260,14 @@ class Generator2Graph:
             outputs = [ir.Var(stmt.target.id)]
         else:
             outputs = list(map(name_to_var, stmt.target.elts))
-        assert len(outputs) == len(instance.outputs)
+        assert len(outputs) == len(inst.outputs)
         capture_head = ir.AssignNode(
-            unique_id=next(unique_node), lvalue=instance.ready_signal, rvalue=ir.UInt(0)
+            unique_id=next(unique_node),
+            lvalue=inst.signals.ready_signal,
+            rvalue=ir.UInt(0),
         )
         capture_node: ir.BasicElement = capture_head
-        for caller, callee in zip(outputs, instance.outputs):
+        for caller, callee in zip(outputs, inst.outputs):
             capture_node.child = ir.NonClockedEdge(unique_id=next(unique_edge))
             capture_node = capture_node.child
             capture_node.child = ir.AssignNode(
@@ -286,7 +288,9 @@ class Generator2Graph:
         )
         first_ifelse = ir.IfElseNode(
             unique_id=f"{prefix}_for_loop",
-            condition=ir.UBinOp(instance.ready_signal, "&&", instance.valid_signal),
+            condition=ir.UBinOp(
+                inst.signals.ready_signal, "&&", inst.signals.valid_signal
+            ),
             true_edge=edge_to_capture_head,  # replaced with linked list for output
             false_edge=edge_to_second_ifelse1,
         )
@@ -477,7 +481,7 @@ class Generator2Graph:
         assert len(assign.targets) == 1
         target = assign.targets[0]
         assert isinstance(target, pyast.Name)
-        instance = self._context.instances[target.id]
+        inst = self._context.instances[target.id]
 
         def unique_node_gen():
             counter = 0
@@ -494,7 +498,7 @@ class Generator2Graph:
 
         head = ir.AssignNode(
             unique_id=next(unique_node),
-            lvalue=instance.ready_signal,
+            lvalue=inst.signals.ready_signal,
             rvalue=ir.UInt(0),
         )
         node: ir.BasicElement = head
@@ -502,7 +506,7 @@ class Generator2Graph:
         node = node.child
         node.child = ir.AssignNode(
             unique_id=next(unique_node),
-            lvalue=instance.start_signal,
+            lvalue=inst.signals.start_signal,
             rvalue=ir.UInt(1),
         )
         node = node.child
@@ -510,9 +514,9 @@ class Generator2Graph:
         assert isinstance(assign.value, pyast.Call)
 
         arguments = list(map(name_to_var, assign.value.args))
-        assert len(arguments) == len(instance.inputs)
+        assert len(arguments) == len(inst.inputs)
 
-        for arg, param in zip(arguments, instance.inputs):
+        for arg, param in zip(arguments, inst.inputs):
             node.child = ir.NonClockedEdge(unique_id=next(unique_edge))
             node = node.child
             node.child = ir.AssignNode(
