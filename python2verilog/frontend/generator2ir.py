@@ -259,7 +259,10 @@ class Generator2Graph:
         if not isinstance(stmt.target, pyast.Tuple):
             outputs = [ir.Var(stmt.target.id)]
         else:
-            outputs = stmt.target  # TODO: spread on left-side of in
+            # raise RuntimeError(pyast.dump(stmt))
+            outputs = [
+                ir.Var(target.id) for target in stmt.target.elts
+            ]  # TODO: spread on left-side of in
         assert len(outputs) == len(instance.outputs)
         capture_head = ir.AssignNode(
             unique_id=next(unique_node), lvalue=instance.ready_signal, rvalue=ir.UInt(0)

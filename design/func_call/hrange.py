@@ -11,7 +11,7 @@ from python2verilog import Modes, verilogify
 def hrange(base, limit, step):
     i = base
     while i < limit:
-        yield i
+        yield i, i
         i += step
 
 
@@ -23,9 +23,9 @@ def hrange(base, limit, step):
 )
 def dup_range_goal(base, limit, step):
     inst = hrange(base, limit, step)
-    for i in inst:
+    for i, j in inst:
         yield i
-        yield i
+        yield j
 
 
 # @verilogify(

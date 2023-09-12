@@ -10,6 +10,7 @@ module hrange_tb (
     wire _done;
     wire _valid;
     wire signed [31:0] _0;
+    wire signed [31:0] _1;
     hrange DUT (
         ._clock(_clock),
         ._start(_start),
@@ -20,7 +21,8 @@ module hrange_tb (
         .step(step),
         ._done(_done),
         ._valid(_valid),
-        ._0(_0)
+        ._0(_0),
+        ._1(_1)
         );
     always #5 _clock = !_clock;
     initial begin
@@ -43,12 +45,12 @@ module hrange_tb (
         while ($signed(!(_done) || !(_ready))) begin
             // `if (_ready && _valid)` also works as a conditional
             if (_ready) begin
-                $display("%0d, %0d, %0d", _valid, _ready, _0);
+                $display("%0d, %0d, %0d, %0d", _valid, _ready, _0, _1);
             end
             @(negedge _clock);
         end
         if (_ready) begin
-            $display("%0d, %0d, %0d", _valid, _ready, _0);
+            $display("%0d, %0d, %0d, %0d", _valid, _ready, _0, _1);
         end
         // ============ Test Case 1 with arguments (0, 10, 2) ============
         base = $signed(0);
@@ -63,12 +65,12 @@ module hrange_tb (
         while ($signed(!(_done) || !(_ready))) begin
             // `if (_ready && _valid)` also works as a conditional
             if (_ready) begin
-                $display("%0d, %0d, %0d", _valid, _ready, _0);
+                $display("%0d, %0d, %0d, %0d", _valid, _ready, _0, _1);
             end
             @(negedge _clock);
         end
         if (_ready) begin
-            $display("%0d, %0d, %0d", _valid, _ready, _0);
+            $display("%0d, %0d, %0d, %0d", _valid, _ready, _0, _1);
         end
         // ============ Test Case 2 with arguments (0, 10, 2) ============
         base = $signed(0);
@@ -83,12 +85,12 @@ module hrange_tb (
         while ($signed(!(_done) || !(_ready))) begin
             // `if (_ready && _valid)` also works as a conditional
             if (_ready) begin
-                $display("%0d, %0d, %0d", _valid, _ready, _0);
+                $display("%0d, %0d, %0d, %0d", _valid, _ready, _0, _1);
             end
             @(negedge _clock);
         end
         if (_ready) begin
-            $display("%0d, %0d, %0d", _valid, _ready, _0);
+            $display("%0d, %0d, %0d, %0d", _valid, _ready, _0, _1);
         end
         $finish;
     end

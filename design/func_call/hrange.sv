@@ -5,7 +5,7 @@
 def hrange(base, limit, step):
     i = base
     while i < limit:
-        yield i
+        yield i, i
         i += step
 
 
@@ -34,11 +34,12 @@ module hrange (
     output reg _done, // is high if module done outputting
 
     // Output values as a tuple with respective index(es)
-    output reg signed [31:0] _0
+    output reg signed [31:0] _0,
+    output reg signed [31:0] _1
 );
-    localparam _state_1 = 0;
-    localparam _state_fake = 1;
-    localparam _state_0_while_0 = 2;
+    localparam _state_0_while_0 = 0;
+    localparam _state_1 = 1;
+    localparam _state_fake = 2;
     // Global variables
     reg signed [31:0] _i;
     reg signed [31:0] _state;
@@ -62,6 +63,7 @@ module hrange (
             _i <= base;
             if ((base < limit)) begin
                 _0 <= base;
+                _1 <= base;
                 _valid <= 1;
                 _state <= _state_0_while_0;
             end else begin
@@ -76,6 +78,7 @@ module hrange (
                         _i <= $signed(_i + _step);
                         if (($signed(_i + _step) < _limit)) begin
                             _0 <= $signed(_i + _step);
+                            _1 <= $signed(_i + _step);
                             _valid <= 1;
                             _state <= _state_0_while_0;
                         end else begin

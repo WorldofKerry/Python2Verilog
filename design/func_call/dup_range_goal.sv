@@ -9,9 +9,9 @@
 )
 def dup_range_goal(base, limit, step):
     inst = hrange(base, limit, step)
-    for i in inst:
+    for i, j in inst:
         yield i
-        yield i
+        yield j
 
 
 # Test Cases
@@ -39,13 +39,14 @@ module dup_range_goal (
     // Output values as a tuple with respective index(es)
     output reg signed [31:0] _0
 );
-    localparam _state_fake = 0;
-    localparam _state_0_for_1 = 1;
-    localparam _state_0_call_0 = 2;
+    localparam _state_0_call_0 = 0;
+    localparam _state_fake = 1;
+    localparam _state_1_call_0 = 2;
     localparam _state_0_for_0 = 3;
-    localparam _state_1_call_0 = 4;
+    localparam _state_0_for_1 = 4;
     // Global variables
     reg signed [31:0] _i;
+    reg signed [31:0] _j;
     reg signed [31:0] _state;
     reg signed [31:0] _base;
     reg signed [31:0] _limit;
@@ -56,6 +57,7 @@ module dup_range_goal (
         .limit(_inst_hrange_limit),
         .step(_inst_hrange_step),
         ._0(_inst_hrange_0),
+        ._1(_inst_hrange_1),
         ._valid(_inst_hrange__valid),
         ._done(_inst_hrange__done),
         ._clock(_clock),
@@ -67,6 +69,7 @@ module dup_range_goal (
     reg [31:0] _inst_hrange_limit;
     reg [31:0] _inst_hrange_step;
     wire [31:0] _inst_hrange_0;
+    wire [31:0] _inst_hrange_1;
     wire _inst_hrange__valid;
     wire _inst_hrange__done;
     reg _inst_hrange__start;
@@ -100,7 +103,7 @@ module dup_range_goal (
                         _state <= _state_fake;
                     end
                     _state_0_for_0: begin
-                        _0 <= _i;
+                        _0 <= _j;
                         _valid <= 1;
                         _state <= _state_0_call_0;
                     end
@@ -115,6 +118,7 @@ module dup_range_goal (
                         if ((_inst_hrange__ready && _inst_hrange__valid)) begin
                             _inst_hrange__ready <= 0;
                             _i <= _inst_hrange_0;
+                            _j <= _inst_hrange_1;
                             if (_inst_hrange__done) begin
                                 _state <= _state_fake;
                             end else begin

@@ -273,6 +273,7 @@ class Context(GenericReprAndStr):
     def __check_types(
         self, expected_types: list[type[Any]], actual_values: list[type[Any]]
     ):
+        assert len(expected_types) == len(actual_values)
         for expected, actual in zip(expected_types, actual_values):
             assert isinstance(
                 actual, expected

@@ -181,7 +181,9 @@ def text_to_context(
             if not isinstance(output, tuple):
                 output = (output,)
 
-            for i, (expected_type, actual_value) in enumerate(zip(input_types, output)):
+            for i, (expected_type, actual_value) in enumerate(
+                zip(output_types, output)
+            ):
                 assert expected_type == type(
                     actual_value
                 ), f"Expected parameter `{input_names[i]}` to be \
