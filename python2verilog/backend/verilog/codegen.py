@@ -122,7 +122,7 @@ class CodeGen:
                 module.clock_signal: instance.clock_signal,
                 module.start_signal: instance.start_signal,
                 module.reset_signal: "1'b0",
-                module.ready_signal: instance.reset_signal,
+                module.ready_signal: instance.ready_signal,
             }
             body.append(
                 ver.Instantiation(
@@ -149,6 +149,9 @@ class CodeGen:
                 body.append(ver.Declaration(name=var.ver_name, reg=True))
             for var in instance.outputs:
                 body.append(ver.Declaration(name=var.ver_name))
+            for var in defaults.values():
+                if isinstance(var, ir.Var):
+                    body.append(ver.Declaration(name=var.ver_name, reg=True, size=1))
 
         body.append(ver.Statement(comment="Core"))
         body.append(always)
