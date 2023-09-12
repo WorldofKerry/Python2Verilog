@@ -6,9 +6,9 @@
 
 # python2verilog
 
-- This tool facilitates the conversion of select Python functions into synthesizable sequential SystemVerilog
-- Testbenches can be automatically generated if the user uses the function within their Python code or provides explicit test cases
+- This tool facilitates the conversion of select Python generator functions into synthesizable sequential SystemVerilog
 - Ideal for quickly translating higher-level "CPU code" into hardware descriptions for use on FPGAs, without needing to interface with or including a CPU in the design
+- Testbenches can be automatically generated if the user uses the function within their Python code or provides explicit test cases
 
 ```python
 from python2verilog import verilogify, Modes
