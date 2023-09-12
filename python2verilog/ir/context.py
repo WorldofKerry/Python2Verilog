@@ -316,11 +316,8 @@ class Context(GenericReprAndStr):
             )
             for field in fields(self.signals)
         }
-        print(args)
 
         signals = ProtocolSignals(**args)
-
-        print(signals)
 
         return Instance(
             self.name,
