@@ -34,10 +34,11 @@ class Generator2Graph:
                             assert len(assign.targets) == 1
                             target = assign.targets[0]
                             if assign.targets[0] not in self._context.instances:
-                                context = self._context.namespace[assign.value.func.id]
-                                instance = context.create_instance(target.id)
-                                self._context.instances[target.id] = instance
-                                print("instantiated", target.id)
+                                for context in self._context.namespace:
+                                    if context.name == assign.value.func.id:
+                                        instance = context.create_instance(target.id)
+                                        self._context.instances[target.id] = instance
+                                        print("instantiated", target.id)
 
         self._root = self.__parse_statements(
             stmts=context.py_ast.body,
