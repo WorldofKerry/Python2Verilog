@@ -7,6 +7,7 @@ import io
 from dataclasses import dataclass, field
 from types import FunctionType
 from typing import Any, Optional
+import warnings
 
 from python2verilog.api.modes import Modes
 from python2verilog.ir.expressions import Var
@@ -62,6 +63,14 @@ class Context(GenericReprAndStr):
     # Function calls
     namespace: list[Context] = field(default_factory=list)  # callable functions
     instances: dict[str, Instance] = field(default_factory=dict)  # generator instances
+
+    def _repr(self):
+        """
+        Avoids recursion on itself
+        """
+        dic = self.__dict__
+        del dic["namespace"]
+        return dic
 
     def __del__(self):
         if self._module_file:

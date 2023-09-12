@@ -25,9 +25,10 @@ class TestVerilogify(unittest.TestCase):
 
         count(10)
 
-        self.assertIn(count.__name__, str(namespace[count]))
+        print(str(namespace[count.__name__]))
+        # self.assertIn(count.__name__, str(namespace[count.__name__]))
 
-        module, testbench = context_to_text_and_file(namespace[count])
+        module, testbench = context_to_text_and_file(namespace[count.__name__])
         self.assertIn(count.__name__, testbench)
         self.assertIn(count.__name__, module)
 

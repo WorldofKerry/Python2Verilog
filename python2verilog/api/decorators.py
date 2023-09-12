@@ -41,7 +41,7 @@ except NameError:
     from atexit import register as exit_register  # type: ignore
 
 # All functions if a lesser namespace is not given
-global_namespace: dict[Callable[..., Any], ir.Context] = {}
+global_namespace: dict[str, ir.Context] = {}
 exit_namespaces = [global_namespace]
 
 
@@ -99,7 +99,7 @@ def get_func_ast_from_func(func: FunctionType):
 @decorator_with_args
 def verilogify(
     func: FunctionType,
-    namespace: dict[Callable[..., Any], ir.Context] = global_namespace,
+    namespace: dict[str, ir.Context] = global_namespace,
     optimization_level: int = 1,
     module_output: Optional[Union[os.PathLike[Any], typing.IO[Any], str]] = None,
     testbench_output: Optional[Union[os.PathLike[Any], typing.IO[Any], str]] = None,
@@ -112,12 +112,12 @@ def verilogify(
     :param mode: if WRITE or OVERWRITE, files will be written to the specified paths
     """
     get_typed(func, FunctionType)
-    assert_typed_dict(namespace, FunctionType, ir.Context)  # type: ignore[misc]
+    assert_typed_dict(namespace, str, ir.Context)  # type: ignore[misc]
     get_typed(module_output, (os.PathLike, io.IOBase, str))
     get_typed(testbench_output, (os.PathLike, io.IOBase, str))
     assert_typed(mode, Modes)
 
-    if func in namespace:
+    if func.__name__ in namespace:
         raise RuntimeError(f"{func.__name__} has already been decorated")
 
     # Get caller filename for default output paths
@@ -148,7 +148,7 @@ def verilogify(
     context.mode = mode
     context.optimization_level = optimization_level
 
-    context.namespace = namespace.values()
+    context.namespace = namespace
 
     if Modes.write(mode):
         # pylint: disable=consider-using-with
@@ -213,5 +213,5 @@ def verilogify(
     wrapper = (
         generator_wrapper if inspect.isgeneratorfunction(func) else function_wrapper
     )
-    namespace[wrapper] = context
+    namespace[wrapper.__name__] = context
     return wrapper
