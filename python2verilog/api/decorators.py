@@ -18,8 +18,7 @@ from typing import Any, Optional, Union
 
 from python2verilog import ir
 from python2verilog.api.modes import Modes
-from python2verilog.api.namespace import global_namespace
-from python2verilog.api.wrappers import context_to_text_and_file
+from python2verilog.api.namespace import get_file_namespace
 from python2verilog.utils.assertions import assert_typed, assert_typed_dict, get_typed
 from python2verilog.utils.decorator import decorator_with_args
 
@@ -63,17 +62,18 @@ def verilogify(
     get_typed(testbench_output, (os.PathLike, io.IOBase, str))
     assert_typed(mode, Modes)
 
+    # Get caller filename for default output paths
+    # .stack()[2] as this function uses a decorator, so the first frames' filename
+    # is the filename that contains that decorator
+    filename = inspect.stack()[2].filename
+
     if namespace is None:
-        namespace = global_namespace
+        namespace = get_file_namespace(filename)
     assert_typed_dict(namespace, str, ir.Context)  # type: ignore[misc]
 
     if func.__name__ in namespace:
         raise RuntimeError(f"{func.__name__} has already been decorated")
 
-    # Get caller filename for default output paths
-    # .stack()[2] as this function uses a decorator, so the first frames' filename
-    # is the filename that contains that decorator
-    filename = inspect.stack()[2].filename
     input_file_stem = os.path.splitext(filename)[0]  # path with no extension
 
     if not module_output:

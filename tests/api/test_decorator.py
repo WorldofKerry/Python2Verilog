@@ -1,7 +1,7 @@
 import unittest
 from io import StringIO
 
-from python2verilog.api.decorators import Modes, context_to_text_and_file, verilogify
+from python2verilog.api import Modes, context_to_text_and_file, verilogify
 
 
 class TestVerilogify(unittest.TestCase):
