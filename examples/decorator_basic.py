@@ -1,3 +1,6 @@
+import logging
+
+logging.root.setLevel(logging.DEBUG)
 from python2verilog.api import Modes, verilogify
 
 

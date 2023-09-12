@@ -103,8 +103,6 @@ endmodule
 @verilogify(
     mode=Modes.OVERWRITE,
     namespace=goal_namespace,
-    # module_output="./design/func_call/dup_range_goal.sv",
-    # testbench_output="./design/func_call/dup_range_goal_tb.sv",
     optimization_level=1,
 )
 def dup_range_goal(base, limit, step):

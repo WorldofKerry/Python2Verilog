@@ -102,7 +102,7 @@ def text_to_context(
     test_cases = extra_test_cases if extra_test_cases else []
 
     for node in ast.walk(tree):
-        logging.debug(f"Walking through {ast.dump(node)}")
+        # logging.debug(f"Walking through {ast.dump(node)}")
         if isinstance(node, ast.FunctionDef) and node.name == function_name:
             logging.info(f"Found function at {get_file_and_line_num(node)}")
             generator_ast = node

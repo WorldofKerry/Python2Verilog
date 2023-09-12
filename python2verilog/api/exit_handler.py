@@ -33,8 +33,6 @@ except NameError:
     # For normal
     from atexit import register as exit_register  # type: ignore
 
-# All functions if a lesser namespace is not given
-
 
 def namespace_to_file(path: Path, namespace: dict[str, ir.Context]):
     """

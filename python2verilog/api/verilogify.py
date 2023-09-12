@@ -104,7 +104,7 @@ def verilogify(
                 context.output_types = [type(arg) for arg in result]
                 context.default_output_vars()
             else:
-                logging.debug(f"Next yield gave {result}")
+                # logging.debug(f"Next yield gave {result}")
                 context.check_output_types(result)
 
         return func(*args, **kwargs)
