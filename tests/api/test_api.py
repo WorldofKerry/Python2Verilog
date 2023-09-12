@@ -123,7 +123,10 @@ class TestVerilogify(unittest.TestCase):
         def inner():
             try:
 
-                @verilogify(mode=Modes.WRITE, namespace=new_namespace())
+                @verilogify(
+                    mode=Modes.WRITE,
+                    namespace=new_namespace(Path(__file__) / "other.py"),
+                )
                 def counter_overwrite(n):
                     i = 0
                     while i < n:

@@ -33,30 +33,34 @@ except NameError:
     from atexit import register as exit_register  # type: ignore
 
 # All functions if a lesser namespace is not given
-exit_namespaces: list[dict[str, ir.Context]] = []
 file_namespaces: dict[Path, dict[str, ir.Context]] = {}
 
 
-def get_file_namespace(path: Path | str):
+def get_namespace(path: Path | str) -> dict[str, ir.Context]:
     """
-    Get file namespace of specific file
+    Get namespace of a file and creates it if it doesn't exist
+
+    Only the path without extension is used, e.g.,
+
+    - `/path/to/file` -> `/path/to/file` namespace
+    - `/path/to/file.py` -> `/path/to/file` same namespace as above
+    - `/path/to/file.ext` -> `/path/to/file` same namespace as above
     """
-    print(path)
     path = Path(path)
-    if path not in file_namespaces:
-        file_namespaces[path] = {}
-    return file_namespaces[path]
+    namespace = path.with_suffix("")
+    if namespace not in file_namespaces:
+        file_namespaces[namespace] = {}
+    return file_namespaces[namespace]
 
 
-def new_namespace() -> dict[str, ir.Context]:
+def new_namespace(path: Path | str) -> dict[str, ir.Context]:
     """
-    Create new namespace that is handled on program exit
-
-    :return: newly created namespace
+    Create a new namespace for path
     """
-    namespace: dict[str, ir.Context] = {}
-    exit_namespaces.append(namespace)
-    return namespace
+    path = Path(path)
+    namespace = path.with_suffix("")
+    assert namespace not in file_namespaces, f"Namespace for {namespace} already exists"
+    return get_namespace(namespace)
 
 
 def namespace_to_file(namespace: dict[str, ir.Context]):
@@ -77,6 +81,4 @@ def __namespace_exit_handler():
     Handles the conversions in each namespace for program exit
     """
     for namespace in file_namespaces.values():
-        namespace_to_file(namespace)
-    for namespace in exit_namespaces:
         namespace_to_file(namespace)

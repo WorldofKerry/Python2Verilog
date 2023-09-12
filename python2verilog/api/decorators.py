@@ -18,7 +18,7 @@ from typing import Any, Optional, Union
 
 from python2verilog import ir
 from python2verilog.api.modes import Modes
-from python2verilog.api.namespace import get_file_namespace
+from python2verilog.api.namespace import get_namespace
 from python2verilog.utils.assertions import assert_typed, assert_typed_dict, get_typed
 from python2verilog.utils.decorator import decorator_with_args
 
@@ -68,7 +68,7 @@ def verilogify(
     filename = inspect.stack()[2].filename
 
     if namespace is None:
-        namespace = get_file_namespace(filename)
+        namespace = get_namespace(filename)
     assert_typed_dict(namespace, str, ir.Context)  # type: ignore[misc]
 
     if func.__name__ in namespace:
