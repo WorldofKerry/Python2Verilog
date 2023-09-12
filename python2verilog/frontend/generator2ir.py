@@ -34,9 +34,11 @@ class Generator2Graph:
                             assert len(assign.targets) == 1
                             target = assign.targets[0]
                             if assign.targets[0] not in self._context.instances:
-                                for context in self._context.namespace:
-                                    if context.name == assign.value.func.id:
-                                        instance = context.create_instance(target.id)
+                                for cxt in self._context.namespace:
+                                    assert isinstance(assign.value, pyast.Call)
+                                    assert isinstance(assign.value.func, pyast.Name)
+                                    if cxt.name == assign.value.func.id:
+                                        instance = cxt.create_instance(target.id)
                                         self._context.instances[target.id] = instance
                                         print("instantiated", target.id)
 
@@ -89,7 +91,9 @@ class Generator2Graph:
             raise TypeError(f"Unsupported lvalue type {type(node)} {pyast.dump(node)}")
         return self.__parse_expression(node)
 
-    def __parse_assign(self, node: pyast.Assign, prefix: str) -> ir.BasicElement:
+    def __parse_assign(
+        self, node: pyast.Assign, prefix: str
+    ) -> tuple[ir.BasicElement, ir.BasicElement]:
         """
         <target0, target1, ...> = <value>;
         """
@@ -259,10 +263,7 @@ class Generator2Graph:
         if not isinstance(stmt.target, pyast.Tuple):
             outputs = [ir.Var(stmt.target.id)]
         else:
-            # raise RuntimeError(pyast.dump(stmt))
-            outputs = [
-                ir.Var(target.id) for target in stmt.target.elts
-            ]  # TODO: spread on left-side of in
+            outputs = [ir.Var(target.id) for target in stmt.target.elts]
         assert len(outputs) == len(instance.outputs)
         capture_head = ir.AssignNode(
             unique_id=next(unique_node), lvalue=instance.ready_signal, rvalue=ir.UInt(0)
@@ -280,12 +281,6 @@ class Generator2Graph:
 
         capture_node.child = edge_to_second_ifelse0
         capture_node = capture_head
-        while capture_node:
-            print(capture_node)
-            try:
-                capture_node = capture_node.child
-            except:
-                break
 
         edge_to_second_ifelse1 = ir.NonClockedEdge(
             unique_id=next(unique_edge), child=second_ifelse1
