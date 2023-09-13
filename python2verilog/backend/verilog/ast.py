@@ -163,7 +163,9 @@ class Module(ImplementsToLines):
 
         input_lines = Lines()
         if is_not_testbench:
-            input_lines += "// Function parameters:"
+            input_lines += (
+                "// Function parameters (only need to be set when start is high):"
+            )
             for input_ in inputs:
                 assert isinstance(input_, str)
                 input_lines += f"input wire signed [31:0] {input_},"
@@ -186,7 +188,7 @@ class Module(ImplementsToLines):
 
         output_lines = Lines()
         if is_not_testbench:
-            output_lines += "output reg _valid, // is high if output is valid"
+            output_lines += "output reg _valid, // is high if output values are valid"
             output_lines.blank()
             output_lines += "output reg _done, // is high if module done outputting"
             output_lines.blank()
