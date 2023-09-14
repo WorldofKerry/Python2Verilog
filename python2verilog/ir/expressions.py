@@ -53,13 +53,19 @@ class Int(Expression):
 
     def __init__(self, value: int):
         self.value = get_typed(value, int)
-        super().__init__(f"$signed({str(value)})")
+        super().__init__(str(self.__class__))
 
     def verilog(self) -> str:
         """
         In Verilog
         """
         return f"$signed({str(self.value)})"
+
+    def to_string(self) -> str:
+        """
+        String
+        """
+        return str(self.value)
 
 
 class UInt(Expression):
@@ -176,17 +182,24 @@ class UBinOp(Expression):
     def to_string(self):
         return f"({self._left.to_string()} {self._oper} {self._right.to_string()})"
 
+    def verilog(self):
+        """
+        To Verilog
+        """
+        return f"({self._left.verilog()} {self._oper} {self._right.verilog()})"
+
 
 class BinOp(UBinOp):
     """
-    $signed(<left> <op> <right>)
+    <left> <op> <right>
 
+    In verilog the signed specifier is used.
     For mixed unsigned and signed operations, the following page explains well
     https://www.01signal.com/verilog-design/arithmetic/signed-wire-reg/
     """
 
-    def to_string(self):
-        return "$signed" + super().to_string()
+    def verilog(self):
+        return "$signed" + super().verilog()
 
 
 class Add(BinOp):

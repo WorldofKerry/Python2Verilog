@@ -1,4 +1,5 @@
 import unittest
+import warnings
 
 from python2verilog import ir
 from python2verilog.backend.verilog import CodeGen
@@ -17,7 +18,7 @@ class TestGraphApplyMapping(unittest.TestCase):
             rvalue=ir.Add(ir.Var("i"), ir.Int(1)),
         )
         updated = graph_apply_mapping(node, mapping)
-        self.assertEqual("_i <= $signed($signed(1) + $signed(1))", str(updated))
+        self.assertEqual("_i <= $signed($signed(1) + $signed(1))", updated.verilog())
 
         mapping = {ir.Var("i"): ir.Add(ir.Var("i"), ir.Int(1))}
         node = ir.AssignNode(
@@ -27,13 +28,13 @@ class TestGraphApplyMapping(unittest.TestCase):
         )
         updated = graph_apply_mapping(node, mapping)
         self.assertEqual(
-            "_i <= $signed($signed(_i + $signed(1)) + $signed(1))", str(updated)
+            "_i <= $signed($signed(_i + $signed(1)) + $signed(1))", updated.verilog()
         )
 
         mapping = {ir.Var("i"): ir.Int(1)}
         node = ir.AssignNode(unique_id="", lvalue=ir.Var("a"), rvalue=ir.Var("i"))
         updated = graph_apply_mapping(node, mapping)
-        self.assertEqual("_a <= $signed(1)", str(updated))
+        self.assertEqual("_a <= $signed(1)", updated.verilog())
 
     def test_independent(self):
         """
@@ -46,7 +47,7 @@ class TestGraphApplyMapping(unittest.TestCase):
             rvalue=ir.Add(ir.Int(0), ir.Int(1)),
         )
         updated = graph_apply_mapping(node, mapping)
-        self.assertEqual("_i <= $signed($signed(0) + $signed(1))", str(updated))
+        self.assertEqual("_i <= $signed($signed(0) + $signed(1))", updated.verilog())
 
         mapping = {ir.Var("i"): ir.Add(ir.Var("i"), ir.Var("i"))}
         node = ir.AssignNode(
@@ -55,7 +56,7 @@ class TestGraphApplyMapping(unittest.TestCase):
             rvalue=ir.Add(ir.Int(0), ir.Int(1)),
         )
         updated = graph_apply_mapping(node, mapping)
-        self.assertEqual("_i <= $signed($signed(0) + $signed(1))", str(updated))
+        self.assertEqual("_i <= $signed($signed(0) + $signed(1))", updated.verilog())
 
         mapping = {ir.Var("i"): ir.Add(ir.Int(0), ir.Int(1))}
         node = ir.AssignNode(
@@ -64,7 +65,7 @@ class TestGraphApplyMapping(unittest.TestCase):
             rvalue=ir.Add(ir.Int(0), ir.Int(1)),
         )
         updated = graph_apply_mapping(node, mapping)
-        self.assertEqual("_i <= $signed($signed(0) + $signed(1))", str(updated))
+        self.assertEqual("_i <= $signed($signed(0) + $signed(1))", updated.verilog())
 
 
 # class TestOptimizer(unittest.TestCase):
