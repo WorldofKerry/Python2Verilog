@@ -6,10 +6,10 @@ import itertools
 import typing
 
 from python2verilog.optimizer.optimizer import backwards_replace
-from python2verilog.utils.string import Lines
+from python2verilog.utils.lines import Lines
 
 from ... import ir
-from ...utils.assertions import assert_typed_dict, get_typed, get_typed_list
+from ...utils.smart_asserts import assert_typed_dict, get_typed, get_typed_list
 from . import ast as ver
 
 

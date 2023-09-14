@@ -15,8 +15,12 @@ from typing import Optional
 from python2verilog import ir
 from python2verilog.api.modes import Modes
 from python2verilog.api.namespace import get_namespace
-from python2verilog.utils.assertions import assert_typed, assert_typed_dict, get_typed
 from python2verilog.utils.decorator import decorator_with_args
+from python2verilog.utils.smart_asserts import (
+    assert_typed,
+    assert_typed_dict,
+    get_typed,
+)
 
 
 def get_func_ast_from_func(func: FunctionType):

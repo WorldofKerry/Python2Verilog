@@ -8,8 +8,8 @@ import itertools
 from typing import Optional
 
 from ... import ir
-from ...utils.assertions import assert_typed_dict, get_typed, get_typed_list
-from ...utils.string import ImplementsToLines, Indent, Lines
+from ...utils.lines import ImplementsToLines, Indent, Lines
+from ...utils.smart_asserts import assert_typed_dict, get_typed, get_typed_list
 
 
 class AtPosedge(ir.Expression):

@@ -9,8 +9,8 @@ from __future__ import annotations
 
 import copy
 
-from python2verilog.utils.assertions import assert_typed, get_typed, get_typed_list
 from python2verilog.utils.generics import GenericRepr
+from python2verilog.utils.smart_asserts import assert_typed, get_typed, get_typed_list
 
 
 class Expression(GenericRepr):
