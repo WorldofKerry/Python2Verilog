@@ -22,7 +22,7 @@ class Expression(GenericRepr):
         assert isinstance(string, str)
         self.string = string
 
-    def to_string(self):
+    def to_string(self) -> str:
         """
         To String
         """
@@ -43,7 +43,7 @@ class Expression(GenericRepr):
         """
         In Verilog syntax
         """
-        return self.string
+        return self.to_string()
 
 
 class Int(Expression):

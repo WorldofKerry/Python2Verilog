@@ -132,20 +132,28 @@ class CodeGen:
                 body.append(ver.Declaration(name=var.ver_name, reg=True))
             for var in instance.outputs:
                 body.append(ver.Declaration(name=var.ver_name))
-            body.append(ver.Declaration(name=instance.signals.valid_signal, size=1))
-            body.append(ver.Declaration(name=instance.signals.done_signal, size=1))
             body.append(
-                ver.Declaration(name=instance.signals.start_signal, size=1, reg=True)
+                ver.Declaration(name=instance.signals.valid_signal.ver_name, size=1)
             )
             body.append(
-                ver.Declaration(name=instance.signals.ready_signal, size=1, reg=True)
+                ver.Declaration(name=instance.signals.done_signal.ver_name, size=1)
+            )
+            body.append(
+                ver.Declaration(
+                    name=instance.signals.start_signal.ver_name, size=1, reg=True
+                )
+            )
+            body.append(
+                ver.Declaration(
+                    name=instance.signals.ready_signal.ver_name, size=1, reg=True
+                )
             )
             body.append(
                 ver.Instantiation(
                     instance.module_name,
                     str(instance.var),
                     typing.cast(
-                        dict[ir.Expression | str, ir.Expression | str],
+                        dict[str, str],
                         {
                             key.py_name: str(value)
                             for key, value in zip(

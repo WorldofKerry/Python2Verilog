@@ -114,7 +114,7 @@ class Instantiation(Statement):
         self,
         module_name: str,
         given_name: str,
-        port_connections: dict[ir.Expression | str, ir.Expression | str],
+        port_connections: dict[str, str],
         *args,
         **kwargs,
     ):
@@ -363,7 +363,7 @@ class Declaration(Statement):
 
     def __init__(
         self,
-        name: ir.Expression | str,
+        name: str,
         *args,
         size: int = 32,
         reg: bool = False,
