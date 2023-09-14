@@ -79,9 +79,9 @@ class LocalParam(Statement):
     localparam <name> = <value>;
     """
 
-    def __init__(self, name: ir.Expression, value: ir.UInt, *args, **kwargs):
+    def __init__(self, name: str, value: ir.UInt, *args, **kwargs):
         assert isinstance(value, ir.UInt)
-        super().__init__(f"localparam {name} = {value};", *args, **kwargs)
+        super().__init__(f"localparam {name} = {value.verilog()};", *args, **kwargs)
 
 
 class AtPosedgeStatement(Statement):
@@ -156,7 +156,7 @@ class Module(ImplementsToLines):
         outputs: list[str],
         body: Optional[list[Statement]] = None,
         is_not_testbench=True,
-        localparams: Optional[dict[ir.Expression, ir.UInt]] = None,
+        localparams: Optional[dict[str, ir.UInt]] = None,
         header: Optional[Lines] = None,
     ):
         self.name = name

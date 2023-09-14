@@ -9,8 +9,8 @@ from __future__ import annotations
 
 import copy
 
-from ..utils.assertions import get_typed, get_typed_list
-from ..utils.generics import GenericRepr
+from python2verilog.utils.assertions import assert_typed, get_typed, get_typed_list
+from python2verilog.utils.generics import GenericRepr
 
 
 class Expression(GenericRepr):
@@ -29,15 +29,16 @@ class Expression(GenericRepr):
         return self.string
 
     def __str__(self):
+        # raise RuntimeError()
         return self.to_string()
 
     def __eq__(self, other: object):
-        if get_typed(other, Expression):
-            return str(self) == str(other)
+        if isinstance(other, Expression):
+            return self.verilog() == other.verilog()
         return False
 
     def __hash__(self):
-        return hash(str(self))
+        return hash(self.to_string())
 
     def verilog(self) -> str:
         """
@@ -127,10 +128,10 @@ class Ternary(Expression):
         self.condition = condition
         self.left = left
         self.right = right
-        super().__init__(str(self))
+        super().__init__(self.to_string())
 
     def to_string(self):
-        return f"{str(self.condition)} ? {str(self.left)} : {str(self.right)}"
+        return f"({str(self.condition)} ? {str(self.left)} : {str(self.right)})"
 
 
 class UBinOp(Expression):
