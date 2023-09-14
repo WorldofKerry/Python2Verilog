@@ -96,7 +96,7 @@ class BaseTestCases:
                 df = pd.DataFrame(
                     self.all_statistics, columns=self.all_statistics[0].keys()
                 )
-                title = f" Statistics for {__class__.__name__} "
+                title = f" Statistics for {self.__class__.__name__} "
                 table = df.to_markdown()
                 table_width = len(table.partition("\n")[0])
                 pad = table_width - len(title)
