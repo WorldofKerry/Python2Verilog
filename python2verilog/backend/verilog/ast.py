@@ -287,7 +287,7 @@ class Always(Statement):
         """
         To Verilog
         """
-        lines = Lines(f"always {self.trigger.to_string()} begin")
+        lines = Lines(f"always {self.trigger.verilog()} begin")
         for stmt in self.body:
             lines.concat(stmt.to_lines(), 1)
         lines += "end"
@@ -334,7 +334,7 @@ class Subsitution(Statement):
         Converts to Verilog
         """
         assert isinstance(self.oper, str), "Subclasses need to set self.type"
-        self.literal = f"{self.lvalue} {self.oper} {self.rvalue};"
+        self.literal = f"{self.lvalue.verilog()} {self.oper} {self.rvalue.verilog()};"
         return super().to_lines()
 
 

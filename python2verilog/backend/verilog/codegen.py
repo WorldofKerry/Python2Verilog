@@ -472,7 +472,7 @@ class CaseBuilder:
         self.case.case_items.append(self.new_caseitem(root))
         have_done_state = False
         for caseitem in self.case.case_items:
-            if context.done_state == str(caseitem.condition):
+            if context.done_state == caseitem.condition.verilog():
                 have_done_state = True
         if not have_done_state:
             self.case.case_items.append(
