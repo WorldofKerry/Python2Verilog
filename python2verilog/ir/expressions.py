@@ -288,7 +288,7 @@ class UnaryOp(Expression):
         return f"{self.oper}({self.expr.verilog()})"
 
 
-class ModWrapper(Expression):
+class Mod(BinOp):
     """
     <left> % <right>
     """
@@ -296,7 +296,7 @@ class ModWrapper(Expression):
     def __init__(self, left: Expression, right: Expression):
         self.left = get_typed(left, Expression)
         self.right = get_typed(right, Expression)
-        super().__init__(self.__class__.__name__)
+        super().__init__(left, "%", right)
 
     def verilog(self):
         """
@@ -321,3 +321,42 @@ class ModWrapper(Expression):
         String
         """
         return f"({self.left.to_string()} % {self.right.to_string()})"
+
+
+class FloorDiv(BinOp):
+    """
+    <left> // <right>
+
+    Follows Python conventions
+    """
+
+    def __init__(self, left: Expression, right: Expression):
+        self.left = get_typed(left, Expression)
+        self.right = get_typed(right, Expression)
+        super().__init__(left, "//", right)
+
+    def verilog(self):
+        """
+        Verilog
+        """
+        return Ternary(
+            condition=BinOp(
+                left=BinOp(left=self.left, right=self.right, oper="%"),
+                right=Int(0),
+                oper="===",
+            ),
+            left=BinOp(self.left, "/", self.right),
+            right=BinOp(
+                BinOp(self.left, "/", self.right),
+                "-",
+                BinOp(
+                    UBinOp(
+                        BinOp(self.left, "<", Int(0)),
+                        "^",
+                        BinOp(self.right, "<", Int(0)),
+                    ),
+                    "&",
+                    Int(1),
+                ),
+            ),
+        ).verilog()

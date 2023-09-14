@@ -405,31 +405,11 @@ class Generator2Graph:
         if isinstance(expr.op, pyast.FloorDiv):
             left = self.__parse_expression(expr.left)
             right = self.__parse_expression(expr.right)
-            return ir.Ternary(
-                condition=ir.BinOp(
-                    left=ir.BinOp(left=left, right=right, oper="%"),
-                    right=ir.Int(0),
-                    oper="===",
-                ),
-                left=ir.BinOp(left, "/", right),
-                right=ir.BinOp(
-                    ir.BinOp(left, "/", right),
-                    "-",
-                    ir.BinOp(
-                        ir.UBinOp(
-                            ir.BinOp(left, "<", ir.Int(0)),
-                            "^",
-                            ir.BinOp(right, "<", ir.Int(0)),
-                        ),
-                        "&",
-                        ir.Int(1),
-                    ),
-                ),
-            )
+            return ir.FloorDiv(left, right)
         if isinstance(expr.op, pyast.Mod):
             left = self.__parse_expression(expr.left)
             right = self.__parse_expression(expr.right)
-            return ir.ModWrapper(left, right)
+            return ir.Mod(left, right)
         raise TypeError(
             "Error: unexpected binop type", type(expr.op), pyast.dump(expr.op)
         )
