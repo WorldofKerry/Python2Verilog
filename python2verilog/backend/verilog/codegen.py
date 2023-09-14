@@ -274,7 +274,7 @@ class CodeGen:
         """
         Get Verilog module as string
         """
-        return str(self.get_module_lines())
+        return self.get_module_lines().to_string()
 
     def get_testbench(self, random_wait: bool = False):
         """
@@ -449,7 +449,7 @@ class CodeGen:
         """
         New testbench as str
         """
-        return str(self.get_testbench_lines(random_wait=random_wait))
+        return self.get_testbench_lines(random_wait=random_wait).to_string()
 
 
 class CaseBuilder:
