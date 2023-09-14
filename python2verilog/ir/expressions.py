@@ -15,7 +15,7 @@ from ..utils.generics import GenericRepr
 
 class Expression(GenericRepr):
     """
-    A String (that can be equated to something)
+    An expression that can be equated
     """
 
     def __init__(self, string: str):
@@ -39,6 +39,12 @@ class Expression(GenericRepr):
     def __hash__(self):
         return hash(str(self))
 
+    def verilog(self) -> str:
+        """
+        In Verilog syntax
+        """
+        return self.string
+
 
 class Int(Expression):
     """
@@ -46,8 +52,14 @@ class Int(Expression):
     """
 
     def __init__(self, value: int):
-        assert isinstance(value, int)
+        self.value = get_typed(value, int)
         super().__init__(f"$signed({str(value)})")
+
+    def verilog(self) -> str:
+        """
+        In Verilog
+        """
+        return f"$signed({str(self.value)})"
 
 
 class UInt(Expression):

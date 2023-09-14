@@ -64,7 +64,7 @@ class ProtocolSignals:
         Get the instance-specific signals
         """
         instance_signals = map(lambda field_: field_.name, fields(InstanceSignals))
-        warnings.warn(str(instance_signals))
+        # warnings.warn(str(instance_signals))
         for key, value in self.items():
             if key in instance_signals:
                 yield key, value
