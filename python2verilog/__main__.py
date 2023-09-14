@@ -29,6 +29,7 @@ if __name__ == "__main__":
         type=str,
         help="Name of function to be converted, defaults to python filename stem",
         default="",
+        required=True,
     )
 
     parser.add_argument(
@@ -110,10 +111,17 @@ if __name__ == "__main__":
             file_path=input_file_path,
             optimization_level=args.optimization_level,
         )
+        # print(module_str, testbench_str)
 
         with open(
             os.path.abspath(args.output), mode="w+", encoding="utf8"
         ) as module_file:
+            print(
+                "attempting to write",
+                module_str[:50],
+                "to",
+                os.path.abspath(args.output),
+            )
             module_file.write(module_str)
 
         if args.test_cases != "":

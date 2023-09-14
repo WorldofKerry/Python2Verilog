@@ -224,12 +224,12 @@ class Module(ImplementsToLines):
         else:
             lines = Lines()
         lines += f"module {self.name} ("
-        for line in self.input:
-            lines += Indent(1) + line
-        for line in self.output:
-            lines += Indent(1) + line
-        if len(lines) > 1:  # This means there are ports
+        lines.concat(self.input, indent=1)
+        lines.concat(self.output, indent=1)
+
+        if len(lines) > 2:  # This means there are ports
             lines[-1] = lines[-1][0:-1]  # removes last comma
+
         lines += ");"
         lines.concat(self.local_params, 1)
         for stmt in self.body:

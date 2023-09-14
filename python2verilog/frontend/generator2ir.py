@@ -9,6 +9,14 @@ from ..utils.assertions import get_typed, get_typed_list
 from ..utils.string import Indent, Lines
 
 
+def name_to_var(name: pyast.expr) -> ir.Var:
+    """
+    Converts a pyast.Name to a ir.Var using its id
+    """
+    assert isinstance(name, pyast.Name)
+    return ir.Var(name.id)
+
+
 class Generator2Graph:
     """
     Parses python generator functions to Verilog AST
@@ -17,7 +25,6 @@ class Generator2Graph:
     def __init__(
         self,
         context: ir.Context,
-        done_state_name: str = "_state_fake",
     ):
         """
         Initializes the parser, does quick setup work
@@ -25,14 +32,30 @@ class Generator2Graph:
         context.validate()
         self._context = get_typed(context, ir.Context)
 
+        # Populate function calls
+        # pylint: disable=too-many-nested-blocks
+        for node in context.py_ast.body:
+            for assign in pyast.walk(node):
+                if isinstance(assign, pyast.Assign):
+                    for child in pyast.walk(assign):
+                        if isinstance(child, pyast.Call):
+                            assert len(assign.targets) == 1
+                            target = assign.targets[0]
+                            assert isinstance(target, pyast.Name)
+                            if assign.targets[0] not in self._context.instances:
+                                assert isinstance(assign.value, pyast.Call)
+                                assert isinstance(assign.value.func, pyast.Name)
+                                cxt = self._context.namespace[assign.value.func.id]
+                                instance = cxt.create_instance(target.id)
+                                self._context.instances[target.id] = instance
+
         self._root = self.__parse_statements(
             stmts=context.py_ast.body,
             prefix="_state",
-            nextt=ir.DoneNode(unique_id=done_state_name, name="done"),
+            nextt=ir.DoneNode(unique_id=context.done_state, name="done"),
         )
 
         self._context.entry_state = self._root.unique_id
-        self._context.ready_state = done_state_name
 
     @property
     def root(self):
@@ -74,15 +97,22 @@ class Generator2Graph:
             raise TypeError(f"Unsupported lvalue type {type(node)} {pyast.dump(node)}")
         return self.__parse_expression(node)
 
-    def __parse_assign(self, node: pyast.Assign, prefix: str):
+    def __parse_assign(
+        self, node: pyast.Assign, prefix: str
+    ) -> tuple[ir.BasicElement, ir.BasicElement]:
         """
         <target0, target1, ...> = <value>;
         """
-        return ir.AssignNode(
+        # Check if contains function call
+        for child in pyast.walk(node):
+            if isinstance(child, pyast.Call):
+                return self.__parse_assign_to_call(node, prefix)
+        assign = ir.AssignNode(
             unique_id=prefix,
             lvalue=self.__parse_targets(node.targets),
             rvalue=self.__parse_expression(node.value),
         )
+        return (assign, assign)
 
     def __parse_statements(
         self, stmts: list[pyast.stmt], prefix: str, nextt: ir.Element
@@ -125,17 +155,18 @@ class Generator2Graph:
         """
         get_typed(stmt, pyast.AST)
         get_typed(nextt, ir.Element)
-        cur_node = None
         if isinstance(stmt, pyast.Assign):
-            cur_node = self.__parse_assign(stmt, prefix=prefix)
+            cur_node, end_node = self.__parse_assign(stmt, prefix=prefix)
             edge = ir.ClockedEdge(unique_id=f"{prefix}_e", child=nextt)
-            cur_node.child = edge
+            end_node.child = edge
         elif isinstance(stmt, pyast.Yield):
             cur_node = self.__parse_yield(stmt, prefix=prefix)
             edge = ir.ClockedEdge(unique_id=f"{prefix}_e", child=nextt)
             cur_node.child = edge
         elif isinstance(stmt, pyast.While):
             cur_node = self.__parse_while(stmt, nextt=nextt, prefix=prefix)
+        elif isinstance(stmt, pyast.For):
+            cur_node = self.__parse_for(stmt, nextt=nextt, prefix=prefix)
         elif isinstance(stmt, pyast.If):
             cur_node = self.__parse_ifelse(stmt=stmt, nextt=nextt, prefix=prefix)
         elif isinstance(stmt, pyast.Expr):
@@ -161,9 +192,119 @@ class Generator2Graph:
             )
         return cur_node
 
+    def __parse_for(self, stmt: pyast.For, nextt: ir.Element, prefix: str):
+        """
+        For ... in ...:
+        """
+        # pylint: disable=too-many-locals
+        loop_edge = ir.ClockedEdge(unique_id=f"{prefix}_edge", name="True")
+        done_edge = ir.ClockedEdge(unique_id=f"{prefix}_f", name="False", child=nextt)
+
+        target = stmt.iter
+        assert isinstance(target, pyast.Name)
+        if target.id not in self._context.instances:
+            raise RuntimeError(f"No iterator instance {self._context.instances}")
+        inst = self._context.instances[target.id]
+
+        def unique_node_gen():
+            counter = 0
+            while True:
+                yield f"{prefix}_call_{counter}"
+                counter += 1
+
+        def unique_edge_gen():
+            counter = 0
+            while True:
+                yield f"{prefix}_call_{counter}_e"
+                counter += 1
+
+        unique_node = unique_node_gen()
+        unique_edge = unique_edge_gen()
+
+        head = ir.AssignNode(
+            unique_id=next(unique_node),
+            lvalue=inst.signals.ready_signal,
+            rvalue=ir.UInt(1),
+        )
+        node: ir.BasicElement = head
+        node.child = ir.NonClockedEdge(unique_id=next(unique_edge))
+        node = node.child
+        node.child = ir.AssignNode(
+            unique_id=next(unique_node),
+            lvalue=inst.signals.start_signal,
+            rvalue=ir.UInt(0),
+        )
+        node = node.child
+        node.child = ir.NonClockedEdge(unique_id=next(unique_edge))
+        node = node.child
+
+        edge_to_head = ir.ClockedEdge(unique_id=next(unique_edge), child=head)
+        second_ifelse0 = ir.IfElseNode(
+            unique_id=next(unique_node),
+            condition=inst.signals.done_signal,
+            true_edge=done_edge,
+            false_edge=loop_edge,
+        )
+        edge_to_second_ifelse0 = ir.NonClockedEdge(
+            unique_id=next(unique_edge), child=second_ifelse0
+        )
+        second_ifelse1 = ir.IfElseNode(
+            unique_id=next(unique_node),
+            condition=inst.signals.done_signal,
+            true_edge=done_edge,
+            false_edge=edge_to_head,
+        )
+
+        # capture output
+        if not isinstance(stmt.target, pyast.Tuple):
+            assert isinstance(stmt.target, pyast.Name)
+            outputs = [ir.Var(stmt.target.id)]
+        else:
+            outputs = list(map(name_to_var, stmt.target.elts))
+        assert len(outputs) == len(inst.outputs)
+        capture_head = ir.AssignNode(
+            unique_id=next(unique_node),
+            lvalue=inst.signals.ready_signal,
+            rvalue=ir.UInt(0),
+        )
+        capture_node: ir.BasicElement = capture_head
+        for caller, callee in zip(outputs, inst.outputs):
+            capture_node.child = ir.NonClockedEdge(unique_id=next(unique_edge))
+            capture_node = capture_node.child
+            capture_node.child = ir.AssignNode(
+                unique_id=next(unique_node), lvalue=caller, rvalue=callee
+            )
+            capture_node = capture_node.child
+            if not self._context.is_declared(str(caller)):
+                self._context.add_global_var(caller)
+
+        capture_node.child = edge_to_second_ifelse0
+        capture_node = capture_head
+
+        edge_to_second_ifelse1 = ir.NonClockedEdge(
+            unique_id=next(unique_edge), child=second_ifelse1
+        )
+        edge_to_capture_head = ir.NonClockedEdge(
+            unique_id=next(unique_edge), child=capture_head
+        )
+        first_ifelse = ir.IfElseNode(
+            unique_id=next(unique_node),
+            condition=ir.UBinOp(
+                inst.signals.ready_signal, "&&", inst.signals.valid_signal
+            ),
+            true_edge=edge_to_capture_head,  # replaced with linked list for output
+            false_edge=edge_to_second_ifelse1,
+        )
+        node.child = first_ifelse
+
+        body_node = self.__parse_statements(stmt.body, f"{prefix}_for", head)
+        loop_edge.child = body_node
+
+        return head
+
     def __parse_ifelse(self, stmt: pyast.If, nextt: ir.Element, prefix: str):
         """
-        If statement
+        If else block
         """
         assert isinstance(stmt, pyast.If)
 
@@ -235,9 +376,11 @@ class Generator2Graph:
             )
         raise TypeError(f"Expected tuple {type(node.value)}")
 
-    def __parse_binop(self, expr: pyast.BinOp):
+    def __parse_binop(self, expr: pyast.BinOp) -> ir.Expression:
         """
         <left> <op> <right>
+
+        With special case for floor division
         """
         if isinstance(expr.op, pyast.Add):
             return ir.Add(
@@ -297,7 +440,7 @@ class Generator2Graph:
             "Error: unexpected binop type", type(expr.op), pyast.dump(expr.op)
         )
 
-    def __parse_expression(self, expr: pyast.AST):
+    def __parse_expression(self, expr: pyast.AST) -> ir.Expression:
         """
         <expression> (e.g. constant, name, subscript, etc., those that return a value)
         """
@@ -323,11 +466,70 @@ class Generator2Graph:
                     f"({self.__parse_expression(expr.values[0]).to_string()}) \
                     && ({self.__parse_expression(expr.values[1]).to_string()})"
                 )
+        # if isinstance(expr, pyast.Call):
+        #     return self.__parse_call(expr)
         raise TypeError(
             "Error: unexpected expression type", type(expr), pyast.dump(expr)
         )
 
-    def __parse_subscript(self, node: pyast.Subscript):
+    def __parse_assign_to_call(
+        self, assign: pyast.Assign, prefix: str
+    ) -> tuple[ir.BasicElement, ir.BasicElement]:
+        """
+        instance = func(args, ...)
+        """
+        # print(pyast.dump(assign))
+        assert len(assign.targets) == 1
+        target = assign.targets[0]
+        assert isinstance(target, pyast.Name)
+        inst = self._context.instances[target.id]
+
+        def unique_node_gen():
+            counter = 0
+            while True:
+                yield f"{prefix}_call_{counter}"
+
+        def unique_edge_gen():
+            counter = 0
+            while True:
+                yield f"{prefix}_call_{counter}_e"
+
+        unique_node = unique_node_gen()
+        unique_edge = unique_edge_gen()
+
+        head = ir.AssignNode(
+            unique_id=next(unique_node),
+            lvalue=inst.signals.ready_signal,
+            rvalue=ir.UInt(0),
+        )
+        node: ir.BasicElement = head
+        node.child = ir.NonClockedEdge(unique_id=next(unique_edge))
+        node = node.child
+        node.child = ir.AssignNode(
+            unique_id=next(unique_node),
+            lvalue=inst.signals.start_signal,
+            rvalue=ir.UInt(1),
+        )
+        node = node.child
+
+        assert isinstance(assign.value, pyast.Call)
+
+        arguments = list(map(name_to_var, assign.value.args))
+        assert len(arguments) == len(inst.inputs)
+
+        for arg, param in zip(arguments, inst.inputs):
+            node.child = ir.NonClockedEdge(unique_id=next(unique_edge))
+            node = node.child
+            node.child = ir.AssignNode(
+                unique_id=next(unique_node),
+                lvalue=param,
+                rvalue=arg,
+            )
+            node = node.child
+
+        return (head, node)
+
+    def __parse_subscript(self, node: pyast.Subscript) -> ir.Expression:
         """
         <value>[<slice>]
         Note: built from right to left, e.g. [z] -> [y][z] -> [x][y][z] -> matrix[x][y][z]
@@ -337,7 +539,7 @@ class Generator2Graph:
                 [{self.__parse_expression(node.slice).to_string()}]"
         )
 
-    def __parse_compare(self, node: pyast.Compare):
+    def __parse_compare(self, node: pyast.Compare) -> ir.UBinOp:
         """
         <left> <op> <comparators>
         """

@@ -148,5 +148,9 @@ Members:
 ## Finish Verilog pseudocode and verify
 
 ```bash
+# manual
 iverilog -s dup_range_tb ./design/func_call/dup_range.sv ./design/func_call/dup_range_tb.sv ./design/func_call/hrange.sv -g2005-sv -o output.log && vvp output.log
+
+# goal
+iverilog -s dup_range_goal_tb ./design/func_call/dup_range_goal.sv ./design/func_call/dup_range_goal_tb.sv ./design/func_call/hrange.sv -g2005-sv -o output.log && vvp output.log
 ```

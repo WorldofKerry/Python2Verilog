@@ -1,15 +1,22 @@
-"""Context for Intermediate Representation"""
+"""
+The context of a generator
+
+Includes the function, its representation and its usage information
+"""
 from __future__ import annotations
 
 import ast
 import copy
 import io
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 from types import FunctionType
 from typing import Any, Optional
 
 from python2verilog.api.modes import Modes
 from python2verilog.ir.expressions import Var
+from python2verilog.ir.graph import DoneNode
+from python2verilog.ir.instance import Instance
+from python2verilog.ir.signals import ProtocolSignals
 from python2verilog.utils.assertions import assert_typed_dict, get_typed, get_typed_list
 from python2verilog.utils.env_vars import is_debug_mode
 from python2verilog.utils.generics import GenericReprAndStr
@@ -38,31 +45,35 @@ class Context(GenericReprAndStr):
     optimization_level: int = -1
 
     mode: Modes = Modes.NO_WRITE
-    _module_file: Optional[io.IOBase] = None
-    _testbench_file: Optional[io.IOBase] = None
 
     _global_vars: list[Var] = field(default_factory=list)
     _input_vars: list[Var] = field(default_factory=list)
     _output_vars: list[Var] = field(default_factory=list)
     _states: set[str] = field(default_factory=set)
 
-    valid_signal: Var = Var("valid")
-    done_signal: Var = Var("done")
-    clock_signal: Var = Var("clock")
-    start_signal: Var = Var("start")
-    reset_signal: Var = Var("reset")
-    ready_signal: Var = Var("ready")
+    signals: ProtocolSignals = ProtocolSignals(
+        start_signal=Var("start"),
+        done_signal=Var("done"),
+        ready_signal=Var("ready"),
+        valid_signal=Var("valid"),
+    )
 
     state_var: Var = Var("state")
 
+    _done_state: str = "_state_done"
     _entry_state: Optional[str] = None
-    _ready_state: Optional[str] = None
 
-    def __del__(self):
-        if self._module_file:
-            self._module_file.close()
-        if self._testbench_file:
-            self._testbench_file.close()
+    # Function calls
+    namespace: dict[str, Context] = field(default_factory=dict)  # callable functions
+    instances: dict[str, Instance] = field(default_factory=dict)  # generator instances
+
+    def _repr(self):
+        """
+        Avoids recursion on itself
+        """
+        dic = self.__dict__
+        del dic["namespace"]
+        return dic
 
     def validate(self):
         """
@@ -90,25 +101,13 @@ class Context(GenericReprAndStr):
         assert check_list(self.output_vars), self
 
         assert isinstance(self.optimization_level, int), self
-        assert self.optimization_level >= 0
-
-        if self.mode:
-            if self._module_file:
-                assert isinstance(self.module_file, io.IOBase), self
-            if self._testbench_file:
-                assert isinstance(self.testbench_file, io.IOBase), self
+        assert self.optimization_level >= 0, f"{self.optimization_level} {self.name}"
 
         if self._entry_state:
             assert self.entry_state in self.states, self
-        if self._ready_state:
-            assert self.ready_state in self.states, self
 
-        assert get_typed(self.ready_signal, Var)
-        assert get_typed(self.clock_signal, Var)
-        assert get_typed(self.done_signal, Var)
-        assert get_typed(self.valid_signal, Var)
-        assert get_typed(self.reset_signal, Var)
-        assert get_typed(self.start_signal, Var)
+        for value in self.signals.values():
+            assert get_typed(value, Var)
 
         return self
 
@@ -165,17 +164,17 @@ class Context(GenericReprAndStr):
         self._entry_state = other
 
     @property
-    def ready_state(self):
+    def done_state(self):
         """
         The ready state
         """
-        assert isinstance(self._ready_state, str), self
-        return self._ready_state
+        assert isinstance(self._done_state, str), self
+        return self._done_state
 
-    @ready_state.setter
-    def ready_state(self, other: str):
+    @done_state.setter
+    def done_state(self, other: str):
         assert isinstance(other, str)
-        self._ready_state = other
+        self._done_state = other
 
     @property
     def input_vars(self):
@@ -268,6 +267,7 @@ class Context(GenericReprAndStr):
     def __check_types(
         self, expected_types: list[type[Any]], actual_values: list[type[Any]]
     ):
+        assert len(expected_types) == len(actual_values)
         for expected, actual in zip(expected_types, actual_values):
             assert isinstance(
                 actual, expected
@@ -285,3 +285,30 @@ class Context(GenericReprAndStr):
         Checks if outputs to functions' types matches previous outputs
         """
         self.__check_types(self.output_types, output)
+
+    def create_instance(self, name: str) -> Instance:
+        """
+        Create generator instance
+        """
+        inst_input_vars = list(
+            map(lambda var: Var(f"{name}_{self.name}_{var.py_name}"), self.input_vars)
+        )
+        inst_output_vars = list(
+            map(lambda var: Var(f"{name}_{self.name}_{var.py_name}"), self.output_vars)
+        )
+        args = {
+            field.name: Var(
+                f"{name}_{self.name}__{getattr(self.signals, field.name).py_name}"
+            )
+            for field in fields(self.signals)
+        }
+
+        signals = ProtocolSignals(**args)
+
+        return Instance(
+            self.name,
+            Var(name),
+            inst_input_vars,
+            inst_output_vars,
+            signals,
+        )

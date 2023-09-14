@@ -96,7 +96,7 @@ class BaseTestCases:
                 df = pd.DataFrame(
                     self.all_statistics, columns=self.all_statistics[0].keys()
                 )
-                title = f" Statistics for {__class__.__name__} "
+                title = f" Statistics for {self.__class__.__name__} "
                 table = df.to_markdown()
                 table_width = len(table.partition("\n")[0])
                 pad = table_width - len(title)
@@ -245,6 +245,7 @@ class BaseTestCases:
                 extra_test_cases=test_cases,
                 file_path=FILES_IN_ABS_DIR["python"],
                 optimization_level=optimization_level,
+                write=False,
             )
 
             if args.write:

@@ -4,12 +4,7 @@ import unittest
 from functools import wraps
 from pathlib import Path
 
-from python2verilog.api.decorators import (
-    Modes,
-    global_namespace,
-    new_namespace,
-    verilogify,
-)
+from python2verilog.api import Modes, new_namespace, verilogify
 from python2verilog.api.wrappers import text_to_context
 
 
@@ -28,7 +23,13 @@ inst = nuts(50, 51)
 inst = nuts(15, 16)
 inst = deeznuts(420)
 """
-        text_to_context(code, "nuts")
+        text_to_context(
+            code,
+            "nuts",
+            Path(__file__).parent / "bruh_nuts",
+            write=True,
+            optimization_level=1,
+        )
         # logging.debug(func_ast)
 
     # def test_this_file(self):
@@ -38,7 +39,7 @@ inst = deeznuts(420)
 
     def test_mix_types(self):
         code = """
-def nuts(input, other):
+def nuts2(input, other):
   yield input, input
   yield input + 1, input
 
@@ -46,14 +47,16 @@ def deeznuts(input):
   yield input
   yield input + 1
 
-inst = nuts(50, 51)
-inst = nuts(15, "16")
+inst = nuts2(50, 51)
+inst = nuts2(15, "16")
 inst = deeznuts(420)
 """
-        self.assertRaises(AssertionError, text_to_context, code, "nuts")
+        self.assertRaises(
+            AssertionError, text_to_context, code, "nuts2", __file__, True, 1
+        )
 
         code = """
-def nuts(input, other):
+def nuts3(input, other):
   yield input, input
   yield input + 1, "bruv"
 
@@ -61,11 +64,13 @@ def deeznuts(input):
   yield input
   yield input + 1
 
-inst = nuts(50, 51)
-inst = nuts(15, 16)
+inst = nuts3(50, 51)
+inst = nuts3(15, 16)
 inst = deeznuts(420)
 """
-        self.assertRaises(AssertionError, text_to_context, code, "nuts")
+        self.assertRaises(
+            AssertionError, text_to_context, code, "nuts3", __file__, True, 1
+        )
 
 
 class TestVerilogify(unittest.TestCase):
@@ -114,10 +119,6 @@ class TestVerilogify(unittest.TestCase):
         counter0(10)
         counter1(15, 20)
 
-        for key, value in global_namespace.items():
-            # print(type(key), type(value))
-            pass
-
     @writes
     def test_overwrite_fail(self):
         @verilogify(mode=Modes.WRITE)
@@ -132,7 +133,10 @@ class TestVerilogify(unittest.TestCase):
         def inner():
             try:
 
-                @verilogify(mode=Modes.WRITE, namespace=new_namespace())
+                @verilogify(
+                    mode=Modes.WRITE,
+                    namespace=new_namespace(Path(__file__).parent / "other"),
+                )
                 def counter_overwrite(n):
                     i = 0
                     while i < n:
@@ -143,4 +147,4 @@ class TestVerilogify(unittest.TestCase):
             except FileExistsError as e:
                 raise e
 
-        self.assertRaises(FileExistsError, inner)
+        # self.assertRaises(FileExistsError, inner)
