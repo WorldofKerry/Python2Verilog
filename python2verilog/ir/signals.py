@@ -43,3 +43,11 @@ class ProtocolSignals:
         """
         for key, value in self.__dict__.items():
             yield key, value
+
+    def instance_specific(self) -> Generator[str, None, None]:
+        """
+        Get the instance-specific signals
+        """
+
+        for value in self.__dict__.values():
+            yield value

@@ -516,6 +516,12 @@ class Generator2Graph:
 
         arguments = list(map(name_to_var, assign.value.args))
         assert len(arguments) == len(inst.inputs)
+        # for var in inst.inputs:
+        #     self._context.add_global_var(var)
+        # for var in inst.outputs:
+        #     self._context.add_global_var(var)
+        # for var in inst.signals.values():
+        #     self._context.add_global_var(var)
 
         for arg, param in zip(arguments, inst.inputs):
             node.child = ir.NonClockedEdge(unique_id=next(unique_edge))

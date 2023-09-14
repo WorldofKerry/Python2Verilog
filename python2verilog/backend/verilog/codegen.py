@@ -128,6 +128,18 @@ class CodeGen:
                 module.signals.ready_signal: instance.signals.ready_signal,
             }
             # defaults = dict(zip(module.signals.values(), instance.signals.values()))
+            for var in instance.inputs:
+                body.append(ver.Declaration(name=var.ver_name, reg=True))
+            for var in instance.outputs:
+                body.append(ver.Declaration(name=var.ver_name))
+            body.append(ver.Declaration(name=instance.signals.valid_signal, size=1))
+            body.append(ver.Declaration(name=instance.signals.done_signal, size=1))
+            body.append(
+                ver.Declaration(name=instance.signals.start_signal, size=1, reg=True)
+            )
+            body.append(
+                ver.Declaration(name=instance.signals.ready_signal, size=1, reg=True)
+            )
             body.append(
                 ver.Instantiation(
                     instance.module_name,
@@ -151,18 +163,6 @@ class CodeGen:
                         | {str(key): str(value) for key, value in defaults.items()},
                     ),
                 )
-            )
-            for var in instance.inputs:
-                body.append(ver.Declaration(name=var.ver_name, reg=True))
-            for var in instance.outputs:
-                body.append(ver.Declaration(name=var.ver_name))
-            body.append(ver.Declaration(name=instance.signals.valid_signal, size=1))
-            body.append(ver.Declaration(name=instance.signals.done_signal, size=1))
-            body.append(
-                ver.Declaration(name=instance.signals.start_signal, size=1, reg=True)
-            )
-            body.append(
-                ver.Declaration(name=instance.signals.ready_signal, size=1, reg=True)
             )
 
         body.append(ver.Statement(comment="Core"))
