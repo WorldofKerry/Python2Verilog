@@ -151,22 +151,22 @@ class CodeGen:
             body.append(
                 ver.Instantiation(
                     instance.module_name,
-                    str(instance.var),
+                    instance.var.ver_name,
                     {
-                        key.py_name: str(value)
+                        key.py_name: value.ver_name
                         for key, value in zip(
                             module.input_vars,
                             instance.inputs,
                         )
                     }
                     | {
-                        str(key): str(value)
+                        key.ver_name: value.ver_name
                         for key, value in zip(
                             module.output_vars,
                             instance.outputs,
                         )
                     }
-                    | {str(key): str(value) for key, value in defaults.items()},
+                    | {key.ver_name: value.ver_name for key, value in defaults.items()},
                 )
             )
 
