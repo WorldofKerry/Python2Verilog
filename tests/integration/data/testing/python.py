@@ -3,10 +3,9 @@ def testing(n) -> tuple[int]:
     a = n
     b = a * 3
     if b == a:
-        c = b
+        d = a * 4 + 3
+        c = a * 4 + 7
+        yield d, c
     else:
         c = n + 1
-    yield c, 2
-    d = a * 4 * 3
-    c = a * 4 + 7
-    yield d, c
+        yield c, 3
