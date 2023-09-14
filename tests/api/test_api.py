@@ -5,7 +5,11 @@ from functools import wraps
 from pathlib import Path
 
 from python2verilog.api import Modes, new_namespace, verilogify
-from python2verilog.api.wrappers import context_to_text, text_to_context
+from python2verilog.api.wrappers import (
+    context_to_text,
+    context_to_text_and_dump,
+    text_to_context,
+)
 
 
 class TestParsePython(unittest.TestCase):
@@ -182,28 +186,31 @@ class TestVerilogify(unittest.TestCase):
                 yield (s_x - y, s_y + x, height, x, y, d)
                 yield (s_x - y, s_y - x, height, x, y, d)
 
-        @verilogify(namespace=ns, mode=Modes.OVERWRITE)
+        @verilogify(namespace=ns, mode=Modes.OVERWRITE, optimization_level=0)
         def triple_circle(centre_x, centre_y, radius):
             c_x = centre_x
             c_y = centre_y
             c_x1 = c_x + radius // 2
             c_y1 = c_y + radius * 2 // 6
-            c_x2 = c_x - radius // 2
-            c_y2 = c_y + radius * 2 // 6
-            c_x3 = c_x
-            c_y3 = c_y - radius * 2 // 6
+            c_x - radius // 2
+            c_y + radius * 2 // 6
+            c_y - radius * 2 // 6
 
             gen0 = circle_lines(c_x1, c_y1, radius)
             for x, y, a, b, c, d in gen0:
                 yield x, y
-            gen1 = circle_lines(c_x2, c_y2, radius)
-            for x, y, a, b, c, d in gen1:
-                yield x, y
-            gen2 = circle_lines(c_x3, c_y3, radius)
-            for x, y, a, b, c, d in gen2:
-                yield x, y
+            # gen1 = circle_lines(c_x2, c_y2, radius)
+            # for x, y, a, b, c, d in gen1:
+            #     yield x, y
+            # gen2 = circle_lines(c_x3, c_y3, radius)
+            # for x, y, a, b, c, d in gen2:
+            #     yield x, y
 
         triple_circle(50, 50, 8)
-        module, tb = context_to_text(ns[triple_circle.__name__])
+        module, tb, cytoscape = context_to_text_and_dump(
+            ns[triple_circle.__name__], dump_graph=True
+        )
         # warnings.warn(module)
         # warnings.warn(tb)
+        with open(Path(__file__).parent / "triple_circle_cytoscape.log", mode="w") as f:
+            f.write(str(cytoscape))

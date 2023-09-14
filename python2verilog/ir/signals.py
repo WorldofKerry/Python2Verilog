@@ -2,10 +2,25 @@
 Protocol signals used by the converter
 """
 
-from dataclasses import dataclass
+import warnings
+from dataclasses import dataclass, fields
 from typing import Generator
 
 from python2verilog.ir.expressions import Var
+
+
+@dataclass(frozen=True)
+class InstanceSignals:
+    """
+    Signals that are often named differently for each instance
+    """
+
+    # pylint: disable=too-many-instance-attributes
+    start_signal: Var
+    done_signal: Var
+
+    ready_signal: Var
+    valid_signal: Var
 
 
 @dataclass(frozen=True)
@@ -44,10 +59,12 @@ class ProtocolSignals:
         for key, value in self.__dict__.items():
             yield key, value
 
-    def instance_specific(self) -> Generator[str, None, None]:
+    def instance_specific(self) -> Generator[tuple[str, Var], None, None]:
         """
         Get the instance-specific signals
         """
-
-        for value in self.__dict__.values():
-            yield value
+        instance_signals = map(lambda field_: field_.name, fields(InstanceSignals))
+        warnings.warn(str(instance_signals))
+        for key, value in self.items():
+            if key in instance_signals:
+                yield key, value

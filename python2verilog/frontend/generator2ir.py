@@ -106,13 +106,19 @@ class Generator2Graph:
         # Check if contains function call
         for child in pyast.walk(node):
             if isinstance(child, pyast.Call):
+                # temp = ir.AssignNode(
+                #     unique_id=prefix,
+                #     lvalue=ir.Expression("func"),
+                #     rvalue=ir.Expression("call"),
+                # )
+                # return temp, temp
                 return self.__parse_assign_to_call(node, prefix)
         assign = ir.AssignNode(
             unique_id=prefix,
             lvalue=self.__parse_targets(node.targets),
             rvalue=self.__parse_expression(node.value),
         )
-        return (assign, assign)
+        return assign, assign
 
     def __parse_statements(
         self, stmts: list[pyast.stmt], prefix: str, nextt: ir.Element
@@ -516,12 +522,6 @@ class Generator2Graph:
 
         arguments = list(map(name_to_var, assign.value.args))
         assert len(arguments) == len(inst.inputs)
-        # for var in inst.inputs:
-        #     self._context.add_global_var(var)
-        # for var in inst.outputs:
-        #     self._context.add_global_var(var)
-        # for var in inst.signals.values():
-        #     self._context.add_global_var(var)
 
         for arg, param in zip(arguments, inst.inputs):
             node.child = ir.NonClockedEdge(unique_id=next(unique_edge))

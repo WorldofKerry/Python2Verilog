@@ -226,8 +226,7 @@ class Context(GenericReprAndStr):
             or var in self._input_vars
             or var in self.output_vars
         ):
-            return var
-            raise RuntimeError(f"Added {var} with {self._global_vars}")
+            return
         self._global_vars.append(get_typed(var, Var))
 
     @property
@@ -306,7 +305,7 @@ class Context(GenericReprAndStr):
         )
         args = {
             key: Var(f"{name}_{self.name}__{value.py_name}")
-            for key, value in self.signals.items()
+            for key, value in self.signals.instance_specific()
         }
 
         signals = ProtocolSignals(**args)

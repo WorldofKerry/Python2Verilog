@@ -240,7 +240,7 @@ def context_to_verilog(context: ir.Context):
 
 def context_to_text(context: ir.Context) -> tuple[str, str]:
     """
-    Covnerts a context to a verilog module and testbench str
+    Converts a context to a verilog module and testbench str
 
     :return: (module, testbench) pair
     """
@@ -250,7 +250,22 @@ def context_to_text(context: ir.Context) -> tuple[str, str]:
     module_str = ver_code_gen.get_module_str()
     tb_str = ver_code_gen.get_testbench_str()
 
-    return (module_str, tb_str)
+    return module_str, tb_str
+
+
+def context_to_text_and_dump(context: ir.Context) -> tuple[str, str, str]:
+    """
+    Converts a context to a verilog module, testbench, and cytoscape str
+
+    :return: (module, testbench, cytoscape_dump) pair
+    """
+    get_typed(context, ir.Context)
+    ver_code_gen, ir_root = context_to_verilog(context)
+
+    module_str = ver_code_gen.get_module_str()
+    tb_str = ver_code_gen.get_testbench_str()
+
+    return module_str, tb_str, ir.create_cytoscape_elements(ir_root)
 
 
 # def context_to_text(

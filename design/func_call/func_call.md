@@ -153,4 +153,7 @@ iverilog -s dup_range_tb ./design/func_call/dup_range.sv ./design/func_call/dup_
 
 # goal
 iverilog -s dup_range_goal_tb ./design/func_call/dup_range_goal.sv ./design/func_call/dup_range_goal_tb.sv ./design/func_call/hrange.sv -g2005-sv -o output.log && vvp output.log
+
+# triple circle
+iverilog -s triple_circle_tb tests/api/triple_circle.sv tests/api/triple_circle_tb.sv  -g2005-sv -Wall && vvp a.out
 ```
