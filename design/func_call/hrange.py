@@ -29,7 +29,8 @@ def hrange(base, limit, step):
 def dup_range_goal(base, limit, step):
     inst = hrange(base, limit, step)
     for i, j in inst:
-        yield i
+        if i > 4:
+            yield i
         yield j
 
 

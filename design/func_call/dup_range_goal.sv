@@ -20,7 +20,7 @@ print(list(hrange(*(0, 10, 2))))
 */
 
 module hrange (
-    // Function parameters:
+    // Function parameters (only need to be set when start is high):
     input wire signed [31:0] base,
     input wire signed [31:0] limit,
     input wire signed [31:0] step,
@@ -32,7 +32,7 @@ module hrange (
     // Implements a ready/valid handshake based on
     // http://www.cjdrake.com/readyvalid-protocol-primer.html
     input wire _ready, // set high when caller is ready for output
-    output reg _valid, // is high if output is valid
+    output reg _valid, // is high if output values are valid
 
     output reg _done, // is high if module done outputting
 
@@ -108,7 +108,8 @@ endmodule
 def dup_range_goal(base, limit, step):
     inst = hrange(base, limit, step)
     for i, j in inst:
-        yield i
+        if i > 4:
+            yield i
         yield j
 
 
@@ -118,7 +119,7 @@ print(list(dup_range_goal(*(0, 10, 2))))
 */
 
 module dup_range_goal (
-    // Function parameters:
+    // Function parameters (only need to be set when start is high):
     input wire signed [31:0] base,
     input wire signed [31:0] limit,
     input wire signed [31:0] step,
@@ -130,7 +131,7 @@ module dup_range_goal (
     // Implements a ready/valid handshake based on
     // http://www.cjdrake.com/readyvalid-protocol-primer.html
     input wire _ready, // set high when caller is ready for output
-    output reg _valid, // is high if output is valid
+    output reg _valid, // is high if output values are valid
 
     output reg _done, // is high if module done outputting
 
@@ -140,8 +141,9 @@ module dup_range_goal (
     localparam _state_0_call_0 = 0;
     localparam _state_0_for_0 = 1;
     localparam _state_0_for_1 = 2;
-    localparam _state_1_call_0 = 3;
-    localparam _state_done = 4;
+    localparam _state_0_for_1_t_0 = 3;
+    localparam _state_1_call_0 = 4;
+    localparam _state_done = 5;
     // Global variables
     reg signed [31:0] _i;
     reg signed [31:0] _j;
@@ -205,10 +207,17 @@ module dup_range_goal (
                         _valid <= 1;
                         _state <= _state_0_call_0;
                     end
-                    _state_0_for_1: begin
+                    _state_0_for_1_t_0: begin
                         _0 <= _i;
                         _valid <= 1;
                         _state <= _state_0_for_0;
+                    end
+                    _state_0_for_1: begin
+                        if ($signed(_i > $signed(4))) begin
+                            _state <= _state_0_for_1_t_0;
+                        end else begin
+                            _state <= _state_0_for_0;
+                        end
                     end
                     _state_0_call_0: begin
                         _inst_hrange__ready <= 1;

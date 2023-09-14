@@ -210,11 +210,13 @@ class Generator2Graph:
             counter = 0
             while True:
                 yield f"{prefix}_call_{counter}"
+                counter += 1
 
         def unique_edge_gen():
             counter = 0
             while True:
                 yield f"{prefix}_call_{counter}_e"
+                counter += 1
 
         unique_node = unique_node_gen()
         unique_edge = unique_edge_gen()
@@ -238,7 +240,7 @@ class Generator2Graph:
 
         edge_to_head = ir.ClockedEdge(unique_id=next(unique_edge), child=head)
         second_ifelse0 = ir.IfElseNode(
-            unique_id=f"{prefix}_for_done_0",
+            unique_id=next(unique_node),
             condition=inst.signals.done_signal,
             true_edge=done_edge,
             false_edge=loop_edge,
@@ -247,7 +249,7 @@ class Generator2Graph:
             unique_id=next(unique_edge), child=second_ifelse0
         )
         second_ifelse1 = ir.IfElseNode(
-            unique_id=f"{prefix}_for_done_1",
+            unique_id=next(unique_node),
             condition=inst.signals.done_signal,
             true_edge=done_edge,
             false_edge=edge_to_head,
@@ -286,7 +288,7 @@ class Generator2Graph:
             unique_id=next(unique_edge), child=capture_head
         )
         first_ifelse = ir.IfElseNode(
-            unique_id=f"{prefix}_for_loop",
+            unique_id=next(unique_node),
             condition=ir.UBinOp(
                 inst.signals.ready_signal, "&&", inst.signals.valid_signal
             ),
