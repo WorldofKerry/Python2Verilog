@@ -209,8 +209,11 @@ class TestVerilogify(unittest.TestCase):
             #     yield x, y
 
         triple_circle(50, 50, 8)
-        module, tb, cytoscape = context_to_text_and_dump(ns[triple_circle.__name__])
         # warnings.warn(module)
         # warnings.warn(tb)
+        module, tb, cytoscape = context_to_text_and_dump(ns[triple_circle.__name__])
         with open(Path(__file__).parent / "triple_circle_cytoscape.log", mode="w") as f:
+            f.write(str(cytoscape))
+        module, tb, cytoscape = context_to_text_and_dump(ns[circle_lines.__name__])
+        with open(Path(__file__).parent / "circle_lines_cytoscape.log", mode="w") as f:
             f.write(str(cytoscape))

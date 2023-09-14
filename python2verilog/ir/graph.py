@@ -341,7 +341,11 @@ class YieldNode(Vertex, BasicElement):
         """
         To string
         """
-        return f"yield {str(self._stmts)}"
+        string = "yield ["
+        for stmt in self._stmts:
+            string += stmt.to_string() + ", "
+        string = string[:-2] + "]"
+        return string
 
 
 class DoneNode(Vertex, Element):
