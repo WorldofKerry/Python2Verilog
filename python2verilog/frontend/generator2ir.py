@@ -281,7 +281,7 @@ class Generator2Graph:
                 unique_id=next(unique_node), lvalue=caller, rvalue=callee
             )
             capture_node = capture_node.child
-            if not self._context.is_declared(str(caller)):
+            if not self._context.is_declared(caller.ver_name):
                 self._context.add_global_var(caller)
 
         capture_node.child = edge_to_second_ifelse0

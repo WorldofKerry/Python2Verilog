@@ -105,7 +105,10 @@ class CodeGen:
             ver.Statement(comment="Global variables"),
         ]
 
-        body += [ver.Declaration(v, reg=True, signed=True) for v in context.global_vars]
+        body += [
+            ver.Declaration(v.ver_name, reg=True, signed=True)
+            for v in context.global_vars
+        ]
 
         body += [
             ver.Declaration(var.ver_name, reg=True, signed=True)
@@ -302,7 +305,7 @@ class CodeGen:
             string += "%0d, " * (len(self.context.output_vars) - 1)
             string += '%0d", _valid, _ready'
             for var in self.context.output_vars:
-                string += f", {var}"
+                string += f", {var.ver_name}"
             string += ");"
             return ver.Statement(literal=string)
 

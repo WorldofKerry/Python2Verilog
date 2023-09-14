@@ -29,7 +29,6 @@ class Expression(GenericRepr):
         return self.string
 
     def __str__(self):
-        # raise RuntimeError()
         return self.to_string()
 
     def __eq__(self, other: object):
@@ -131,7 +130,13 @@ class Ternary(Expression):
         super().__init__(self.to_string())
 
     def to_string(self):
-        return f"({str(self.condition)} ? {str(self.left)} : {str(self.right)})"
+        return (
+            f"({self.condition.to_string()} ? {self.left.to_string()}"
+            f" : {self.right.to_string()})"
+        )
+
+    def verilog(self):
+        return f"({self.condition.verilog()} ? {self.left.verilog()} : {self.right.verilog()})"
 
 
 class UBinOp(Expression):
@@ -261,4 +266,10 @@ class UnaryOp(Expression):
         """
         string
         """
-        return f"{self.oper}({self.expr})"
+        return f"{self.oper}({self.expr.to_string()})"
+
+    def verilog(self):
+        """
+        Verilog
+        """
+        return f"{self.oper}({self.expr.verilog()})"

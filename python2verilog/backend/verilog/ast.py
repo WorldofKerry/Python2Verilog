@@ -370,10 +370,10 @@ class Declaration(Statement):
         signed: bool = False,
         **kwargs,
     ):
-        self.size = size
-        self.reg = reg
-        self.signed = signed
-        self.name = name
+        self.size = get_typed(size, int)
+        self.reg = get_typed(reg, bool)
+        self.signed = get_typed(signed, bool)
+        self.name = get_typed(name, str)
         super().__init__(*args, **kwargs)
 
     def to_lines(self):
