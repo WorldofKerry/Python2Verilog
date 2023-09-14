@@ -256,7 +256,7 @@ class Pow(UBinOp):
         super().__init__(left, "**", right)
 
 
-class Mod(UBinOp):
+class _Mod(UBinOp):
     """
     <left> % <right>
     """
@@ -286,3 +286,38 @@ class UnaryOp(Expression):
         Verilog
         """
         return f"{self.oper}({self.expr.verilog()})"
+
+
+class ModWrapper(Expression):
+    """
+    <left> % <right>
+    """
+
+    def __init__(self, left: Expression, right: Expression):
+        self.left = get_typed(left, Expression)
+        self.right = get_typed(right, Expression)
+        super().__init__(self.__class__.__name__)
+
+    def verilog(self):
+        """
+        Verilog
+        """
+        return Ternary(
+            UBinOp(self.left, "<", Int(0)),
+            Ternary(
+                UBinOp(self.right, ">=", Int(0)),
+                UnaryOp("-", _Mod(self.left, self.right)),
+                _Mod(self.left, self.right),
+            ),
+            Ternary(
+                UBinOp(self.right, "<", Int(0)),
+                UnaryOp("-", _Mod(self.left, self.right)),
+                _Mod(self.left, self.right),
+            ),
+        ).verilog()
+
+    def to_string(self):
+        """
+        String
+        """
+        return f"({self.left.to_string()} % {self.right.to_string()})"

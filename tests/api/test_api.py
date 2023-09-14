@@ -214,6 +214,7 @@ class TestVerilogify(unittest.TestCase):
         module, tb, cytoscape = context_to_text_and_dump(ns[triple_circle.__name__])
         with open(Path(__file__).parent / "triple_circle_cytoscape.log", mode="w") as f:
             f.write(str(cytoscape))
+        # python3 python2verilog/utils/cytoscape.py  tests/aptriple_circlees_cytoscape.log
         module, tb, cytoscape = context_to_text_and_dump(ns[circle_lines.__name__])
         with open(Path(__file__).parent / "circle_lines_cytoscape.log", mode="w") as f:
             f.write(str(cytoscape))

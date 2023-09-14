@@ -403,23 +403,23 @@ class Generator2Graph:
             )
 
         if isinstance(expr.op, pyast.FloorDiv):
-            var_a = self.__parse_expression(expr.left)
-            var_b = self.__parse_expression(expr.right)
+            left = self.__parse_expression(expr.left)
+            right = self.__parse_expression(expr.right)
             return ir.Ternary(
                 condition=ir.BinOp(
-                    left=ir.BinOp(left=var_a, right=var_b, oper="%"),
+                    left=ir.BinOp(left=left, right=right, oper="%"),
                     right=ir.Int(0),
                     oper="===",
                 ),
-                left=ir.BinOp(var_a, "/", var_b),
+                left=ir.BinOp(left, "/", right),
                 right=ir.BinOp(
-                    ir.BinOp(var_a, "/", var_b),
+                    ir.BinOp(left, "/", right),
                     "-",
                     ir.BinOp(
                         ir.UBinOp(
-                            ir.BinOp(var_a, "<", ir.Int(0)),
+                            ir.BinOp(left, "<", ir.Int(0)),
                             "^",
-                            ir.BinOp(var_b, "<", ir.Int(0)),
+                            ir.BinOp(right, "<", ir.Int(0)),
                         ),
                         "&",
                         ir.Int(1),
@@ -427,21 +427,9 @@ class Generator2Graph:
                 ),
             )
         if isinstance(expr.op, pyast.Mod):
-            var_a = self.__parse_expression(expr.left)
-            var_b = self.__parse_expression(expr.right)
-            return ir.Ternary(
-                ir.UBinOp(var_a, "<", ir.Int(0)),
-                ir.Ternary(
-                    ir.UBinOp(var_b, ">=", ir.Int(0)),
-                    ir.UnaryOp("-", ir.Mod(var_a, var_b)),
-                    ir.Mod(var_a, var_b),
-                ),
-                ir.Ternary(
-                    ir.UBinOp(var_b, "<", ir.Int(0)),
-                    ir.UnaryOp("-", ir.Mod(var_a, var_b)),
-                    ir.Mod(var_a, var_b),
-                ),
-            )
+            left = self.__parse_expression(expr.left)
+            right = self.__parse_expression(expr.right)
+            return ir.ModWrapper(left, right)
         raise TypeError(
             "Error: unexpected binop type", type(expr.op), pyast.dump(expr.op)
         )

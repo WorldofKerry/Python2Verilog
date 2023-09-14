@@ -13,7 +13,7 @@ from .expressions import (
     Expression,
     Int,
     LessThan,
-    Mod,
+    ModWrapper,
     Mul,
     Pow,
     State,
