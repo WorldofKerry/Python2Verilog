@@ -188,13 +188,15 @@ class TestVerilogify(unittest.TestCase):
 
         @verilogify(namespace=ns, mode=Modes.OVERWRITE, optimization_level=0)
         def triple_circle(centre_x, centre_y, radius):
+            # noqa
             c_x = centre_x
             c_y = centre_y
             c_x1 = c_x + radius // 2
             c_y1 = c_y + radius * 2 // 6
-            c_x - radius // 2
-            c_y + radius * 2 // 6
-            c_y - radius * 2 // 6
+            c_x2 = c_x - radius // 2
+            c_y2 = c_y + radius * 2 // 6
+            c_x3 = c_x
+            c_y3 = c_y - radius * 2 // 6
 
             gen0 = circle_lines(c_x1, c_y1, radius)
             for x, y, a, b, c, d in gen0:
