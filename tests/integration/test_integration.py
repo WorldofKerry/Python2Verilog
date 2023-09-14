@@ -20,7 +20,7 @@ from python2verilog.extern.iverilog import (
     run_iverilog_with_files,
 )
 from python2verilog.utils.smart_asserts import get_typed
-from tools.visualization import make_visual
+from python2verilog.utils.visualization import make_visual
 
 from .cases import TEST_CASES
 
