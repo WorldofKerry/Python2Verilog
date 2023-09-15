@@ -206,38 +206,51 @@ class CodeGen:
             ...
         end
         """
-        # The first case can be included here
-        mapping = {
-            ir.Expression(var.ver_name): ir.Expression(var.py_name)
-            for var in context.input_vars
-        }
-
         then_body: list[ver.Statement] = []
-        for var in context.input_vars:
+        if context.optimization_level > 0:
+            # The first case can be included here
+            mapping = {
+                ir.Expression(var.ver_name): ir.Expression(var.py_name)
+                for var in context.input_vars
+            }
+
+            for var in context.input_vars:
+                then_body.append(
+                    ver.NonBlockingSubsitution(
+                        ir.Expression(var.ver_name), ir.Expression(var.py_name)
+                    )
+                )
+
+            stmt_stack: list[ver.Statement] = []  # backwards replace using dfs
+            for item in root.case_items:
+                if item.condition == ir.Expression(context.entry_state):
+                    stmt_stack += item.statements
+                    then_body += item.statements
+                    root.case_items.remove(item)
+                    break
+
+            while stmt_stack:
+                stmt = stmt_stack.pop()
+                if isinstance(stmt, ver.NonBlockingSubsitution):
+                    stmt.rvalue = backwards_replace(stmt.rvalue, mapping)
+                elif isinstance(stmt, ver.IfElse):
+                    stmt.condition = backwards_replace(stmt.condition, mapping)
+                    stmt_stack += stmt.then_body
+                    stmt_stack += stmt.else_body
+                else:
+                    raise TypeError(f"Unexpected {type(stmt)} {stmt}")
+        else:
+            for var in context.input_vars:
+                then_body.append(
+                    ver.NonBlockingSubsitution(
+                        ir.Expression(var.ver_name), ir.Expression(var.py_name)
+                    )
+                )
             then_body.append(
                 ver.NonBlockingSubsitution(
-                    ir.Expression(var.ver_name), ir.Expression(var.py_name)
+                    context.state_var, ir.Expression(context.entry_state)
                 )
             )
-
-        stmt_stack: list[ver.Statement] = []  # backwards replace using dfs
-        for item in root.case_items:
-            if item.condition == ir.Expression(context.entry_state):
-                stmt_stack += item.statements
-                then_body += item.statements
-                root.case_items.remove(item)
-                break
-
-        while stmt_stack:
-            stmt = stmt_stack.pop()
-            if isinstance(stmt, ver.NonBlockingSubsitution):
-                stmt.rvalue = backwards_replace(stmt.rvalue, mapping)
-            elif isinstance(stmt, ver.IfElse):
-                stmt.condition = backwards_replace(stmt.condition, mapping)
-                stmt_stack += stmt.then_body
-                stmt_stack += stmt.else_body
-            else:
-                raise TypeError(f"Unexpected {type(stmt)} {stmt}")
 
         if_else = ver.IfElse(
             ir.Expression("_start"),
