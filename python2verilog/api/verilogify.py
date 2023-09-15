@@ -10,7 +10,7 @@ import logging
 import textwrap
 from functools import wraps
 from types import FunctionType
-from typing import Optional
+from typing import Optional, Protocol
 
 from python2verilog import ir
 from python2verilog.api.modes import Modes
@@ -21,6 +21,11 @@ from python2verilog.utils.smart_asserts import (
     assert_typed_dict,
     get_typed,
 )
+
+
+class Verilogified(Protocol):
+    _python2verilog_context: ir.Context
+    _python2verilog_original_func: FunctionType
 
 
 # pylint: disable=too-many-locals
