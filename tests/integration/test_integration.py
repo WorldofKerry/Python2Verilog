@@ -219,12 +219,7 @@ class BaseTestCases:
                 logging.debug("writing expected")
                 with open(FILES_IN_ABS_DIR["expected"], mode="w") as expected_file:
                     for output in expected:
-                        if len(output) > 1:
-                            expected_file.write(f"{str(output)[1:-1]}\n")
-                        else:
-                            expected_file.write(
-                                f"{str(output)[1:-2]}\n"
-                            )  # remove trailing comma
+                        expected_file.write(f"{str(output)[1:-1]}\n")
 
                 logging.debug("making visual and writing it")
                 make_visual(
@@ -318,12 +313,7 @@ class BaseTestCases:
             if args.write:
                 with open(FILES_IN_ABS_DIR["filtered_actual"], mode="w") as filtered_f:
                     for output in filtered_actual:
-                        if len(output) > 1:
-                            filtered_f.write(f"{str(output)[1:-1]}\n")
-                        else:
-                            filtered_f.write(
-                                f"{str(output)[1:-2]}\n"
-                            )  # remove trailing comma
+                        filtered_f.write(f"{str(output)[1:-1]}\n")
 
                 make_visual(filtered_actual, FILES_IN_ABS_DIR["actual_visual"])
 
