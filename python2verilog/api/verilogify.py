@@ -23,23 +23,6 @@ from python2verilog.utils.smart_asserts import (
 )
 
 
-def get_func_ast_from_func(func: FunctionType):
-    """
-    Given a function, gets its ast
-
-    :return: ast rooted at function
-    """
-    tree = ast.parse(textwrap.dedent(inspect.getsource(func)))
-    assert len(tree.body) == 1
-
-    func_tree = tree.body[0]
-    assert isinstance(
-        func_tree, ast.FunctionDef
-    ), f"Got {type(func_tree)} expected {ast.FunctionDef}"
-
-    return func_tree
-
-
 # pylint: disable=too-many-locals
 @decorator_with_args
 def verilogify(
