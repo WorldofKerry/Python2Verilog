@@ -152,6 +152,15 @@ module dup_range_goal (
     reg signed [31:0] _limit;
     reg signed [31:0] _step;
     // ================ Function Instance ================
+    reg [31:0] _inst_hrange_base;
+    reg [31:0] _inst_hrange_limit;
+    reg [31:0] _inst_hrange_step;
+    wire [31:0] _inst_hrange_0;
+    wire [31:0] _inst_hrange_1;
+    wire _inst_hrange__valid;
+    wire _inst_hrange__done;
+    reg _inst_hrange__start;
+    reg _inst_hrange__ready;
     hrange _inst (
         .base(_inst_hrange_base),
         .limit(_inst_hrange_limit),
@@ -162,18 +171,9 @@ module dup_range_goal (
         ._done(_inst_hrange__done),
         ._clock(_clock),
         ._start(_inst_hrange__start),
-        ._reset(_inst_hrange__reset),
+        ._reset(_reset),
         ._ready(_inst_hrange__ready)
         );
-    reg [31:0] _inst_hrange_base;
-    reg [31:0] _inst_hrange_limit;
-    reg [31:0] _inst_hrange_step;
-    wire [31:0] _inst_hrange_0;
-    wire [31:0] _inst_hrange_1;
-    wire _inst_hrange__valid;
-    wire _inst_hrange__done;
-    reg _inst_hrange__start;
-    reg _inst_hrange__ready;
     // Core
     always @(posedge _clock) begin
         _done <= 0;

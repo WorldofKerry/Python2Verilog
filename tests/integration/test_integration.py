@@ -16,8 +16,8 @@ from matplotlib import pyplot as plt
 
 from python2verilog import ir
 from python2verilog.api.wrappers import text_to_verilog
-from python2verilog.extern import iverilog
-from python2verilog.extern.iverilog import (
+from python2verilog.simulation import iverilog
+from python2verilog.simulation.iverilog import (
     run_iverilog_with_fifos,
     run_iverilog_with_files,
 )
