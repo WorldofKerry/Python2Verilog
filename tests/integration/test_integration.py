@@ -15,8 +15,8 @@ import pytest
 from matplotlib import pyplot as plt
 
 from python2verilog import ir
-from python2verilog.api.wrappers import text_to_verilog
-from python2verilog.simulation import iverilog
+from python2verilog import simulation
+from python2verilog.api.text import text_to_verilog
 from python2verilog.simulation.iverilog import (
     run_iverilog_with_fifos,
     run_iverilog_with_files,
@@ -297,7 +297,7 @@ class BaseTestCases:
                             produced stdout: {stdout}",
             )
 
-            actual_raw = list(iverilog.parse_stdout(stdout))
+            actual_raw = list(simulation.parse_stdout(stdout))
 
             if args.write:
                 with open(FILES_IN_ABS_DIR["actual"], mode="w") as filtered_f:
@@ -308,10 +308,10 @@ class BaseTestCases:
             statistics["Simu (ms)"] = time_delta_ms
 
             try:
-                filtered_actual = list(iverilog.strip_signals(actual_raw))
-            except iverilog.UnknownValue as e:
+                filtered_actual = list(simulation.strip_signals(actual_raw))
+            except simulation.UnknownValue as e:
                 logging.error(
-                    f"{function_name} {len(filtered_actual)} {row} {e}\n{FILES_IN_ABS_DIR['module']}\n{FILES_IN_ABS_DIR['testbench']}"
+                    f"{function_name} {len(filtered_actual)} {e}\n{FILES_IN_ABS_DIR['module']}\n{FILES_IN_ABS_DIR['testbench']}"
                 )
 
             if args.write:

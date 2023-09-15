@@ -1,6 +1,8 @@
 import sys
 from pathlib import Path
 
+from python2verilog.api.exit_handler import namespace_to_verilog
+
 P2V_PATH = Path(__file__).parent.absolute().resolve().parent.parent
 sys.path.insert(0, str(P2V_PATH))
 
@@ -54,3 +56,5 @@ output = list(hrange(0, 10, 2))
 output = list(dup_range(0, 10, 2))
 output = list(dup_range_goal(0, 10, 2))
 print(output)
+
+module, testbench = namespace_to_verilog(goal_namespace)
