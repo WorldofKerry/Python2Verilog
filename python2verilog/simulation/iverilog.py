@@ -7,7 +7,7 @@ import os
 import signal
 import subprocess
 import tempfile
-from typing import Generator, Iterable, Optional
+from typing import Iterable, Optional
 
 
 def make_iverilog_cmd(top_level_module: str, files: Iterable[str]):
