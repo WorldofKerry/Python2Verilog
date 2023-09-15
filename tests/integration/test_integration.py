@@ -6,6 +6,7 @@ import re
 import subprocess
 import time
 import unittest
+import warnings
 from typing import Any, Optional
 
 import networkx as nx
@@ -15,6 +16,7 @@ from matplotlib import pyplot as plt
 
 from python2verilog import ir
 from python2verilog.api.wrappers import text_to_verilog
+from python2verilog.extern import iverilog
 from python2verilog.extern.iverilog import (
     run_iverilog_with_fifos,
     run_iverilog_with_files,
@@ -295,10 +297,7 @@ class BaseTestCases:
                             produced stdout: {stdout}",
             )
 
-            actual_raw: list[list[str]] = []
-            for line in stdout.splitlines():
-                row = [elem.strip() for elem in line.split(",")]
-                actual_raw.append(row)
+            actual_raw = list(iverilog.parse_stdout(stdout))
 
             if args.write:
                 with open(FILES_IN_ABS_DIR["actual"], mode="w") as filtered_f:
