@@ -76,35 +76,52 @@ first = ((a + b) * (a + b)) - (5 / ((a + b) * (a + b)))
     add = llmod.get_function("add")
 
     def replace_loads(instr: llvm.ValueRef):
-        print(instr)
-        print(instr._kind)
+        # print(instr._kind)
         instr._kind = "instruction"
         if all([str(instr.opcode) != opcode for opcode in ["load", "store"]]):
-            print("TRUE")
             print(instr)
+            # print("TRUE")
+            # print(instr)
             if instr.opcode:
                 for operand in instr.operands:
                     replace_loads(operand)
-            print("TRUE_DONE")
+            # print("TRUE_DONE")
         else:
-            print("FALSE")
-            print(instr)
-            for operand in instr.operands:
-                operand._kind = "instruction"
-                print("operand", operand, "opcode", operand.opcode)
-                if operand.opcode:
-                    print("operand", operand)
-                    replace_loads(operand)
-            # print(list(instr.operands))
+            # print("mapping", instr)
+            # print("FALSE")
+            # print(instr)
+            if str(instr.opcode) == "store":
+                for operand in instr.operands:
+                    operand._kind = "instruction"
+                    # print("operand", operand, "opcode", operand.opcode)
+                    if operand.opcode:
+                        # print("operand", operand)
+                        replace_loads(operand)
+                # print(list(instr.operands))
+                for key, input in inputs.items():
+                    if f"%{input.name}" in str(instr).strip().split("=")[0]:
+                        print(f"{key} -> %{input.name}")
+            else:
+                print("input", instr)
+                for key, input in inputs.items():
+                    if f"%{input.name}" in str(instr).strip().split("=")[0]:
+                        print(f"{key} -> %{input.name}")
 
     # print(dir(add))
     code = ""
-    dict(inputs)
+    print("STARTING CODEGEN")
+    mapping = dict(inputs)
+    print("mapping", mapping)
     for block in add.blocks:
         for instr in block.instructions:
             if str(instr.opcode) == "store":
                 replace_loads(instr)
-            code += str(instr)
+                print("store", instr)
+                continue
+            if str(instr.opcode) == "load":
+                continue
+            code += str(instr) + "\n"
+    print("CODE")
     print(code)
 
 
