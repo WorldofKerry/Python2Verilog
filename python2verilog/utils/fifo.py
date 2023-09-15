@@ -10,7 +10,7 @@ from typing import Iterator
 
 
 @contextmanager
-def temp_fifo() -> Iterator[os.PathLike[str]]:
+def temp_fifo() -> Iterator[str]:
     """
     Create a temporary fifo
     """
@@ -18,7 +18,7 @@ def temp_fifo() -> Iterator[os.PathLike[str]]:
     filename = os.path.join(tmpdir, "fifo")  # Temporary filename
     os.mkfifo(filename)  # Create FIFO
     try:
-        yield Path(filename)
+        yield filename
     finally:
         os.unlink(filename)  # Remove file
         os.rmdir(tmpdir)  # Remove directory
