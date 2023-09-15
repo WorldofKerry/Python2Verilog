@@ -183,9 +183,11 @@ class BaseTestCases:
                 generator_inst = _locals[function_name](*test_case)
                 size = None
 
-                for iter_, output in enumerate(generator_inst):
-                    if isinstance(output, int):
-                        output = (output,)
+                for iter_, raw_output in enumerate(generator_inst):
+                    if isinstance(raw_output, int):
+                        output = (raw_output,)
+                    else:
+                        output = raw_output
                     get_typed(output, tuple)
 
                     if size is None:
@@ -198,7 +200,7 @@ class BaseTestCases:
                     for e in output:
                         assert isinstance(e, int)
 
-                    expected.append(output)
+                    expected.append(raw_output)
 
                     if iter_ >= 100000:
                         err_msg = f"capped generator outputs to {iter_} iterations"

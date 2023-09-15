@@ -1,3 +1,7 @@
+"""
+Parses Verilog display statements
+"""
+
 from typing import Generator, Iterable
 
 
@@ -13,7 +17,7 @@ def parse_stdout(stdout: str) -> Generator[tuple[str, ...], None, None]:
 
 def strip_signals(
     actual_raw: Iterable[tuple[str, ...]],
-) -> Generator[tuple[int, ...], None, None]:
+) -> Generator[tuple[int, ...], None, None] | Generator[int, None, None]:
     """
     Implementation-specific (based on testbench output)
     Assumes assumes first two signals to be valid and wait
@@ -26,7 +30,11 @@ def strip_signals(
         assert len(row) >= 2  # [valid, ready, ...]
         if row[0] == "1" and row[1] == "1":
             try:
-                yield tuple(int(elem) for elem in row[2:])
+                outputs = row[2:]
+                if len(outputs) == 1:
+                    yield int(outputs[0])
+                else:
+                    yield tuple(int(elem) for elem in outputs)
             except ValueError as e:
                 raise UnknownValue(f"Unknown logic value in outputs {row}") from e
 

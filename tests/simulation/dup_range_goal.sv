@@ -1,18 +1,20 @@
 /*
 
 # Python Function
-@verilogify(
-    mode=Modes.OVERWRITE,
-    namespace=goal_namespace,
-)
-def hrange(base, limit, step):
-    i = base
-    while i < limit:
-        yield i, i
-        i += step
+        @verilogify(
+            mode=Modes.OVERWRITE,
+            namespace=goal_namespace,
+        )
+        def hrange(base, limit, step):
+            i = base
+            while i < limit:
+                yield i, i
+                i += step
 
 
 # Test Cases
+print(list(hrange(*(0, 10, 2))))
+print(list(hrange(*(0, 10, 2))))
 print(list(hrange(*(0, 10, 2))))
 print(list(hrange(*(0, 10, 2))))
 print(list(hrange(*(0, 10, 2))))
@@ -90,20 +92,21 @@ endmodule
 /*
 
 # Python Function
-@verilogify(
-    mode=Modes.OVERWRITE,
-    namespace=goal_namespace,
-    optimization_level=1,
-)
-def dup_range_goal(base, limit, step):
-    inst = hrange(base, limit, step)
-    for i, j in inst:
-        if i > 4:
-            yield i
-        yield j
+        @verilogify(
+            mode=Modes.OVERWRITE,
+            namespace=goal_namespace,
+            optimization_level=1,
+        )
+        def dup_range_goal(base, limit, step):
+            inst = hrange(base, limit, step)
+            for i, j in inst:
+                if i > 4:
+                    yield i
+                yield j
 
 
 # Test Cases
+print(list(dup_range_goal(*(0, 10, 2))))
 print(list(dup_range_goal(*(0, 10, 2))))
 
 */
