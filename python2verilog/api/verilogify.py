@@ -10,7 +10,7 @@ import logging
 import textwrap
 from functools import wraps
 from types import FunctionType
-from typing import Optional, Protocol
+from typing import Optional, Protocol, cast
 
 from python2verilog import ir
 from python2verilog.api.modes import Modes
@@ -21,11 +21,6 @@ from python2verilog.utils.smart_asserts import (
     assert_typed_dict,
     get_typed,
 )
-
-
-class Verilogified(Protocol):
-    _python2verilog_context: ir.Context
-    _python2verilog_original_func: FunctionType
 
 
 # pylint: disable=too-many-locals
@@ -104,14 +99,27 @@ def verilogify(
         return func(*args, **kwargs)
 
     @wraps(func)
-    def function_wrapper(*args, **kwargs):
-        logging.error("Non-generator functions currently not supported")
-        return func(*args, **kwargs)
+    def function_wrapper(*_0, **_1):
+        raise TypeError("Non-generator functions currently not supported")
 
     wrapper = (
         generator_wrapper if inspect.isgeneratorfunction(func) else function_wrapper
     )
-    wrapper._python2verilog_context = context
-    wrapper._python2verilog_func = func
+    wrapper._python2verilog_context = context  # type: ignore # pylint: disable=protected-access
+    wrapper._python2verilog_original_func = func  # type: ignore # pylint: disable=protected-access
     namespace[wrapper.__name__] = context
     return wrapper
+
+
+def get_context(verilogified: FunctionType) -> ir.Context:
+    """
+    Gets context from verilogified function
+    """
+    return verilogified._python2verilog_context  # type: ignore # pylint: disable=protected-access
+
+
+def get_original_func(verilogified: FunctionType) -> FunctionType:
+    """
+    Gets original function from verilogified function
+    """
+    return verilogified._python2verilog_original_func  # type: ignore # pylint: disable=protected-access
