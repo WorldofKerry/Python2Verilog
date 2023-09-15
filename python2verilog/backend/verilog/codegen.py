@@ -446,7 +446,7 @@ class CodeGen:
 
         if self.context:
             module = ver.Module(
-                f"{self.context.name}_tb",
+                f"{self.context.name}{self.context.testbench_suffix}",
                 [],
                 [],
                 body=setups + [initial_loop],

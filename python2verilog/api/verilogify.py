@@ -76,7 +76,10 @@ def verilogify(
             raise RuntimeError(
                 "Keyword arguments not yet supported, use positional arguments only"
             )
+        # if len(context.test_cases) == 1 and "dup_range_goal" in func.__name__:
+        #     raise RuntimeError()
         context.test_cases.append(args)
+        print(f"wrapper_test_cases {func.__name__}", context.test_cases)
         if not context.input_types:
             context.input_types = [type(arg) for arg in args]
         else:
@@ -91,7 +94,6 @@ def verilogify(
                 context.output_types = [type(arg) for arg in result]
                 context.default_output_vars()
             else:
-                # logging.debug(f"Next yield gave {result}")
                 context.check_output_types(result)
 
         return func(*args, **kwargs)
@@ -104,5 +106,7 @@ def verilogify(
     wrapper = (
         generator_wrapper if inspect.isgeneratorfunction(func) else function_wrapper
     )
+    wrapper._python2verilog_context = context
+    wrapper._python2verilog_func = func
     namespace[wrapper.__name__] = context
     return wrapper

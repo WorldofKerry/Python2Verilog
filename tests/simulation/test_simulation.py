@@ -35,23 +35,7 @@ class TestSimulation(unittest.TestCase):
                     yield i
                 yield j
 
-        # @verilogify(
-        #     mode=Modes.OVERWRITE,
-        #     module_output="./design/func_call/dup_range.sv",
-        #     testbench_output="./design/func_call/dup_range_tb.sv",
-        #     optimization_level=0,
-        # )
-        def dup_range(base, limit, step):
-            counter = base
-            inst = 0  # fake generator
-            while counter < limit:
-                value = inst  # fake iter
-                yield value
-                yield value
-                counter += step
-
-        output = list(hrange(0, 10, 2))
-        output = list(dup_range(0, 10, 2))
+        output = list(hrange(1, 11, 3))
         output = list(dup_range_goal(0, 10, 2))
         print(output)
 
@@ -65,5 +49,9 @@ class TestSimulation(unittest.TestCase):
             self.assertFalse(err)
             actual = list(strip_signals(parse_stdout(stdout)))
             print(actual)
-            expected = list(dup_range_goal(0, 10, 2))
+            expected = []
+            test_cases = list(dup_range_goal._python2verilog_context.test_cases)
+            for test in test_cases:
+                expected += list(dup_range_goal(*test))
+            print("test cases", goal_namespace[dup_range_goal.__name__].test_cases)
             self.assertListEqual(actual, expected)

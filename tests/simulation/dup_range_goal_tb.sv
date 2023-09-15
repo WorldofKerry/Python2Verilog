@@ -32,10 +32,10 @@ module hrange_tb (
         _reset = 1;
         @(negedge _clock);
         _reset = 0;
-        // ============ Test Case 0 with arguments (0, 10, 2) ============
-        base = $signed(0);
-        limit = $signed(10);
-        step = $signed(2);
+        // ============ Test Case 0 with arguments (1, 11, 3) ============
+        base = $signed(1);
+        limit = $signed(11);
+        step = $signed(3);
         _start = 1;
         @(negedge _clock);
         base = 'x; // only need inputs when start is set

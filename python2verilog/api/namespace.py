@@ -55,11 +55,9 @@ def namespace_to_file(path: Path, namespace: dict[str, ir.Context]):
     with open(str(path) + ".sv", mode="w", encoding="utf8") as module_file, open(
         str(path) + "_tb.sv", mode="w", encoding="utf8"
     ) as testbench_file:
-        for context in namespace.values():
-            if Modes.write(context.mode):
-                module, testbench = context_to_text(context=context)
-                module_file.write(module)
-                testbench_file.write(testbench)
+        module, testbench = namespace_to_verilog(namespace)
+        module_file.write(module)
+        testbench_file.write(testbench)
 
 
 def namespace_to_verilog(namespace: dict[str, ir.Context]) -> tuple[str, str]:

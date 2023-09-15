@@ -37,6 +37,8 @@ class Context(GenericReprAndStr):
 
     # pylint: disable=too-many-instance-attributes
     name: str = ""
+    testbench_suffix: str = "_tb"
+
     test_cases: list[tuple[int]] = field(default_factory=list)
 
     py_func: Optional[FunctionType] = None
