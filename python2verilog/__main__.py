@@ -10,7 +10,7 @@ import logging
 import os
 
 from python2verilog import ir
-from python2verilog.api.wrappers import text_to_text, text_to_verilog
+from python2verilog.api import text_to_text
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -111,7 +111,6 @@ if __name__ == "__main__":
             file_path=input_file_path,
             optimization_level=args.optimization_level,
         )
-        # print(module_str, testbench_str)
 
         with open(
             os.path.abspath(args.output), mode="w+", encoding="utf8"
