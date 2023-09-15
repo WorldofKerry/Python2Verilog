@@ -10,9 +10,9 @@ from typing import Any, Callable
 
 from python2verilog import ir
 from python2verilog.api.file_namespaces import file_namespaces
+from python2verilog.api.from_context import context_to_text
 from python2verilog.api.modes import Modes
 from python2verilog.api.namespace import namespace_to_file
-from python2verilog.api.wrappers import context_to_text
 from python2verilog.utils.decorator import decorator_with_args
 from python2verilog.utils.smart_asserts import (
     assert_typed,

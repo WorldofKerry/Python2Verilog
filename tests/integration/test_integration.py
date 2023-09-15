@@ -15,7 +15,7 @@ import pytest
 from matplotlib import pyplot as plt
 
 from python2verilog import ir, simulation
-from python2verilog.api.text import text_to_verilog
+from python2verilog.api.from_text import text_to_verilog
 from python2verilog.simulation.iverilog import (
     run_iverilog_with_fifos,
     run_iverilog_with_files,

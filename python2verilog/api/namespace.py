@@ -3,14 +3,14 @@ Handles namespaces
 """
 
 from __future__ import annotations
-import logging
 
+import logging
 from pathlib import Path
 
 from python2verilog import ir
 from python2verilog.api.file_namespaces import file_namespaces
+from python2verilog.api.from_context import context_to_text
 from python2verilog.api.modes import Modes
-from python2verilog.api.wrappers import context_to_text
 
 
 def get_namespace(path: Path | str) -> dict[str, ir.Context]:

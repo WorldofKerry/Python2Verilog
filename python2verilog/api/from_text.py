@@ -8,9 +8,9 @@ from types import FunctionType
 from typing import Any, Optional
 
 from python2verilog import ir
+from python2verilog.api.from_context import context_to_verilog
 from python2verilog.api.modes import Modes
 from python2verilog.api.namespace import get_namespace
-from python2verilog.api.wrappers import context_to_verilog
 from python2verilog.backend import verilog
 from python2verilog.frontend.generator2ir import Generator2Graph
 from python2verilog.optimizer.optimizer import OptimizeGraph
