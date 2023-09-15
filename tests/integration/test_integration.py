@@ -307,17 +307,12 @@ class BaseTestCases:
             statistics["Ver Clks"] = len(actual_raw)
             statistics["Simu (ms)"] = time_delta_ms
 
-            filtered_actual = []
-            for row in actual_raw:
-                if row[0] == "1":
-                    try:
-                        filtered_actual.append(
-                            tuple([int(elem) for elem in row[2:]])
-                        )  # [valid, wait, ...]
-                    except ValueError as e:
-                        logging.error(
-                            f"{function_name} {len(filtered_actual)} {row} {e}\n{FILES_IN_ABS_DIR['module']}\n{FILES_IN_ABS_DIR['testbench']}"
-                        )
+            try:
+                filtered_actual = list(iverilog.strip_signals(actual_raw))
+            except iverilog.UnknownValue as e:
+                logging.error(
+                    f"{function_name} {len(filtered_actual)} {row} {e}\n{FILES_IN_ABS_DIR['module']}\n{FILES_IN_ABS_DIR['testbench']}"
+                )
 
             if args.write:
                 with open(FILES_IN_ABS_DIR["filtered_actual"], mode="w") as filtered_f:

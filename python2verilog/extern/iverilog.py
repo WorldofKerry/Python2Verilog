@@ -180,4 +180,10 @@ def strip_signals(
             try:
                 yield tuple(int(elem) for elem in row[2:])
             except ValueError as e:
-                raise ValueError(f"Unknown logic value in outputs {row}") from e
+                raise UnknownValue(f"Unknown logic value in outputs {row}") from e
+
+
+class UnknownValue(Exception):
+    """
+    An unexpected 'x' or 'z' was encountered
+    """
