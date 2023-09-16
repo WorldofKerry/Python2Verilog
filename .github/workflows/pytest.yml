@@ -60,7 +60,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        pytest-args: ["-RS", "-FRS", "-F", ""]
+        pytest-args: ["", "-RS", "-FRS", "-F"]
         pytest-opti-levels: ["-L 0 1 2 4 8", "-L 16"]
         python-version: ["3.9", "3.10", "3.11"]
 
@@ -83,7 +83,7 @@ jobs:
           sudo apt-get install iverilog expect
 
       - name: Download OSS CAD Suite for yosys
-        if: ${{ contains(matrix.pytest-args, 'synthesis') }}
+        if: ${{ contains(matrix.pytest-args, 'S') }}
         run: |
           wget -nv https://github.com/YosysHQ/oss-cad-suite-build/releases/download/2023-08-02/oss-cad-suite-linux-x64-20230802.tgz
           tar -xzf oss-cad-suite-linux-x64-20230802.tgz

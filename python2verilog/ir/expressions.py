@@ -9,20 +9,20 @@ from __future__ import annotations
 
 import copy
 
-from ..utils.assertions import get_typed, get_typed_list
-from ..utils.generics import GenericRepr
+from python2verilog.utils.assertions import assert_typed, get_typed, get_typed_list
+from python2verilog.utils.generics import GenericRepr
 
 
 class Expression(GenericRepr):
     """
-    A String (that can be equated to something)
+    An expression that can be equated
     """
 
     def __init__(self, string: str):
         assert isinstance(string, str)
         self.string = string
 
-    def to_string(self):
+    def to_string(self) -> str:
         """
         To String
         """
@@ -32,12 +32,18 @@ class Expression(GenericRepr):
         return self.to_string()
 
     def __eq__(self, other: object):
-        if get_typed(other, Expression):
-            return str(self) == str(other)
+        if isinstance(other, Expression):
+            return self.verilog() == other.verilog()
         return False
 
     def __hash__(self):
-        return hash(str(self))
+        return hash(self.to_string())
+
+    def verilog(self) -> str:
+        """
+        In Verilog syntax
+        """
+        return self.to_string()
 
 
 class Int(Expression):
@@ -46,8 +52,20 @@ class Int(Expression):
     """
 
     def __init__(self, value: int):
-        assert isinstance(value, int)
-        super().__init__(f"$signed({str(value)})")
+        self.value = get_typed(value, int)
+        super().__init__(str(self.__class__))
+
+    def verilog(self) -> str:
+        """
+        In Verilog
+        """
+        return f"$signed({str(self.value)})"
+
+    def to_string(self) -> str:
+        """
+        String
+        """
+        return str(self.value)
 
 
 class UInt(Expression):
@@ -115,10 +133,16 @@ class Ternary(Expression):
         self.condition = condition
         self.left = left
         self.right = right
-        super().__init__(str(self))
+        super().__init__(self.to_string())
 
     def to_string(self):
-        return f"{str(self.condition)} ? {str(self.left)} : {str(self.right)}"
+        return (
+            f"({self.condition.to_string()} ? {self.left.to_string()}"
+            f" : {self.right.to_string()})"
+        )
+
+    def verilog(self):
+        return f"({self.condition.verilog()} ? {self.left.verilog()} : {self.right.verilog()})"
 
 
 class UBinOp(Expression):
@@ -158,17 +182,24 @@ class UBinOp(Expression):
     def to_string(self):
         return f"({self._left.to_string()} {self._oper} {self._right.to_string()})"
 
+    def verilog(self):
+        """
+        To Verilog
+        """
+        return f"({self._left.verilog()} {self._oper} {self._right.verilog()})"
+
 
 class BinOp(UBinOp):
     """
-    $signed(<left> <op> <right>)
+    <left> <op> <right>
 
+    In verilog the signed specifier is used.
     For mixed unsigned and signed operations, the following page explains well
     https://www.01signal.com/verilog-design/arithmetic/signed-wire-reg/
     """
 
-    def to_string(self):
-        return "$signed" + super().to_string()
+    def verilog(self):
+        return "$signed" + super().verilog()
 
 
 class Add(BinOp):
@@ -225,7 +256,7 @@ class Pow(UBinOp):
         super().__init__(left, "**", right)
 
 
-class Mod(UBinOp):
+class _Mod(UBinOp):
     """
     <left> % <right>
     """
@@ -248,4 +279,84 @@ class UnaryOp(Expression):
         """
         string
         """
-        return f"{self.oper}({self.expr})"
+        return f"{self.oper}({self.expr.to_string()})"
+
+    def verilog(self):
+        """
+        Verilog
+        """
+        return f"{self.oper}({self.expr.verilog()})"
+
+
+class Mod(BinOp):
+    """
+    <left> % <right>
+    """
+
+    def __init__(self, left: Expression, right: Expression):
+        self.left = get_typed(left, Expression)
+        self.right = get_typed(right, Expression)
+        super().__init__(left, "%", right)
+
+    def verilog(self):
+        """
+        Verilog
+        """
+        return Ternary(
+            UBinOp(self.left, "<", Int(0)),
+            Ternary(
+                UBinOp(self.right, ">=", Int(0)),
+                UnaryOp("-", _Mod(self.left, self.right)),
+                _Mod(self.left, self.right),
+            ),
+            Ternary(
+                UBinOp(self.right, "<", Int(0)),
+                UnaryOp("-", _Mod(self.left, self.right)),
+                _Mod(self.left, self.right),
+            ),
+        ).verilog()
+
+    def to_string(self):
+        """
+        String
+        """
+        return f"({self.left.to_string()} % {self.right.to_string()})"
+
+
+class FloorDiv(BinOp):
+    """
+    <left> // <right>
+
+    Follows Python conventions
+    """
+
+    def __init__(self, left: Expression, right: Expression):
+        self.left = get_typed(left, Expression)
+        self.right = get_typed(right, Expression)
+        super().__init__(left, "//", right)
+
+    def verilog(self):
+        """
+        Verilog
+        """
+        return Ternary(
+            condition=BinOp(
+                left=BinOp(left=self.left, right=self.right, oper="%"),
+                right=Int(0),
+                oper="===",
+            ),
+            left=BinOp(self.left, "/", self.right),
+            right=BinOp(
+                BinOp(self.left, "/", self.right),
+                "-",
+                BinOp(
+                    UBinOp(
+                        BinOp(self.left, "<", Int(0)),
+                        "^",
+                        BinOp(self.right, "<", Int(0)),
+                    ),
+                    "&",
+                    Int(1),
+                ),
+            ),
+        ).verilog()

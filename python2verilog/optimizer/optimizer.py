@@ -46,7 +46,7 @@ def backwards_replace(expr: ir.Expression, mapping: dict[ir.Expression, ir.Expre
     elif isinstance(expr, ir.UnaryOp):
         expr.expr = backwards_replace(expr.expr, mapping)
     else:
-        logging.debug(f"TODO: use the State class {type(expr)} {expr}")
+        logging.debug(f"TODO: use the State class {type(expr)} {expr.to_string()}")
     return expr
 
 
@@ -261,16 +261,12 @@ class OptimizeGraph:
                 #     child=result,
                 # )
 
-                edge = ir.ClockedEdge(
-                    unique_id=f"{element.child.unique_id}_{make_unique()}_optimal",
-                    child=element.child.child,
-                )
                 new_node = ir.YieldNode(
                     unique_id=f"{element.unique_id}_{make_unique()}_optimal",
                     stmts=updated,
                     name=element.name,
                 )
-                new_node.optimal_child = edge
+                new_node.optimal_child = element.child
                 return new_node
 
             if isinstance(element, ir.DoneNode):

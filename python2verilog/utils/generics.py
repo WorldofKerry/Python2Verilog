@@ -26,8 +26,16 @@ class GenericRepr:
     """
 
     def __repr__(self):
-        items = [f"{key}=({repr(value)})" for key, value in self.__dict__.items()]
+        items = [f"{key}=({repr(value)})" for key, value in self._repr().items()]
         return f"{self.__class__.__name__}({','.join(items)})"
+
+    def _repr(self):
+        """
+        Representation of self
+
+        To print recursive types
+        """
+        return self.__dict__
 
 
 class GenericReprAndStr(GenericRepr):
@@ -36,4 +44,4 @@ class GenericReprAndStr(GenericRepr):
     """
 
     def __str__(self):
-        return f"{self.__class__.__name__}\n{pretty_dict(self.__dict__)}"
+        return f"{self.__class__.__name__}\n{pretty_dict(self._repr())}"

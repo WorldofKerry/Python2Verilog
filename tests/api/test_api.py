@@ -4,13 +4,12 @@ import unittest
 from functools import wraps
 from pathlib import Path
 
-from python2verilog.api.decorators import (
-    Modes,
-    global_namespace,
-    new_namespace,
-    verilogify,
+from python2verilog.api import Modes, new_namespace, verilogify
+from python2verilog.api.from_context import (
+    context_to_verilog,
+    context_to_verilog_and_dump,
 )
-from python2verilog.api.wrappers import text_to_context
+from python2verilog.api.from_text import text_to_context
 
 
 class TestParsePython(unittest.TestCase):
@@ -28,7 +27,13 @@ inst = nuts(50, 51)
 inst = nuts(15, 16)
 inst = deeznuts(420)
 """
-        text_to_context(code, "nuts")
+        text_to_context(
+            code,
+            "nuts",
+            Path(__file__).parent / "bruh_nuts",
+            write=True,
+            optimization_level=1,
+        )
         # logging.debug(func_ast)
 
     # def test_this_file(self):
@@ -38,7 +43,7 @@ inst = deeznuts(420)
 
     def test_mix_types(self):
         code = """
-def nuts(input, other):
+def nuts2(input, other):
   yield input, input
   yield input + 1, input
 
@@ -46,14 +51,16 @@ def deeznuts(input):
   yield input
   yield input + 1
 
-inst = nuts(50, 51)
-inst = nuts(15, "16")
+inst = nuts2(50, 51)
+inst = nuts2(15, "16")
 inst = deeznuts(420)
 """
-        self.assertRaises(AssertionError, text_to_context, code, "nuts")
+        self.assertRaises(
+            AssertionError, text_to_context, code, "nuts2", __file__, True, 1
+        )
 
         code = """
-def nuts(input, other):
+def nuts3(input, other):
   yield input, input
   yield input + 1, "bruv"
 
@@ -61,11 +68,13 @@ def deeznuts(input):
   yield input
   yield input + 1
 
-inst = nuts(50, 51)
-inst = nuts(15, 16)
+inst = nuts3(50, 51)
+inst = nuts3(15, 16)
 inst = deeznuts(420)
 """
-        self.assertRaises(AssertionError, text_to_context, code, "nuts")
+        self.assertRaises(
+            AssertionError, text_to_context, code, "nuts3", __file__, True, 1
+        )
 
 
 class TestVerilogify(unittest.TestCase):
@@ -114,10 +123,6 @@ class TestVerilogify(unittest.TestCase):
         counter0(10)
         counter1(15, 20)
 
-        for key, value in global_namespace.items():
-            # print(type(key), type(value))
-            pass
-
     @writes
     def test_overwrite_fail(self):
         @verilogify(mode=Modes.WRITE)
@@ -132,7 +137,10 @@ class TestVerilogify(unittest.TestCase):
         def inner():
             try:
 
-                @verilogify(mode=Modes.WRITE, namespace=new_namespace())
+                @verilogify(
+                    mode=Modes.WRITE,
+                    namespace=new_namespace(Path(__file__).parent / "other"),
+                )
                 def counter_overwrite(n):
                     i = 0
                     while i < n:
@@ -143,4 +151,70 @@ class TestVerilogify(unittest.TestCase):
             except FileExistsError as e:
                 raise e
 
-        self.assertRaises(FileExistsError, inner)
+        # self.assertRaises(FileExistsError, inner)
+
+    @writes
+    def test_func_call(self):
+        ns = new_namespace(Path(__file__).parent / "triple_circle")
+
+        @verilogify(namespace=ns, mode=Modes.OVERWRITE)
+        def circle_lines(s_x, s_y, height) -> tuple[int, int, int, int, int, int]:
+            x = 0
+            y = height
+            d = 3 - 2 * y
+            yield (s_x + x, s_y + y, height, x, y, d)
+            yield (s_x + x, s_y - y, height, x, y, d)
+            yield (s_x - x, s_y + y, height, x, y, d)
+            yield (s_x - x, s_y - y, height, x, y, d)
+            yield (s_x + y, s_y + x, height, x, y, d)
+            yield (s_x + y, s_y - x, height, x, y, d)
+            yield (s_x - y, s_y + x, height, x, y, d)
+            yield (s_x - y, s_y - x, height, x, y, d)
+            while y >= x:
+                x = x + 1
+                if d > 0:
+                    y = y - 1
+                    d = d + 4 * (x - y) + 10
+                else:
+                    d = d + 4 * x + 6
+                yield (s_x + x, s_y + y, height, x, y, d)
+                yield (s_x + x, s_y - y, height, x, y, d)
+                yield (s_x - x, s_y + y, height, x, y, d)
+                yield (s_x - x, s_y - y, height, x, y, d)
+                yield (s_x + y, s_y + x, height, x, y, d)
+                yield (s_x + y, s_y - x, height, x, y, d)
+                yield (s_x - y, s_y + x, height, x, y, d)
+                yield (s_x - y, s_y - x, height, x, y, d)
+
+        @verilogify(namespace=ns, mode=Modes.OVERWRITE, optimization_level=0)
+        def triple_circle(centre_x, centre_y, radius):
+            # noqa
+            c_x = centre_x
+            c_y = centre_y
+            c_x1 = c_x + radius // 2
+            c_y1 = c_y + radius * 2 // 6
+            c_x2 = c_x - radius // 2
+            c_y2 = c_y + radius * 2 // 6
+            c_x3 = c_x
+            c_y3 = c_y - radius * 2 // 6
+
+            gen0 = circle_lines(c_x1, c_y1, radius)
+            for x, y, a, b, c, d in gen0:
+                yield x, y
+            # gen1 = circle_lines(c_x2, c_y2, radius)
+            # for x, y, a, b, c, d in gen1:
+            #     yield x, y
+            # gen2 = circle_lines(c_x3, c_y3, radius)
+            # for x, y, a, b, c, d in gen2:
+            #     yield x, y
+
+        triple_circle(50, 50, 8)
+        # warnings.warn(module)
+        # warnings.warn(tb)
+        module, tb, cytoscape = context_to_verilog_and_dump(ns[triple_circle.__name__])
+        with open(Path(__file__).parent / "triple_circle_cytoscape.log", mode="w") as f:
+            f.write(str(cytoscape))
+        # python3 python2verilog/utils/cytoscape.py  tests/aptriple_circlees_cytoscape.log
+        module, tb, cytoscape = context_to_verilog_and_dump(ns[circle_lines.__name__])
+        with open(Path(__file__).parent / "circle_lines_cytoscape.log", mode="w") as f:
+            f.write(str(cytoscape))

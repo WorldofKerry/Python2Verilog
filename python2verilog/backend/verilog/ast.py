@@ -9,7 +9,7 @@ from typing import Optional
 
 from ... import ir
 from ...utils.assertions import assert_typed_dict, get_typed, get_typed_list
-from ...utils.string import ImplementsToLines, Indent, Lines
+from ...utils.lines import ImplementsToLines, Indent, Lines
 
 
 class AtPosedge(ir.Expression):
@@ -79,9 +79,9 @@ class LocalParam(Statement):
     localparam <name> = <value>;
     """
 
-    def __init__(self, name: ir.Expression, value: ir.UInt, *args, **kwargs):
+    def __init__(self, name: str, value: ir.UInt, *args, **kwargs):
         assert isinstance(value, ir.UInt)
-        super().__init__(f"localparam {name} = {value};", *args, **kwargs)
+        super().__init__(f"localparam {name} = {value.verilog()};", *args, **kwargs)
 
 
 class AtPosedgeStatement(Statement):
@@ -114,7 +114,7 @@ class Instantiation(Statement):
         self,
         module_name: str,
         given_name: str,
-        port_connections: dict[ir.Expression | str, ir.Expression | str],
+        port_connections: dict[str, str],
         *args,
         **kwargs,
     ):
@@ -156,7 +156,7 @@ class Module(ImplementsToLines):
         outputs: list[str],
         body: Optional[list[Statement]] = None,
         is_not_testbench=True,
-        localparams: Optional[dict[ir.Expression, ir.UInt]] = None,
+        localparams: Optional[dict[str, ir.UInt]] = None,
         header: Optional[Lines] = None,
     ):
         self.name = name
@@ -224,12 +224,12 @@ class Module(ImplementsToLines):
         else:
             lines = Lines()
         lines += f"module {self.name} ("
-        for line in self.input:
-            lines += Indent(1) + line
-        for line in self.output:
-            lines += Indent(1) + line
-        if len(lines) > 1:  # This means there are ports
+        lines.concat(self.input, indent=1)
+        lines.concat(self.output, indent=1)
+
+        if len(lines) > 2:  # This means there are ports
             lines[-1] = lines[-1][0:-1]  # removes last comma
+
         lines += ");"
         lines.concat(self.local_params, 1)
         for stmt in self.body:
@@ -287,7 +287,7 @@ class Always(Statement):
         """
         To Verilog
         """
-        lines = Lines(f"always {self.trigger.to_string()} begin")
+        lines = Lines(f"always {self.trigger.verilog()} begin")
         for stmt in self.body:
             lines.concat(stmt.to_lines(), 1)
         lines += "end"
@@ -334,7 +334,7 @@ class Subsitution(Statement):
         Converts to Verilog
         """
         assert isinstance(self.oper, str), "Subclasses need to set self.type"
-        self.literal = f"{self.lvalue} {self.oper} {self.rvalue};"
+        self.literal = f"{self.lvalue.verilog()} {self.oper} {self.rvalue.verilog()};"
         return super().to_lines()
 
 
@@ -363,17 +363,17 @@ class Declaration(Statement):
 
     def __init__(
         self,
-        name: ir.Expression | str,
+        name: str,
         *args,
         size: int = 32,
         reg: bool = False,
         signed: bool = False,
         **kwargs,
     ):
-        self.size = size
-        self.reg = reg
-        self.signed = signed
-        self.name = name
+        self.size = get_typed(size, int)
+        self.reg = get_typed(reg, bool)
+        self.signed = get_typed(signed, bool)
+        self.name = get_typed(name, str)
         super().__init__(*args, **kwargs)
 
     def to_lines(self):
@@ -479,7 +479,7 @@ class IfElse(Statement):
 
     def to_lines(self):
         lines = Lines()
-        lines += f"if ({self.condition.to_string()}) begin"
+        lines += f"if ({self.condition.verilog()}) begin"
         for stmt in self.then_body:
             lines.concat(stmt.to_lines(), indent=1)
         if self.else_body:

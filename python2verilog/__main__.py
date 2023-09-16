@@ -10,7 +10,7 @@ import logging
 import os
 
 from python2verilog import ir
-from python2verilog.api.wrappers import text_to_text, text_to_verilog
+from python2verilog.api import text_to_text
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -29,6 +29,7 @@ if __name__ == "__main__":
         type=str,
         help="Name of function to be converted, defaults to python filename stem",
         default="",
+        required=True,
     )
 
     parser.add_argument(
@@ -114,6 +115,12 @@ if __name__ == "__main__":
         with open(
             os.path.abspath(args.output), mode="w+", encoding="utf8"
         ) as module_file:
+            print(
+                "attempting to write",
+                module_str[:50],
+                "to",
+                os.path.abspath(args.output),
+            )
             module_file.write(module_str)
 
         if args.test_cases != "":

@@ -54,11 +54,20 @@ class Lines:
     def __rshift__(self, indent: int):
         self.indent(indent)
 
+    @staticmethod
+    def __indent(indent_amount: int, text: str):
+        """
+        Indent non-empty lines
+        """
+        if len(text.strip()) > 0:
+            return Indent(indent_amount) + text
+        return text
+
     def indent(self, indent_amount: int):
         """
         Indent all lines by amount
         """
-        self.lines = [Indent(indent_amount) + line for line in self.lines]
+        self.lines = [self.__indent(indent_amount, line) for line in self.lines]
         return self
 
     def to_string(self, indent: int = 0):
@@ -67,7 +76,7 @@ class Lines:
         """
         output = ""
         for buffer in self.lines:
-            output += Indent(indent) + buffer + "\n"
+            output += self.__indent(indent, buffer) + "\n"
         return output
 
     def add(self, other: str):
@@ -92,7 +101,7 @@ class Lines:
         """
         assert isinstance(other, Lines), f"got {type(other)} instead"
         for line in other.lines:
-            self.lines.append(Indent(indent) + line)
+            self.lines.append(self.__indent(indent, line))
         return self
 
     @staticmethod

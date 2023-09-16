@@ -6,6 +6,7 @@ import re
 import subprocess
 import time
 import unittest
+import warnings
 from typing import Any, Optional
 
 import networkx as nx
@@ -13,14 +14,11 @@ import pandas as pd
 import pytest
 from matplotlib import pyplot as plt
 
-from python2verilog import ir
-from python2verilog.api.wrappers import text_to_verilog
-from python2verilog.extern.iverilog import (
-    run_iverilog_with_fifos,
-    run_iverilog_with_files,
-)
+from python2verilog import ir, simulation
+from python2verilog.api.from_text import text_to_verilog
+from python2verilog.simulation.iverilog import run_with_fifos, run_with_files
 from python2verilog.utils.assertions import get_typed
-from tools.visualization import make_visual
+from python2verilog.utils.visualization import make_visual
 
 from .cases import TEST_CASES
 
@@ -96,7 +94,7 @@ class BaseTestCases:
                 df = pd.DataFrame(
                     self.all_statistics, columns=self.all_statistics[0].keys()
                 )
-                title = f" Statistics for {__class__.__name__} "
+                title = f" Statistics for {self.__class__.__name__} "
                 table = df.to_markdown()
                 table_width = len(table.partition("\n")[0])
                 pad = table_width - len(title)
@@ -182,9 +180,11 @@ class BaseTestCases:
                 generator_inst = _locals[function_name](*test_case)
                 size = None
 
-                for iter_, output in enumerate(generator_inst):
-                    if isinstance(output, int):
-                        output = (output,)
+                for iter_, raw_output in enumerate(generator_inst):
+                    if isinstance(raw_output, int):
+                        output = (raw_output,)
+                    else:
+                        output = raw_output
                     get_typed(output, tuple)
 
                     if size is None:
@@ -197,7 +197,7 @@ class BaseTestCases:
                     for e in output:
                         assert isinstance(e, int)
 
-                    expected.append(output)
+                    expected.append(raw_output)
 
                     if iter_ >= 100000:
                         err_msg = f"capped generator outputs to {iter_} iterations"
@@ -216,12 +216,7 @@ class BaseTestCases:
                 logging.debug("writing expected")
                 with open(FILES_IN_ABS_DIR["expected"], mode="w") as expected_file:
                     for output in expected:
-                        if len(output) > 1:
-                            expected_file.write(f"{str(output)[1:-1]}\n")
-                        else:
-                            expected_file.write(
-                                f"{str(output)[1:-2]}\n"
-                            )  # remove trailing comma
+                        expected_file.write(f"{str(output)[1:-1]}\n")
 
                 logging.debug("making visual and writing it")
                 make_visual(
@@ -245,6 +240,7 @@ class BaseTestCases:
                 extra_test_cases=test_cases,
                 file_path=FILES_IN_ABS_DIR["python"],
                 optimization_level=optimization_level,
+                write=False,
             )
 
             if args.write:
@@ -267,7 +263,7 @@ class BaseTestCases:
 
             time_started = time.time()
             if args.write:
-                stdout, stderr = run_iverilog_with_files(
+                stdout, stderr = run_with_files(
                     f"{function_name}_tb",
                     {
                         FILES_IN_ABS_DIR["module"]: module_str,
@@ -276,7 +272,7 @@ class BaseTestCases:
                     timeout=len(expected),
                 )
             else:
-                stdout, stderr = run_iverilog_with_fifos(
+                stdout, stderr = run_with_fifos(
                     f"{function_name}_tb",
                     {
                         FILES_IN_ABS_DIR["module_fifo"]: module_str,
@@ -294,10 +290,7 @@ class BaseTestCases:
                             produced stdout: {stdout}",
             )
 
-            actual_raw: list[list[str]] = []
-            for line in stdout.splitlines():
-                row = [elem.strip() for elem in line.split(",")]
-                actual_raw.append(row)
+            actual_raw = list(simulation.parse_stdout(stdout))
 
             if args.write:
                 with open(FILES_IN_ABS_DIR["actual"], mode="w") as filtered_f:
@@ -307,27 +300,17 @@ class BaseTestCases:
             statistics["Ver Clks"] = len(actual_raw)
             statistics["Simu (ms)"] = time_delta_ms
 
-            filtered_actual = []
-            for row in actual_raw:
-                if row[0] == "1":
-                    try:
-                        filtered_actual.append(
-                            tuple([int(elem) for elem in row[2:]])
-                        )  # [valid, wait, ...]
-                    except ValueError as e:
-                        logging.error(
-                            f"{function_name} {len(filtered_actual)} {row} {e}\n{FILES_IN_ABS_DIR['module']}\n{FILES_IN_ABS_DIR['testbench']}"
-                        )
+            try:
+                filtered_actual = list(simulation.strip_signals(actual_raw))
+            except simulation.UnknownValue as e:
+                logging.error(
+                    f"{function_name} {len(filtered_actual)} {e}\n{FILES_IN_ABS_DIR['module']}\n{FILES_IN_ABS_DIR['testbench']}"
+                )
 
             if args.write:
                 with open(FILES_IN_ABS_DIR["filtered_actual"], mode="w") as filtered_f:
                     for output in filtered_actual:
-                        if len(output) > 1:
-                            filtered_f.write(f"{str(output)[1:-1]}\n")
-                        else:
-                            filtered_f.write(
-                                f"{str(output)[1:-2]}\n"
-                            )  # remove trailing comma
+                        filtered_f.write(f"{str(output)[1:-1]}\n")
 
                 make_visual(filtered_actual, FILES_IN_ABS_DIR["actual_visual"])
 
@@ -361,9 +344,7 @@ class BaseTestCases:
                     stdout = syn_process.stdout.read()
                     stderr = syn_process.stderr.read()
 
-                if stderr:
-                    logging.critical(stderr)
-
+                self.assertFalse(stderr.strip())
                 stats = stdout[stdout.find("Printing statistics.") :]
 
                 def snake_case(text):

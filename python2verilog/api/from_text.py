@@ -8,18 +8,19 @@ from types import FunctionType
 from typing import Any, Optional
 
 from python2verilog import ir
+from python2verilog.api.from_context import context_to_codegen
 from python2verilog.api.modes import Modes
+from python2verilog.api.namespace import get_namespace
 from python2verilog.backend import verilog
 from python2verilog.frontend.generator2ir import Generator2Graph
 from python2verilog.optimizer.optimizer import OptimizeGraph
 from python2verilog.utils.assertions import get_typed, get_typed_list
 
-# from python2verilog.api import Modes
-
 
 def text_to_verilog(
     code: str,
     function_name: str,
+    write: bool,
     extra_test_cases: Optional[list[tuple[int]]] = None,
     file_path: str = "",
     optimization_level: int = 1,
@@ -34,12 +35,14 @@ def text_to_verilog(
         function_name=function_name,
         extra_test_cases=extra_test_cases,
         file_path=file_path,
+        write=write,
+        optimization_level=optimization_level,
     )
     assert isinstance(context, ir.Context)
     assert isinstance(extra_test_cases, list)
     context.optimization_level = optimization_level
     context.test_cases = extra_test_cases
-    return context_to_verilog(context)
+    return context_to_codegen(context)
 
 
 def text_to_text(
@@ -47,6 +50,7 @@ def text_to_text(
     function_name: str,
     extra_test_cases: Optional[list[tuple[int]]] = None,
     file_path: str = "",
+    write: bool = True,
     optimization_level: int = 1,
 ):
     """
@@ -66,6 +70,7 @@ def text_to_text(
         extra_test_cases=extra_test_cases,
         file_path=file_path,
         optimization_level=optimization_level,
+        write=write,
     )
     return code_gen.get_module_str(), code_gen.get_testbench_str()
 
@@ -73,7 +78,9 @@ def text_to_text(
 def text_to_context(
     code: str,
     function_name: str,
-    file_path: Optional[str] = None,
+    file_path: str,
+    write: bool,
+    optimization_level: int,
     extra_test_cases: Optional[list[tuple[int]]] = None,
 ):
     """
@@ -90,7 +97,7 @@ def text_to_context(
         Gets file and line number
         """
         if file_path:
-            string = file_path
+            string = str(file_path)
         else:
             string = "line"
         string += f":{node.lineno}"
@@ -101,7 +108,7 @@ def text_to_context(
     test_cases = extra_test_cases if extra_test_cases else []
 
     for node in ast.walk(tree):
-        logging.debug(f"Walking through {ast.dump(node)}")
+        # logging.debug(f"Walking through {ast.dump(node)}")
         if isinstance(node, ast.FunctionDef) and node.name == function_name:
             logging.info(f"Found function at {get_file_and_line_num(node)}")
             generator_ast = node
@@ -181,7 +188,9 @@ def text_to_context(
             if not isinstance(output, tuple):
                 output = (output,)
 
-            for i, (expected_type, actual_value) in enumerate(zip(input_types, output)):
+            for i, (expected_type, actual_value) in enumerate(
+                zip(output_types, output)
+            ):
                 assert expected_type == type(
                     actual_value
                 ), f"Expected parameter `{input_names[i]}` to be \
@@ -208,39 +217,9 @@ def text_to_context(
     context.py_ast = generator_ast
     context.py_func = generator_func
     context.py_string = func_str
+    context.optimization_level = optimization_level
+    context.mode = Modes.OVERWRITE if write else Modes.NO_WRITE
+    context.namespace = get_namespace(file_path)
+    context.namespace[function_name] = context
 
     return context
-
-
-def context_to_verilog(context: ir.Context):
-    """
-    Converts a context to verilog and its ir
-
-    :return: (codegen, ir)
-    """
-    ir_root, context = Generator2Graph(context).results
-    if context.optimization_level > 0:
-        OptimizeGraph(ir_root, threshold=context.optimization_level - 1)
-    return verilog.CodeGen(ir_root, context), ir_root
-
-
-def context_to_text_and_file(context: ir.Context):
-    """
-    Covnerts a context to a verilog module and testbench str
-
-    If decorated with write enabled, writes to designated files/streams
-
-    :return: (module, testbench) pair
-    """
-    get_typed(context, ir.Context)
-    ver_code_gen, _ = context_to_verilog(context)
-
-    module_str = ver_code_gen.get_module_str()
-    tb_str = ver_code_gen.get_testbench_str()
-    if Modes.write(context.mode):
-        context.module_file.write(module_str)
-        context.module_file.seek(0)
-        context.testbench_file.write(tb_str)
-        context.testbench_file.seek(0)
-
-    return (module_str, tb_str)
