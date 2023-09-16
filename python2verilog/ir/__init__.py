@@ -11,6 +11,7 @@ from .expressions import (
     BinOp,
     Div,
     Expression,
+    FloorDiv,
     Int,
     LessThan,
     Mod,

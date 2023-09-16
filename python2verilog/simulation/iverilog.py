@@ -9,14 +9,16 @@ import subprocess
 import tempfile
 from typing import Iterable, Optional
 
+from python2verilog.utils.assertions import assert_typed_dict
 
-def make_iverilog_cmd(top_level_module: str, files: Iterable[str]):
+
+def make_cmd(top_level_module: str, files: Iterable[str]):
     """
     Returns an iverilog command
 
     :param files: set of absolute paths to files required for simulation
     """
-    cmd = f"iverilog -g2005-sv -s {top_level_module} "
+    cmd = f"iverilog -g2005-sv -Wall -s {top_level_module} "
     cmd += " ".join(files) + " "
     # pylint: disable=consider-using-with
     cache_file = tempfile.NamedTemporaryFile(mode="r", encoding="utf8")
@@ -25,7 +27,7 @@ def make_iverilog_cmd(top_level_module: str, files: Iterable[str]):
     return cmd
 
 
-def write_data_to_paths(path_to_data: dict[str, str]):
+def _write_data_to_paths(path_to_data: dict[str, str]):
     """
     Writes data to respective path
     """
@@ -37,7 +39,7 @@ def write_data_to_paths(path_to_data: dict[str, str]):
     logging.debug("Writing data to paths done")
 
 
-def run_cmd_with_fifos(
+def _run_cmd_with_fifos(
     command: str, input_fifos: dict[str, str], timeout: Optional[int] = None
 ):
     """
@@ -47,6 +49,7 @@ def run_cmd_with_fifos(
 
     :return: (stdout, stderr/exception)
     """
+    assert_typed_dict(input_fifos, str, str)  # type: ignore
     # pylint: disable=subprocess-popen-preexec-fn
     with subprocess.Popen(
         command,
@@ -56,7 +59,7 @@ def run_cmd_with_fifos(
         stderr=subprocess.PIPE,
         preexec_fn=os.setsid,
     ) as process:
-        write_data_to_paths(input_fifos)
+        _write_data_to_paths(input_fifos)
 
         try:
             logging.debug(f"Waiting on process for {timeout}s")
@@ -72,7 +75,7 @@ def run_cmd_with_fifos(
             return process.stdout.read(), process.stderr.read()
 
 
-def run_cmd_with_files(
+def _run_cmd_with_files(
     command: str, input_files: dict[str, str], timeout: Optional[int] = None
 ):
     """
@@ -82,7 +85,8 @@ def run_cmd_with_files(
 
     :return: (stdout, stderr/exception)
     """
-    write_data_to_paths(input_files)
+    assert_typed_dict(input_files, str, str)  # type: ignore
+    _write_data_to_paths(input_files)
     # pylint: disable=subprocess-popen-preexec-fn
     with subprocess.Popen(
         command,
@@ -106,7 +110,7 @@ def run_cmd_with_files(
             return process.stdout.read(), process.stderr.read()
 
 
-def run_iverilog_with_fifos(
+def run_with_fifos(
     top_level_module: str,
     input_fifos: dict[str, str],
     timeout: Optional[int] = None,
@@ -116,17 +120,17 @@ def run_iverilog_with_fifos(
 
     :return: (stdout, stderr/exception)
     """
-    iverilog_cmd = make_iverilog_cmd(
+    iverilog_cmd = make_cmd(
         top_level_module=top_level_module,
         files=input_fifos.keys(),
     )
     logging.debug(f"Running {iverilog_cmd}")
-    return run_cmd_with_fifos(
+    return _run_cmd_with_fifos(
         command=iverilog_cmd, input_fifos=input_fifos, timeout=timeout
     )
 
 
-def run_iverilog_with_files(
+def run_with_files(
     top_level_module: str,
     input_files: dict[str, str],
     timeout: Optional[int] = None,
@@ -136,11 +140,11 @@ def run_iverilog_with_files(
 
     :return: (stdout, stderr/exception)
     """
-    iverilog_cmd = make_iverilog_cmd(
+    iverilog_cmd = make_cmd(
         top_level_module=top_level_module,
         files=input_files.keys(),
     )
     logging.debug(f"Running {iverilog_cmd}")
-    return run_cmd_with_files(
+    return _run_cmd_with_files(
         command=iverilog_cmd, input_files=input_files, timeout=timeout
     )

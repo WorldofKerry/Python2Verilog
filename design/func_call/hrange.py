@@ -5,7 +5,9 @@ P2V_PATH = Path(__file__).parent.absolute().resolve().parent.parent
 sys.path.insert(0, str(P2V_PATH))
 
 from python2verilog import Modes, verilogify
-from python2verilog.api.namespace import new_namespace
+from python2verilog.api.namespace import namespace_to_verilog, new_namespace
+from python2verilog.simulation.iverilog import make_cmd
+from python2verilog.utils.fifo import temp_fifo
 
 goal_namespace = new_namespace(Path(__file__).parent / "dup_range_goal")
 
@@ -54,3 +56,8 @@ output = list(hrange(0, 10, 2))
 output = list(dup_range(0, 10, 2))
 output = list(dup_range_goal(0, 10, 2))
 print(output)
+
+
+module, testbench = namespace_to_verilog(goal_namespace)
+with temp_fifo() as module_fifo, temp_fifo() as tb_fifo:
+    cmd = make_cmd(Path(__file__).parent / "dup_range_goal", module_fifo, tb_fifo)

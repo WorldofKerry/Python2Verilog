@@ -6,7 +6,7 @@ import ast as pyast
 
 from .. import ir
 from ..utils.assertions import get_typed, get_typed_list
-from ..utils.string import Indent, Lines
+from ..utils.lines import Indent, Lines
 
 
 def name_to_var(name: pyast.expr) -> ir.Var:
@@ -106,13 +106,19 @@ class Generator2Graph:
         # Check if contains function call
         for child in pyast.walk(node):
             if isinstance(child, pyast.Call):
+                # temp = ir.AssignNode(
+                #     unique_id=prefix,
+                #     lvalue=ir.Expression("func"),
+                #     rvalue=ir.Expression("call"),
+                # )
+                # return temp, temp
                 return self.__parse_assign_to_call(node, prefix)
         assign = ir.AssignNode(
             unique_id=prefix,
             lvalue=self.__parse_targets(node.targets),
             rvalue=self.__parse_expression(node.value),
         )
-        return (assign, assign)
+        return assign, assign
 
     def __parse_statements(
         self, stmts: list[pyast.stmt], prefix: str, nextt: ir.Element
@@ -275,7 +281,7 @@ class Generator2Graph:
                 unique_id=next(unique_node), lvalue=caller, rvalue=callee
             )
             capture_node = capture_node.child
-            if not self._context.is_declared(str(caller)):
+            if not self._context.is_declared(caller.ver_name):
                 self._context.add_global_var(caller)
 
         capture_node.child = edge_to_second_ifelse0
@@ -397,45 +403,13 @@ class Generator2Graph:
             )
 
         if isinstance(expr.op, pyast.FloorDiv):
-            var_a = self.__parse_expression(expr.left)
-            var_b = self.__parse_expression(expr.right)
-            return ir.Ternary(
-                condition=ir.BinOp(
-                    left=ir.BinOp(left=var_a, right=var_b, oper="%"),
-                    right=ir.Int(0),
-                    oper="===",
-                ),
-                left=ir.BinOp(var_a, "/", var_b),
-                right=ir.BinOp(
-                    ir.BinOp(var_a, "/", var_b),
-                    "-",
-                    ir.BinOp(
-                        ir.UBinOp(
-                            ir.BinOp(var_a, "<", ir.Int(0)),
-                            "^",
-                            ir.BinOp(var_b, "<", ir.Int(0)),
-                        ),
-                        "&",
-                        ir.Int(1),
-                    ),
-                ),
-            )
+            left = self.__parse_expression(expr.left)
+            right = self.__parse_expression(expr.right)
+            return ir.FloorDiv(left, right)
         if isinstance(expr.op, pyast.Mod):
-            var_a = self.__parse_expression(expr.left)
-            var_b = self.__parse_expression(expr.right)
-            return ir.Ternary(
-                ir.UBinOp(var_a, "<", ir.Int(0)),
-                ir.Ternary(
-                    ir.UBinOp(var_b, ">=", ir.Int(0)),
-                    ir.UnaryOp("-", ir.Mod(var_a, var_b)),
-                    ir.Mod(var_a, var_b),
-                ),
-                ir.Ternary(
-                    ir.UBinOp(var_b, "<", ir.Int(0)),
-                    ir.UnaryOp("-", ir.Mod(var_a, var_b)),
-                    ir.Mod(var_a, var_b),
-                ),
-            )
+            left = self.__parse_expression(expr.left)
+            right = self.__parse_expression(expr.right)
+            return ir.Mod(left, right)
         raise TypeError(
             "Error: unexpected binop type", type(expr.op), pyast.dump(expr.op)
         )

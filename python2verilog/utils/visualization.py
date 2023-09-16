@@ -3,12 +3,13 @@ Visualization Tools
 """
 
 import logging
+from typing import Optional
 
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt  # type: ignore
 import numpy as np
 
 
-def make_visual(generator_inst, directory: str):
+def make_visual(generator_inst, directory: Optional[str] = None):
     """
     Any iterable of tuples where the tuples are of length > 0 will work.
     Visualizes the first 3 elements of each tuple as (x, y, colour)
@@ -53,8 +54,9 @@ def make_visual(generator_inst, directory: str):
         plt.gca().invert_yaxis()
 
         # Show the plot
-        # plt.show()
-        plt.savefig(directory)
+        plt.show()
+        if directory:
+            plt.savefig(directory)
 
         plt.clf()
         plt.cla()

@@ -5,3 +5,5 @@ pandas
 tabulate
 matplotlib
 networkx[default]
+dash_cytoscape
+dash

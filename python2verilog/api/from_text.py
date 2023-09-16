@@ -8,14 +8,13 @@ from types import FunctionType
 from typing import Any, Optional
 
 from python2verilog import ir
+from python2verilog.api.from_context import context_to_codegen
 from python2verilog.api.modes import Modes
 from python2verilog.api.namespace import get_namespace
 from python2verilog.backend import verilog
 from python2verilog.frontend.generator2ir import Generator2Graph
 from python2verilog.optimizer.optimizer import OptimizeGraph
 from python2verilog.utils.assertions import get_typed, get_typed_list
-
-# from python2verilog.api import Modes
 
 
 def text_to_verilog(
@@ -43,7 +42,7 @@ def text_to_verilog(
     assert isinstance(extra_test_cases, list)
     context.optimization_level = optimization_level
     context.test_cases = extra_test_cases
-    return context_to_verilog(context)
+    return context_to_codegen(context)
 
 
 def text_to_text(
@@ -224,55 +223,3 @@ def text_to_context(
     context.namespace[function_name] = context
 
     return context
-
-
-def context_to_verilog(context: ir.Context):
-    """
-    Converts a context to verilog and its ir
-
-    :return: (codegen, ir)
-    """
-    ir_root, context = Generator2Graph(context).results
-    if context.optimization_level > 0:
-        OptimizeGraph(ir_root, threshold=context.optimization_level - 1)
-    return verilog.CodeGen(ir_root, context), ir_root
-
-
-def context_to_text(context: ir.Context) -> tuple[str, str]:
-    """
-    Covnerts a context to a verilog module and testbench str
-
-    :return: (module, testbench) pair
-    """
-    get_typed(context, ir.Context)
-    ver_code_gen, _ = context_to_verilog(context)
-
-    module_str = ver_code_gen.get_module_str()
-    tb_str = ver_code_gen.get_testbench_str()
-
-    return (module_str, tb_str)
-
-
-# def context_to_text(
-#     context: ir.Context, path: Optional[Path | str] = None
-# ) -> tuple[str, str]:
-#     """
-#     Covnerts a context to a verilog module and testbench str
-
-#     :return: (module, testbench) pair
-#     """
-#     get_typed(context, ir.Context)
-#     ver_code_gen, _ = context_to_verilog(context)
-
-#     module_str = ver_code_gen.get_module_str()
-#     tb_str = ver_code_gen.get_testbench_str()
-#     if path is None:
-#         path = inspect.stack()[1].filename
-#     namespace = Path(path).suffix("")
-#     with open(namespace + ".sv", mode="w")
-#     context.module_file.write(module_str)
-#     context.module_file.seek(0)
-#     context.testbench_file.write(tb_str)
-#     context.testbench_file.seek(0)
-
-#     return (module_str, tb_str)

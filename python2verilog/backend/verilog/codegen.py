@@ -6,7 +6,7 @@ import itertools
 import typing
 
 from python2verilog.optimizer.optimizer import backwards_replace
-from python2verilog.utils.string import Lines
+from python2verilog.utils.lines import Lines
 
 from ... import ir
 from ...utils.assertions import assert_typed_dict, get_typed, get_typed_list
@@ -105,7 +105,10 @@ class CodeGen:
             ver.Statement(comment="Global variables"),
         ]
 
-        body += [ver.Declaration(v, reg=True, signed=True) for v in context.global_vars]
+        body += [
+            ver.Declaration(v.ver_name, reg=True, signed=True)
+            for v in context.global_vars
+        ]
 
         body += [
             ver.Declaration(var.ver_name, reg=True, signed=True)
@@ -128,41 +131,46 @@ class CodeGen:
                 module.signals.ready_signal: instance.signals.ready_signal,
             }
             # defaults = dict(zip(module.signals.values(), instance.signals.values()))
-            body.append(
-                ver.Instantiation(
-                    instance.module_name,
-                    str(instance.var),
-                    typing.cast(
-                        dict[ir.Expression | str, ir.Expression | str],
-                        {
-                            key.py_name: str(value)
-                            for key, value in zip(
-                                module.input_vars,
-                                instance.inputs,
-                            )
-                        }
-                        | {
-                            str(key): str(value)
-                            for key, value in zip(
-                                module.output_vars,
-                                instance.outputs,
-                            )
-                        }
-                        | {str(key): str(value) for key, value in defaults.items()},
-                    ),
-                )
-            )
             for var in instance.inputs:
                 body.append(ver.Declaration(name=var.ver_name, reg=True))
             for var in instance.outputs:
                 body.append(ver.Declaration(name=var.ver_name))
-            body.append(ver.Declaration(name=instance.signals.valid_signal, size=1))
-            body.append(ver.Declaration(name=instance.signals.done_signal, size=1))
             body.append(
-                ver.Declaration(name=instance.signals.start_signal, size=1, reg=True)
+                ver.Declaration(name=instance.signals.valid_signal.ver_name, size=1)
             )
             body.append(
-                ver.Declaration(name=instance.signals.ready_signal, size=1, reg=True)
+                ver.Declaration(name=instance.signals.done_signal.ver_name, size=1)
+            )
+            body.append(
+                ver.Declaration(
+                    name=instance.signals.start_signal.ver_name, size=1, reg=True
+                )
+            )
+            body.append(
+                ver.Declaration(
+                    name=instance.signals.ready_signal.ver_name, size=1, reg=True
+                )
+            )
+            body.append(
+                ver.Instantiation(
+                    instance.module_name,
+                    instance.var.ver_name,
+                    {
+                        key.py_name: value.ver_name
+                        for key, value in zip(
+                            module.input_vars,
+                            instance.inputs,
+                        )
+                    }
+                    | {
+                        key.ver_name: value.ver_name
+                        for key, value in zip(
+                            module.output_vars,
+                            instance.outputs,
+                        )
+                    }
+                    | {key.ver_name: value.ver_name for key, value in defaults.items()},
+                )
             )
 
         body.append(ver.Statement(comment="Core"))
@@ -198,38 +206,51 @@ class CodeGen:
             ...
         end
         """
-        # The first case can be included here
-        mapping = {
-            ir.Expression(var.ver_name): ir.Expression(var.py_name)
-            for var in context.input_vars
-        }
-
         then_body: list[ver.Statement] = []
-        for var in context.input_vars:
+        if context.optimization_level > 0:
+            # The first case can be included here
+            mapping = {
+                ir.Expression(var.ver_name): ir.Expression(var.py_name)
+                for var in context.input_vars
+            }
+
+            for var in context.input_vars:
+                then_body.append(
+                    ver.NonBlockingSubsitution(
+                        ir.Expression(var.ver_name), ir.Expression(var.py_name)
+                    )
+                )
+
+            stmt_stack: list[ver.Statement] = []  # backwards replace using dfs
+            for item in root.case_items:
+                if item.condition == ir.Expression(context.entry_state):
+                    stmt_stack += item.statements
+                    then_body += item.statements
+                    root.case_items.remove(item)
+                    break
+
+            while stmt_stack:
+                stmt = stmt_stack.pop()
+                if isinstance(stmt, ver.NonBlockingSubsitution):
+                    stmt.rvalue = backwards_replace(stmt.rvalue, mapping)
+                elif isinstance(stmt, ver.IfElse):
+                    stmt.condition = backwards_replace(stmt.condition, mapping)
+                    stmt_stack += stmt.then_body
+                    stmt_stack += stmt.else_body
+                else:
+                    raise TypeError(f"Unexpected {type(stmt)} {stmt}")
+        else:
+            for var in context.input_vars:
+                then_body.append(
+                    ver.NonBlockingSubsitution(
+                        ir.Expression(var.ver_name), ir.Expression(var.py_name)
+                    )
+                )
             then_body.append(
                 ver.NonBlockingSubsitution(
-                    ir.Expression(var.ver_name), ir.Expression(var.py_name)
+                    context.state_var, ir.Expression(context.entry_state)
                 )
             )
-
-        stmt_stack: list[ver.Statement] = []  # backwards replace using dfs
-        for item in root.case_items:
-            if item.condition == ir.Expression(context.entry_state):
-                stmt_stack += item.statements
-                then_body += item.statements
-                root.case_items.remove(item)
-                break
-
-        while stmt_stack:
-            stmt = stmt_stack.pop()
-            if isinstance(stmt, ver.NonBlockingSubsitution):
-                stmt.rvalue = backwards_replace(stmt.rvalue, mapping)
-            elif isinstance(stmt, ver.IfElse):
-                stmt.condition = backwards_replace(stmt.condition, mapping)
-                stmt_stack += stmt.then_body
-                stmt_stack += stmt.else_body
-            else:
-                raise TypeError(f"Unexpected {type(stmt)} {stmt}")
 
         if_else = ver.IfElse(
             ir.Expression("_start"),
@@ -269,7 +290,7 @@ class CodeGen:
         """
         Get Verilog module as string
         """
-        return str(self.get_module_lines())
+        return self.get_module_lines().to_string()
 
     def get_testbench(self, random_wait: bool = False):
         """
@@ -297,7 +318,7 @@ class CodeGen:
             string += "%0d, " * (len(self.context.output_vars) - 1)
             string += '%0d", _valid, _ready'
             for var in self.context.output_vars:
-                string += f", {var}"
+                string += f", {var.ver_name}"
             string += ");"
             return ver.Statement(literal=string)
 
@@ -425,7 +446,7 @@ class CodeGen:
 
         if self.context:
             module = ver.Module(
-                f"{self.context.name}_tb",
+                f"{self.context.name}{self.context.testbench_suffix}",
                 [],
                 [],
                 body=setups + [initial_loop],
@@ -444,7 +465,7 @@ class CodeGen:
         """
         New testbench as str
         """
-        return str(self.get_testbench_lines(random_wait=random_wait))
+        return self.get_testbench_lines(random_wait=random_wait).to_string()
 
 
 class CaseBuilder:
@@ -467,7 +488,7 @@ class CaseBuilder:
         self.case.case_items.append(self.new_caseitem(root))
         have_done_state = False
         for caseitem in self.case.case_items:
-            if context.done_state == str(caseitem.condition):
+            if context.done_state == caseitem.condition.verilog():
                 have_done_state = True
         if not have_done_state:
             self.case.case_items.append(

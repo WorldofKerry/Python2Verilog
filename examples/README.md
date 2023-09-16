@@ -1,4 +1,4 @@
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/WorldofKerry/Python2Verilog/blob/main/examples/decorator_advanced.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/WorldofKerry/Python2Verilog/blob/main/examples/notebook.ipynb)
 
 # Examples
 
@@ -6,15 +6,7 @@ Two ways of using this library
 
 ## Importing the Package (Recommended)
 
-### Basic
-
-`python3 decorator_basic.py`
-
-### Advanced
-
-`python3 -m pip install -r requirements.txt`
-
-`python3 decorator_advanced.py`
+`python3 decorator.py`
 
 ## Command Line Interface
 

@@ -308,6 +308,12 @@ class AssignNode(Vertex, BasicElement):
         """
         return f"{self._lvalue.to_string()} <= {self._rvalue.to_string()}"
 
+    def verilog(self):
+        """
+        To string
+        """
+        return f"{self._lvalue.verilog()} <= {self._rvalue.verilog()}"
+
 
 class YieldNode(Vertex, BasicElement):
     """
@@ -335,7 +341,11 @@ class YieldNode(Vertex, BasicElement):
         """
         To string
         """
-        return f"yield {str(self._stmts)}"
+        string = "yield ["
+        for stmt in self._stmts:
+            string += stmt.to_string() + ", "
+        string = string[:-2] + "]"
+        return string
 
 
 class DoneNode(Vertex, Element):

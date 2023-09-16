@@ -10,30 +10,16 @@ import logging
 import textwrap
 from functools import wraps
 from types import FunctionType
-from typing import Optional
+from typing import Generator, Optional, Protocol, Union, cast
 
 from python2verilog import ir
 from python2verilog.api.modes import Modes
 from python2verilog.api.namespace import get_namespace
+from python2verilog.simulation import iverilog
+from python2verilog.simulation.display import parse_stdout, strip_signals
 from python2verilog.utils.assertions import assert_typed, assert_typed_dict, get_typed
 from python2verilog.utils.decorator import decorator_with_args
-
-
-def get_func_ast_from_func(func: FunctionType):
-    """
-    Given a function, gets its ast
-
-    :return: ast rooted at function
-    """
-    tree = ast.parse(textwrap.dedent(inspect.getsource(func)))
-    assert len(tree.body) == 1
-
-    func_tree = tree.body[0]
-    assert isinstance(
-        func_tree, ast.FunctionDef
-    ), f"Got {type(func_tree)} expected {ast.FunctionDef}"
-
-    return func_tree
+from python2verilog.utils.fifo import temp_fifo
 
 
 # pylint: disable=too-many-locals
@@ -104,18 +90,61 @@ def verilogify(
                 context.output_types = [type(arg) for arg in result]
                 context.default_output_vars()
             else:
-                # logging.debug(f"Next yield gave {result}")
                 context.check_output_types(result)
 
         return func(*args, **kwargs)
 
     @wraps(func)
-    def function_wrapper(*args, **kwargs):
-        logging.error("Non-generator functions currently not supported")
-        return func(*args, **kwargs)
+    def function_wrapper(*_0, **_1):
+        raise TypeError("Non-generator functions currently not supported")
 
     wrapper = (
         generator_wrapper if inspect.isgeneratorfunction(func) else function_wrapper
     )
+    wrapper._python2verilog_context = context  # type: ignore # pylint: disable=protected-access
+    wrapper._python2verilog_original_func = func  # type: ignore # pylint: disable=protected-access
     namespace[wrapper.__name__] = context
     return wrapper
+
+
+def get_context(verilogified: FunctionType) -> ir.Context:
+    """
+    Gets context from verilogified function
+    """
+    return verilogified._python2verilog_context  # type: ignore # pylint: disable=protected-access
+
+
+def get_original_func(verilogified: FunctionType) -> FunctionType:
+    """
+    Gets original function from verilogified function
+    """
+    return verilogified._python2verilog_original_func  # type: ignore # pylint: disable=protected-access
+
+
+def get_expected(verilogified: FunctionType) -> Generator[tuple[int, ...], None, None]:
+    """
+    Get expected output of testbench
+    """
+    generator_func = get_original_func(verilogified)
+    for test in get_context(verilogified).test_cases:
+        yield from generator_func(*test)
+
+
+def get_actual(
+    verilogified: FunctionType,
+    module: str,
+    testbench: str,
+    timeout: Optional[int] = None,
+) -> Generator[Union[tuple[int, ...], int], None, None]:
+    """
+    Get expected output of testbench
+    """
+    context = get_context(verilogified)
+    with temp_fifo() as module_fifo, temp_fifo() as tb_fifo:
+        stdout, err = iverilog.run_with_fifos(
+            f"{context.name}{context.testbench_suffix}",
+            {module_fifo: module, tb_fifo: testbench},
+            timeout=timeout,
+        )
+        assert not err
+        yield from strip_signals(parse_stdout(stdout))

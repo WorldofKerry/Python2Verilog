@@ -8,7 +8,7 @@ from __future__ import annotations
 import ast
 import copy
 import io
-from dataclasses import dataclass, field, fields
+from dataclasses import dataclass, field
 from types import FunctionType
 from typing import Any, Optional
 
@@ -33,6 +33,8 @@ class Context(GenericReprAndStr):
 
     # pylint: disable=too-many-instance-attributes
     name: str = ""
+    testbench_suffix: str = "_tb"
+
     test_cases: list[tuple[int]] = field(default_factory=list)
 
     py_func: Optional[FunctionType] = None
@@ -94,7 +96,7 @@ class Context(GenericReprAndStr):
         def check_list(list_: list):
             return isinstance(list_, list) and len(list_) > 0
 
-        assert check_list(self.input_types), self
+        assert check_list(self.input_types), "Input types not inferred"
         assert check_list(self.input_vars), self
 
         assert check_list(self.output_types), self
@@ -220,6 +222,13 @@ class Context(GenericReprAndStr):
         """
         Appends global var
         """
+        var = get_typed(var, Var)
+        if (
+            var in self._global_vars
+            or var in self._input_vars
+            or var in self.output_vars
+        ):
+            return
         self._global_vars.append(get_typed(var, Var))
 
     @property
@@ -297,10 +306,8 @@ class Context(GenericReprAndStr):
             map(lambda var: Var(f"{name}_{self.name}_{var.py_name}"), self.output_vars)
         )
         args = {
-            field.name: Var(
-                f"{name}_{self.name}__{getattr(self.signals, field.name).py_name}"
-            )
-            for field in fields(self.signals)
+            key: Var(f"{name}_{self.name}__{value.py_name}")
+            for key, value in self.signals.instance_specific()
         }
 
         signals = ProtocolSignals(**args)

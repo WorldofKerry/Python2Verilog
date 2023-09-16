@@ -4,10 +4,13 @@ Handles namespaces
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 from python2verilog import ir
 from python2verilog.api.file_namespaces import file_namespaces
+from python2verilog.api.from_context import context_to_verilog
+from python2verilog.api.modes import Modes
 
 
 def get_namespace(path: Path | str) -> dict[str, ir.Context]:
@@ -41,3 +44,33 @@ def new_namespace(path: Path | str) -> dict[str, ir.Context]:
     namespace = path.with_suffix("")
     assert namespace not in file_namespaces, f"Namespace for {namespace} already exists"
     return get_namespace(namespace)
+
+
+def namespace_to_file(path: Path, namespace: dict[str, ir.Context]):
+    """
+    Namespace to modules and testbneches files
+    """
+    logging.info(namespace_to_file.__name__)
+
+    with open(str(path) + ".sv", mode="w", encoding="utf8") as module_file, open(
+        str(path) + "_tb.sv", mode="w", encoding="utf8"
+    ) as testbench_file:
+        module, testbench = namespace_to_verilog(namespace)
+        module_file.write(module)
+        testbench_file.write(testbench)
+
+
+def namespace_to_verilog(namespace: dict[str, ir.Context]) -> tuple[str, str]:
+    """
+    Namespace to modules and testbenches str
+
+    :return: (modules, testbenches)
+    """
+    module = ""
+    testbench = ""
+    for context in namespace.values():
+        if Modes.write(context.mode):
+            mod, tb = context_to_verilog(context=context)
+            module += mod
+            testbench += tb
+    return module, testbench
