@@ -39,8 +39,10 @@ def strip_signals(  # pylint: disable=useless-return
                 except ValueError as e:
                     raise UnknownValue(f"Unknown logic value in outputs {row}") from e
         else:
-            # Usually a statement to indicate $finish
-            logging.warning(f"Skipped parsing {row}")
+            if "$finish" in " ".join(row):
+                pass
+            else:
+                raise ValueError(f"Skipped parsing {row}")
     return None  # for mypy
 
 
