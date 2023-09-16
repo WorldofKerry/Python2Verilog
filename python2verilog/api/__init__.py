@@ -12,4 +12,11 @@ from .from_context import (
 from .from_text import text_to_context, text_to_text, text_to_verilog
 from .modes import Modes
 from .namespace import new_namespace
-from .verilogify import verilogify
+from .verilogify import (
+    get_actual,
+    get_context,
+    get_expected,
+    get_namespace,
+    get_original_func,
+    verilogify,
+)

@@ -1,15 +1,13 @@
+import logging
 import unittest
 from io import StringIO
 
-from python2verilog.api import Modes, context_to_verilog, verilogify
+from python2verilog.api import Modes, context_to_verilog, get_context, verilogify
 
 
 class TestVerilogify(unittest.TestCase):
     def test_main(self):
         namespace = {}
-
-        StringIO()
-        StringIO()
 
         @verilogify(namespace=namespace)
         def count(n):
@@ -18,14 +16,11 @@ class TestVerilogify(unittest.TestCase):
                 yield (i)
                 i += 1
 
-        count(10)
+        list(count(10))
 
-        print(str(namespace[count.__name__]))
-        # self.assertIn(count.__name__, str(namespace[count.__name__]))
+        logging.debug(str(namespace[count.__name__]))
+        self.assertEqual(count.__name__, get_context(count).name)
 
-        module, testbench = context_to_verilog(namespace[count.__name__])
+        module, testbench = context_to_verilog(get_context(count))
         self.assertIn(count.__name__, testbench)
         self.assertIn(count.__name__, module)
-
-        # self.assertIn(count.__name__, module_stream.read())
-        # self.assertIn(count.__name__, testbench_stream.read())
