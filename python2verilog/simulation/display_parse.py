@@ -37,7 +37,7 @@ def strip_signals(  # pylint: disable=useless-return
                     yield tuple(int(elem) for elem in outputs)
             except ValueError as e:
                 raise UnknownValue(f"Unknown logic value in outputs {row}") from e
-    return None
+    return None  # for mypy
 
 
 class UnknownValue(Exception):
