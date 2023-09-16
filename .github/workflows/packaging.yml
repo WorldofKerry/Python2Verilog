@@ -44,13 +44,10 @@ jobs:
       - name: Run examples
         working-directory: examples
         run: |
-          python3 decorator_basic.py
-          cat decorator_basic.sv
-
-          python3 decorator_advanced.py
-          cat decorator_advanced.sv
+          python3 decorator.py
+          cat decorator.sv
 
           python3 -m python2verilog cli_basic.py -n draw_circle -c "[(5, 7, 3)]"
           cat cli_basic.sv
 
-          ipython -c "%run decorator_advanced.ipynb"
+          ipython -c "%run notebook.ipynb"
