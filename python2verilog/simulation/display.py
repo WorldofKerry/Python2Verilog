@@ -16,9 +16,9 @@ def parse_stdout(stdout: str) -> Generator[tuple[str, ...], None, None]:
         yield tuple(elem.strip() for elem in line.split(","))
 
 
-def strip_signals(  # pylint: disable=useless-return
+def strip_signals(
     actual_raw: Iterable[tuple[str, ...]],
-) -> Union[Generator[tuple[int, ...], None, None], tuple[int, None, None]]:
+) -> Generator[Union[tuple[int, ...], int], None, None]:
     """
     Implementation-specific (based on testbench output)
     Assumes assumes first two signals to be valid and wait
@@ -43,7 +43,6 @@ def strip_signals(  # pylint: disable=useless-return
                 pass
             else:
                 raise ValueError(f"Skipped parsing {row}")
-    return None  # for mypy
 
 
 class UnknownValue(Exception):

@@ -6,7 +6,7 @@ from python2verilog.api import verilogify
 from python2verilog.api.from_context import context_to_codegen, context_to_verilog
 from python2verilog.api.modes import Modes
 from python2verilog.api.namespace import namespace_to_verilog, new_namespace
-from python2verilog.api.verilogify import get_context, get_expected
+from python2verilog.api.verilogify import get_actual, get_context, get_expected
 from python2verilog.simulation import iverilog, parse_stdout, strip_signals
 from python2verilog.utils.fifo import temp_fifo
 
@@ -37,18 +37,11 @@ class TestSimulation(unittest.TestCase):
                     yield i
                 yield j
 
-        output = list(hrange(1, 11, 3))
-        output = list(dup_range_goal(0, 10, 2))
-        print(output)
+        list(hrange(1, 11, 3))
+        list(dup_range_goal(0, 10, 2))
 
         module, testbench = namespace_to_verilog(goal_namespace)
-        with temp_fifo() as module_fifo, temp_fifo() as tb_fifo:
-            stdout, err = iverilog.run_with_fifos(
-                "dup_range_goal_tb",
-                {module_fifo: module, tb_fifo: testbench},
-                timeout=3,
-            )
-            self.assertFalse(err)
-            logging.warning(stdout)
-            actual = list(strip_signals(parse_stdout(stdout)))
-            self.assertListEqual(actual, list(get_expected(dup_range_goal)))
+        self.assertListEqual(
+            list(get_actual(dup_range_goal, module, testbench)),
+            list(get_expected(dup_range_goal)),
+        )

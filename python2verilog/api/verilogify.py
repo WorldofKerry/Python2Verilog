@@ -10,12 +10,13 @@ import logging
 import textwrap
 from functools import wraps
 from types import FunctionType
-from typing import Generator, Optional, Protocol, cast
+from typing import Generator, Optional, Protocol, Union, cast
 
 from python2verilog import ir
 from python2verilog.api.modes import Modes
 from python2verilog.api.namespace import get_namespace
 from python2verilog.simulation import iverilog
+from python2verilog.simulation.display import parse_stdout, strip_signals
 from python2verilog.utils.decorator import decorator_with_args
 from python2verilog.utils.fifo import temp_fifo
 from python2verilog.utils.smart_asserts import (
@@ -136,16 +137,21 @@ def get_expected(verilogified: FunctionType) -> Generator[tuple[int, ...], None,
         yield from generator_func(*test)
 
 
-# def get_actual(verilogified: FunctionType) -> list[tuple[int, ...]]:
-#     """
-#     Get expected output of testbench
-#     """
-#     with temp_fifo() as module_fifo, temp_fifo() as tb_fifo:
-#         stdout, err = iverilog.run_with_fifos(
-#             "dup_range_goal_tb",
-#             {module_fifo: module, tb_fifo: testbench},
-#             timeout=3,
-#         )
-#         self.assertFalse(err)
-#         logging.warning(stdout)
-#         actual = list(strip_signals(parse_stdout(stdout)))
+def get_actual(
+    verilogified: FunctionType,
+    module: str,
+    testbench: str,
+    timeout: Optional[int] = None,
+) -> Generator[Union[tuple[int, ...], int], None, None]:
+    """
+    Get expected output of testbench
+    """
+    context = get_context(verilogified)
+    with temp_fifo() as module_fifo, temp_fifo() as tb_fifo:
+        stdout, err = iverilog.run_with_fifos(
+            f"{context.name}{context.testbench_suffix}",
+            {module_fifo: module, tb_fifo: testbench},
+            timeout=timeout,
+        )
+        assert not err
+        yield from strip_signals(parse_stdout(stdout))
