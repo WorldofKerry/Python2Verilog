@@ -41,7 +41,7 @@ Unsupported Python paradigms include but are not limited to the following:
 
 ## Usage and Installation
 
-Try it in [Google Collab](https://colab.research.google.com/github/WorldofKerry/Python2Verilog/blob/main/examples/decorator_advanced.ipynb) or check out [`examples/`](examples/)!
+Try it in [Google Collab](https://colab.research.google.com/github/WorldofKerry/Python2Verilog/blob/main/examples/notebook.ipynb) or check out [`examples/`](examples/)!
 
 `python3 -m pip install --upgrade pip`
 
