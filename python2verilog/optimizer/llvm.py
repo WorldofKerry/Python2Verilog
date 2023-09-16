@@ -1,3 +1,6 @@
+# pylint: skip-file
+# type: ignore
+
 import ast
 
 import llvmlite.binding as llvm
