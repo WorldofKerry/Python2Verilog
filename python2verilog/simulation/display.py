@@ -2,6 +2,7 @@
 Parses Verilog display statements
 """
 
+import logging
 from typing import Generator, Iterable, Union
 
 
@@ -27,16 +28,19 @@ def strip_signals(  # pylint: disable=useless-return
     :return: [output0, output1, ...]
     """
     for row in actual_raw:
-        assert len(row) >= 2, actual_raw  # [valid, ready, ...]
-        if row[0] == "1" and row[1] == "1":
-            try:
-                outputs = row[2:]
-                if len(outputs) == 1:
-                    yield int(outputs[0])
-                else:
-                    yield tuple(int(elem) for elem in outputs)
-            except ValueError as e:
-                raise UnknownValue(f"Unknown logic value in outputs {row}") from e
+        if len(row) >= 2:  # [valid, ready, ...]
+            if row[0] == "1" and row[1] == "1":
+                try:
+                    outputs = row[2:]
+                    if len(outputs) == 1:
+                        yield int(outputs[0])
+                    else:
+                        yield tuple(int(elem) for elem in outputs)
+                except ValueError as e:
+                    raise UnknownValue(f"Unknown logic value in outputs {row}") from e
+        else:
+            # Usually a statement to indicate $finish
+            logging.warning(f"Skipped parsing {row}")
     return None  # for mypy
 
 
