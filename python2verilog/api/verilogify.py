@@ -79,10 +79,7 @@ def verilogify(
             raise RuntimeError(
                 "Keyword arguments not yet supported, use positional arguments only"
             )
-        # if len(context.test_cases) == 1 and "dup_range_goal" in func.__name__:
-        #     raise RuntimeError()
         context.test_cases.append(args)
-        print(f"wrapper_test_cases {func.__name__}", context.test_cases)
         if not context.input_types:
             context.input_types = [type(arg) for arg in args]
         else:
