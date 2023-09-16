@@ -15,7 +15,7 @@ def parse_stdout(stdout: str) -> Generator[tuple[str, ...], None, None]:
         yield tuple(elem.strip() for elem in line.split(","))
 
 
-def strip_signals(  # type: ignore
+def strip_signals(  # pylint: disable=useless-return
     actual_raw: Iterable[tuple[str, ...]],
 ) -> Union[Generator[tuple[int, ...], None, None], tuple[int, None, None]]:
     """
@@ -37,6 +37,7 @@ def strip_signals(  # type: ignore
                     yield tuple(int(elem) for elem in outputs)
             except ValueError as e:
                 raise UnknownValue(f"Unknown logic value in outputs {row}") from e
+    return None
 
 
 class UnknownValue(Exception):
