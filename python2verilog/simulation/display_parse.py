@@ -2,10 +2,10 @@
 Parses Verilog display statements
 """
 
-from typing import Generator, Iterable, Tuple
+from typing import Generator, Iterable, Union
 
 
-def parse_stdout(stdout: str) -> Generator[Tuple[str, ...], None, None]:
+def parse_stdout(stdout: str) -> Generator[tuple[str, ...], None, None]:
     """
     Implementation-specific (based on testbench output)
     Yields the signals and outputs for a display statement
@@ -15,9 +15,9 @@ def parse_stdout(stdout: str) -> Generator[Tuple[str, ...], None, None]:
         yield tuple(elem.strip() for elem in line.split(","))
 
 
-def strip_signals(
-    actual_raw: Iterable[Tuple[str, ...]],
-) -> Generator[Tuple[int, ...], None, None] | Generator[int, None, None]:
+def strip_signals(  # type: ignore
+    actual_raw: Iterable[tuple[str, ...]],
+) -> Union[Generator[tuple[int, ...], None, None], tuple[int, None, None]]:
     """
     Implementation-specific (based on testbench output)
     Assumes assumes first two signals to be valid and wait
@@ -27,7 +27,7 @@ def strip_signals(
     :return: [output0, output1, ...]
     """
     for row in actual_raw:
-        assert len(row) >= 2  # [valid, ready, ...]
+        assert len(row) >= 2, row  # [valid, ready, ...]
         if row[0] == "1" and row[1] == "1":
             try:
                 outputs = row[2:]
