@@ -344,9 +344,7 @@ class BaseTestCases:
                     stdout = syn_process.stdout.read()
                     stderr = syn_process.stderr.read()
 
-                if stderr:
-                    logging.critical(stderr)
-
+                self.assertFalse(stderr.strip())
                 stats = stdout[stdout.find("Printing statistics.") :]
 
                 def snake_case(text):
