@@ -9,7 +9,7 @@ from pathlib import Path
 
 from python2verilog import ir
 from python2verilog.api.file_namespaces import file_namespaces
-from python2verilog.api.from_context import context_to_text
+from python2verilog.api.from_context import context_to_verilog
 from python2verilog.api.modes import Modes
 
 
@@ -70,7 +70,7 @@ def namespace_to_verilog(namespace: dict[str, ir.Context]) -> tuple[str, str]:
     testbench = ""
     for context in namespace.values():
         if Modes.write(context.mode):
-            mod, tb = context_to_text(context=context)
+            mod, tb = context_to_verilog(context=context)
             module += mod
             testbench += tb
     return module, testbench

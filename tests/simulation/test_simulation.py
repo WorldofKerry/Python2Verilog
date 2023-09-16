@@ -3,17 +3,18 @@ import unittest
 from pathlib import Path
 
 from python2verilog.api import verilogify
+from python2verilog.api.from_context import context_to_codegen, context_to_verilog
 from python2verilog.api.modes import Modes
 from python2verilog.api.namespace import namespace_to_verilog, new_namespace
 from python2verilog.api.verilogify import get_context, get_expected
 from python2verilog.simulation import iverilog, parse_stdout, strip_signals
 from python2verilog.utils.fifo import temp_fifo
 
-goal_namespace = new_namespace(Path(__file__).parent / "dup_range_goal")
-
 
 class TestSimulation(unittest.TestCase):
     def test_all(self):
+        goal_namespace = new_namespace(Path(__file__).parent / "dup_range_goal")
+
         @verilogify(
             mode=Modes.OVERWRITE,
             namespace=goal_namespace,
@@ -50,5 +51,4 @@ class TestSimulation(unittest.TestCase):
             self.assertFalse(err)
             logging.warning(stdout)
             actual = list(strip_signals(parse_stdout(stdout)))
-            print(get_expected(dup_range_goal))
             self.assertListEqual(actual, list(get_expected(dup_range_goal)))

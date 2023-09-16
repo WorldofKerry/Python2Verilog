@@ -10,7 +10,7 @@ from python2verilog.optimizer.optimizer import OptimizeGraph
 from python2verilog.utils.smart_asserts import get_typed
 
 
-def context_to_verilog(context: ir.Context):
+def context_to_codegen(context: ir.Context):
     """
     Converts a context to verilog and its ir
 
@@ -22,14 +22,14 @@ def context_to_verilog(context: ir.Context):
     return verilog.CodeGen(ir_root, context), ir_root
 
 
-def context_to_text(context: ir.Context) -> tuple[str, str]:
+def context_to_verilog(context: ir.Context) -> tuple[str, str]:
     """
-    Converts a context to a verilog module and testbench str
+    Converts a context to a verilog module and testbench
 
-    :return: (module, testbench) pair
+    :return: (module, testbench)
     """
     get_typed(context, ir.Context)
-    ver_code_gen, _ = context_to_verilog(context)
+    ver_code_gen, _ = context_to_codegen(context)
 
     module_str = ver_code_gen.get_module_str()
     tb_str = ver_code_gen.get_testbench_str()
@@ -37,14 +37,14 @@ def context_to_text(context: ir.Context) -> tuple[str, str]:
     return module_str, tb_str
 
 
-def context_to_text_and_dump(context: ir.Context) -> tuple[str, str, str]:
+def context_to_verilog_and_dump(context: ir.Context) -> tuple[str, str, str]:
     """
     Converts a context to a verilog module, testbench, and cytoscape str
 
     :return: (module, testbench, cytoscape_dump) pair
     """
     get_typed(context, ir.Context)
-    ver_code_gen, ir_root = context_to_verilog(context)
+    ver_code_gen, ir_root = context_to_codegen(context)
 
     module_str = ver_code_gen.get_module_str()
     tb_str = ver_code_gen.get_testbench_str()

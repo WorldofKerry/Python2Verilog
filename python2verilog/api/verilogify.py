@@ -15,7 +15,9 @@ from typing import Generator, Optional, Protocol, cast
 from python2verilog import ir
 from python2verilog.api.modes import Modes
 from python2verilog.api.namespace import get_namespace
+from python2verilog.simulation import iverilog
 from python2verilog.utils.decorator import decorator_with_args
+from python2verilog.utils.fifo import temp_fifo
 from python2verilog.utils.smart_asserts import (
     assert_typed,
     assert_typed_dict,
@@ -138,6 +140,12 @@ def get_expected(verilogified: FunctionType) -> Generator[tuple[int, ...], None,
 #     """
 #     Get expected output of testbench
 #     """
-#     generator_func = get_original_func(verilogified)
-#     for test in get_context(verilogified).test_cases:
-#         yield from generator_func(*test)
+#     with temp_fifo() as module_fifo, temp_fifo() as tb_fifo:
+#         stdout, err = iverilog.run_with_fifos(
+#             "dup_range_goal_tb",
+#             {module_fifo: module, tb_fifo: testbench},
+#             timeout=3,
+#         )
+#         self.assertFalse(err)
+#         logging.warning(stdout)
+#         actual = list(strip_signals(parse_stdout(stdout)))

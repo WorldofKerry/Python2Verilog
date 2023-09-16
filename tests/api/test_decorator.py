@@ -1,7 +1,7 @@
 import unittest
 from io import StringIO
 
-from python2verilog.api import Modes, context_to_text, verilogify
+from python2verilog.api import Modes, context_to_verilog, verilogify
 
 
 class TestVerilogify(unittest.TestCase):
@@ -23,7 +23,7 @@ class TestVerilogify(unittest.TestCase):
         print(str(namespace[count.__name__]))
         # self.assertIn(count.__name__, str(namespace[count.__name__]))
 
-        module, testbench = context_to_text(namespace[count.__name__])
+        module, testbench = context_to_verilog(namespace[count.__name__])
         self.assertIn(count.__name__, testbench)
         self.assertIn(count.__name__, module)
 

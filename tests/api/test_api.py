@@ -5,7 +5,10 @@ from functools import wraps
 from pathlib import Path
 
 from python2verilog.api import Modes, new_namespace, verilogify
-from python2verilog.api.from_context import context_to_text, context_to_text_and_dump
+from python2verilog.api.from_context import (
+    context_to_verilog,
+    context_to_verilog_and_dump,
+)
 from python2verilog.api.from_text import text_to_context
 
 
@@ -208,10 +211,10 @@ class TestVerilogify(unittest.TestCase):
         triple_circle(50, 50, 8)
         # warnings.warn(module)
         # warnings.warn(tb)
-        module, tb, cytoscape = context_to_text_and_dump(ns[triple_circle.__name__])
+        module, tb, cytoscape = context_to_verilog_and_dump(ns[triple_circle.__name__])
         with open(Path(__file__).parent / "triple_circle_cytoscape.log", mode="w") as f:
             f.write(str(cytoscape))
         # python3 python2verilog/utils/cytoscape.py  tests/aptriple_circlees_cytoscape.log
-        module, tb, cytoscape = context_to_text_and_dump(ns[circle_lines.__name__])
+        module, tb, cytoscape = context_to_verilog_and_dump(ns[circle_lines.__name__])
         with open(Path(__file__).parent / "circle_lines_cytoscape.log", mode="w") as f:
             f.write(str(cytoscape))

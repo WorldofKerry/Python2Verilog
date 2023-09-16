@@ -8,7 +8,7 @@ from types import FunctionType
 from typing import Any, Optional
 
 from python2verilog import ir
-from python2verilog.api.from_context import context_to_verilog
+from python2verilog.api.from_context import context_to_codegen
 from python2verilog.api.modes import Modes
 from python2verilog.api.namespace import get_namespace
 from python2verilog.backend import verilog
@@ -42,7 +42,7 @@ def text_to_verilog(
     assert isinstance(extra_test_cases, list)
     context.optimization_level = optimization_level
     context.test_cases = extra_test_cases
-    return context_to_verilog(context)
+    return context_to_codegen(context)
 
 
 def text_to_text(
