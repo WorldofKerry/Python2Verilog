@@ -5,8 +5,8 @@ from __future__ import annotations
 import ast as pyast
 
 from .. import ir
+from ..utils.assertions import get_typed, get_typed_list
 from ..utils.lines import Indent, Lines
-from ..utils.smart_asserts import get_typed, get_typed_list
 
 
 def name_to_var(name: pyast.expr) -> ir.Var:

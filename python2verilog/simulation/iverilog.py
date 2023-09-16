@@ -9,7 +9,7 @@ import subprocess
 import tempfile
 from typing import Iterable, Optional
 
-from python2verilog.utils.smart_asserts import assert_typed_dict
+from python2verilog.utils.assertions import assert_typed_dict
 
 
 def make_cmd(top_level_module: str, files: Iterable[str]):

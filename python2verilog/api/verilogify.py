@@ -17,13 +17,9 @@ from python2verilog.api.modes import Modes
 from python2verilog.api.namespace import get_namespace
 from python2verilog.simulation import iverilog
 from python2verilog.simulation.display import parse_stdout, strip_signals
+from python2verilog.utils.assertions import assert_typed, assert_typed_dict, get_typed
 from python2verilog.utils.decorator import decorator_with_args
 from python2verilog.utils.fifo import temp_fifo
-from python2verilog.utils.smart_asserts import (
-    assert_typed,
-    assert_typed_dict,
-    get_typed,
-)
 
 
 # pylint: disable=too-many-locals

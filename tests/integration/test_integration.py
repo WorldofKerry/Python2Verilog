@@ -17,7 +17,7 @@ from matplotlib import pyplot as plt
 from python2verilog import ir, simulation
 from python2verilog.api.from_text import text_to_verilog
 from python2verilog.simulation.iverilog import run_with_fifos, run_with_files
-from python2verilog.utils.smart_asserts import get_typed
+from python2verilog.utils.assertions import get_typed
 from python2verilog.utils.visualization import make_visual
 
 from .cases import TEST_CASES
