@@ -16,10 +16,7 @@ from matplotlib import pyplot as plt
 
 from python2verilog import ir, simulation
 from python2verilog.api.from_text import text_to_verilog
-from python2verilog.simulation.iverilog import (
-    run_iverilog_with_fifos,
-    run_iverilog_with_files,
-)
+from python2verilog.simulation.iverilog import run_with_fifos, run_with_files
 from python2verilog.utils.smart_asserts import get_typed
 from python2verilog.utils.visualization import make_visual
 
@@ -266,7 +263,7 @@ class BaseTestCases:
 
             time_started = time.time()
             if args.write:
-                stdout, stderr = run_iverilog_with_files(
+                stdout, stderr = run_with_files(
                     f"{function_name}_tb",
                     {
                         FILES_IN_ABS_DIR["module"]: module_str,
@@ -275,7 +272,7 @@ class BaseTestCases:
                     timeout=len(expected),
                 )
             else:
-                stdout, stderr = run_iverilog_with_fifos(
+                stdout, stderr = run_with_fifos(
                     f"{function_name}_tb",
                     {
                         FILES_IN_ABS_DIR["module_fifo"]: module_str,

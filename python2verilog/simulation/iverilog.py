@@ -39,7 +39,7 @@ def _write_data_to_paths(path_to_data: dict[str, str]):
     logging.debug("Writing data to paths done")
 
 
-def run_cmd_with_fifos(
+def _run_cmd_with_fifos(
     command: str, input_fifos: dict[str, str], timeout: Optional[int] = None
 ):
     """
@@ -75,7 +75,7 @@ def run_cmd_with_fifos(
             return process.stdout.read(), process.stderr.read()
 
 
-def run_cmd_with_files(
+def _run_cmd_with_files(
     command: str, input_files: dict[str, str], timeout: Optional[int] = None
 ):
     """
@@ -110,7 +110,7 @@ def run_cmd_with_files(
             return process.stdout.read(), process.stderr.read()
 
 
-def run_iverilog_with_fifos(
+def run_with_fifos(
     top_level_module: str,
     input_fifos: dict[str, str],
     timeout: Optional[int] = None,
@@ -125,12 +125,12 @@ def run_iverilog_with_fifos(
         files=input_fifos.keys(),
     )
     logging.debug(f"Running {iverilog_cmd}")
-    return run_cmd_with_fifos(
+    return _run_cmd_with_fifos(
         command=iverilog_cmd, input_fifos=input_fifos, timeout=timeout
     )
 
 
-def run_iverilog_with_files(
+def run_with_files(
     top_level_module: str,
     input_files: dict[str, str],
     timeout: Optional[int] = None,
@@ -145,6 +145,6 @@ def run_iverilog_with_files(
         files=input_files.keys(),
     )
     logging.debug(f"Running {iverilog_cmd}")
-    return run_cmd_with_files(
+    return _run_cmd_with_files(
         command=iverilog_cmd, input_files=input_files, timeout=timeout
     )
