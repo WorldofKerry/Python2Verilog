@@ -27,7 +27,7 @@ def strip_signals(  # pylint: disable=useless-return
     :return: [output0, output1, ...]
     """
     for row in actual_raw:
-        assert len(row) >= 2, row  # [valid, ready, ...]
+        assert len(row) >= 2, actual_raw  # [valid, ready, ...]
         if row[0] == "1" and row[1] == "1":
             try:
                 outputs = row[2:]
