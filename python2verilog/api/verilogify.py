@@ -10,7 +10,7 @@ import logging
 import textwrap
 from functools import wraps
 from types import FunctionType
-from typing import Optional, Protocol, cast
+from typing import Generator, Optional, Protocol, cast
 
 from python2verilog import ir
 from python2verilog.api.modes import Modes
@@ -123,3 +123,21 @@ def get_original_func(verilogified: FunctionType) -> FunctionType:
     Gets original function from verilogified function
     """
     return verilogified._python2verilog_original_func  # type: ignore # pylint: disable=protected-access
+
+
+def get_expected(verilogified: FunctionType) -> Generator[tuple[int, ...], None, None]:
+    """
+    Get expected output of testbench
+    """
+    generator_func = get_original_func(verilogified)
+    for test in get_context(verilogified).test_cases:
+        yield from generator_func(*test)
+
+
+# def get_actual(verilogified: FunctionType) -> list[tuple[int, ...]]:
+#     """
+#     Get expected output of testbench
+#     """
+#     generator_func = get_original_func(verilogified)
+#     for test in get_context(verilogified).test_cases:
+#         yield from generator_func(*test)

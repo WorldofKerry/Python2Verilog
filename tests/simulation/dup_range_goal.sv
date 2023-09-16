@@ -17,7 +17,6 @@ print(list(hrange(*(1, 11, 3))))
 print(list(hrange(*(0, 10, 2))))
 print(list(hrange(*(0, 10, 2))))
 print(list(hrange(*(0, 10, 2))))
-print(list(hrange(*(0, 10, 2))))
 
 */
 
@@ -106,7 +105,6 @@ endmodule
 
 
 # Test Cases
-print(list(dup_range_goal(*(0, 10, 2))))
 print(list(dup_range_goal(*(0, 10, 2))))
 
 */
