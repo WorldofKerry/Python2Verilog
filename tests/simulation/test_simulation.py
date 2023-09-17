@@ -5,7 +5,11 @@ from pathlib import Path
 from python2verilog.api import verilogify
 from python2verilog.api.from_context import context_to_codegen, context_to_verilog
 from python2verilog.api.modes import Modes
-from python2verilog.api.namespace import namespace_to_verilog, new_namespace
+from python2verilog.api.namespace import (
+    namespace_to_file,
+    namespace_to_verilog,
+    new_namespace,
+)
 from python2verilog.api.verilogify import get_actual, get_context, get_expected
 from python2verilog.simulation import iverilog, parse_stdout, strip_signals
 from python2verilog.utils.fifo import temp_fifo
@@ -28,7 +32,7 @@ class TestSimulation(unittest.TestCase):
         @verilogify(
             mode=Modes.OVERWRITE,
             namespace=goal_namespace,
-            optimization_level=1,
+            optimization_level=0,
         )
         def dup_range_goal(base, limit, step):
             inst = hrange(base, limit, step)

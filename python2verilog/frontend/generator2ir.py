@@ -462,11 +462,13 @@ class Generator2Graph:
             counter = 0
             while True:
                 yield f"{prefix}_call_{counter}"
+                counter += 1
 
         def unique_edge_gen():
             counter = 0
             while True:
                 yield f"{prefix}_call_{counter}_e"
+                counter += 1
 
         unique_node = unique_node_gen()
         unique_edge = unique_edge_gen()

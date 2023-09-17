@@ -94,7 +94,7 @@ endmodule
         @verilogify(
             mode=Modes.OVERWRITE,
             namespace=goal_namespace,
-            optimization_level=1,
+            optimization_level=0,
         )
         def dup_range_goal(base, limit, step):
             inst = hrange(base, limit, step)
@@ -135,7 +135,9 @@ module dup_range_goal (
     localparam _state_0_for_1_t_0 = 3;
     localparam _state_1_call_0 = 4;
     localparam _state_1_for_0 = 5;
-    localparam _state_done = 6;
+    localparam _state_1_for_0_t_0 = 6;
+    localparam _state_1_for_1 = 7;
+    localparam _state_done = 8;
     // Global variables
     reg signed [31:0] _i;
     reg signed [31:0] _j;
@@ -180,36 +182,7 @@ module dup_range_goal (
             _base <= base;
             _limit <= limit;
             _step <= step;
-            _inst_hrange__ready <= 1;
-            _inst_hrange__start <= 0;
-            if ((1 && _inst_hrange__valid)) begin
-                _inst_hrange__ready <= 0;
-                _i <= _inst_hrange_0;
-                _j <= _inst_hrange_1;
-                if (_inst_hrange__done) begin
-                    _inst_hrange__ready <= 0;
-                    _inst_hrange__start <= 1;
-                    _inst_hrange_base <= base;
-                    _inst_hrange_limit <= limit;
-                    _inst_hrange_step <= step;
-                    _state <= _state_done;
-                end else begin
-                    _0 <= _inst_hrange_1;
-                    _valid <= 1;
-                    _state <= _state_1_for_0;
-                end
-            end else begin
-                if (_inst_hrange__done) begin
-                    _inst_hrange__ready <= 0;
-                    _inst_hrange__start <= 1;
-                    _inst_hrange_base <= base;
-                    _inst_hrange_limit <= limit;
-                    _inst_hrange_step <= step;
-                    _state <= _state_done;
-                end else begin
-                    _state <= _state_1_call_0;
-                end
-            end
+            _state <= _state_1_call_0;
         end else begin
             // If ready or not valid, then continue computation
             if ((_ready || !(_valid))) begin
@@ -218,41 +191,48 @@ module dup_range_goal (
                         _done <= 1;
                         _state <= _state_done;
                     end
+                    _state_0_call_0: begin
+                        _inst_hrange__ready <= 0;
+                        _inst_hrange__start <= 1;
+                        _inst_hrange_base <= _base;
+                        _inst_hrange_limit <= _limit;
+                        _inst_hrange_step <= _step;
+                        _state <= _state_done;
+                    end
+                    _state_1_for_0_t_0: begin
+                        _0 <= _i;
+                        _valid <= 1;
+                        _state <= _state_1_call_0;
+                    end
                     _state_1_for_0: begin
                         if ($signed(_i > $signed(4))) begin
-                            _0 <= _i;
-                            _valid <= 1;
-                            _state <= _state_1_call_0;
+                            _state <= _state_1_for_0_t_0;
                         end else begin
-                            _inst_hrange__ready <= 1;
-                            _inst_hrange__start <= 0;
-                            if ((1 && _inst_hrange__valid)) begin
-                                _inst_hrange__ready <= 0;
-                                _i <= _inst_hrange_0;
-                                _j <= _inst_hrange_1;
-                                if (_inst_hrange__done) begin
-                                    _inst_hrange__ready <= 0;
-                                    _inst_hrange__start <= 1;
-                                    _inst_hrange_base <= _base;
-                                    _inst_hrange_limit <= _limit;
-                                    _inst_hrange_step <= _step;
-                                    _state <= _state_done;
-                                end else begin
-                                    _0 <= _inst_hrange_1;
-                                    _valid <= 1;
-                                    _state <= _state_1_for_0;
-                                end
+                            _state <= _state_1_call_0;
+                        end
+                    end
+                    _state_1_for_1: begin
+                        _0 <= _j;
+                        _valid <= 1;
+                        _state <= _state_1_for_0;
+                    end
+                    _state_1_call_0: begin
+                        _inst_hrange__ready <= 1;
+                        _inst_hrange__start <= 0;
+                        if ((_inst_hrange__ready && _inst_hrange__valid)) begin
+                            _inst_hrange__ready <= 0;
+                            _i <= _inst_hrange_0;
+                            _j <= _inst_hrange_1;
+                            if (_inst_hrange__done) begin
+                                _state <= _state_0_call_0;
                             end else begin
-                                if (_inst_hrange__done) begin
-                                    _inst_hrange__ready <= 0;
-                                    _inst_hrange__start <= 1;
-                                    _inst_hrange_base <= _base;
-                                    _inst_hrange_limit <= _limit;
-                                    _inst_hrange_step <= _step;
-                                    _state <= _state_done;
-                                end else begin
-                                    _state <= _state_1_call_0;
-                                end
+                                _state <= _state_1_for_1;
+                            end
+                        end else begin
+                            if (_inst_hrange__done) begin
+                                _state <= _state_0_call_0;
+                            end else begin
+                                _state <= _state_1_call_0;
                             end
                         end
                     end
