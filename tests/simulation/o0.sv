@@ -38,8 +38,8 @@ module hrange (
     output reg _done, // is high if module done outputting
 
     // Output values as a tuple with respective index(es)
-    output reg signed [31:0] _out_0,
-    output reg signed [31:0] _out_1
+    output reg signed [31:0] _out0,
+    output reg signed [31:0] _out1
 );
     // State variables
     typedef enum{_state_0_while_0,_state_1,_state_1_while,_state_done} _state_t;
@@ -51,7 +51,7 @@ module hrange (
     reg signed [31:0] _step;
     // Core
     always @(posedge _clock) begin
-        // $display("state:%0d,start:%0d,done:%0d,ready:%0d,valid:%0d,i:%0d,base:%0d,limit:%0d,step:%0d,out_0:%0d,out_1:%0d", _state, _start, _done, _ready, _valid, _i, _base, _limit, _step, _out_0, _out_1);
+        // $display("state:%0d,start:%0d,done:%0d,ready:%0d,valid:%0d,i:%0d,base:%0d,limit:%0d,step:%0d,out0:%0d,out1:%0d", _state, _start, _done, _ready, _valid, _i, _base, _limit, _step, _out0, _out1);
         _done <= 0;
         if (_ready) begin
             _valid <= 0;
@@ -66,8 +66,8 @@ module hrange (
             _step <= step;
             if ((_i < limit)) begin
                 _i <= $signed(_i + step);
-                _out_0 <= $signed(_i + step);
-                _out_1 <= $signed(_i + step);
+                _out0 <= $signed(_i + step);
+                _out1 <= $signed(_i + step);
                 _valid <= 1;
                 _state <= _state_1_while;
             end else begin
@@ -126,7 +126,7 @@ module dup_range_goal (
     output reg _done, // is high if module done outputting
 
     // Output values as a tuple with respective index(es)
-    output reg signed [31:0] _out_0
+    output reg signed [31:0] _out0
 );
     // State variables
     typedef enum{_state_0_call_0,_state_0_for_0,_state_0_for_body_0,_state_0_for_body_1,_state_0_for_body_1_t_0,_state_1_call_0,_state_1_for_0,_state_1_for_body_0,_state_1_for_body_0_t_0,_state_1_for_body_1,_state_done} _state_t;
@@ -141,8 +141,8 @@ module dup_range_goal (
     reg [31:0] _inst_hrange_base;
     reg [31:0] _inst_hrange_limit;
     reg [31:0] _inst_hrange_step;
-    wire [31:0] _inst_hrange_out_0;
-    wire [31:0] _inst_hrange_out_1;
+    wire [31:0] _inst_hrange_out0;
+    wire [31:0] _inst_hrange_out1;
     wire _inst_hrange__valid;
     wire _inst_hrange__done;
     reg _inst_hrange__start;
@@ -151,8 +151,8 @@ module dup_range_goal (
         .base(_inst_hrange_base),
         .limit(_inst_hrange_limit),
         .step(_inst_hrange_step),
-        ._out_0(_inst_hrange_out_0),
-        ._out_1(_inst_hrange_out_1),
+        ._out0(_inst_hrange_out0),
+        ._out1(_inst_hrange_out1),
         ._valid(_inst_hrange__valid),
         ._done(_inst_hrange__done),
         ._clock(_clock),
@@ -162,7 +162,7 @@ module dup_range_goal (
         );
     // Core
     always @(posedge _clock) begin
-        // $display("state:%0d,start:%0d,done:%0d,ready:%0d,valid:%0d,i:%0d,j:%0d,base:%0d,limit:%0d,step:%0d,out_0:%0d", _state, _start, _done, _ready, _valid, _i, _j, _base, _limit, _step, _out_0);
+        // $display("state:%0d,start:%0d,done:%0d,ready:%0d,valid:%0d,i:%0d,j:%0d,base:%0d,limit:%0d,step:%0d,out0:%0d", _state, _start, _done, _ready, _valid, _i, _j, _base, _limit, _step, _out0);
         _done <= 0;
         if (_ready) begin
             _valid <= 0;
@@ -193,7 +193,7 @@ module dup_range_goal (
                         _state <= _state_done;
                     end
                     _state_1_for_body_0_t_0: begin
-                        _out_0 <= _i;
+                        _out0 <= _i;
                         _valid <= 1;
                         _state <= _state_1_for_0;
                     end
@@ -205,7 +205,7 @@ module dup_range_goal (
                         end
                     end
                     _state_1_for_body_1: begin
-                        _out_0 <= _j;
+                        _out0 <= _j;
                         _valid <= 1;
                         _state <= _state_1_for_body_0;
                     end
@@ -214,8 +214,8 @@ module dup_range_goal (
                         _inst_hrange__start <= 0;
                         if ((_inst_hrange__ready && _inst_hrange__valid)) begin
                             _inst_hrange__ready <= 0;
-                            _i <= _inst_hrange_out_0;
-                            _j <= _inst_hrange_out_1;
+                            _i <= _inst_hrange_out0;
+                            _j <= _inst_hrange_out1;
                             if (_inst_hrange__done) begin
                                 _state <= _state_0_call_0;
                             end else begin

@@ -9,12 +9,12 @@ module circle_lines_tb (
     reg signed [31:0] height;
     wire _done;
     wire _valid;
-    wire signed [31:0] _out_0;
-    wire signed [31:0] _out_1;
-    wire signed [31:0] _out_2;
-    wire signed [31:0] _out_3;
-    wire signed [31:0] _out_4;
-    wire signed [31:0] _out_5;
+    wire signed [31:0] _out0;
+    wire signed [31:0] _out1;
+    wire signed [31:0] _out2;
+    wire signed [31:0] _out3;
+    wire signed [31:0] _out4;
+    wire signed [31:0] _out5;
     circle_lines DUT (
         ._clock(_clock),
         ._start(_start),
@@ -25,12 +25,12 @@ module circle_lines_tb (
         .height(height),
         ._done(_done),
         ._valid(_valid),
-        ._out_0(_out_0),
-        ._out_1(_out_1),
-        ._out_2(_out_2),
-        ._out_3(_out_3),
-        ._out_4(_out_4),
-        ._out_5(_out_5)
+        ._out0(_out0),
+        ._out1(_out1),
+        ._out2(_out2),
+        ._out3(_out3),
+        ._out4(_out4),
+        ._out5(_out5)
         );
     always #5 _clock = !_clock;
     initial begin
@@ -53,12 +53,12 @@ module circle_lines_tb (
         while ((!(_done) || !(_ready))) begin
             // `if (_ready && _valid)` also works as a conditional
             if (_ready) begin
-                $display("%0d, %0d, %0d, %0d, %0d, %0d, %0d, %0d", _valid, _ready, _out_0, _out_1, _out_2, _out_3, _out_4, _out_5);
+                $display("%0d, %0d, %0d, %0d, %0d, %0d, %0d, %0d", _valid, _ready, _out0, _out1, _out2, _out3, _out4, _out5);
             end
             @(negedge _clock);
         end
         if (_ready) begin
-            $display("%0d, %0d, %0d, %0d, %0d, %0d, %0d, %0d", _valid, _ready, _out_0, _out_1, _out_2, _out_3, _out_4, _out_5);
+            $display("%0d, %0d, %0d, %0d, %0d, %0d, %0d, %0d", _valid, _ready, _out0, _out1, _out2, _out3, _out4, _out5);
         end
         $finish;
     end
@@ -74,8 +74,8 @@ module triple_circle_tb (
     reg signed [31:0] radius;
     wire _done;
     wire _valid;
-    wire signed [31:0] _out_0;
-    wire signed [31:0] _out_1;
+    wire signed [31:0] _out0;
+    wire signed [31:0] _out1;
     triple_circle DUT (
         ._clock(_clock),
         ._start(_start),
@@ -86,8 +86,8 @@ module triple_circle_tb (
         .radius(radius),
         ._done(_done),
         ._valid(_valid),
-        ._out_0(_out_0),
-        ._out_1(_out_1)
+        ._out0(_out0),
+        ._out1(_out1)
         );
     always #5 _clock = !_clock;
     initial begin
@@ -110,12 +110,12 @@ module triple_circle_tb (
         while ((!(_done) || !(_ready))) begin
             // `if (_ready && _valid)` also works as a conditional
             if (_ready) begin
-                $display("%0d, %0d, %0d, %0d", _valid, _ready, _out_0, _out_1);
+                $display("%0d, %0d, %0d, %0d", _valid, _ready, _out0, _out1);
             end
             @(negedge _clock);
         end
         if (_ready) begin
-            $display("%0d, %0d, %0d, %0d", _valid, _ready, _out_0, _out_1);
+            $display("%0d, %0d, %0d, %0d", _valid, _ready, _out0, _out1);
         end
         $finish;
     end
