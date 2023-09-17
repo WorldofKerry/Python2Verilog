@@ -73,7 +73,7 @@ module circle_lines (
     reg signed [31:0] _height;
     // Core
     always @(posedge _clock) begin
-        // $display("state:%0d,start:%0d,done:%0d,ready:%0d,valid:%0d,d:%0d,y:%0d,x:%0d,s_x:%0d,s_y:%0d,height:%0d,out0:%0d,out1:%0d,out2:%0d,out3:%0d,out4:%0d,out5:%0d", _state, _start, _done, _ready, _valid, _d, _y, _x, _s_x, _s_y, _height, _out0, _out1, _out2, _out3, _out4, _out5);
+        // $display("%s,start:%0d,done:%0d,ready:%0d,valid:%0d,d:%0d,y:%0d,x:%0d,s_x:%0d,s_y:%0d,height:%0d,out0:%0d,out1:%0d,out2:%0d,out3:%0d,out4:%0d,out5:%0d", _state.name, _start, _done, _ready, _valid, _d, _y, _x, _s_x, _s_y, _height, _out0, _out1, _out2, _out3, _out4, _out5);
         _done <= 0;
         if (_ready) begin
             _valid <= 0;
@@ -420,7 +420,7 @@ module triple_circle (
         );
     // Core
     always @(posedge _clock) begin
-        // $display("state:%0d,start:%0d,done:%0d,ready:%0d,valid:%0d,x:%0d,y:%0d,a:%0d,b:%0d,c:%0d,d:%0d,c_y3:%0d,c_x3:%0d,c_y2:%0d,c_x2:%0d,c_y1:%0d,c_x1:%0d,c_y:%0d,c_x:%0d,centre_x:%0d,centre_y:%0d,radius:%0d,out0:%0d,out1:%0d", _state, _start, _done, _ready, _valid, _x, _y, _a, _b, _c, _d, _c_y3, _c_x3, _c_y2, _c_x2, _c_y1, _c_x1, _c_y, _c_x, _centre_x, _centre_y, _radius, _out0, _out1);
+        $display("%s,start:%0d,done:%0d,ready:%0d,valid:%0d,x:%0d,y:%0d,a:%0d,b:%0d,c:%0d,d:%0d,c_y3:%0d,c_x3:%0d,c_y2:%0d,c_x2:%0d,c_y1:%0d,c_x1:%0d,c_y:%0d,c_x:%0d,centre_x:%0d,centre_y:%0d,radius:%0d,out0:%0d,out1:%0d", _state.name, _start, _done, _ready, _valid, _x, _y, _a, _b, _c, _d, _c_y3, _c_x3, _c_y2, _c_x2, _c_y1, _c_x1, _c_y, _c_x, _centre_x, _centre_y, _radius, _out0, _out1);
         _done <= 0;
         if (_ready) begin
             _valid <= 0;

@@ -50,7 +50,7 @@ module hrange (
     reg signed [31:0] _step;
     // Core
     always @(posedge _clock) begin
-        // $display("state:%0d,start:%0d,done:%0d,ready:%0d,valid:%0d,i:%0d,base:%0d,limit:%0d,step:%0d,out0:%0d,out1:%0d", _state, _start, _done, _ready, _valid, _i, _base, _limit, _step, _out0, _out1);
+        // $display("%s,start:%0d,done:%0d,ready:%0d,valid:%0d,i:%0d,base:%0d,limit:%0d,step:%0d,out0:%0d,out1:%0d", _state.name, _start, _done, _ready, _valid, _i, _base, _limit, _step, _out0, _out1);
         _done <= 0;
         if (_ready) begin
             _valid <= 0;
@@ -161,7 +161,7 @@ module dup_range_goal (
         );
     // Core
     always @(posedge _clock) begin
-        // $display("state:%0d,start:%0d,done:%0d,ready:%0d,valid:%0d,i:%0d,j:%0d,base:%0d,limit:%0d,step:%0d,out0:%0d", _state, _start, _done, _ready, _valid, _i, _j, _base, _limit, _step, _out0);
+        // $display("%s,start:%0d,done:%0d,ready:%0d,valid:%0d,i:%0d,j:%0d,base:%0d,limit:%0d,step:%0d,out0:%0d", _state.name, _start, _done, _ready, _valid, _i, _j, _base, _limit, _step, _out0);
         _done <= 0;
         if (_ready) begin
             _valid <= 0;

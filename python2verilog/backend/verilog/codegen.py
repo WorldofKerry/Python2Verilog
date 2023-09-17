@@ -67,13 +67,14 @@ class CodeGen:
 
             $display("%0d, ...", ...);
             """
-            vars_ = [context.state_var]
+            vars_: list[ir.Var] = []
             vars_ += context.signals.instance_specific_values()
             vars_ += context.global_vars
             vars_ += context.input_vars
             vars_ += context.output_vars
-            str_ = '$display("'
+            str_ = '$display("%s,'
             str_ += "%0d,".join(map(lambda var: f"{var.py_name}:", vars_)) + '%0d", '
+            str_ += f"{context.state_var.ver_name}.name, "
             str_ += ", ".join(map(lambda var: var.ver_name, vars_))
             str_ += ");"
             return str_
