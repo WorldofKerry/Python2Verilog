@@ -21,11 +21,11 @@ from python2verilog.utils.fifo import temp_fifo
 
 class TestSimulation(unittest.TestCase):
     def test_o0(self):
-        ns = new_namespace(Path(__file__).parent / "o0")
+        goal_namespace = new_namespace(Path(__file__).parent / "o0")
 
         @verilogify(
             mode=Modes.OVERWRITE,
-            namespace=ns,
+            namespace=goal_namespace,
         )
         def hrange(base, limit, step):
             i = base
@@ -35,7 +35,7 @@ class TestSimulation(unittest.TestCase):
 
         @verilogify(
             mode=Modes.OVERWRITE,
-            namespace=ns,
+            namespace=goal_namespace,
             optimization_level=0,
         )
         def dup_range_goal(base, limit, step):
@@ -51,18 +51,18 @@ class TestSimulation(unittest.TestCase):
         # with open("./cyto.log", mode="w") as f:
         #     _, _, cy = context_to_verilog_and_dump(get_context(dup_range_goal))
         #     f.write(str(cy))
-        module, testbench = namespace_to_verilog(ns)
+        module, testbench = namespace_to_verilog(goal_namespace)
         self.assertListEqual(
             list(get_actual(dup_range_goal, module, testbench, timeout=1)),
             list(get_expected(dup_range_goal)),
         )
 
     def test_o1(self):
-        ns = new_namespace(Path(__file__).parent / "o1")
+        goal_namespace = new_namespace(Path(__file__).parent / "o1")
 
         @verilogify(
             mode=Modes.OVERWRITE,
-            namespace=ns,
+            namespace=goal_namespace,
         )
         def hrange(base, limit, step):
             i = base
@@ -72,7 +72,7 @@ class TestSimulation(unittest.TestCase):
 
         @verilogify(
             mode=Modes.OVERWRITE,
-            namespace=ns,
+            namespace=goal_namespace,
             optimization_level=1,
         )
         def dup_range_goal(base, limit, step):
@@ -88,16 +88,16 @@ class TestSimulation(unittest.TestCase):
         with open("./cyto.log", mode="w") as f:
             _, _, cy = context_to_verilog_and_dump(get_context(dup_range_goal))
             f.write(str(cy))
-        module, testbench = namespace_to_verilog(ns)
+        module, testbench = namespace_to_verilog(goal_namespace)
         # self.assertListEqual(
         #     list(get_actual(dup_range_goal, module, testbench, timeout=1)),
         #     list(get_expected(dup_range_goal)),
         # )
 
     def test_triple(self):
-        ns = new_namespace(Path(__file__).parent / "triple_o1")
+        goal_namespace = new_namespace(Path(__file__).parent / "triple_o1")
 
-        @verilogify(namespace=ns, mode=Modes.OVERWRITE)
+        @verilogify(namespace=goal_namespace, mode=Modes.OVERWRITE)
         def circle_lines(s_x, s_y, height) -> tuple[int, int, int, int, int, int]:
             x = 0
             y = height
@@ -126,7 +126,9 @@ class TestSimulation(unittest.TestCase):
                 yield (s_x - y, s_y + x, height, x, y, d)
                 yield (s_x - y, s_y - x, height, x, y, d)
 
-        @verilogify(namespace=ns, mode=Modes.OVERWRITE, optimization_level=0)
+        @verilogify(
+            namespace=goal_namespace, mode=Modes.OVERWRITE, optimization_level=0
+        )
         def triple_circle(centre_x, centre_y, radius):
             # noqa
             c_x = centre_x
@@ -153,8 +155,8 @@ class TestSimulation(unittest.TestCase):
         with open("./cyto.log", mode="w") as f:
             _, _, cy = context_to_verilog_and_dump(get_context(triple_circle))
             f.write(str(cy))
-        module, testbench = namespace_to_verilog(ns)
-        # self.assertListEqual(
-        #     list(get_actual(triple_circle, module, testbench, timeout=1)),
-        #     list(get_expected(triple_circle)),
-        # )
+        module, testbench = namespace_to_verilog(goal_namespace)
+        self.assertListEqual(
+            list(get_actual(triple_circle, module, testbench, timeout=1)),
+            list(get_expected(triple_circle)),
+        )
