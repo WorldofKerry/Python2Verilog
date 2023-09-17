@@ -73,13 +73,10 @@ class CodeGen:
             vars_ += context.input_vars
             vars_ += context.output_vars
             str_ = '$display("'
-            str_ += "%0d, ".join(map(lambda var: f"{var.py_name}: ", vars_)) + '%0d", '
+            str_ += "%0d,".join(map(lambda var: f"{var.py_name}:", vars_)) + '%0d", '
             str_ += ", ".join(map(lambda var: var.ver_name, vars_))
             str_ += ");"
             return str_
-
-        debug_display = make_debug_display(context)
-        warnings.warn(debug_display)
 
         always = ver.PosedgeSyncAlways(
             context.signals.clock_signal,

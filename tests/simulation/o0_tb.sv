@@ -9,8 +9,8 @@ module hrange_tb (
     reg signed [31:0] step;
     wire _done;
     wire _valid;
-    wire signed [31:0] _0;
-    wire signed [31:0] _1;
+    wire signed [31:0] _out_0;
+    wire signed [31:0] _out_1;
     hrange DUT (
         ._clock(_clock),
         ._start(_start),
@@ -21,8 +21,8 @@ module hrange_tb (
         .step(step),
         ._done(_done),
         ._valid(_valid),
-        ._0(_0),
-        ._1(_1)
+        ._out_0(_out_0),
+        ._out_1(_out_1)
         );
     always #5 _clock = !_clock;
     initial begin
@@ -45,12 +45,12 @@ module hrange_tb (
         while ((!(_done) || !(_ready))) begin
             // `if (_ready && _valid)` also works as a conditional
             if (_ready) begin
-                $display("%0d, %0d, %0d, %0d", _valid, _ready, _0, _1);
+                $display("%0d, %0d, %0d, %0d", _valid, _ready, _out_0, _out_1);
             end
             @(negedge _clock);
         end
         if (_ready) begin
-            $display("%0d, %0d, %0d, %0d", _valid, _ready, _0, _1);
+            $display("%0d, %0d, %0d, %0d", _valid, _ready, _out_0, _out_1);
         end
         // ============ Test Case 1 with arguments (0, 10, 2) ============
         base = $signed(0);
@@ -65,12 +65,12 @@ module hrange_tb (
         while ((!(_done) || !(_ready))) begin
             // `if (_ready && _valid)` also works as a conditional
             if (_ready) begin
-                $display("%0d, %0d, %0d, %0d", _valid, _ready, _0, _1);
+                $display("%0d, %0d, %0d, %0d", _valid, _ready, _out_0, _out_1);
             end
             @(negedge _clock);
         end
         if (_ready) begin
-            $display("%0d, %0d, %0d, %0d", _valid, _ready, _0, _1);
+            $display("%0d, %0d, %0d, %0d", _valid, _ready, _out_0, _out_1);
         end
         // ============ Test Case 2 with arguments (0, 10, 2) ============
         base = $signed(0);
@@ -85,12 +85,12 @@ module hrange_tb (
         while ((!(_done) || !(_ready))) begin
             // `if (_ready && _valid)` also works as a conditional
             if (_ready) begin
-                $display("%0d, %0d, %0d, %0d", _valid, _ready, _0, _1);
+                $display("%0d, %0d, %0d, %0d", _valid, _ready, _out_0, _out_1);
             end
             @(negedge _clock);
         end
         if (_ready) begin
-            $display("%0d, %0d, %0d, %0d", _valid, _ready, _0, _1);
+            $display("%0d, %0d, %0d, %0d", _valid, _ready, _out_0, _out_1);
         end
         // ============ Test Case 3 with arguments (0, 10, 2) ============
         base = $signed(0);
@@ -105,12 +105,12 @@ module hrange_tb (
         while ((!(_done) || !(_ready))) begin
             // `if (_ready && _valid)` also works as a conditional
             if (_ready) begin
-                $display("%0d, %0d, %0d, %0d", _valid, _ready, _0, _1);
+                $display("%0d, %0d, %0d, %0d", _valid, _ready, _out_0, _out_1);
             end
             @(negedge _clock);
         end
         if (_ready) begin
-            $display("%0d, %0d, %0d, %0d", _valid, _ready, _0, _1);
+            $display("%0d, %0d, %0d, %0d", _valid, _ready, _out_0, _out_1);
         end
         $finish;
     end
@@ -126,7 +126,7 @@ module dup_range_goal_tb (
     reg signed [31:0] step;
     wire _done;
     wire _valid;
-    wire signed [31:0] _0;
+    wire signed [31:0] _out_0;
     dup_range_goal DUT (
         ._clock(_clock),
         ._start(_start),
@@ -137,7 +137,7 @@ module dup_range_goal_tb (
         .step(step),
         ._done(_done),
         ._valid(_valid),
-        ._0(_0)
+        ._out_0(_out_0)
         );
     always #5 _clock = !_clock;
     initial begin
@@ -160,12 +160,12 @@ module dup_range_goal_tb (
         while ((!(_done) || !(_ready))) begin
             // `if (_ready && _valid)` also works as a conditional
             if (_ready) begin
-                $display("%0d, %0d, %0d", _valid, _ready, _0);
+                $display("%0d, %0d, %0d", _valid, _ready, _out_0);
             end
             @(negedge _clock);
         end
         if (_ready) begin
-            $display("%0d, %0d, %0d", _valid, _ready, _0);
+            $display("%0d, %0d, %0d", _valid, _ready, _out_0);
         end
         $finish;
     end

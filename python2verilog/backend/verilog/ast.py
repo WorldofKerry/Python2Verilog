@@ -89,8 +89,7 @@ class TypeDef(Statement):
     """
     typedef enum
     {
-        <val0>,
-        <val1>
+        <val0>, <val1>, ...
     } _state_t;
     """
 
@@ -108,6 +107,9 @@ class TypeDef(Statement):
         values += f"{self.values[-1]}"
         lines.concat(values, indent=1)
         lines += f"}} {self.name};"
+
+        # condense
+        lines = Lines(lines.to_string().replace("\n", "").replace("  ", ""))
         return lines
 
 

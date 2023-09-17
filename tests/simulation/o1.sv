@@ -37,21 +37,20 @@ module hrange (
     output reg _done, // is high if module done outputting
 
     // Output values as a tuple with respective index(es)
-    output reg signed [31:0] _0,
-    output reg signed [31:0] _1
+    output reg signed [31:0] _out_0,
+    output reg signed [31:0] _out_1
 );
-    localparam _state_0_while_0 = 0;
-    localparam _state_1 = 1;
-    localparam _state_1_while = 2;
-    localparam _state_done = 3;
+    // State variables
+    typedef enum{_state_0_while_0,_state_1,_state_1_while,_state_done} _state_t;
+    _state_t _state;
     // Global variables
     reg signed [31:0] _i;
-    reg signed [31:0] _state;
     reg signed [31:0] _base;
     reg signed [31:0] _limit;
     reg signed [31:0] _step;
     // Core
     always @(posedge _clock) begin
+        // $display("state:%0d,start:%0d,done:%0d,ready:%0d,valid:%0d,i:%0d,base:%0d,limit:%0d,step:%0d,out_0:%0d,out_1:%0d", _state, _start, _done, _ready, _valid, _i, _base, _limit, _step, _out_0, _out_1);
         _done <= 0;
         if (_ready) begin
             _valid <= 0;
@@ -66,8 +65,8 @@ module hrange (
             _step <= step;
             if ((_i < limit)) begin
                 _i <= $signed(_i + step);
-                _0 <= $signed(_i + step);
-                _1 <= $signed(_i + step);
+                _out_0 <= $signed(_i + step);
+                _out_1 <= $signed(_i + step);
                 _valid <= 1;
                 _state <= _state_1_while;
             end else begin
@@ -126,17 +125,14 @@ module dup_range_goal (
     output reg _done, // is high if module done outputting
 
     // Output values as a tuple with respective index(es)
-    output reg signed [31:0] _0
+    output reg signed [31:0] _out_0
 );
-    localparam _state_0_call_0 = 0;
-    localparam _state_0_for_0 = 1;
-    localparam _state_1_call_0 = 2;
-    localparam _state_1_for_0 = 3;
-    localparam _state_done = 4;
+    // State variables
+    typedef enum{_state_0_for_0,_state_0_for_body_0,_state_1_call_0,_state_1_for_0,_state_1_for_body_0,_state_done} _state_t;
+    _state_t _state;
     // Global variables
     reg signed [31:0] _i;
     reg signed [31:0] _j;
-    reg signed [31:0] _state;
     reg signed [31:0] _base;
     reg signed [31:0] _limit;
     reg signed [31:0] _step;
@@ -144,8 +140,8 @@ module dup_range_goal (
     reg [31:0] _inst_hrange_base;
     reg [31:0] _inst_hrange_limit;
     reg [31:0] _inst_hrange_step;
-    wire [31:0] _inst_hrange_0;
-    wire [31:0] _inst_hrange_1;
+    wire [31:0] _inst_hrange_out_0;
+    wire [31:0] _inst_hrange_out_1;
     wire _inst_hrange__valid;
     wire _inst_hrange__done;
     reg _inst_hrange__start;
@@ -154,8 +150,8 @@ module dup_range_goal (
         .base(_inst_hrange_base),
         .limit(_inst_hrange_limit),
         .step(_inst_hrange_step),
-        ._0(_inst_hrange_0),
-        ._1(_inst_hrange_1),
+        ._out_0(_inst_hrange_out_0),
+        ._out_1(_inst_hrange_out_1),
         ._valid(_inst_hrange__valid),
         ._done(_inst_hrange__done),
         ._clock(_clock),
@@ -165,6 +161,7 @@ module dup_range_goal (
         );
     // Core
     always @(posedge _clock) begin
+        // $display("state:%0d,start:%0d,done:%0d,ready:%0d,valid:%0d,i:%0d,j:%0d,base:%0d,limit:%0d,step:%0d,out_0:%0d", _state, _start, _done, _ready, _valid, _i, _j, _base, _limit, _step, _out_0);
         _done <= 0;
         if (_ready) begin
             _valid <= 0;
@@ -186,20 +183,20 @@ module dup_range_goal (
             _inst_hrange__start <= 0;
             if ((1 && _inst_hrange__valid)) begin
                 _inst_hrange__ready <= 0;
-                _i <= _inst_hrange_0;
-                _j <= _inst_hrange_1;
+                _i <= _inst_hrange_out_0;
+                _j <= _inst_hrange_out_1;
                 if (_inst_hrange__done) begin
                     _done <= 1;
                     _state <= _state_done;
                 end else begin
-                    if ($signed(_inst_hrange_0 > $signed(4))) begin
-                        _0 <= _inst_hrange_0;
+                    if ($signed(_inst_hrange_out_0 > $signed(4))) begin
+                        _out_0 <= _inst_hrange_out_0;
+                        _valid <= 1;
+                        _state <= _state_0_for_body_0;
+                    end else begin
+                        _out_0 <= _inst_hrange_out_1;
                         _valid <= 1;
                         _state <= _state_0_for_0;
-                    end else begin
-                        _0 <= _inst_hrange_1;
-                        _valid <= 1;
-                        _state <= _state_0_call_0;
                     end
                 end
             end else begin
@@ -207,32 +204,32 @@ module dup_range_goal (
                     _done <= 1;
                     _state <= _state_done;
                 end else begin
-                    _state <= _state_0_call_0;
+                    _state <= _state_0_for_0;
                 end
             end
         end else begin
             // If ready or not valid, then continue computation
             if ((_ready || !(_valid))) begin
                 case (_state)
-                    _state_0_call_0: begin
+                    _state_0_for_0: begin
                         _inst_hrange__ready <= 1;
                         _inst_hrange__start <= 0;
                         if ((1 && _inst_hrange__valid)) begin
                             _inst_hrange__ready <= 0;
-                            _i <= _inst_hrange_0;
-                            _j <= _inst_hrange_1;
+                            _i <= _inst_hrange_out_0;
+                            _j <= _inst_hrange_out_1;
                             if (_inst_hrange__done) begin
                                 _done <= 1;
                                 _state <= _state_done;
                             end else begin
-                                if ($signed(_inst_hrange_0 > $signed(4))) begin
-                                    _0 <= _inst_hrange_0;
+                                if ($signed(_inst_hrange_out_0 > $signed(4))) begin
+                                    _out_0 <= _inst_hrange_out_0;
+                                    _valid <= 1;
+                                    _state <= _state_0_for_body_0;
+                                end else begin
+                                    _out_0 <= _inst_hrange_out_1;
                                     _valid <= 1;
                                     _state <= _state_0_for_0;
-                                end else begin
-                                    _0 <= _inst_hrange_1;
-                                    _valid <= 1;
-                                    _state <= _state_0_call_0;
                                 end
                             end
                         end else begin
@@ -240,14 +237,14 @@ module dup_range_goal (
                                 _done <= 1;
                                 _state <= _state_done;
                             end else begin
-                                _state <= _state_0_call_0;
+                                _state <= _state_0_for_0;
                             end
                         end
                     end
-                    _state_0_for_0: begin
-                        _0 <= _j;
+                    _state_0_for_body_0: begin
+                        _out_0 <= _j;
                         _valid <= 1;
-                        _state <= _state_0_call_0;
+                        _state <= _state_0_for_0;
                     end
                     _state_done: begin
                         _done <= 1;

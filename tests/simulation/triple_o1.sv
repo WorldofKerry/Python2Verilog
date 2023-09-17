@@ -33,7 +33,6 @@
 
 # Test Cases
 print(list(circle_lines(*(54, 52, 8))))
-print(list(circle_lines(*(54, 52, 8))))
 
 */
 
@@ -55,51 +54,26 @@ module circle_lines (
     output reg _done, // is high if module done outputting
 
     // Output values as a tuple with respective index(es)
-    output reg signed [31:0] _0,
-    output reg signed [31:0] _1,
-    output reg signed [31:0] _2,
-    output reg signed [31:0] _3,
-    output reg signed [31:0] _4,
-    output reg signed [31:0] _5
+    output reg signed [31:0] _out_0,
+    output reg signed [31:0] _out_1,
+    output reg signed [31:0] _out_2,
+    output reg signed [31:0] _out_3,
+    output reg signed [31:0] _out_4,
+    output reg signed [31:0] _out_5
 );
-    localparam _state_0_while = 0;
-    localparam _state_0_while_0 = 1;
-    localparam _state_0_while_1 = 2;
-    localparam _state_0_while_2 = 3;
-    localparam _state_0_while_3 = 4;
-    localparam _state_0_while_4 = 5;
-    localparam _state_0_while_5 = 6;
-    localparam _state_0_while_6 = 7;
-    localparam _state_1 = 8;
-    localparam _state_11 = 9;
-    localparam _state_11_while = 10;
-    localparam _state_11_while_1 = 11;
-    localparam _state_11_while_2 = 12;
-    localparam _state_11_while_3 = 13;
-    localparam _state_11_while_4 = 14;
-    localparam _state_11_while_5 = 15;
-    localparam _state_11_while_6 = 16;
-    localparam _state_11_while_7 = 17;
-    localparam _state_11_while_8 = 18;
-    localparam _state_2 = 19;
-    localparam _state_3 = 20;
-    localparam _state_4 = 21;
-    localparam _state_5 = 22;
-    localparam _state_6 = 23;
-    localparam _state_7 = 24;
-    localparam _state_8 = 25;
-    localparam _state_9 = 26;
-    localparam _state_done = 27;
+    // State variables
+    typedef enum{_state_0_while,_state_0_while_0,_state_0_while_1,_state_0_while_2,_state_0_while_3,_state_0_while_4,_state_0_while_5,_state_0_while_6,_state_1,_state_11,_state_11_while,_state_11_while_1,_state_11_while_2,_state_11_while_3,_state_11_while_4,_state_11_while_5,_state_11_while_6,_state_11_while_7,_state_11_while_8,_state_2,_state_3,_state_4,_state_5,_state_6,_state_7,_state_8,_state_9,_state_done} _state_t;
+    _state_t _state;
     // Global variables
     reg signed [31:0] _d;
     reg signed [31:0] _y;
     reg signed [31:0] _x;
-    reg signed [31:0] _state;
     reg signed [31:0] _s_x;
     reg signed [31:0] _s_y;
     reg signed [31:0] _height;
     // Core
     always @(posedge _clock) begin
+        $display("state:%0d,start:%0d,done:%0d,ready:%0d,valid:%0d,d:%0d,y:%0d,x:%0d,s_x:%0d,s_y:%0d,height:%0d,out_0:%0d,out_1:%0d,out_2:%0d,out_3:%0d,out_4:%0d,out_5:%0d", _state, _start, _done, _ready, _valid, _d, _y, _x, _s_x, _s_y, _height, _out_0, _out_1, _out_2, _out_3, _out_4, _out_5);
         _done <= 0;
         if (_ready) begin
             _valid <= 0;
@@ -113,21 +87,21 @@ module circle_lines (
             _s_y <= s_y;
             _height <= height;
             if ($signed(_y >= _x)) begin
-                _0 <= $signed(s_x - _y);
-                _1 <= $signed(s_y - _x);
-                _2 <= height;
-                _3 <= _x;
-                _4 <= _y;
-                _5 <= _d;
+                _out_0 <= $signed(s_x - _y);
+                _out_1 <= $signed(s_y - _x);
+                _out_2 <= height;
+                _out_3 <= _x;
+                _out_4 <= _y;
+                _out_5 <= _d;
                 _valid <= 1;
                 _state <= _state_11_while_8;
             end else begin
-                _0 <= $signed(s_x - _y);
-                _1 <= $signed(s_y - _x);
-                _2 <= height;
-                _3 <= _x;
-                _4 <= _y;
-                _5 <= _d;
+                _out_0 <= $signed(s_x - _y);
+                _out_1 <= $signed(s_y - _x);
+                _out_2 <= height;
+                _out_3 <= _x;
+                _out_4 <= _y;
+                _out_5 <= _d;
                 _valid <= 1;
                 _state <= _state_9;
             end
@@ -143,72 +117,72 @@ module circle_lines (
                         _state <= _state_done;
                     end
                     _state_3: begin
-                        _0 <= $signed(_s_x + _x);
-                        _1 <= $signed(_s_y + _y);
-                        _2 <= _height;
-                        _3 <= _x;
-                        _4 <= _y;
-                        _5 <= _d;
+                        _out_0 <= $signed(_s_x + _x);
+                        _out_1 <= $signed(_s_y + _y);
+                        _out_2 <= _height;
+                        _out_3 <= _x;
+                        _out_4 <= _y;
+                        _out_5 <= _d;
                         _valid <= 1;
                         _state <= _state_2;
                     end
                     _state_4: begin
-                        _0 <= $signed(_s_x + _x);
-                        _1 <= $signed(_s_y - _y);
-                        _2 <= _height;
-                        _3 <= _x;
-                        _4 <= _y;
-                        _5 <= _d;
+                        _out_0 <= $signed(_s_x + _x);
+                        _out_1 <= $signed(_s_y - _y);
+                        _out_2 <= _height;
+                        _out_3 <= _x;
+                        _out_4 <= _y;
+                        _out_5 <= _d;
                         _valid <= 1;
                         _state <= _state_3;
                     end
                     _state_5: begin
-                        _0 <= $signed(_s_x - _x);
-                        _1 <= $signed(_s_y + _y);
-                        _2 <= _height;
-                        _3 <= _x;
-                        _4 <= _y;
-                        _5 <= _d;
+                        _out_0 <= $signed(_s_x - _x);
+                        _out_1 <= $signed(_s_y + _y);
+                        _out_2 <= _height;
+                        _out_3 <= _x;
+                        _out_4 <= _y;
+                        _out_5 <= _d;
                         _valid <= 1;
                         _state <= _state_4;
                     end
                     _state_6: begin
-                        _0 <= $signed(_s_x - _x);
-                        _1 <= $signed(_s_y - _y);
-                        _2 <= _height;
-                        _3 <= _x;
-                        _4 <= _y;
-                        _5 <= _d;
+                        _out_0 <= $signed(_s_x - _x);
+                        _out_1 <= $signed(_s_y - _y);
+                        _out_2 <= _height;
+                        _out_3 <= _x;
+                        _out_4 <= _y;
+                        _out_5 <= _d;
                         _valid <= 1;
                         _state <= _state_5;
                     end
                     _state_7: begin
-                        _0 <= $signed(_s_x + _y);
-                        _1 <= $signed(_s_y + _x);
-                        _2 <= _height;
-                        _3 <= _x;
-                        _4 <= _y;
-                        _5 <= _d;
+                        _out_0 <= $signed(_s_x + _y);
+                        _out_1 <= $signed(_s_y + _x);
+                        _out_2 <= _height;
+                        _out_3 <= _x;
+                        _out_4 <= _y;
+                        _out_5 <= _d;
                         _valid <= 1;
                         _state <= _state_6;
                     end
                     _state_8: begin
-                        _0 <= $signed(_s_x + _y);
-                        _1 <= $signed(_s_y - _x);
-                        _2 <= _height;
-                        _3 <= _x;
-                        _4 <= _y;
-                        _5 <= _d;
+                        _out_0 <= $signed(_s_x + _y);
+                        _out_1 <= $signed(_s_y - _x);
+                        _out_2 <= _height;
+                        _out_3 <= _x;
+                        _out_4 <= _y;
+                        _out_5 <= _d;
                         _valid <= 1;
                         _state <= _state_7;
                     end
                     _state_9: begin
-                        _0 <= $signed(_s_x - _y);
-                        _1 <= $signed(_s_y + _x);
-                        _2 <= _height;
-                        _3 <= _x;
-                        _4 <= _y;
-                        _5 <= _d;
+                        _out_0 <= $signed(_s_x - _y);
+                        _out_1 <= $signed(_s_y + _x);
+                        _out_2 <= _height;
+                        _out_3 <= _x;
+                        _out_4 <= _y;
+                        _out_5 <= _d;
                         _valid <= 1;
                         _state <= _state_8;
                     end
@@ -218,21 +192,21 @@ module circle_lines (
                             _y <= $signed(_y - $signed(1));
                             _x <= $signed(_x + $signed(1));
                             if ($signed($signed(_y - $signed(1)) >= $signed(_x + $signed(1)))) begin
-                                _0 <= $signed(_s_x - $signed(_y - $signed(1)));
-                                _1 <= $signed(_s_y - $signed(_x + $signed(1)));
-                                _2 <= _height;
-                                _3 <= $signed(_x + $signed(1));
-                                _4 <= $signed(_y - $signed(1));
-                                _5 <= $signed($signed(_d + $signed($signed(4) * $signed(_x - _y))) + $signed(10));
+                                _out_0 <= $signed(_s_x - $signed(_y - $signed(1)));
+                                _out_1 <= $signed(_s_y - $signed(_x + $signed(1)));
+                                _out_2 <= _height;
+                                _out_3 <= $signed(_x + $signed(1));
+                                _out_4 <= $signed(_y - $signed(1));
+                                _out_5 <= $signed($signed(_d + $signed($signed(4) * $signed(_x - _y))) + $signed(10));
                                 _valid <= 1;
                                 _state <= _state_11_while_8;
                             end else begin
-                                _0 <= $signed(_s_x - $signed(_y - $signed(1)));
-                                _1 <= $signed(_s_y - $signed(_x + $signed(1)));
-                                _2 <= _height;
-                                _3 <= $signed(_x + $signed(1));
-                                _4 <= $signed(_y - $signed(1));
-                                _5 <= $signed($signed(_d + $signed($signed(4) * $signed(_x - _y))) + $signed(10));
+                                _out_0 <= $signed(_s_x - $signed(_y - $signed(1)));
+                                _out_1 <= $signed(_s_y - $signed(_x + $signed(1)));
+                                _out_2 <= _height;
+                                _out_3 <= $signed(_x + $signed(1));
+                                _out_4 <= $signed(_y - $signed(1));
+                                _out_5 <= $signed($signed(_d + $signed($signed(4) * $signed(_x - _y))) + $signed(10));
                                 _valid <= 1;
                                 _state <= _state_9;
                             end
@@ -240,93 +214,93 @@ module circle_lines (
                             _d <= $signed($signed(_d + $signed($signed(4) * _x)) + $signed(6));
                             _x <= $signed(_x + $signed(1));
                             if ($signed(_y >= $signed(_x + $signed(1)))) begin
-                                _0 <= $signed(_s_x - _y);
-                                _1 <= $signed(_s_y - $signed(_x + $signed(1)));
-                                _2 <= _height;
-                                _3 <= $signed(_x + $signed(1));
-                                _4 <= _y;
-                                _5 <= $signed($signed(_d + $signed($signed(4) * _x)) + $signed(6));
+                                _out_0 <= $signed(_s_x - _y);
+                                _out_1 <= $signed(_s_y - $signed(_x + $signed(1)));
+                                _out_2 <= _height;
+                                _out_3 <= $signed(_x + $signed(1));
+                                _out_4 <= _y;
+                                _out_5 <= $signed($signed(_d + $signed($signed(4) * _x)) + $signed(6));
                                 _valid <= 1;
                                 _state <= _state_11_while_8;
                             end else begin
-                                _0 <= $signed(_s_x - _y);
-                                _1 <= $signed(_s_y - $signed(_x + $signed(1)));
-                                _2 <= _height;
-                                _3 <= $signed(_x + $signed(1));
-                                _4 <= _y;
-                                _5 <= $signed($signed(_d + $signed($signed(4) * _x)) + $signed(6));
+                                _out_0 <= $signed(_s_x - _y);
+                                _out_1 <= $signed(_s_y - $signed(_x + $signed(1)));
+                                _out_2 <= _height;
+                                _out_3 <= $signed(_x + $signed(1));
+                                _out_4 <= _y;
+                                _out_5 <= $signed($signed(_d + $signed($signed(4) * _x)) + $signed(6));
                                 _valid <= 1;
                                 _state <= _state_9;
                             end
                         end
                     end
                     _state_11_while_2: begin
-                        _0 <= $signed(_s_x + _x);
-                        _1 <= $signed(_s_y + _y);
-                        _2 <= _height;
-                        _3 <= _x;
-                        _4 <= _y;
-                        _5 <= _d;
+                        _out_0 <= $signed(_s_x + _x);
+                        _out_1 <= $signed(_s_y + _y);
+                        _out_2 <= _height;
+                        _out_3 <= _x;
+                        _out_4 <= _y;
+                        _out_5 <= _d;
                         _valid <= 1;
                         _state <= _state_11_while_1;
                     end
                     _state_11_while_3: begin
-                        _0 <= $signed(_s_x + _x);
-                        _1 <= $signed(_s_y - _y);
-                        _2 <= _height;
-                        _3 <= _x;
-                        _4 <= _y;
-                        _5 <= _d;
+                        _out_0 <= $signed(_s_x + _x);
+                        _out_1 <= $signed(_s_y - _y);
+                        _out_2 <= _height;
+                        _out_3 <= _x;
+                        _out_4 <= _y;
+                        _out_5 <= _d;
                         _valid <= 1;
                         _state <= _state_11_while_2;
                     end
                     _state_11_while_4: begin
-                        _0 <= $signed(_s_x - _x);
-                        _1 <= $signed(_s_y + _y);
-                        _2 <= _height;
-                        _3 <= _x;
-                        _4 <= _y;
-                        _5 <= _d;
+                        _out_0 <= $signed(_s_x - _x);
+                        _out_1 <= $signed(_s_y + _y);
+                        _out_2 <= _height;
+                        _out_3 <= _x;
+                        _out_4 <= _y;
+                        _out_5 <= _d;
                         _valid <= 1;
                         _state <= _state_11_while_3;
                     end
                     _state_11_while_5: begin
-                        _0 <= $signed(_s_x - _x);
-                        _1 <= $signed(_s_y - _y);
-                        _2 <= _height;
-                        _3 <= _x;
-                        _4 <= _y;
-                        _5 <= _d;
+                        _out_0 <= $signed(_s_x - _x);
+                        _out_1 <= $signed(_s_y - _y);
+                        _out_2 <= _height;
+                        _out_3 <= _x;
+                        _out_4 <= _y;
+                        _out_5 <= _d;
                         _valid <= 1;
                         _state <= _state_11_while_4;
                     end
                     _state_11_while_6: begin
-                        _0 <= $signed(_s_x + _y);
-                        _1 <= $signed(_s_y + _x);
-                        _2 <= _height;
-                        _3 <= _x;
-                        _4 <= _y;
-                        _5 <= _d;
+                        _out_0 <= $signed(_s_x + _y);
+                        _out_1 <= $signed(_s_y + _x);
+                        _out_2 <= _height;
+                        _out_3 <= _x;
+                        _out_4 <= _y;
+                        _out_5 <= _d;
                         _valid <= 1;
                         _state <= _state_11_while_5;
                     end
                     _state_11_while_7: begin
-                        _0 <= $signed(_s_x + _y);
-                        _1 <= $signed(_s_y - _x);
-                        _2 <= _height;
-                        _3 <= _x;
-                        _4 <= _y;
-                        _5 <= _d;
+                        _out_0 <= $signed(_s_x + _y);
+                        _out_1 <= $signed(_s_y - _x);
+                        _out_2 <= _height;
+                        _out_3 <= _x;
+                        _out_4 <= _y;
+                        _out_5 <= _d;
                         _valid <= 1;
                         _state <= _state_11_while_6;
                     end
                     _state_11_while_8: begin
-                        _0 <= $signed(_s_x - _y);
-                        _1 <= $signed(_s_y + _x);
-                        _2 <= _height;
-                        _3 <= _x;
-                        _4 <= _y;
-                        _5 <= _d;
+                        _out_0 <= $signed(_s_x - _y);
+                        _out_1 <= $signed(_s_y + _x);
+                        _out_2 <= _height;
+                        _out_3 <= _x;
+                        _out_4 <= _y;
+                        _out_5 <= _d;
                         _valid <= 1;
                         _state <= _state_11_while_7;
                     end
@@ -389,26 +363,12 @@ module triple_circle (
     output reg _done, // is high if module done outputting
 
     // Output values as a tuple with respective index(es)
-    output reg signed [31:0] _0,
-    output reg signed [31:0] _1
+    output reg signed [31:0] _out_0,
+    output reg signed [31:0] _out_1
 );
-    localparam _state_0 = 0;
-    localparam _state_0_call_0 = 1;
-    localparam _state_0_for_0 = 2;
-    localparam _state_1 = 3;
-    localparam _state_1_call_0 = 4;
-    localparam _state_2 = 5;
-    localparam _state_3 = 6;
-    localparam _state_4 = 7;
-    localparam _state_5 = 8;
-    localparam _state_6 = 9;
-    localparam _state_7 = 10;
-    localparam _state_8 = 11;
-    localparam _state_8_call_0 = 12;
-    localparam _state_9 = 13;
-    localparam _state_9_call_0 = 14;
-    localparam _state_9_for_0 = 15;
-    localparam _state_done = 16;
+    // State variables
+    typedef enum{_state_0,_state_0_for_0,_state_0_for_body_0,_state_1,_state_1_call_0,_state_2,_state_3,_state_4,_state_5,_state_6,_state_7,_state_8,_state_8_call_0,_state_9,_state_9_for_0,_state_9_for_body_0,_state_done} _state_t;
+    _state_t _state;
     // Global variables
     reg signed [31:0] _x;
     reg signed [31:0] _y;
@@ -424,7 +384,6 @@ module triple_circle (
     reg signed [31:0] _c_x1;
     reg signed [31:0] _c_y;
     reg signed [31:0] _c_x;
-    reg signed [31:0] _state;
     reg signed [31:0] _centre_x;
     reg signed [31:0] _centre_y;
     reg signed [31:0] _radius;
@@ -432,12 +391,12 @@ module triple_circle (
     reg [31:0] _gen0_circle_lines_s_x;
     reg [31:0] _gen0_circle_lines_s_y;
     reg [31:0] _gen0_circle_lines_height;
-    wire [31:0] _gen0_circle_lines_0;
-    wire [31:0] _gen0_circle_lines_1;
-    wire [31:0] _gen0_circle_lines_2;
-    wire [31:0] _gen0_circle_lines_3;
-    wire [31:0] _gen0_circle_lines_4;
-    wire [31:0] _gen0_circle_lines_5;
+    wire [31:0] _gen0_circle_lines_out_0;
+    wire [31:0] _gen0_circle_lines_out_1;
+    wire [31:0] _gen0_circle_lines_out_2;
+    wire [31:0] _gen0_circle_lines_out_3;
+    wire [31:0] _gen0_circle_lines_out_4;
+    wire [31:0] _gen0_circle_lines_out_5;
     wire _gen0_circle_lines__valid;
     wire _gen0_circle_lines__done;
     reg _gen0_circle_lines__start;
@@ -446,12 +405,12 @@ module triple_circle (
         .s_x(_gen0_circle_lines_s_x),
         .s_y(_gen0_circle_lines_s_y),
         .height(_gen0_circle_lines_height),
-        ._0(_gen0_circle_lines_0),
-        ._1(_gen0_circle_lines_1),
-        ._2(_gen0_circle_lines_2),
-        ._3(_gen0_circle_lines_3),
-        ._4(_gen0_circle_lines_4),
-        ._5(_gen0_circle_lines_5),
+        ._out_0(_gen0_circle_lines_out_0),
+        ._out_1(_gen0_circle_lines_out_1),
+        ._out_2(_gen0_circle_lines_out_2),
+        ._out_3(_gen0_circle_lines_out_3),
+        ._out_4(_gen0_circle_lines_out_4),
+        ._out_5(_gen0_circle_lines_out_5),
         ._valid(_gen0_circle_lines__valid),
         ._done(_gen0_circle_lines__done),
         ._clock(_clock),
@@ -461,7 +420,7 @@ module triple_circle (
         );
     // Core
     always @(posedge _clock) begin
-        // $display("state %0d, callee %0d %0d", _state, _gen0_circle_lines_0, _gen0_circle_lines_1);
+        // $display("state:%0d,start:%0d,done:%0d,ready:%0d,valid:%0d,x:%0d,y:%0d,a:%0d,b:%0d,c:%0d,d:%0d,c_y3:%0d,c_x3:%0d,c_y2:%0d,c_x2:%0d,c_y1:%0d,c_x1:%0d,c_y:%0d,c_x:%0d,centre_x:%0d,centre_y:%0d,radius:%0d,out_0:%0d,out_1:%0d", _state, _start, _done, _ready, _valid, _x, _y, _a, _b, _c, _d, _c_y3, _c_x3, _c_y2, _c_x2, _c_y1, _c_x1, _c_y, _c_x, _centre_x, _centre_y, _radius, _out_0, _out_1);
         _done <= 0;
         if (_ready) begin
             _valid <= 0;
@@ -483,35 +442,33 @@ module triple_circle (
                         _done <= 1;
                         _state <= _state_done;
                     end
-                    _state_0_for_0: begin
-                        _0 <= _x;
-                        _1 <= _y;
+                    _state_0_for_body_0: begin
+                        _out_0 <= _x;
+                        _out_1 <= _y;
                         _valid <= 1;
-                        _state <= _state_0_call_0;
+                        _state <= _state_0_for_0;
                     end
-                    _state_0_call_0: begin
-                        $display("Called %0d %0d %0d, state %0d, output %0d", _gen0_circle_lines__ready, _gen0_circle_lines__start, _gen0_circle_lines_s_x, _gen0._state, _gen0_circle_lines_0);
+                    _state_0_for_0: begin
                         _gen0_circle_lines__ready <= 1;
                         _gen0_circle_lines__start <= 0;
-                        $display("valid %0d", _gen0_circle_lines__valid);
                         if ((_gen0_circle_lines__ready && _gen0_circle_lines__valid)) begin
                             _gen0_circle_lines__ready <= 0;
-                            _x <= _gen0_circle_lines_0;
-                            _y <= _gen0_circle_lines_1;
-                            _a <= _gen0_circle_lines_2;
-                            _b <= _gen0_circle_lines_3;
-                            _c <= _gen0_circle_lines_4;
-                            _d <= _gen0_circle_lines_5;
+                            _x <= _gen0_circle_lines_out_0;
+                            _y <= _gen0_circle_lines_out_1;
+                            _a <= _gen0_circle_lines_out_2;
+                            _b <= _gen0_circle_lines_out_3;
+                            _c <= _gen0_circle_lines_out_4;
+                            _d <= _gen0_circle_lines_out_5;
                             if (_gen0_circle_lines__done) begin
                                 _state <= _state_done;
                             end else begin
-                                _state <= _state_0_for_0;
+                                _state <= _state_0_for_body_0;
                             end
                         end else begin
                             if (_gen0_circle_lines__done) begin
                                 _state <= _state_done;
                             end else begin
-                                _state <= _state_0_call_0;
+                                _state <= _state_0_for_0;
                             end
                         end
                     end
@@ -521,8 +478,7 @@ module triple_circle (
                         _gen0_circle_lines_s_x <= _c_x1;
                         _gen0_circle_lines_s_y <= _c_y1;
                         _gen0_circle_lines_height <= _radius;
-                        _state <= _state_0_call_0;
-                        // $display("Calling %0d %0d %0d", _gen0_circle_lines__ready, _gen0_circle_lines__start, _gen0_circle_lines_s_x);
+                        _state <= _state_0_for_0;
                     end
                     _state_2: begin
                         _c_y3 <= $signed(_c_y - ($signed($signed($signed(_radius * $signed(2)) % $signed(6)) === $signed(0)) ? $signed($signed(_radius * $signed(2)) / $signed(6)) : $signed($signed($signed(_radius * $signed(2)) / $signed(6)) - $signed(($signed($signed(_radius * $signed(2)) < $signed(0)) ^ $signed($signed(6) < $signed(0))) & $signed(1)))));
