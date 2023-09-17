@@ -61,35 +61,9 @@ module circle_lines (
     output reg signed [31:0] _out4,
     output reg signed [31:0] _out5
 );
-    localparam _state_0_while = 0;
-    localparam _state_0_while_0 = 1;
-    localparam _state_0_while_1 = 2;
-    localparam _state_0_while_2 = 3;
-    localparam _state_0_while_3 = 4;
-    localparam _state_0_while_4 = 5;
-    localparam _state_0_while_5 = 6;
-    localparam _state_0_while_6 = 7;
-    localparam _state_1 = 8;
-    localparam _state_11 = 9;
-    localparam _state_11_while = 10;
-    localparam _state_11_while_1 = 11;
-    localparam _state_11_while_2 = 12;
-    localparam _state_11_while_3 = 13;
-    localparam _state_11_while_4 = 14;
-    localparam _state_11_while_5 = 15;
-    localparam _state_11_while_6 = 16;
-    localparam _state_11_while_7 = 17;
-    localparam _state_11_while_8 = 18;
-    localparam _state_2 = 19;
-    localparam _state_3 = 20;
-    localparam _state_4 = 21;
-    localparam _state_5 = 22;
-    localparam _state_6 = 23;
-    localparam _state_7 = 24;
-    localparam _state_8 = 25;
-    localparam _state_9 = 26;
-    localparam _state_done = 27;
-    reg [31:0] _state;
+    // State variables
+    typedef enum{_state_0_while,_state_0_while_0,_state_0_while_1,_state_0_while_2,_state_0_while_3,_state_0_while_4,_state_0_while_5,_state_0_while_6,_state_1,_state_11,_state_11_while,_state_11_while_1,_state_11_while_2,_state_11_while_3,_state_11_while_4,_state_11_while_5,_state_11_while_6,_state_11_while_7,_state_11_while_8,_state_2,_state_3,_state_4,_state_5,_state_6,_state_7,_state_8,_state_9,_state_done} _state_t;
+    _state_t _state;
     // Global variables
     reg signed [31:0] _d;
     reg signed [31:0] _y;
@@ -99,7 +73,7 @@ module circle_lines (
     reg signed [31:0] _height;
     // Core
     always @(posedge _clock) begin
-        // $display("%s,start:%0d,done:%0d,ready:%0d,valid:%0d,d:%0d,y:%0d,x:%0d,s_x:%0d,s_y:%0d,height:%0d,out0:%0d,out1:%0d,out2:%0d,out3:%0d,out4:%0d,out5:%0d", _state.name, _start, _done, _ready, _valid, _d, _y, _x, _s_x, _s_y, _height, _out0, _out1, _out2, _out3, _out4, _out5);
+        // $display("%s,start:%0d,done:%0d,ready:%0d,valid:%0d,out0:%0d,out1:%0d,out2:%0d,out3:%0d,out4:%0d,out5:%0d", _state.name, _start, _done, _ready, _valid, _out0, _out1, _out2, _out3, _out4, _out5);
         _done <= 0;
         if (_ready) begin
             _valid <= 0;
@@ -392,24 +366,9 @@ module triple_circle (
     output reg signed [31:0] _out0,
     output reg signed [31:0] _out1
 );
-    localparam _state_0 = 0;
-    localparam _state_0_for_0 = 1;
-    localparam _state_0_for_body_0 = 2;
-    localparam _state_1 = 3;
-    localparam _state_1_call_0 = 4;
-    localparam _state_2 = 5;
-    localparam _state_3 = 6;
-    localparam _state_4 = 7;
-    localparam _state_5 = 8;
-    localparam _state_6 = 9;
-    localparam _state_7 = 10;
-    localparam _state_8 = 11;
-    localparam _state_8_call_0 = 12;
-    localparam _state_9 = 13;
-    localparam _state_9_for_0 = 14;
-    localparam _state_9_for_body_0 = 15;
-    localparam _state_done = 16;
-    reg [31:0] _state;
+    // State variables
+    typedef enum{_state_0,_state_0_for_0,_state_0_for_body_0,_state_1,_state_1_call_0,_state_2,_state_3,_state_4,_state_5,_state_6,_state_7,_state_8,_state_8_call_0,_state_9,_state_9_for_0,_state_9_for_body_0,_state_done} _state_t;
+    _state_t _state;
     // Global variables
     reg signed [31:0] _x;
     reg signed [31:0] _y;
@@ -461,7 +420,7 @@ module triple_circle (
         );
     // Core
     always @(posedge _clock) begin
-        // $display("%s,start:%0d,done:%0d,ready:%0d,valid:%0d,x:%0d,y:%0d,a:%0d,b:%0d,c:%0d,d:%0d,c_y3:%0d,c_x3:%0d,c_y2:%0d,c_x2:%0d,c_y1:%0d,c_x1:%0d,c_y:%0d,c_x:%0d,centre_x:%0d,centre_y:%0d,radius:%0d,out0:%0d,out1:%0d", _state.name, _start, _done, _ready, _valid, _x, _y, _a, _b, _c, _d, _c_y3, _c_x3, _c_y2, _c_x2, _c_y1, _c_x1, _c_y, _c_x, _centre_x, _centre_y, _radius, _out0, _out1);
+        // $display("%s,start:%0d,done:%0d,ready:%0d,valid:%0d,out0:%0d,out1:%0d", _state.name, _start, _done, _ready, _valid, _out0, _out1);
         _done <= 0;
         if (_ready) begin
             _valid <= 0;

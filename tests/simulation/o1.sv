@@ -40,11 +40,9 @@ module hrange (
     output reg signed [31:0] _out0,
     output reg signed [31:0] _out1
 );
-    localparam _state_0_while_0 = 0;
-    localparam _state_1 = 1;
-    localparam _state_1_while = 2;
-    localparam _state_done = 3;
-    reg [31:0] _state;
+    // State variables
+    typedef enum{_state_0_while_0,_state_1,_state_1_while,_state_done} _state_t;
+    _state_t _state;
     // Global variables
     reg signed [31:0] _i;
     reg signed [31:0] _base;
@@ -52,7 +50,7 @@ module hrange (
     reg signed [31:0] _step;
     // Core
     always @(posedge _clock) begin
-        // $display("%s,start:%0d,done:%0d,ready:%0d,valid:%0d,i:%0d,base:%0d,limit:%0d,step:%0d,out0:%0d,out1:%0d", _state.name, _start, _done, _ready, _valid, _i, _base, _limit, _step, _out0, _out1);
+        // $display("%s,start:%0d,done:%0d,ready:%0d,valid:%0d,out0:%0d,out1:%0d", _state.name, _start, _done, _ready, _valid, _out0, _out1);
         _done <= 0;
         if (_ready) begin
             _valid <= 0;
@@ -129,13 +127,9 @@ module dup_range_goal (
     // Output values as a tuple with respective index(es)
     output reg signed [31:0] _out0
 );
-    localparam _state_0_for_0 = 0;
-    localparam _state_0_for_body_0 = 1;
-    localparam _state_1_call_0 = 2;
-    localparam _state_1_for_0 = 3;
-    localparam _state_1_for_body_0 = 4;
-    localparam _state_done = 5;
-    reg [31:0] _state;
+    // State variables
+    typedef enum{_state_0_for_0,_state_0_for_body_0,_state_1_call_0,_state_1_for_0,_state_1_for_body_0,_state_done} _state_t;
+    _state_t _state;
     // Global variables
     reg signed [31:0] _i;
     reg signed [31:0] _j;
@@ -167,7 +161,7 @@ module dup_range_goal (
         );
     // Core
     always @(posedge _clock) begin
-        // $display("%s,start:%0d,done:%0d,ready:%0d,valid:%0d,i:%0d,j:%0d,base:%0d,limit:%0d,step:%0d,out0:%0d", _state.name, _start, _done, _ready, _valid, _i, _j, _base, _limit, _step, _out0);
+        // $display("%s,start:%0d,done:%0d,ready:%0d,valid:%0d,out0:%0d", _state.name, _start, _done, _ready, _valid, _out0);
         _done <= 0;
         if (_ready) begin
             _valid <= 0;

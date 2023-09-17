@@ -67,8 +67,6 @@ jobs:
       - name: Download Icarus Verilog Requirements
         run: |
           sudo apt-get install expect
-          iverilog -V
-          vvp -V
 
       - name: Download OSS CAD Suite for yosys
         run: |
@@ -128,7 +126,7 @@ jobs:
       - name: Run Pytest
         run: |
           python3 -m pytest tests/ --cov=python2verilog/ --cov-report term-missing \
-          ${{ matrix.pytest-args }} ${{ matrix.pytest-opti-levels }}
+          ${{ matrix.pytest-args }} ${{ matrix.pytest-opti-levels }} --log-cli-level=DEBUG
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
