@@ -20,8 +20,8 @@ from python2verilog.utils.fifo import temp_fifo
 
 
 class TestSimulation(unittest.TestCase):
-    def test_all(self):
-        goal_namespace = new_namespace(Path(__file__).parent / "dup_range_goal")
+    def test_o0(self):
+        goal_namespace = new_namespace(Path(__file__).parent / "o0")
 
         @verilogify(
             mode=Modes.OVERWRITE,
@@ -51,6 +51,43 @@ class TestSimulation(unittest.TestCase):
         # with open("./cyto.log", mode="w") as f:
         #     _, _, cy = context_to_verilog_and_dump(get_context(dup_range_goal))
         #     f.write(str(cy))
+        module, testbench = namespace_to_verilog(goal_namespace)
+        self.assertListEqual(
+            list(get_actual(dup_range_goal, module, testbench, timeout=1)),
+            list(get_expected(dup_range_goal)),
+        )
+
+    def test_o1(self):
+        goal_namespace = new_namespace(Path(__file__).parent / "o1")
+
+        @verilogify(
+            mode=Modes.OVERWRITE,
+            namespace=goal_namespace,
+        )
+        def hrange(base, limit, step):
+            i = base
+            while i < limit:
+                yield i, i
+                i += step
+
+        @verilogify(
+            mode=Modes.OVERWRITE,
+            namespace=goal_namespace,
+            optimization_level=1,
+        )
+        def dup_range_goal(base, limit, step):
+            inst = hrange(base, limit, step)
+            for i, j in inst:
+                if i > 4:
+                    yield i
+                yield j
+
+        list(hrange(1, 11, 3))
+        list(dup_range_goal(0, 10, 2))
+
+        with open("./cyto.log", mode="w") as f:
+            _, _, cy = context_to_verilog_and_dump(get_context(dup_range_goal))
+            f.write(str(cy))
         module, testbench = namespace_to_verilog(goal_namespace)
         self.assertListEqual(
             list(get_actual(dup_range_goal, module, testbench, timeout=1)),
