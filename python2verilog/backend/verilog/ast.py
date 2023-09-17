@@ -84,6 +84,16 @@ class LocalParam(Statement):
         super().__init__(f"localparam {name} = {value.verilog()};", *args, **kwargs)
 
 
+class TypeDef(Statement):
+    """
+    typedef enum
+    {
+        <val0>,
+        <val1>
+    } _state_t;
+    """
+
+
 class AtPosedgeStatement(Statement):
     """
     @(posedge <condition>);

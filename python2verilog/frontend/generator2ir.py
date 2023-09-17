@@ -215,13 +215,13 @@ class Generator2Graph:
         def unique_node_gen():
             counter = 0
             while True:
-                yield f"{prefix}_call_{counter}"
+                yield f"{prefix}_for_{counter}"
                 counter += 1
 
         def unique_edge_gen():
             counter = 0
             while True:
-                yield f"{prefix}_call_{counter}_e"
+                yield f"{prefix}_for_{counter}_e"
                 counter += 1
 
         unique_node = unique_node_gen()
@@ -303,7 +303,7 @@ class Generator2Graph:
         )
         node.child = first_ifelse
 
-        body_node = self.__parse_statements(stmt.body, f"{prefix}_for", head)
+        body_node = self.__parse_statements(stmt.body, f"{prefix}_for_body", head)
         loop_edge.child = body_node
 
         return head
