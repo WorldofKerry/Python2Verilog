@@ -3,6 +3,8 @@ import sys
 
 import pytest
 
+from python2verilog.utils import env
+
 from .utils import Argument
 
 """
@@ -54,7 +56,8 @@ def pytest_addoption(parser: pytest.Parser):
     for param in params:
         param.add_to_parser(parser)
 
-    os.environ["PYTHON_2_VERILOG_DEBUG"] = "1"
+    env.set_var(env.Vars.DEBUG_MODE, "1")
+    env.set_var(env.Vars.IVERILOG_PATH, "extern/iverilog/driver/iverilog")
 
 
 @pytest.fixture()
