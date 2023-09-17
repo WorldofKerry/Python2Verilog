@@ -92,6 +92,10 @@ class CodeGen:
                             lvalue=context.state_var,
                             rvalue=ir.Expression(context.done_state),
                         ),
+                        ver.NonBlockingSubsitution(
+                            lvalue=context.signals.valid_signal,
+                            rvalue=ir.UInt(0),
+                        ),
                     ],
                     else_body=[],
                 ),
