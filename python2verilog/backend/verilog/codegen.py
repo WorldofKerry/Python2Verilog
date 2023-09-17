@@ -4,6 +4,7 @@ Verilog Codegen
 
 import itertools
 import typing
+import warnings
 
 from python2verilog.optimizer.optimizer import backwards_replace
 from python2verilog.utils.lines import Lines
@@ -27,7 +28,7 @@ class CodeGen:
         self.context = context
 
         self.context.output_vars = [
-            ir.Var(str(i)) for i in range(len(self.context.output_types))
+            ir.Var(f"out_{i}") for i in range(len(self.context.output_types))
         ]
 
         root_case = CaseBuilder(root, context).case
@@ -60,9 +61,30 @@ class CodeGen:
         for var in context.output_vars:
             outputs.append(var.ver_name)
 
+        def make_debug_display(context: ir.Context):
+            """
+            Creates a display statement for all signals
+
+            $display("%0d, ...", ...);
+            """
+            vars_ = [context.state_var]
+            vars_ += context.signals.instance_specific_values()
+            vars_ += context.global_vars
+            vars_ += context.input_vars
+            vars_ += context.output_vars
+            str_ = '$display("'
+            str_ += "%0d, ".join(map(lambda var: f"{var.py_name}: ", vars_)) + '%0d", '
+            str_ += ", ".join(map(lambda var: var.ver_name, vars_))
+            str_ += ");"
+            return str_
+
+        debug_display = make_debug_display(context)
+        warnings.warn(debug_display)
+
         always = ver.PosedgeSyncAlways(
             context.signals.clock_signal,
             body=[
+                ver.Statement(comment=make_debug_display(context)),
                 ver.NonBlockingSubsitution(context.signals.done_signal, ir.UInt(0)),
                 ver.Statement(),
                 ver.IfElse(

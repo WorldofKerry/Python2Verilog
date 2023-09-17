@@ -59,12 +59,18 @@ class ProtocolSignals:
         for key, value in self.__dict__.items():
             yield key, value
 
-    def instance_specific(self) -> Generator[tuple[str, Var], None, None]:
+    def instance_specific_items(self) -> Generator[tuple[str, Var], None, None]:
         """
         Get the instance-specific signals
         """
         instance_signals = map(lambda field_: field_.name, fields(InstanceSignals))
-        # warnings.warn(str(instance_signals))
         for key, value in self.items():
             if key in instance_signals:
                 yield key, value
+
+    def instance_specific_values(self) -> Generator[Var, None, None]:
+        """
+        Get the instance-specific signals
+        """
+        for _, value in self.instance_specific_items():
+            yield value

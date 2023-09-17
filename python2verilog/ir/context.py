@@ -307,7 +307,7 @@ class Context(GenericReprAndStr):
         )
         args = {
             key: Var(f"{name}_{self.name}__{value.py_name}")
-            for key, value in self.signals.instance_specific()
+            for key, value in self.signals.instance_specific_items()
         }
 
         signals = ProtocolSignals(**args)
