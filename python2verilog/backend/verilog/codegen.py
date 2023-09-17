@@ -40,10 +40,6 @@ class CodeGen:
         assert isinstance(context.done_state, ir.State)
         self.context.add_state_weak(str(context.done_state))
 
-        self.context.add_global_var(
-            ir.State("_state", initial_value=self.context.done_state)
-        )
-
         self._module = CodeGen.__new_module(root_case, self.context)
 
     @staticmethod

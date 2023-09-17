@@ -5,7 +5,8 @@ Verilog Abstract Syntax Tree Components
 from __future__ import annotations
 
 import itertools
-from typing import Optional
+import logging
+from typing import Iterable, Optional
 
 from ... import ir
 from ...utils.assertions import assert_typed_dict, get_typed, get_typed_list
@@ -92,6 +93,22 @@ class TypeDef(Statement):
         <val1>
     } _state_t;
     """
+
+    def __init__(self, name: str, values: list[str]):
+        self.name = get_typed(name, str)
+        self.values = get_typed_list(values, str)
+        super().__init__()
+
+    def to_lines(self):
+        lines = Lines("typedef enum")
+        lines += "{"
+        values = Lines()
+        for value in self.values[:-1]:
+            values += f"{value},"
+        values += f"{self.values[-1]}"
+        lines.concat(values, indent=1)
+        lines += f"}} {self.name};"
+        return lines
 
 
 class AtPosedgeStatement(Statement):
@@ -216,10 +233,10 @@ class Module(ImplementsToLines):
             self.body = []
 
         if localparams:
-            assert_typed_dict(localparams, str, ir.UInt)  # type: ignore[misc]
-            self.local_params = Lines()
-            for key, value in localparams.items():
-                self.local_params.concat(LocalParam(key, value).to_lines())
+            typedef = TypeDef("_state_t", list(localparams.keys()))
+            self.local_params = Lines("// State variables")
+            self.local_params.concat(typedef.to_lines())
+            self.local_params += "_state_t _state;"
         else:
             self.local_params = Lines()
 
