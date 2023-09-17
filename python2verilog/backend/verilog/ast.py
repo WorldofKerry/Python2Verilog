@@ -244,7 +244,7 @@ class Module(ImplementsToLines):
                 )
                 self.local_params += "_state_t _state;"
             else:
-                self.local_params = Lines()
+                self.local_params = Lines("// State variables")
                 for key, value in localparams.items():
                     self.local_params.concat(LocalParam(key, value).to_lines())
                 self.local_params.concat(Declaration("_state", reg=True).to_lines())
