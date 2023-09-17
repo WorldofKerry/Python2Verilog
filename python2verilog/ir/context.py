@@ -13,7 +13,7 @@ from types import FunctionType
 from typing import Any, Optional
 
 from python2verilog.api.modes import Modes
-from python2verilog.ir.expressions import Var
+from python2verilog.ir.expressions import State, Var
 from python2verilog.ir.graph import DoneNode
 from python2verilog.ir.instance import Instance
 from python2verilog.ir.signals import ProtocolSignals
@@ -62,7 +62,7 @@ class Context(GenericReprAndStr):
 
     state_var: Var = Var("state")
 
-    _done_state: str = "_state_done"
+    _done_state: State = State("_state_done")
     _entry_state: Optional[str] = None
 
     # Function calls
@@ -170,12 +170,12 @@ class Context(GenericReprAndStr):
         """
         The ready state
         """
-        assert isinstance(self._done_state, str), self
+        assert isinstance(self._done_state, State), self
         return self._done_state
 
     @done_state.setter
-    def done_state(self, other: str):
-        assert isinstance(other, str)
+    def done_state(self, other: State):
+        assert isinstance(other, State)
         self._done_state = other
 
     @property

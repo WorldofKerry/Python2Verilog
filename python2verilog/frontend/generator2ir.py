@@ -52,7 +52,7 @@ class Generator2Graph:
         self._root = self.__parse_statements(
             stmts=context.py_ast.body,
             prefix="_state",
-            nextt=ir.DoneNode(unique_id=context.done_state, name="done"),
+            nextt=ir.DoneNode(unique_id=str(context.done_state), name="done"),
         )
 
         self._context.entry_state = self._root.unique_id
@@ -441,8 +441,6 @@ class Generator2Graph:
                     "&&",
                     self.__parse_expression(expr.values[1]),
                 )
-        # if isinstance(expr, pyast.Call):
-        #     return self.__parse_call(expr)
         raise TypeError(
             "Error: unexpected expression type", type(expr), pyast.dump(expr)
         )

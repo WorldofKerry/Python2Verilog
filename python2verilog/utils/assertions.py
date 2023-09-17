@@ -42,7 +42,7 @@ if sys.version_info >= (3, 10):
         """
         Type guard for type
         """
-        assert isinstance(obj, type_), f"Expected {type_} got {type(obj)} instead"
+        assert isinstance(obj, type_), f"Expected {type_} got {type(obj)} instead {obj}"
         return True
 
     def get_typed(obj: _ValueType, type_: _ValueType):

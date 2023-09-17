@@ -37,11 +37,11 @@ class CodeGen:
                 item.condition.to_string()
             )  # change to not weak
 
-        assert isinstance(context.done_state, str)
-        self.context.add_state_weak(context.done_state)
+        assert isinstance(context.done_state, ir.State)
+        self.context.add_state_weak(str(context.done_state))
 
         self.context.add_global_var(
-            ir.Var("state", initial_value=self.context.done_state)
+            ir.State("_state", initial_value=self.context.done_state)
         )
 
         self._module = CodeGen.__new_module(root_case, self.context)
@@ -90,7 +90,7 @@ class CodeGen:
                     then_body=[
                         ver.NonBlockingSubsitution(
                             lvalue=context.state_var,
-                            rvalue=ir.Expression(context.done_state),
+                            rvalue=context.done_state,
                         ),
                         ver.NonBlockingSubsitution(
                             lvalue=context.signals.valid_signal,
@@ -227,7 +227,7 @@ class CodeGen:
 
             stmt_stack: list[ver.Statement] = []  # backwards replace using dfs
             for item in root.case_items:
-                if item.condition == ir.Expression(context.entry_state):
+                if item.condition == ir.State(context.entry_state):
                     stmt_stack += item.statements
                     then_body += item.statements
                     root.case_items.remove(item)
@@ -481,7 +481,7 @@ class CaseBuilder:
         # Member Vars
         self.visited: set[str] = set()
         self.context = context
-        self.case = ver.Case(expression=ir.Expression("_state"), case_items=[])
+        self.case = ver.Case(expression=context.state_var, case_items=[])
         self.added_ready_node = False
 
         # Member Funcs
@@ -497,7 +497,7 @@ class CaseBuilder:
         if not have_done_state:
             self.case.case_items.append(
                 ver.CaseItem(
-                    ir.Expression(context.done_state),
+                    context.done_state,
                     statements=[
                         ver.NonBlockingSubsitution(
                             lvalue=ir.State("_done"), rvalue=ir.UInt(1)
@@ -514,7 +514,7 @@ class CaseBuilder:
         Creates a new case item with the root's unique id as identifier
         """
         stmts = self.do_vertex(root)
-        item = ver.CaseItem(condition=ir.Expression(root.unique_id), statements=stmts)
+        item = ver.CaseItem(condition=ir.State(root.unique_id), statements=stmts)
 
         return item
 
@@ -533,7 +533,7 @@ class CaseBuilder:
                     self.context.signals.done_signal, ir.UInt(1)
                 ),
                 ver.NonBlockingSubsitution(
-                    self.case.condition, ir.Expression(self.context.done_state)
+                    self.case.condition, self.context.done_state
                 ),
             ]
             self.added_ready_node = True
@@ -574,7 +574,7 @@ class CaseBuilder:
             state_change.append(
                 ver.NonBlockingSubsitution(
                     self.context.state_var,
-                    ir.Expression(vertex.optimal_child.optimal_child.unique_id),
+                    ir.State(vertex.optimal_child.optimal_child.unique_id),
                 )
             )
             if vertex.optimal_child.optimal_child.unique_id not in self.visited:
@@ -600,7 +600,7 @@ class CaseBuilder:
                 self.case.case_items.append(self.new_caseitem(edge.optimal_child))
             return [
                 ver.NonBlockingSubsitution(
-                    self.context.state_var, ir.Expression(edge.optimal_child.unique_id)
+                    self.context.state_var, ir.State(edge.optimal_child.unique_id)
                 )
             ]
         raise RuntimeError(f"{type(edge)}")
