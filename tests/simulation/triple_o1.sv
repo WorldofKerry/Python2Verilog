@@ -73,7 +73,9 @@ module circle_lines (
     reg signed [31:0] _height;
     // Core
     always @(posedge _clock) begin
-        // $display("%s,start:%0d,done:%0d,ready:%0d,valid:%0d,out0:%0d,out1:%0d,out2:%0d,out3:%0d,out4:%0d,out5:%0d", _state.name, _start, _done, _ready, _valid, _out0, _out1, _out2, _out3, _out4, _out5);
+        `ifdef DEBUG
+        $display("circle_lines,%s,start:%0d,done:%0d,ready:%0d,valid:%0d,out0:%0d,out1:%0d,out2:%0d,out3:%0d,out4:%0d,out5:%0d", _state.name, _start, _done, _ready, _valid, _out0, _out1, _out2, _out3, _out4, _out5);
+        `endif
         _done <= 0;
         if (_ready) begin
             _valid <= 0;
@@ -420,7 +422,9 @@ module triple_circle (
         );
     // Core
     always @(posedge _clock) begin
-        // $display("%s,start:%0d,done:%0d,ready:%0d,valid:%0d,out0:%0d,out1:%0d", _state.name, _start, _done, _ready, _valid, _out0, _out1);
+        `ifdef DEBUG
+        $display("triple_circle,%s,start:%0d,done:%0d,ready:%0d,valid:%0d,out0:%0d,out1:%0d", _state.name, _start, _done, _ready, _valid, _out0, _out1);
+        `endif
         _done <= 0;
         if (_ready) begin
             _valid <= 0;

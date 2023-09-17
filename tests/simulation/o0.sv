@@ -51,7 +51,9 @@ module hrange (
     reg signed [31:0] _step;
     // Core
     always @(posedge _clock) begin
-        // $display("%s,start:%0d,done:%0d,ready:%0d,valid:%0d,out0:%0d,out1:%0d", _state.name, _start, _done, _ready, _valid, _out0, _out1);
+        `ifdef DEBUG
+        $display("hrange,%s,start:%0d,done:%0d,ready:%0d,valid:%0d,out0:%0d,out1:%0d", _state.name, _start, _done, _ready, _valid, _out0, _out1);
+        `endif
         _done <= 0;
         if (_ready) begin
             _valid <= 0;
@@ -162,7 +164,9 @@ module dup_range_goal (
         );
     // Core
     always @(posedge _clock) begin
-        // $display("%s,start:%0d,done:%0d,ready:%0d,valid:%0d,out0:%0d", _state.name, _start, _done, _ready, _valid, _out0);
+        `ifdef DEBUG
+        $display("dup_range_goal,%s,start:%0d,done:%0d,ready:%0d,valid:%0d,out0:%0d", _state.name, _start, _done, _ready, _valid, _out0);
+        `endif
         _done <= 0;
         if (_ready) begin
             _valid <= 0;
