@@ -61,9 +61,35 @@ module circle_lines (
     output reg signed [31:0] _out4,
     output reg signed [31:0] _out5
 );
-    // State variables
-    typedef enum{_state_0_while,_state_0_while_0,_state_0_while_1,_state_0_while_2,_state_0_while_3,_state_0_while_4,_state_0_while_5,_state_0_while_6,_state_1,_state_11,_state_11_while,_state_11_while_1,_state_11_while_2,_state_11_while_3,_state_11_while_4,_state_11_while_5,_state_11_while_6,_state_11_while_7,_state_11_while_8,_state_2,_state_3,_state_4,_state_5,_state_6,_state_7,_state_8,_state_9,_state_done} _state_t;
-    _state_t _state;
+    localparam _state_0_while = 0;
+    localparam _state_0_while_0 = 1;
+    localparam _state_0_while_1 = 2;
+    localparam _state_0_while_2 = 3;
+    localparam _state_0_while_3 = 4;
+    localparam _state_0_while_4 = 5;
+    localparam _state_0_while_5 = 6;
+    localparam _state_0_while_6 = 7;
+    localparam _state_1 = 8;
+    localparam _state_11 = 9;
+    localparam _state_11_while = 10;
+    localparam _state_11_while_1 = 11;
+    localparam _state_11_while_2 = 12;
+    localparam _state_11_while_3 = 13;
+    localparam _state_11_while_4 = 14;
+    localparam _state_11_while_5 = 15;
+    localparam _state_11_while_6 = 16;
+    localparam _state_11_while_7 = 17;
+    localparam _state_11_while_8 = 18;
+    localparam _state_2 = 19;
+    localparam _state_3 = 20;
+    localparam _state_4 = 21;
+    localparam _state_5 = 22;
+    localparam _state_6 = 23;
+    localparam _state_7 = 24;
+    localparam _state_8 = 25;
+    localparam _state_9 = 26;
+    localparam _state_done = 27;
+    reg [31:0] _state;
     // Global variables
     reg signed [31:0] _d;
     reg signed [31:0] _y;
@@ -366,9 +392,24 @@ module triple_circle (
     output reg signed [31:0] _out0,
     output reg signed [31:0] _out1
 );
-    // State variables
-    typedef enum{_state_0,_state_0_for_0,_state_0_for_body_0,_state_1,_state_1_call_0,_state_2,_state_3,_state_4,_state_5,_state_6,_state_7,_state_8,_state_8_call_0,_state_9,_state_9_for_0,_state_9_for_body_0,_state_done} _state_t;
-    _state_t _state;
+    localparam _state_0 = 0;
+    localparam _state_0_for_0 = 1;
+    localparam _state_0_for_body_0 = 2;
+    localparam _state_1 = 3;
+    localparam _state_1_call_0 = 4;
+    localparam _state_2 = 5;
+    localparam _state_3 = 6;
+    localparam _state_4 = 7;
+    localparam _state_5 = 8;
+    localparam _state_6 = 9;
+    localparam _state_7 = 10;
+    localparam _state_8 = 11;
+    localparam _state_8_call_0 = 12;
+    localparam _state_9 = 13;
+    localparam _state_9_for_0 = 14;
+    localparam _state_9_for_body_0 = 15;
+    localparam _state_done = 16;
+    reg [31:0] _state;
     // Global variables
     reg signed [31:0] _x;
     reg signed [31:0] _y;

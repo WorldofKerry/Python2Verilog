@@ -5,8 +5,9 @@ Special env variable functions
 import logging
 import os
 from enum import Enum
-from types import NoneType
 from typing import Optional
+
+PREFIX = "PYTHON_2_VERILOG_"
 
 
 class Vars(Enum):
@@ -14,8 +15,9 @@ class Vars(Enum):
     Env var names
     """
 
-    DEBUG_MODE = "PYTHON_2_VERILOG_DEBUG"
-    IVERILOG_PATH = "PYTHON_2_VERILOG_IVERILOG_PATH"
+    DEBUG_MODE = PREFIX + "DEBUG"
+    IVERILOG_PATH = PREFIX + "IVERILOG_PATH"
+    IS_SYSTEM_VERILOG = PREFIX + "SYSTEM_VERILOG"
 
 
 def set_debug_mode(mode: bool):
@@ -40,11 +42,14 @@ def set_var(name: Vars, value: Optional[str]):
     Set an env var
     """
     assert isinstance(name, Vars)
-    assert isinstance(value, (NoneType, str))
+    assert isinstance(value, (type(None), str))
     if value is not None:
         os.environ[str(name)] = value
     else:
-        del os.environ[str(name)]
+        try:
+            del os.environ[str(name)]
+        except KeyError:
+            pass
 
 
 def get_var(name: Vars):

@@ -40,9 +40,11 @@ module hrange (
     output reg signed [31:0] _out0,
     output reg signed [31:0] _out1
 );
-    // State variables
-    typedef enum{_state_0_while_0,_state_1,_state_1_while,_state_done} _state_t;
-    _state_t _state;
+    localparam _state_0_while_0 = 0;
+    localparam _state_1 = 1;
+    localparam _state_1_while = 2;
+    localparam _state_done = 3;
+    reg [31:0] _state;
     // Global variables
     reg signed [31:0] _i;
     reg signed [31:0] _base;
@@ -127,9 +129,13 @@ module dup_range_goal (
     // Output values as a tuple with respective index(es)
     output reg signed [31:0] _out0
 );
-    // State variables
-    typedef enum{_state_0_for_0,_state_0_for_body_0,_state_1_call_0,_state_1_for_0,_state_1_for_body_0,_state_done} _state_t;
-    _state_t _state;
+    localparam _state_0_for_0 = 0;
+    localparam _state_0_for_body_0 = 1;
+    localparam _state_1_call_0 = 2;
+    localparam _state_1_for_0 = 3;
+    localparam _state_1_for_body_0 = 4;
+    localparam _state_done = 5;
+    reg [31:0] _state;
     // Global variables
     reg signed [31:0] _i;
     reg signed [31:0] _j;

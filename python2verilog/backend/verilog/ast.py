@@ -8,6 +8,8 @@ import itertools
 import logging
 from typing import Iterable, Optional
 
+from python2verilog.utils import env
+
 from ... import ir
 from ...utils.assertions import assert_typed_dict, get_typed, get_typed_list
 from ...utils.lines import ImplementsToLines, Indent, Lines
@@ -235,10 +237,17 @@ class Module(ImplementsToLines):
             self.body = []
 
         if localparams:
-            typedef = TypeDef("_state_t", list(localparams.keys()))
-            self.local_params = Lines("// State variables")
-            self.local_params.concat(typedef.to_lines())
-            self.local_params += "_state_t _state;"
+            if env.get_var(env.Vars.IS_SYSTEM_VERILOG) is not None:
+                self.local_params = Lines("// State variables")
+                self.local_params.concat(
+                    TypeDef("_state_t", list(localparams.keys())).to_lines()
+                )
+                self.local_params += "_state_t _state;"
+            else:
+                self.local_params = Lines()
+                for key, value in localparams.items():
+                    self.local_params.concat(LocalParam(key, value).to_lines())
+                self.local_params.concat(Declaration("_state", reg=True).to_lines())
         else:
             self.local_params = Lines()
 
