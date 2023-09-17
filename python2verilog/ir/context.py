@@ -63,7 +63,7 @@ class Context(GenericReprAndStr):
     state_var: Var = Var("state")
 
     _done_state: State = State("_state_done")
-    _entry_state: Optional[str] = None
+    _entry_state: Optional[State] = None
 
     # Function calls
     namespace: dict[str, Context] = field(default_factory=dict)  # callable functions
@@ -106,7 +106,7 @@ class Context(GenericReprAndStr):
         assert self.optimization_level >= 0, f"{self.optimization_level} {self.name}"
 
         if self._entry_state:
-            assert self.entry_state in self.states, self
+            assert str(self.entry_state) in self.states, self
 
         for value in self.signals.values():
             assert get_typed(value, Var)
@@ -157,12 +157,12 @@ class Context(GenericReprAndStr):
         """
         The first state that does work in the graph representation
         """
-        assert isinstance(self._entry_state, str), self
+        assert isinstance(self._entry_state, State), self
         return self._entry_state
 
     @entry_state.setter
-    def entry_state(self, other: str):
-        assert isinstance(other, str)
+    def entry_state(self, other: State):
+        assert isinstance(other, State)
         self._entry_state = other
 
     @property

@@ -227,7 +227,7 @@ class CodeGen:
 
             stmt_stack: list[ver.Statement] = []  # backwards replace using dfs
             for item in root.case_items:
-                if item.condition == ir.State(context.entry_state):
+                if item.condition == context.entry_state:
                     stmt_stack += item.statements
                     then_body += item.statements
                     root.case_items.remove(item)
@@ -251,9 +251,7 @@ class CodeGen:
                     )
                 )
             then_body.append(
-                ver.NonBlockingSubsitution(
-                    context.state_var, ir.Expression(context.entry_state)
-                )
+                ver.NonBlockingSubsitution(context.state_var, context.entry_state)
             )
 
         if_else = ver.IfElse(

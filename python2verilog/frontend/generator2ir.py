@@ -55,7 +55,7 @@ class Generator2Graph:
             nextt=ir.DoneNode(unique_id=str(context.done_state), name="done"),
         )
 
-        self._context.entry_state = self._root.unique_id
+        self._context.entry_state = ir.State(self._root.unique_id)
 
     @property
     def root(self):
