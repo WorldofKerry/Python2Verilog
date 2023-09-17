@@ -60,6 +60,7 @@ module hrange (
         // Start signal takes precedence over reset
         if (_reset) begin
             _state <= _state_done;
+            _valid <= 0;
         end
         if (_start) begin
             _base <= base;
@@ -170,6 +171,7 @@ module dup_range_goal (
         );
     // Core
     always @(posedge _clock) begin
+        $display("state %0d", _state);
         _done <= 0;
         if (_ready) begin
             _valid <= 0;
@@ -177,6 +179,7 @@ module dup_range_goal (
         // Start signal takes precedence over reset
         if (_reset) begin
             _state <= _state_done;
+            _valid <= 0;
         end
         if (_start) begin
             _base <= base;

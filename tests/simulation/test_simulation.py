@@ -36,7 +36,7 @@ class TestSimulation(unittest.TestCase):
         @verilogify(
             mode=Modes.OVERWRITE,
             namespace=goal_namespace,
-            optimization_level=1,
+            optimization_level=0,
         )
         def dup_range_goal(base, limit, step):
             inst = hrange(base, limit, step)
@@ -48,9 +48,9 @@ class TestSimulation(unittest.TestCase):
         list(hrange(1, 11, 3))
         list(dup_range_goal(0, 10, 2))
 
-        with open("./cyto.log", mode="w") as f:
-            _, _, cy = context_to_verilog_and_dump(get_context(dup_range_goal))
-            f.write(str(cy))
+        # with open("./cyto.log", mode="w") as f:
+        #     _, _, cy = context_to_verilog_and_dump(get_context(dup_range_goal))
+        #     f.write(str(cy))
         module, testbench = namespace_to_verilog(goal_namespace)
         self.assertListEqual(
             list(get_actual(dup_range_goal, module, testbench, timeout=1)),
