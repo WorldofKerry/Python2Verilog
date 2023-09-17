@@ -436,9 +436,10 @@ class Generator2Graph:
             return self.__parse_compare(expr)
         if isinstance(expr, pyast.BoolOp):
             if isinstance(expr.op, pyast.And):
-                return ir.Expression(
-                    f"({self.__parse_expression(expr.values[0]).to_string()}) \
-                    && ({self.__parse_expression(expr.values[1]).to_string()})"
+                return ir.UBinOp(
+                    self.__parse_expression(expr.values[0]),
+                    "&&",
+                    self.__parse_expression(expr.values[1]),
                 )
         # if isinstance(expr, pyast.Call):
         #     return self.__parse_call(expr)

@@ -53,6 +53,6 @@ class TestSimulation(unittest.TestCase):
             f.write(str(cy))
         module, testbench = namespace_to_verilog(goal_namespace)
         self.assertListEqual(
-            list(get_actual(dup_range_goal, module, testbench, timeout=3)),
+            list(get_actual(dup_range_goal, module, testbench, timeout=1)),
             list(get_expected(dup_range_goal)),
         )
