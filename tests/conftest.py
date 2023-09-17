@@ -57,7 +57,7 @@ def pytest_addoption(parser: pytest.Parser):
         param.add_to_parser(parser)
 
     env.set_var(env.Vars.DEBUG_MODE, "1")
-    env.set_var(env.Vars.IVERILOG_PATH, "extern/iverilog/driver/iverilog")
+    env.set_var(env.Vars.IVERILOG_PATH, "iverilog")
 
 
 @pytest.fixture()

@@ -66,9 +66,9 @@ jobs:
           python3 -m pip install -r tests/requirements.txt
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-      - name: Download Icarus Verilog and Utilities
+      - name: Download Icarus Verilog Requirements
         run: |
-          sudo apt-get install iverilog expect
+          sudo apt-get install expect
 
       - name: Download OSS CAD Suite for yosys
         run: |
