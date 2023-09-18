@@ -92,6 +92,7 @@ class CodeGen:
                 ver.Statement("`ifdef DEBUG"),
                 ver.Statement(make_debug_display(context)),
                 ver.Statement("`endif"),
+                ver.NonBlockingSubsitution(context.signals.done_signal, ir.UInt(0)),
                 ver.Statement(),
                 ver.IfElse(
                     context.signals.ready_signal,
@@ -139,63 +140,64 @@ class CodeGen:
             for var in context.input_vars
         ]
 
-        for inst in context.instances.values():
+        for instance in context.instances.values():
             body.append(
                 ver.Statement(
                     comment="================ Function Instance ================"
                 )
             )
-            module = context.namespace[inst.module_name]
+            module = context.namespace[instance.module_name]
             defaults = {
-                module.signals.valid_signal: inst.signals.valid_signal,
-                module.signals.done_signal: inst.signals.done_signal,
+                module.signals.valid_signal: instance.signals.valid_signal,
+                module.signals.done_signal: instance.signals.done_signal,
                 module.signals.clock_signal: context.signals.clock_signal,
-                module.signals.start_signal: inst.signals.start_signal,
-                module.signals.reset_signal: inst.signals.reset_signal,
-                module.signals.ready_signal: inst.signals.ready_signal,
+                module.signals.start_signal: instance.signals.start_signal,
+                module.signals.reset_signal: instance.signals.reset_signal,
+                module.signals.ready_signal: instance.signals.ready_signal,
             }
             # defaults = dict(zip(module.signals.values(), instance.signals.values()))
-            for var in inst.inputs:
+            for var in instance.inputs:
                 body.append(ver.Declaration(name=var.ver_name, reg=True))
-            for var in inst.outputs:
+            for var in instance.outputs:
                 body.append(ver.Declaration(name=var.ver_name))
             body.append(
-                ver.Declaration(name=inst.signals.valid_signal.ver_name, size=1)
+                ver.Declaration(name=instance.signals.valid_signal.ver_name, size=1)
             )
-            body.append(ver.Declaration(name=inst.signals.done_signal.ver_name, size=1))
+            body.append(
+                ver.Declaration(name=instance.signals.done_signal.ver_name, size=1)
+            )
             body.append(
                 ver.Declaration(
-                    name=inst.signals.start_signal.ver_name, size=1, reg=True
+                    name=instance.signals.start_signal.ver_name, size=1, reg=True
                 )
             )
             body.append(
                 ver.Declaration(
-                    name=inst.signals.ready_signal.ver_name, size=1, reg=True
+                    name=instance.signals.ready_signal.ver_name, size=1, reg=True
                 )
             )
             body.append(
                 ver.Instantiation(
-                    inst.module_name,
-                    inst.var.ver_name,
+                    instance.module_name,
+                    instance.var.ver_name,
                     {
                         key.py_name: value.ver_name
                         for key, value in zip(
                             module.input_vars,
-                            inst.inputs,
+                            instance.inputs,
                         )
                     }
                     | {
                         key.ver_name: value.ver_name
                         for key, value in zip(
                             module.output_vars,
-                            inst.outputs,
+                            instance.outputs,
                         )
                     }
                     | {key.ver_name: value.ver_name for key, value in defaults.items()},
                 )
             )
 
-        body.append(ver.Statement("assign _done = _state == _state_done;"))
         body.append(ver.Statement(comment="Core"))
         body.append(always)
 
@@ -517,7 +519,11 @@ class CaseBuilder:
             self.case.case_items.append(
                 ver.CaseItem(
                     context.done_state,
-                    statements=[],
+                    statements=[
+                        ver.NonBlockingSubsitution(
+                            lvalue=ir.State("_done"), rvalue=ir.UInt(1)
+                        )
+                    ],
                 )
             )
 
@@ -542,6 +548,9 @@ class CaseBuilder:
 
         if isinstance(vertex, ir.DoneNode):
             stmts += [
+                ver.NonBlockingSubsitution(
+                    self.context.signals.done_signal, ir.UInt(1)
+                ),
                 ver.NonBlockingSubsitution(
                     self.case.condition, self.context.done_state
                 ),
@@ -573,6 +582,13 @@ class CaseBuilder:
                 )
             ]
             state_change = []
+
+            if isinstance(vertex.optimal_child.optimal_child, ir.DoneNode):
+                outputs.append(
+                    ver.NonBlockingSubsitution(
+                        self.context.signals.done_signal, ir.UInt(1)
+                    )
+                )
 
             state_change.append(
                 ver.NonBlockingSubsitution(
