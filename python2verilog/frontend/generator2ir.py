@@ -308,13 +308,7 @@ class Generator2Graph:
         )
         node.child = first_ifelse
 
-        stopper = ir.StopperNode(
-            unique_id=next(unique_node),
-            child=ir.NonClockedEdge(unique_id=next(unique_edge), child=head),
-        )
-        body_node = self.__parse_statements(
-            stmts=stmt.body, prefix=f"{prefix}_for_body", nextt=head
-        )
+        body_node = self.__parse_statements(stmt.body, f"{prefix}_for_body", head)
         loop_edge.child = body_node
 
         return head
