@@ -19,7 +19,7 @@ concurrency:
 
 jobs:
   iverilog:
-    name: Build Iverilog
+    name: build iverilog
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
