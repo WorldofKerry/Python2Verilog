@@ -502,7 +502,6 @@ class CaseBuilder:
         self.visited: set[str] = set()
         self.context = context
         self.case = ver.Case(expression=context.state_var, case_items=[])
-        self.added_ready_node = False
 
         # Member Funcs
         instance = itertools.count()
@@ -526,21 +525,33 @@ class CaseBuilder:
         """
         Processes a node
         """
+
+        def create_quick_done(context: ir.Context) -> ver.IfElse:
+            """
+            if ready:
+                done = 1
+                state = idle
+            else:
+                state = done
+            """
+            return ver.IfElse(
+                condition=context.signals.ready_signal,
+                then_body=[
+                    ver.NonBlockingSubsitution(context.signals.done_signal, ir.UInt(1)),
+                    ver.NonBlockingSubsitution(context.state_var, context.idle_state),
+                ],
+                else_body=[
+                    ver.NonBlockingSubsitution(context.state_var, context.done_state),
+                ],
+            )
+
         assert isinstance(vertex, ir.Vertex), str(vertex)
         self.visited.add(vertex.unique_id)
 
         stmts: list[ver.Statement] = []
 
         if isinstance(vertex, ir.DoneNode):
-            stmts += [
-                ver.NonBlockingSubsitution(
-                    self.context.signals.done_signal, ir.UInt(1)
-                ),
-                ver.NonBlockingSubsitution(
-                    self.case.condition, self.context.idle_state
-                ),
-            ]
-            self.added_ready_node = True
+            stmts.append(create_quick_done(self.context))
 
         elif isinstance(vertex, ir.AssignNode):
             stmts.append(ver.NonBlockingSubsitution(vertex.lvalue, vertex.rvalue))
@@ -558,25 +569,20 @@ class CaseBuilder:
             )
 
         elif isinstance(vertex, ir.YieldNode):
-            outputs = [
+            outputs: list[ver.Statement] = []
+            outputs += [
                 ver.NonBlockingSubsitution(var, expr)
                 for var, expr in zip(self.context.output_vars, vertex.stmts)
-            ] + [
+            ]
+            outputs += [
                 ver.NonBlockingSubsitution(
                     self.context.signals.valid_signal, ir.UInt(1)
                 )
             ]
-            state_change = []
+            state_change: list[ver.Statement] = []
 
             if isinstance(vertex.optimal_child.optimal_child, ir.DoneNode):
-                outputs += [
-                    ver.NonBlockingSubsitution(
-                        self.context.signals.done_signal, ir.UInt(1)
-                    ),
-                    ver.NonBlockingSubsitution(
-                        self.case.condition, self.context.idle_state
-                    ),
-                ]
+                outputs.append(create_quick_done(self.context))
 
             state_change.append(
                 ver.NonBlockingSubsitution(

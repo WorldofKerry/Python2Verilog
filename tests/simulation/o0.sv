@@ -65,8 +65,12 @@ module hrange (
                 _valid <= 1;
                 _state <= _state_0_while_0;
             end else begin
-                _done <= 1;
-                _state <= _state_idle;
+                if (_ready) begin
+                    _done <= 1;
+                    _state <= _state_idle;
+                end else begin
+                    _state <= _state_done;
+                end
             end
         end else begin
             // If ready or not valid, then continue computation
@@ -80,8 +84,12 @@ module hrange (
                             _valid <= 1;
                             _state <= _state_0_while_0;
                         end else begin
-                            _done <= 1;
-                            _state <= _state_idle;
+                            if (_ready) begin
+                                _done <= 1;
+                                _state <= _state_idle;
+                            end else begin
+                                _state <= _state_done;
+                            end
                         end
                     end
                 endcase
@@ -173,8 +181,12 @@ module dup_range_goal (
             if ((_ready || !(_valid))) begin
                 case (_state)
                     _state_done: begin
-                        _done <= 1;
-                        _state <= _state_idle;
+                        if (_ready) begin
+                            _done <= 1;
+                            _state <= _state_idle;
+                        end else begin
+                            _state <= _state_done;
+                        end
                     end
                     _state_0_for_body_0: begin
                         _out0 <= _i;
