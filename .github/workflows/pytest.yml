@@ -14,10 +14,43 @@ on:
       - ready_for_review
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
   cancel-in-progress: true
 
 jobs:
+  iverilog:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11"]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: True
+      - name: Build Icarius Verilog
+        run: |
+          bash extern/iverilog_setup.sh
+          extern/iverilog/driver/iverilog -V
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install -r tests/requirements.txt
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Download expect
+        run: |
+          sudo apt-get install expect
+
+      - name: Run Pytest
+        run: |
+          python3 -m pytest -v tests/ --cov=python2verilog/ --cov-report term-missing \
+          --write -L 0 1 2 -Iextern/iverilog/driver/iverilog
+
   quick:
     runs-on: ubuntu-latest
     strategy:
@@ -26,7 +59,6 @@ jobs:
         python-version: ["3.11"]
     steps:
       - uses: actions/checkout@v3
-
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v3
         with:
@@ -38,7 +70,7 @@ jobs:
           python3 -m pip install -r tests/requirements.txt
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-      - name: Download Icarus Verilog and Utilities
+      - name: Download iverilog
         run: |
           sudo apt-get install iverilog expect
 
@@ -66,7 +98,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v3
         with:
@@ -78,7 +109,7 @@ jobs:
           python3 -m pip install -r tests/requirements.txt
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-      - name: Download Icarus Verilog and Utilities
+      - name: Download iverilog
         run: |
           sudo apt-get install iverilog expect
 
@@ -92,7 +123,7 @@ jobs:
       - name: Run Pytest
         run: |
           python3 -m pytest tests/ --cov=python2verilog/ --cov-report term-missing \
-          ${{ matrix.pytest-args }} ${{ matrix.pytest-opti-levels }}
+          ${{ matrix.pytest-args }} ${{ matrix.pytest-opti-levels }} --log-cli-level=DEBUG
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
@@ -104,7 +135,7 @@ jobs:
     # Joins the matrix runs and makes sure all successful
     if: ${{ always() }}
     runs-on: ubuntu-latest
-    needs: [quick, full]
+    needs: [quick, full, iverilog]
     steps:
       - run: exit 1
         # see https://stackoverflow.com/a/67532120/4907315
