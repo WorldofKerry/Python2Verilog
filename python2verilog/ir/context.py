@@ -13,7 +13,7 @@ from types import FunctionType
 from typing import Any, Optional
 
 from python2verilog.api.modes import Modes
-from python2verilog.ir.expressions import State, Var
+from python2verilog.ir.expressions import ExclusiveVar, State, Var
 from python2verilog.ir.graph import DoneNode
 from python2verilog.ir.instance import Instance
 from python2verilog.ir.signals import ProtocolSignals
@@ -300,14 +300,20 @@ class Context(GenericReprAndStr):
         """
         Create generator instance
         """
-        inst_input_vars = list(
-            map(lambda var: Var(f"{name}_{self.name}_{var.py_name}"), self.input_vars)
+        inst_input_vars: list[Var] = list(
+            map(
+                lambda var: ExclusiveVar(f"{name}_{self.name}_{var.py_name}"),
+                self.input_vars,
+            )
         )
-        inst_output_vars = list(
-            map(lambda var: Var(f"{name}_{self.name}_{var.py_name}"), self.output_vars)
+        inst_output_vars: list[Var] = list(
+            map(
+                lambda var: ExclusiveVar(f"{name}_{self.name}_{var.py_name}"),
+                self.output_vars,
+            )
         )
-        args = {
-            key: Var(f"{name}_{self.name}__{value.py_name}")
+        args: dict[str, Var] = {
+            key: ExclusiveVar(f"{name}_{self.name}__{value.py_name}")
             for key, value in self.signals.instance_specific_items()
         }
 

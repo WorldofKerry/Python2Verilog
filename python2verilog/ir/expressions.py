@@ -128,6 +128,16 @@ class State(Var):
         )
 
 
+class ExclusiveVar(Var):
+    """
+    Exclusive Variable
+
+    Can only be set once before a clock cycle must occur,
+    used by the optimizer to determine if it needs to make
+    a edge clocked or not
+    """
+
+
 class Ternary(Expression):
     """
     <condition> ? <left> : <right>

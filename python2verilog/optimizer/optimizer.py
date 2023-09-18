@@ -5,6 +5,7 @@ Optimizer for the Graph IR
 import copy
 import logging
 import typing
+from functools import reduce
 
 from python2verilog.utils.assertions import get_typed
 
@@ -137,14 +138,14 @@ class OptimizeGraph:
             Returns true if edge should be clocked,
             that is visited this node more than threshold times
             """
-            if node.mutual_exclusion:
-                logging.debug(
-                    f"mutual exclusion {node.mutual_exclusion} {node} {visited}"
-                )
             be_clocked = False
-            if node.mutual_exclusion and node.mutual_exclusion in visited:
-                be_clocked = True
             if node.unique_id in visited and visited[node.unique_id] > threshold:
+                be_clocked = True
+            if (
+                isinstance(node, ir.AssignNode)
+                and isinstance(node.lvalue, ir.ExclusiveVar)
+                and node.lvalue.ver_name in visited
+            ):
                 be_clocked = True
             return be_clocked
 
@@ -161,13 +162,13 @@ class OptimizeGraph:
             if should_i_be_clocked(element, visited, threshold):
                 return element
             visited[element.unique_id] = visited.get(element.unique_id, 0) + 1
-            if element.mutual_exclusion:
-                visited[element.mutual_exclusion] = (
-                    visited.get(element.mutual_exclusion, 0) + 1
-                )
 
             edge: ir.Edge
             if isinstance(element, ir.AssignNode):
+                if isinstance(element.lvalue, ir.ExclusiveVar):
+                    logging.debug(f"found instance signal {element.lvalue}")
+                    visited[element.lvalue.ver_name] = 1
+
                 new_node = graph_apply_mapping(element, mapping)
                 new_node.unique_id = f"{element.unique_id}_{make_unique()}_optimal"
 
@@ -194,7 +195,19 @@ class OptimizeGraph:
 
             if isinstance(element, ir.IfElseNode):
                 new_condition = backwards_replace(element.condition, mapping)
-                if "_inst" in str(element.condition):  # TODO: fix
+
+                # If there is instance signal, most likely a for loop ifelse
+                if (
+                    len(
+                        list(
+                            filter(
+                                lambda x: isinstance(x, ir.ExclusiveVar),
+                                element.traverse_condition_vars(),
+                            )
+                        )
+                    )
+                    > 0
+                ):
                     new_condition = copy.deepcopy(element.condition)
                 new_node = ir.IfElseNode(
                     unique_id=f"{element.unique_id}_{make_unique()}_optimal",

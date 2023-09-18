@@ -10,6 +10,7 @@ from .expressions import (
     Add,
     BinOp,
     Div,
+    ExclusiveVar,
     Expression,
     FloorDiv,
     Int,

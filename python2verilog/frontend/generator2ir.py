@@ -311,7 +311,6 @@ class Generator2Graph:
         body_node = self.__parse_statements(stmt.body, f"{prefix}_for_body", head)
         loop_edge.child = body_node
 
-        head.mutual_exclusion = inst.var.ver_name
         return head
 
     def __parse_ifelse(self, stmt: pyast.If, nextt: ir.Element, prefix: str):
@@ -507,7 +506,6 @@ class Generator2Graph:
             )
             node = node.child
 
-        head.mutual_exclusion = inst.var.ver_name
         return (head, node)
 
     def __parse_subscript(self, node: pyast.Subscript) -> ir.Expression:
