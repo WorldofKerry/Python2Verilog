@@ -31,6 +31,7 @@ jobs:
       - name: Test Iverilog
         run: |
           extern/iverilog/driver/iverilog -V
+          python3 -m pytest -L 0 1 2 -Iextern/iverilog/driver/iverilog
 
   quick:
     runs-on: ubuntu-latest

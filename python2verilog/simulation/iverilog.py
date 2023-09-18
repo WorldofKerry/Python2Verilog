@@ -71,11 +71,13 @@ def _run_cmd_with_fifos(
             assert process.stderr
             return process.stdout.read(), process.stderr.read()
         except subprocess.TimeoutExpired as e:
-            logging.error(e)
             os.killpg(os.getpgid(process.pid), signal.SIGTERM)
             assert process.stdout
             assert process.stderr
-            return process.stdout.read(), process.stderr.read()
+            stdout = process.stdout.read()
+            stderr = process.stderr.read()
+            logging.error(f"{e}, {stdout}, {stderr}")
+            return stdout, stderr
 
 
 def _run_cmd_with_files(
@@ -106,11 +108,13 @@ def _run_cmd_with_files(
             assert process.stderr
             return process.stdout.read(), process.stderr.read()
         except subprocess.TimeoutExpired as e:
-            logging.error(e)
             os.killpg(os.getpgid(process.pid), signal.SIGTERM)
             assert process.stdout
             assert process.stderr
-            return process.stdout.read(), process.stderr.read()
+            stdout = process.stdout.read()
+            stderr = process.stderr.read()
+            logging.error(f"{e}, {stdout}, {stderr}")
+            return stdout, stderr
 
 
 def run_with_fifos(

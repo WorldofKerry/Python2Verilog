@@ -269,7 +269,7 @@ class BaseTestCases:
                         FILES_IN_ABS_DIR["module"]: module_str,
                         FILES_IN_ABS_DIR["testbench"]: tb_str,
                     },
-                    timeout=max(1, len(expected) // 4),
+                    timeout=1 + len(expected) // 64,
                 )
             else:
                 stdout, stderr = run_with_fifos(
@@ -278,7 +278,7 @@ class BaseTestCases:
                         FILES_IN_ABS_DIR["module_fifo"]: module_str,
                         FILES_IN_ABS_DIR["testbench_fifo"]: tb_str,
                     },
-                    timeout=max(1, len(expected) // 4),
+                    timeout=1 + len(expected) // 64,
                 )
             time_delta_ms = (time.time() - time_started) * 1000
 

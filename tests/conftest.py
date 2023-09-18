@@ -42,6 +42,14 @@ params = [
         action="extend",
         help="Set which optimization levels tests run on",
     ),
+    Argument(
+        "I",
+        "iverilog_path",
+        default="iverilog",
+        type=str,
+        action="store",
+        help="Path to iverilog",
+    ),
 ]
 """
 Other useful flags
@@ -72,7 +80,7 @@ def argparse(request):
     if max(args["optimization_levels"]) > 8:
         sys.setrecursionlimit(2000)
     env.set_var(env.Vars.DEBUG_MODE, "1")
-    env.set_var(env.Vars.IVERILOG_PATH, "iverilog")
+    env.set_var(env.Vars.IVERILOG_PATH, args["iverilog_path"])
     if args["synthesis"]:
         # Synthesis tool yosys does not support SystemVerilog features
         env.set_var(env.Vars.IS_SYSTEM_VERILOG, None)
