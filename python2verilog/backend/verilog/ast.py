@@ -221,7 +221,7 @@ class Module(ImplementsToLines):
         if is_not_testbench:
             output_lines += "output reg _valid, // is high if output values are valid"
             output_lines.blank()
-            output_lines += "output reg _done, // is high if module done outputting"
+            output_lines += "output wire _done, // is high if module done outputting"
             output_lines.blank()
             output_lines += "// Output values as a tuple with respective index(es)"
             for output in outputs:

@@ -34,7 +34,7 @@ module hrange (
     input wire _ready, // set high when caller is ready for output
     output reg _valid, // is high if output values are valid
 
-    output reg _done, // is high if module done outputting
+    output wire _done, // is high if module done outputting
 
     // Output values as a tuple with respective index(es)
     output reg signed [31:0] _out0,
@@ -48,12 +48,12 @@ module hrange (
     reg signed [31:0] _base;
     reg signed [31:0] _limit;
     reg signed [31:0] _step;
+    assign _done = _state == _state_done;
     // Core
     always @(posedge _clock) begin
         `ifdef DEBUG
         $display("hrange,%s,_start:%0d,_done:%0d,_ready:%0d,_valid:%0d,base:%0d,limit:%0d,step:%0d,_base:%0d,_limit:%0d,_step:%0d,_out0:%0d,_out1:%0d,_i%0d", _state.name, _start, _done, _ready, _valid, base, limit, step, _base, _limit, _step, _out0, _out1, _i);
         `endif
-        _done <= 0;
         if (_ready) begin
             _valid <= 0;
         end
@@ -72,7 +72,6 @@ module hrange (
                 _valid <= 1;
                 _state <= _state_0_while_0;
             end else begin
-                _done <= 1;
                 _state <= _state_done;
             end
         end else begin
@@ -87,12 +86,10 @@ module hrange (
                             _valid <= 1;
                             _state <= _state_0_while_0;
                         end else begin
-                            _done <= 1;
                             _state <= _state_done;
                         end
                     end
                     _state_done: begin
-                        _done <= 1;
                     end
                 endcase
             end
@@ -136,7 +133,7 @@ module dup_range_goal (
     input wire _ready, // set high when caller is ready for output
     output reg _valid, // is high if output values are valid
 
-    output reg _done, // is high if module done outputting
+    output wire _done, // is high if module done outputting
 
     // Output values as a tuple with respective index(es)
     output reg signed [31:0] _out0
@@ -173,12 +170,12 @@ module dup_range_goal (
         ._reset(_reset),
         ._ready(_inst_hrange__ready)
         );
+    assign _done = _state == _state_done;
     // Core
     always @(posedge _clock) begin
         `ifdef DEBUG
         $display("dup_range_goal,%s,_start:%0d,_done:%0d,_ready:%0d,_valid:%0d,base:%0d,limit:%0d,step:%0d,_base:%0d,_limit:%0d,_step:%0d,_out0:%0d,_i:%0d,_j%0d", _state.name, _start, _done, _ready, _valid, base, limit, step, _base, _limit, _step, _out0, _i, _j);
         `endif
-        _done <= 0;
         if (_ready) begin
             _valid <= 0;
         end
@@ -196,7 +193,6 @@ module dup_range_goal (
             if ((_ready || !(_valid))) begin
                 case (_state)
                     _state_done: begin
-                        _done <= 1;
                         _state <= _state_done;
                     end
                     _state_0_for_body_0: begin
@@ -233,7 +229,6 @@ module dup_range_goal (
                         _state <= _state_0_for_0;
                     end
                     _state_done: begin
-                        _done <= 1;
                     end
                 endcase
             end
