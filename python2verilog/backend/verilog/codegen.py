@@ -20,11 +20,11 @@ class CodeGen:
     Code Generator for Verilog
     """
 
-    def __init__(self, root: ir.Vertex, context: ir.Context):
+    def __init__(self, root: ir.Node, context: ir.Context):
         """ "
         Builds tree from Graph IR
         """
-        get_typed(root, ir.Vertex)
+        get_typed(root, ir.Node)
         get_typed(context, ir.Context)
         self.context = context
 
@@ -497,7 +497,7 @@ class CaseBuilder:
     Creates a case statement for the IR Graph
     """
 
-    def __init__(self, root: ir.Vertex, context: ir.Context):
+    def __init__(self, root: ir.Node, context: ir.Context):
         # Member Vars
         self.visited: set[str] = set()
         self.context = context
@@ -511,7 +511,7 @@ class CaseBuilder:
         logging.debug(f"{self.__class__.__name__} {root.unique_id} {root}")
         self.case.case_items.append(self.new_caseitem(root))
 
-    def new_caseitem(self, root: ir.Vertex):
+    def new_caseitem(self, root: ir.Node):
         """
         Creates a new case item with the root's unique id as identifier
         """
@@ -521,7 +521,7 @@ class CaseBuilder:
 
         return item
 
-    def do_vertex(self, vertex: ir.Vertex):
+    def do_vertex(self, vertex: ir.Node):
         """
         Processes a node
         """
@@ -545,7 +545,7 @@ class CaseBuilder:
                 ],
             )
 
-        assert isinstance(vertex, ir.Vertex), str(vertex)
+        assert isinstance(vertex, ir.Node), str(vertex)
         self.visited.add(vertex.unique_id)
 
         stmts: list[ver.Statement] = []

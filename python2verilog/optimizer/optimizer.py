@@ -6,6 +6,8 @@ import copy
 import logging
 import typing
 
+from python2verilog.utils.assertions import get_typed
+
 from .. import ir
 
 
@@ -136,7 +138,7 @@ class OptimizeGraph:
             return visited[regular.unique_id] > threshold
 
         def helper(
-            element: ir.Element,
+            element: ir.Node,
             mapping: dict[ir.Expression, ir.Expression],
             visited: dict[str, int],
             threshold: int,
@@ -144,13 +146,12 @@ class OptimizeGraph:
             """
             Helper
             """
+            get_typed(element, ir.Node)
             if threshold <= 0 and element.unique_id in visited:
                 return element
             visited[element.unique_id] = visited.get(element.unique_id, 0) + 1
 
             edge: ir.Edge
-            if isinstance(element, ir.Edge):
-                raise RuntimeError(f"no edges allowed {element.child}")
             if isinstance(element, ir.AssignNode):
                 new_node = graph_apply_mapping(element, mapping)
                 new_node.unique_id = f"{element.unique_id}_{make_unique()}_optimal"
@@ -270,8 +271,6 @@ class OptimizeGraph:
                 return new_node
 
             if isinstance(element, ir.DoneNode):
-                # logging.error("found done")
-                # print("found done node")
                 return element
 
             raise RuntimeError(f"unexpected {type(element)} {element}")
@@ -280,7 +279,7 @@ class OptimizeGraph:
             return root
         # print(f"==> optimizing {str(root)}")
         visited.add(root.unique_id)
-        if isinstance(root, ir.BasicElement):
+        if isinstance(root, ir.BasicElement) and isinstance(root, ir.Node):
             root.optimal_child = helper(root, {}, {}, threshold=threshold).optimal_child
             self.__graph_optimize(root.child.child, visited, threshold=threshold)
         elif isinstance(root, ir.IfElseNode):
@@ -294,7 +293,5 @@ class OptimizeGraph:
             self.__graph_optimize(root.false_edge.child, visited, threshold=threshold)
         elif isinstance(root, ir.DoneNode):
             pass
-        elif isinstance(root, ir.Edge):
-            raise RuntimeError()
         else:
             raise RuntimeError(f"{type(root)}")

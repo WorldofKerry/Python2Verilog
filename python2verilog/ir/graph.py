@@ -148,13 +148,13 @@ class BasicElement(Element):
         self._optimal_child = get_typed(other, Element)
 
 
-class Vertex(Element):
+class Node(Element):
     """
     Vertex
     """
 
 
-class IfElseNode(Vertex, Element):
+class IfElseNode(Node, Element):
     """
     Represents an if-else statement
     """
@@ -264,7 +264,7 @@ class IfElseNode(Vertex, Element):
         return [self._optimal_true_edge, self._optimal_false_edge]
 
 
-class AssignNode(Vertex, BasicElement):
+class AssignNode(Node, BasicElement):
     """
     Represents a non-blocking assignment,
     i.e. assignments that do not block the execution of
@@ -315,7 +315,7 @@ class AssignNode(Vertex, BasicElement):
         return f"{self._lvalue.verilog()} <= {self._rvalue.verilog()}"
 
 
-class YieldNode(Vertex, BasicElement):
+class YieldNode(Node, BasicElement):
     """
     Yield statement, represents output
     """
@@ -348,7 +348,7 @@ class YieldNode(Vertex, BasicElement):
         return string
 
 
-class DoneNode(Vertex, Element):
+class DoneNode(Node, Element):
     """
     Signals done
     """
