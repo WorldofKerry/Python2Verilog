@@ -28,6 +28,22 @@ python2verilog.ir.graph module
    :undoc-members:
    :show-inheritance:
 
+python2verilog.ir.instance module
+---------------------------------
+
+.. automodule:: python2verilog.ir.instance
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+python2verilog.ir.signals module
+--------------------------------
+
+.. automodule:: python2verilog.ir.signals
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Module contents
 ---------------
 

@@ -4,18 +4,58 @@ python2verilog.api package
 Submodules
 ----------
 
-python2verilog.api.decorators module
-------------------------------------
+python2verilog.api.exit\_handler module
+---------------------------------------
 
-.. automodule:: python2verilog.api.decorators
+.. automodule:: python2verilog.api.exit_handler
    :members:
    :undoc-members:
    :show-inheritance:
 
-python2verilog.api.wrappers module
-----------------------------------
+python2verilog.api.file\_namespaces module
+------------------------------------------
 
-.. automodule:: python2verilog.api.wrappers
+.. automodule:: python2verilog.api.file_namespaces
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+python2verilog.api.from\_context module
+---------------------------------------
+
+.. automodule:: python2verilog.api.from_context
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+python2verilog.api.from\_text module
+------------------------------------
+
+.. automodule:: python2verilog.api.from_text
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+python2verilog.api.modes module
+-------------------------------
+
+.. automodule:: python2verilog.api.modes
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+python2verilog.api.namespace module
+-----------------------------------
+
+.. automodule:: python2verilog.api.namespace
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+python2verilog.api.verilogify module
+------------------------------------
+
+.. automodule:: python2verilog.api.verilogify
    :members:
    :undoc-members:
    :show-inheritance:

@@ -9,10 +9,10 @@ Subpackages
 
    python2verilog.api
    python2verilog.backend
-   python2verilog.extern
    python2verilog.frontend
    python2verilog.ir
    python2verilog.optimizer
+   python2verilog.simulation
    python2verilog.utils
 
 Module contents

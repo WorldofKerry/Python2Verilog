@@ -36,117 +36,64 @@
 <section id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading">¶</a></h2>
 </section>
-<section id="module-python2verilog.api.decorators">
-<span id="python2verilog-api-decorators-module"></span><h2>python2verilog.api.decorators module<a class="headerlink" href="#module-python2verilog.api.decorators" title="Link to this heading">¶</a></h2>
-<p>Decorators</p>
-<dl class="py function">
-<dt class="sig sig-object py" id="python2verilog.api.decorators.get_func_ast_from_func">
-<span class="sig-name descname"><span class="pre">get_func_ast_from_func</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">function</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/api/decorators.html#get_func_ast_from_func"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.api.decorators.get_func_ast_from_func" title="Link to this definition">¶</a></dt>
-<dd><p>Given a function, gets its ast</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>ast rooted at function</p>
-</dd>
-</dl>
+<section id="python2verilog-api-exit-handler-module">
+<h2>python2verilog.api.exit_handler module<a class="headerlink" href="#python2verilog-api-exit-handler-module" title="Link to this heading">¶</a></h2>
+</section>
+<section id="python2verilog-api-file-namespaces-module">
+<h2>python2verilog.api.file_namespaces module<a class="headerlink" href="#python2verilog-api-file-namespaces-module" title="Link to this heading">¶</a></h2>
+</section>
+<section id="python2verilog-api-from-context-module">
+<h2>python2verilog.api.from_context module<a class="headerlink" href="#python2verilog-api-from-context-module" title="Link to this heading">¶</a></h2>
+</section>
+<section id="python2verilog-api-from-text-module">
+<h2>python2verilog.api.from_text module<a class="headerlink" href="#python2verilog-api-from-text-module" title="Link to this heading">¶</a></h2>
+</section>
+<section id="module-python2verilog.api.modes">
+<span id="python2verilog-api-modes-module"></span><h2>python2verilog.api.modes module<a class="headerlink" href="#module-python2verilog.api.modes" title="Link to this heading">¶</a></h2>
+<p>Modes</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="python2verilog.api.modes.Modes">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Modes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/api/modes.html#Modes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.api.modes.Modes" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></p>
+<p>Filesystem Modes</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="python2verilog.api.modes.Modes.NO_WRITE">
+<span class="sig-name descname"><span class="pre">NO_WRITE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#python2verilog.api.modes.Modes.NO_WRITE" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="python2verilog.api.modes.Modes.OVERWRITE">
+<span class="sig-name descname"><span class="pre">OVERWRITE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></em><a class="headerlink" href="#python2verilog.api.modes.Modes.OVERWRITE" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="python2verilog.api.modes.Modes.WRITE">
+<span class="sig-name descname"><span class="pre">WRITE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em><a class="headerlink" href="#python2verilog.api.modes.Modes.WRITE" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="python2verilog.api.modes.Modes.open_text_mode">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">open_text_mode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#python2verilog.api.modes.Modes" title="python2verilog.api.modes.Modes"><span class="pre">Modes</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/python2verilog/api/modes.html#Modes.open_text_mode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.api.modes.Modes.open_text_mode" title="Link to this definition">¶</a></dt>
+<dd><p>Returns proper mode argument for <cite>open</cite></p>
 </dd></dl>
 
-<dl class="py function">
-<dt class="sig sig-object py" id="python2verilog.api.decorators.namespace_to_file">
-<span class="sig-name descname"><span class="pre">namespace_to_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">namespace</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">function</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.context.Context" title="python2verilog.ir.context.Context"><span class="pre">Context</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/api/decorators.html#namespace_to_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.api.decorators.namespace_to_file" title="Link to this definition">¶</a></dt>
-<dd><p>Verilogifies a namespace</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="python2verilog.api.modes.Modes.write">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">write</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#python2verilog.api.modes.Modes" title="python2verilog.api.modes.Modes"><span class="pre">Modes</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="_modules/python2verilog/api/modes.html#Modes.write"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.api.modes.Modes.write" title="Link to this definition">¶</a></dt>
+<dd><p>Returns if user wants to write</p>
 </dd></dl>
 
-<dl class="py function">
-<dt class="sig sig-object py" id="python2verilog.api.decorators.new_namespace">
-<span class="sig-name descname"><span class="pre">new_namespace</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/api/decorators.html#new_namespace"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.api.decorators.new_namespace" title="Link to this definition">¶</a></dt>
-<dd><p>Create new namespace that is handled on program exit</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>newly created namespace</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="python2verilog.api.decorators.verilogify">
-<span class="sig-name descname"><span class="pre">verilogify</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">namespace</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.context.Context" title="python2verilog.ir.context.Context"><span class="pre">Context</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimization_level</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module_output</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">PathLike</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">IO</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">testbench_output</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">PathLike</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">IO</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">write</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/api/decorators.html#verilogify"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.api.decorators.verilogify" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>namespace</strong> – the namespace to put this function, for linking purposes</p></li>
-<li><p><strong>write</strong> – if True, files will be written to the specified paths</p></li>
-<li><p><strong>overwrite</strong> – If True, existing files will be overwritten</p></li>
-<li><p><strong>module_output</strong> – path to write verilog module to, defaults to function_name.sv</p></li>
-<li><p><strong>testbench_output</strong> – path to write verilog testbench to, defaults to function_name_tb.sv</p></li>
-</ul>
-</dd>
-</dl>
 </dd></dl>
 
 </section>
-<section id="module-python2verilog.api.wrappers">
-<span id="python2verilog-api-wrappers-module"></span><h2>python2verilog.api.wrappers module<a class="headerlink" href="#module-python2verilog.api.wrappers" title="Link to this heading">¶</a></h2>
-<p>Functions that take text as input</p>
-<dl class="py function">
-<dt class="sig sig-object py" id="python2verilog.api.wrappers.context_to_text_and_file">
-<span class="sig-name descname"><span class="pre">context_to_text_and_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.context.Context" title="python2verilog.ir.context.Context"><span class="pre">Context</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/api/wrappers.html#context_to_text_and_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.api.wrappers.context_to_text_and_file" title="Link to this definition">¶</a></dt>
-<dd><p>Covnerts a context to a verilog module and testbench str</p>
-<p>If decorated with write enabled, writes to designated files/streams</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>(module, testbench) pair</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="python2verilog.api.wrappers.context_to_verilog">
-<span class="sig-name descname"><span class="pre">context_to_verilog</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="python2verilog.ir.html#python2verilog.ir.context.Context" title="python2verilog.ir.context.Context"><span class="pre">Context</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/api/wrappers.html#context_to_verilog"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.api.wrappers.context_to_verilog" title="Link to this definition">¶</a></dt>
-<dd><p>Converts a context to verilog and its ir</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>(codegen, ir)</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="python2verilog.api.wrappers.text_to_context">
-<span class="sig-name descname"><span class="pre">text_to_context</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">code</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_test_cases</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/api/wrappers.html#text_to_context"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.api.wrappers.text_to_context" title="Link to this definition">¶</a></dt>
-<dd><p>Parses python code into the function and testbench</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>context</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="python2verilog.api.wrappers.text_to_text">
-<span class="sig-name descname"><span class="pre">text_to_text</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">code</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_test_cases</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimization_level</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/api/wrappers.html#text_to_text"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.api.wrappers.text_to_text" title="Link to this definition">¶</a></dt>
-<dd><p>Converts from code to module and testbench strings</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>(module, testbench)</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="python2verilog.api.wrappers.text_to_verilog">
-<span class="sig-name descname"><span class="pre">text_to_verilog</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">code</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_test_cases</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimization_level</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/api/wrappers.html#text_to_verilog"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.api.wrappers.text_to_verilog" title="Link to this definition">¶</a></dt>
-<dd><p>Converts from code to verilog code generator</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>(context, ir)</p>
-</dd>
-</dl>
-</dd></dl>
-
+<section id="python2verilog-api-namespace-module">
+<h2>python2verilog.api.namespace module<a class="headerlink" href="#python2verilog-api-namespace-module" title="Link to this heading">¶</a></h2>
 </section>
-<section id="module-python2verilog.api">
-<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-python2verilog.api" title="Link to this heading">¶</a></h2>
-<p>API wrappers</p>
+<section id="python2verilog-api-verilogify-module">
+<h2>python2verilog.api.verilogify module<a class="headerlink" href="#python2verilog-api-verilogify-module" title="Link to this heading">¶</a></h2>
+</section>
+<section id="module-contents">
+<h2>Module contents<a class="headerlink" href="#module-contents" title="Link to this heading">¶</a></h2>
 </section>
 </section>
 
@@ -173,20 +120,25 @@
 <li class="toctree-l2 current"><a class="reference internal" href="python2verilog.html#subpackages">Subpackages</a><ul class="current">
 <li class="toctree-l3 current"><a class="current reference internal" href="#">python2verilog.api package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#submodules">Submodules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#module-python2verilog.api.decorators">python2verilog.api.decorators module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#module-python2verilog.api.wrappers">python2verilog.api.wrappers module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#module-python2verilog.api">Module contents</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#python2verilog-api-exit-handler-module">python2verilog.api.exit_handler module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#python2verilog-api-file-namespaces-module">python2verilog.api.file_namespaces module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#python2verilog-api-from-context-module">python2verilog.api.from_context module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#python2verilog-api-from-text-module">python2verilog.api.from_text module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-python2verilog.api.modes">python2verilog.api.modes module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#python2verilog-api-namespace-module">python2verilog.api.namespace module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#python2verilog-api-verilogify-module">python2verilog.api.verilogify module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-contents">Module contents</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="python2verilog.backend.html">python2verilog.backend package</a></li>
-<li class="toctree-l3"><a class="reference internal" href="python2verilog.extern.html">python2verilog.extern package</a></li>
 <li class="toctree-l3"><a class="reference internal" href="python2verilog.frontend.html">python2verilog.frontend package</a></li>
 <li class="toctree-l3"><a class="reference internal" href="python2verilog.ir.html">python2verilog.ir package</a></li>
 <li class="toctree-l3"><a class="reference internal" href="python2verilog.optimizer.html">python2verilog.optimizer package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="python2verilog.simulation.html">python2verilog.simulation package</a></li>
 <li class="toctree-l3"><a class="reference internal" href="python2verilog.utils.html">python2verilog.utils package</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="python2verilog.html#module-python2verilog">Module contents</a></li>
+<li class="toctree-l2"><a class="reference internal" href="python2verilog.html#module-contents">Module contents</a></li>
 </ul>
 </li>
 </ul>
@@ -228,7 +180,7 @@
       &copy;2023, Kerry Wang.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.5</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
       
       |
