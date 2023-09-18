@@ -14,25 +14,10 @@ on:
       - ready_for_review
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  iverilog:
-    name: build iverilog
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          submodules: True
-      - name: Build Icarius Verilog
-        run: |
-          bash extern/iverilog_setup.sh
-      - name: Test Iverilog
-        run: |
-          extern/iverilog/driver/iverilog -V
-          python3 -m pytest -L 0 1 2 -Iextern/iverilog/driver/iverilog
-
   quick:
     runs-on: ubuntu-latest
     strategy:
@@ -41,6 +26,7 @@ jobs:
         python-version: ["3.11"]
     steps:
       - uses: actions/checkout@v3
+
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v3
         with:
@@ -52,7 +38,7 @@ jobs:
           python3 -m pip install -r tests/requirements.txt
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-      - name: Download iverilog
+      - name: Download Icarus Verilog and Utilities
         run: |
           sudo apt-get install iverilog expect
 
@@ -80,6 +66,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v3
         with:
@@ -91,7 +78,7 @@ jobs:
           python3 -m pip install -r tests/requirements.txt
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-      - name: Download iverilog
+      - name: Download Icarus Verilog and Utilities
         run: |
           sudo apt-get install iverilog expect
 
@@ -105,7 +92,7 @@ jobs:
       - name: Run Pytest
         run: |
           python3 -m pytest tests/ --cov=python2verilog/ --cov-report term-missing \
-          ${{ matrix.pytest-args }} ${{ matrix.pytest-opti-levels }} --log-cli-level=DEBUG
+          ${{ matrix.pytest-args }} ${{ matrix.pytest-opti-levels }}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
