@@ -72,6 +72,7 @@ module hrange (
                 _valid <= 1;
                 _state <= _state_0_while_0;
             end else begin
+                _done <= 1;
                 _state <= _state_done;
             end
         end else begin
@@ -86,6 +87,7 @@ module hrange (
                             _valid <= 1;
                             _state <= _state_0_while_0;
                         end else begin
+                            _done <= 1;
                             _state <= _state_done;
                         end
                     end
@@ -194,6 +196,7 @@ module dup_range_goal (
             if ((_ready || !(_valid))) begin
                 case (_state)
                     _state_done: begin
+                        _done <= 1;
                         _state <= _state_done;
                     end
                     _state_0_for_body_0: begin

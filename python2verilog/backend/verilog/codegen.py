@@ -548,9 +548,9 @@ class CaseBuilder:
 
         if isinstance(vertex, ir.DoneNode):
             stmts += [
-                # ver.NonBlockingSubsitution(
-                #     self.context.signals.done_signal, ir.UInt(1)
-                # ),
+                ver.NonBlockingSubsitution(
+                    self.context.signals.done_signal, ir.UInt(1)
+                ),
                 ver.NonBlockingSubsitution(
                     self.case.condition, self.context.done_state
                 ),
