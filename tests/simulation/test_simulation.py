@@ -102,10 +102,12 @@ class TestSimulation(unittest.TestCase):
     #     )
 
     def test_triple(self):
-        # goal_namespace = new_namespace(Path(__file__).parent / "triple_o1")
-        goal_namespace = {}
+        goal_namespace = new_namespace(Path(__file__).parent / "new_namespace")
+        # goal_namespace = {}
 
-        @verilogify(namespace=goal_namespace, mode=Modes.OVERWRITE)
+        @verilogify(
+            namespace=goal_namespace, mode=Modes.OVERWRITE, optimization_level=1
+        )
         def circle_lines(s_x, s_y, height) -> tuple[int, int, int, int, int, int]:
             x = 0
             y = height
