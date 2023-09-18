@@ -265,7 +265,7 @@ class IfElseNode(Node, Element):
 
     def traverse_condition_vars(self) -> Generator[expr.Var, None, None]:
         """
-        Traverses
+        Yields variables of the if conditional, doing a DPS
         """
 
         def rec(exp: expr.Expression):
