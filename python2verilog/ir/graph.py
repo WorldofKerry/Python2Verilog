@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from ..utils.assertions import get_typed, get_typed_list
+from ..utils.assertions import get_typed, get_typed_list, get_typed_optional
 from . import expressions as expr
 
 
@@ -20,9 +20,12 @@ class Element:
     Element, base class for vertex or edge
     """
 
-    def __init__(self, unique_id: str, name: str = ""):
+    def __init__(
+        self, unique_id: str, name: str = "", mutual_exclusion: Optional[str] = None
+    ):
         self._name = get_typed(name, str)
         self._id = get_typed(unique_id, str)
+        self.mutual_exclusion = get_typed_optional(mutual_exclusion, str)
 
     def to_string(self):
         """

@@ -75,14 +75,22 @@ class TestSimulation(unittest.TestCase):
         list(dup_range_goal(10))
 
         module, testbench = namespace_to_verilog(ns)
-        with open(Path(__file__).parent / "o1.sv", mode="w") as f:
+        mod_path = Path(__file__).parent / "o1.sv"
+        tb_path = Path(__file__).parent / "o1_tb.sv"
+        with open(mod_path, mode="w") as f:
             f.write(str(module))
-        with open(Path(__file__).parent / "o1_tb.sv", mode="w") as f:
+        with open(tb_path, mode="w") as f:
             f.write(str(testbench))
-        # self.assertListEqual(
-        #     list(get_actual(dup_range_goal, module, testbench, timeout=1)),
-        #     list(get_expected(dup_range_goal)),
-        # )
+        cmd = iverilog.make_cmd(
+            "dup_range_goal_tb",
+            [mod_path, tb_path],
+        )
+        warnings.warn(cmd)
+        self.assertListEqual(
+            list(get_actual(dup_range_goal, module, testbench, timeout=1)),
+            list(get_expected(dup_range_goal)),
+            namespace_exit_handler(),
+        )
 
     def test_triple0(self):
         """

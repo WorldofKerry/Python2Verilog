@@ -186,36 +186,7 @@ module dup_range_goal (
             _inst_hrange__ready <= 0;
             _inst_hrange__start <= 1;
             _inst_hrange_n <= n;
-            _inst_hrange__ready <= 1;
-            _inst_hrange__start <= 0;
-            if ((1 && _inst_hrange__valid)) begin
-                _inst_hrange__ready <= 0;
-                _i <= _inst_hrange_out0;
-                _j <= _inst_hrange_out1;
-                if (_inst_hrange__done) begin
-                    if ($signed(!(_valid) && _ready)) begin
-                        _done <= 1;
-                        _state <= _state_idle;
-                    end else begin
-                        _state <= _state_done;
-                    end
-                end else begin
-                    _out0 <= _inst_hrange_out0;
-                    _valid <= 1;
-                    _state <= _state_0_for_0;
-                end
-            end else begin
-                if (_inst_hrange__done) begin
-                    if ($signed(!(_valid) && _ready)) begin
-                        _done <= 1;
-                        _state <= _state_idle;
-                    end else begin
-                        _state <= _state_done;
-                    end
-                end else begin
-                    _state <= _state_0_for_0;
-                end
-            end
+            _state <= _state_0_for_0;
         end else begin
             // If ready or not valid, then continue computation
             if ((_ready || !(_valid))) begin
@@ -223,7 +194,7 @@ module dup_range_goal (
                     _state_0_for_0: begin
                         _inst_hrange__ready <= 1;
                         _inst_hrange__start <= 0;
-                        if ((1 && _inst_hrange__valid)) begin
+                        if ((_inst_hrange__ready && _inst_hrange__valid)) begin
                             _inst_hrange__ready <= 0;
                             _i <= _inst_hrange_out0;
                             _j <= _inst_hrange_out1;

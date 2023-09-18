@@ -129,13 +129,24 @@ class OptimizeGraph:
             return self.unique_counter
 
         def should_i_be_clocked(
-            regular: ir.Element,
+            node: ir.Element,
             visited: dict[str, int],
             threshold: int,
         ):
-            if regular.unique_id not in visited:
-                return False
-            return visited[regular.unique_id] > threshold
+            """
+            Returns true if edge should be clocked,
+            that is visited this node more than threshold times
+            """
+            if node.mutual_exclusion:
+                logging.debug(
+                    f"mutual exclusion {node.mutual_exclusion} {node} {visited}"
+                )
+            be_clocked = False
+            if node.mutual_exclusion and node.mutual_exclusion in visited:
+                be_clocked = True
+            if node.unique_id in visited and visited[node.unique_id] > threshold:
+                be_clocked = True
+            return be_clocked
 
         def helper(
             element: ir.Node,
@@ -147,9 +158,13 @@ class OptimizeGraph:
             Helper
             """
             get_typed(element, ir.Node)
-            if threshold <= 0 and element.unique_id in visited:
+            if should_i_be_clocked(element, visited, threshold):
                 return element
             visited[element.unique_id] = visited.get(element.unique_id, 0) + 1
+            if element.mutual_exclusion:
+                visited[element.mutual_exclusion] = (
+                    visited.get(element.mutual_exclusion, 0) + 1
+                )
 
             edge: ir.Edge
             if isinstance(element, ir.AssignNode):
@@ -179,6 +194,8 @@ class OptimizeGraph:
 
             if isinstance(element, ir.IfElseNode):
                 new_condition = backwards_replace(element.condition, mapping)
+                if "_inst" in str(element.condition):  # TODO: fix
+                    new_condition = copy.deepcopy(element.condition)
                 new_node = ir.IfElseNode(
                     unique_id=f"{element.unique_id}_{make_unique()}_optimal",
                     condition=new_condition,
@@ -277,7 +294,7 @@ class OptimizeGraph:
 
         if root.unique_id in visited:
             return root
-        # print(f"==> optimizing {str(root)}")
+        logging.debug(f"optimizing {root.unique_id} {root}")
         visited.add(root.unique_id)
         if isinstance(root, ir.BasicElement) and isinstance(root, ir.Node):
             root.optimal_child = helper(root, {}, {}, threshold=threshold).optimal_child
