@@ -1,4 +1,3 @@
-import logging
 import unittest
 import warnings
 from pathlib import Path
@@ -6,20 +5,11 @@ from pathlib import Path
 import pytest
 
 from python2verilog.api import verilogify
-from python2verilog.api.from_context import (
-    context_to_codegen,
-    context_to_verilog,
-    context_to_verilog_and_dump,
-)
+from python2verilog.api.exit_handler import namespace_exit_handler
 from python2verilog.api.modes import Modes
-from python2verilog.api.namespace import (
-    namespace_to_file,
-    namespace_to_verilog,
-    new_namespace,
-)
-from python2verilog.api.verilogify import get_actual, get_context, get_expected
-from python2verilog.simulation import iverilog, parse_stdout, strip_signals
-from python2verilog.utils.fifo import temp_fifo
+from python2verilog.api.namespace import namespace_to_verilog, new_namespace
+from python2verilog.api.verilogify import get_actual, get_expected
+from python2verilog.simulation import iverilog
 
 
 @pytest.mark.usefixtures("argparse")
@@ -201,3 +191,4 @@ class TestSimulation(unittest.TestCase):
             [mod_path, tb_path],
         )
         warnings.warn(cmd)
+        namespace_exit_handler()
