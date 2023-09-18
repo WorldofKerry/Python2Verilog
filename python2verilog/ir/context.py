@@ -63,7 +63,7 @@ class Context(GenericReprAndStr):
     state_var: Var = Var("state")
 
     _done_state: State = State("_state_done")
-    _idle_state: State = State("_state_idle")
+    idle_state: State = State("_state_idle")
     _entry_state: Optional[State] = None
 
     # Function calls

@@ -41,8 +41,11 @@ module hrange (
     output reg signed [31:0] _out1
 );
     // State variables
-    typedef enum{_state_0_while_0,_state_1,_state_done} _state_t;
-    _state_t _state;
+    localparam _state_0_while_0 = 0;
+    localparam _state_1 = 1;
+    localparam _state_done = 2;
+    localparam _state_idle = 3;
+    reg [31:0] _state;
     // Global variables
     reg signed [31:0] _i;
     reg signed [31:0] _base;
@@ -59,7 +62,7 @@ module hrange (
         end
         // Start signal takes precedence over reset
         if (_reset) begin
-            _state <= _state_done;
+            _state <= _state_idle;
         end
         if (_start) begin
             _base <= base;
@@ -73,7 +76,7 @@ module hrange (
                 _state <= _state_0_while_0;
             end else begin
                 _done <= 1;
-                _state <= _state_done;
+                _state <= _state_idle;
             end
         end else begin
             // If ready or not valid, then continue computation
@@ -88,11 +91,8 @@ module hrange (
                             _state <= _state_0_while_0;
                         end else begin
                             _done <= 1;
-                            _state <= _state_done;
+                            _state <= _state_idle;
                         end
-                    end
-                    _state_done: begin
-                        _done <= 1;
                     end
                 endcase
             end
@@ -142,8 +142,12 @@ module dup_range_goal (
     output reg signed [31:0] _out0
 );
     // State variables
-    typedef enum{_state_0_for_0,_state_0_for_body_0,_state_1_call_0,_state_done} _state_t;
-    _state_t _state;
+    localparam _state_0_for_0 = 0;
+    localparam _state_0_for_body_0 = 1;
+    localparam _state_1_call_0 = 2;
+    localparam _state_done = 3;
+    localparam _state_idle = 4;
+    reg [31:0] _state;
     // Global variables
     reg signed [31:0] _i;
     reg signed [31:0] _j;
@@ -184,7 +188,7 @@ module dup_range_goal (
         end
         // Start signal takes precedence over reset
         if (_reset) begin
-            _state <= _state_done;
+            _state <= _state_idle;
         end
         if (_start) begin
             _base <= base;
@@ -197,7 +201,7 @@ module dup_range_goal (
                 case (_state)
                     _state_done: begin
                         _done <= 1;
-                        _state <= _state_done;
+                        _state <= _state_idle;
                     end
                     _state_0_for_body_0: begin
                         _out0 <= _i;
@@ -231,9 +235,6 @@ module dup_range_goal (
                         _inst_hrange_limit <= _limit;
                         _inst_hrange_step <= _step;
                         _state <= _state_0_for_0;
-                    end
-                    _state_done: begin
-                        _done <= 1;
                     end
                 endcase
             end

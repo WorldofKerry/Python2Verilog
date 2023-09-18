@@ -44,6 +44,7 @@ class CodeGen:
 
         assert isinstance(context.done_state, ir.State)
         self.context.add_state_weak(str(context.done_state))
+        self.context.add_state_weak(str(context.idle_state))
 
         self._module = CodeGen.__new_module(root_case, self.context)
 
@@ -115,7 +116,7 @@ class CodeGen:
                     then_body=[
                         ver.NonBlockingSubsitution(
                             lvalue=context.state_var,
-                            rvalue=context.done_state,
+                            rvalue=context.idle_state,
                         ),
                     ],
                     else_body=[],
@@ -511,21 +512,6 @@ class CaseBuilder:
         # Work
         logging.debug(f"{self.__class__.__name__} {root.unique_id} {root}")
         self.case.case_items.append(self.new_caseitem(root))
-        have_done_state = False
-        for caseitem in self.case.case_items:
-            if context.done_state == caseitem.condition.verilog():
-                have_done_state = True
-        if not have_done_state:
-            self.case.case_items.append(
-                ver.CaseItem(
-                    context.done_state,
-                    statements=[
-                        ver.NonBlockingSubsitution(
-                            lvalue=ir.State("_done"), rvalue=ir.UInt(1)
-                        )
-                    ],
-                )
-            )
 
     def new_caseitem(self, root: ir.Vertex):
         """
@@ -552,7 +538,7 @@ class CaseBuilder:
                     self.context.signals.done_signal, ir.UInt(1)
                 ),
                 ver.NonBlockingSubsitution(
-                    self.case.condition, self.context.done_state
+                    self.case.condition, self.context.idle_state
                 ),
             ]
             self.added_ready_node = True
@@ -584,11 +570,14 @@ class CaseBuilder:
             state_change = []
 
             if isinstance(vertex.optimal_child.optimal_child, ir.DoneNode):
-                outputs.append(
+                outputs += [
                     ver.NonBlockingSubsitution(
                         self.context.signals.done_signal, ir.UInt(1)
-                    )
-                )
+                    ),
+                    ver.NonBlockingSubsitution(
+                        self.case.condition, self.context.idle_state
+                    ),
+                ]
 
             state_change.append(
                 ver.NonBlockingSubsitution(

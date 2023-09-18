@@ -59,12 +59,12 @@ class TestSimulation(unittest.TestCase):
         module, testbench = namespace_to_verilog(goal_namespace)
         with open(Path(__file__).parent / "o0.sv", mode="w") as f:
             f.write(str(module))
-        logging.error(str(module))
+        # logging.error(str(module))
         # with open(__file__)
-        # self.assertListEqual(
-        #     list(get_actual(dup_range_goal, module, testbench, timeout=1)),
-        #     list(get_expected(dup_range_goal)),
-        # )
+        self.assertListEqual(
+            list(get_actual(dup_range_goal, module, testbench, timeout=1)),
+            list(get_expected(dup_range_goal)),
+        )
 
     # def test_o1(self):
     #     goal_namespace = new_namespace(Path(__file__).parent / "o1")
