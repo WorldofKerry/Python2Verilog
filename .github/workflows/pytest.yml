@@ -19,8 +19,9 @@ concurrency:
 
 jobs:
   iverilog:
-    name: build iverilog
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
     steps:
       - uses: actions/checkout@v3
         with:
