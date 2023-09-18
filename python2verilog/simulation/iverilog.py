@@ -7,13 +7,13 @@ import os
 import signal
 import subprocess
 import tempfile
-from typing import Iterable, Optional
+from typing import Iterable, Optional, Union
 
 from python2verilog.utils import env
 from python2verilog.utils.assertions import assert_typed_dict
 
 
-def make_cmd(top_level_module: str, files: Iterable[str | os.PathLike[str]]):
+def make_cmd(top_level_module: str, files: Iterable[Union[str, os.PathLike[str]]]):
     """
     Returns an iverilog command
 
