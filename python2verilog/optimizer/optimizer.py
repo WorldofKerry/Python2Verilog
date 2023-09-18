@@ -5,6 +5,7 @@ Optimizer for the Graph IR
 import copy
 import logging
 import typing
+import warnings
 
 from python2verilog.utils.assertions import get_typed
 
@@ -152,6 +153,22 @@ class OptimizeGraph:
             visited[element.unique_id] = visited.get(element.unique_id, 0) + 1
 
             edge: ir.Edge
+            if isinstance(element, ir.StopperNode):
+                assert isinstance(element.child.child, ir.AssignNode)
+                warnings.warn(str(element.child.child.lvalue))
+                return element
+                result = helper(
+                    element=element.child.child,
+                    mapping=mapping,
+                    visited=visited,
+                    threshold=threshold,
+                )
+                edge = ir.ClockedEdge(
+                    unique_id=f"{element.child.unique_id}_{make_unique()}_optimal",
+                    child=result,
+                )
+                element.optimal_child = edge
+                return result
             if isinstance(element, ir.AssignNode):
                 new_node = graph_apply_mapping(element, mapping)
                 new_node.unique_id = f"{element.unique_id}_{make_unique()}_optimal"

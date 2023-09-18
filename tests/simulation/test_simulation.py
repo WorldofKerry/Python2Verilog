@@ -49,6 +49,41 @@ class TestSimulation(unittest.TestCase):
             list(get_expected(dup_range_goal)),
         )
 
+    def test_o1(self):
+        ns = {}
+
+        @verilogify(
+            mode=Modes.OVERWRITE,
+            namespace=ns,
+        )
+        def hrange(n):
+            i = 0
+            while i < n:
+                yield i, i
+                i += 1
+
+        @verilogify(
+            mode=Modes.OVERWRITE,
+            namespace=ns,
+            optimization_level=1,
+        )
+        def dup_range_goal(n):
+            inst = hrange(n)
+            for i, j in inst:
+                yield i
+
+        list(dup_range_goal(10))
+
+        module, testbench = namespace_to_verilog(ns)
+        with open(Path(__file__).parent / "o1.sv", mode="w") as f:
+            f.write(str(module))
+        with open(Path(__file__).parent / "o1_tb.sv", mode="w") as f:
+            f.write(str(testbench))
+        self.assertListEqual(
+            list(get_actual(dup_range_goal, module, testbench, timeout=1)),
+            list(get_expected(dup_range_goal)),
+        )
+
     def test_triple0(self):
         """
         Circle lines with -O0
@@ -176,10 +211,6 @@ class TestSimulation(unittest.TestCase):
         #     _, _, cy = context_to_verilog_and_dump(get_context(triple_circle))
         #     f.write(str(cy))
         module, testbench = namespace_to_verilog(ns)
-        self.assertListEqual(
-            list(get_actual(triple_circle, module, testbench, timeout=1)),
-            list(get_expected(triple_circle)),
-        )
         mod_path = Path(__file__).parent / "triple_raw.sv"
         tb_path = Path(__file__).parent / "triple_raw_tb.sv"
         with open(mod_path, mode="w") as f:
@@ -191,4 +222,8 @@ class TestSimulation(unittest.TestCase):
             [mod_path, tb_path],
         )
         warnings.warn(cmd)
-        namespace_exit_handler()
+        self.assertListEqual(
+            list(get_actual(triple_circle, module, testbench, timeout=1)),
+            list(get_expected(triple_circle)),
+            namespace_exit_handler(),
+        )
