@@ -1,7 +1,9 @@
 /*
 
 # Python Function
-        @verilogify(namespace=goal_namespace, mode=Modes.OVERWRITE, optimization_level=0)
+        @verilogify(
+            namespace=goal_namespace, mode=Modes.OVERWRITE, optimization_level=1
+        )
         def circle_lines(s_x, s_y, height) -> tuple[int, int, int, int, int, int]:
             x = 0
             y = height
@@ -63,7 +65,7 @@ module circle_lines (
     output reg signed [31:0] _out1
 );
     // State variables
-    typedef enum{_state_0,_state_0_while,_state_0_while_0,_state_0_while_1,_state_0_while_2,_state_0_while_3,_state_0_while_4,_state_0_while_5,_state_0_while_6,_state_0_while_7,_state_0_while_8,_state_0_while_8_f_0,_state_0_while_8_t_0,_state_0_while_8_t_1,_state_0_while_9,_state_1,_state_10,_state_11,_state_11_while,_state_11_while_0,_state_11_while_1,_state_11_while_1_f_0,_state_11_while_1_t_0,_state_11_while_1_t_1,_state_11_while_2,_state_11_while_3,_state_11_while_4,_state_11_while_5,_state_11_while_6,_state_11_while_7,_state_11_while_8,_state_11_while_9,_state_2,_state_3,_state_4,_state_5,_state_6,_state_7,_state_8,_state_9,_state_done,_state_idle} _state_t;
+    typedef enum{_state_0_while,_state_0_while_0,_state_0_while_1,_state_0_while_2,_state_0_while_3,_state_0_while_4,_state_0_while_5,_state_0_while_6,_state_1,_state_11,_state_11_while,_state_11_while_1,_state_11_while_2,_state_11_while_3,_state_11_while_4,_state_11_while_5,_state_11_while_6,_state_11_while_7,_state_11_while_8,_state_2,_state_3,_state_4,_state_5,_state_6,_state_7,_state_8,_state_9,_state_done,_state_idle} _state_t;
     _state_t _state;
     // Global variables
     reg signed [31:0] _d;
@@ -89,32 +91,104 @@ module circle_lines (
             _s_x <= s_x;
             _s_y <= s_y;
             _height <= height;
-            _state <= _state_11_while;
+            if ($signed(_y >= _x)) begin
+                _out0 <= $signed(s_x - _y);
+                _out1 <= $signed(s_y - _x);
+                _valid <= 1;
+                _state <= _state_11_while_8;
+            end else begin
+                _out0 <= $signed(s_x - _y);
+                _out1 <= $signed(s_y - _x);
+                _valid <= 1;
+                _state <= _state_9;
+            end
         end else begin
             // If ready or not valid, then continue computation
             if ((_ready || !(_valid))) begin
                 case (_state)
-                    _state_11_while_0: begin
-                        _x <= $signed(_x + $signed(1));
-                        _state <= _state_11_while;
+                    _state_2: begin
+                        _d <= $signed($signed(3) - $signed($signed(2) * _y));
+                        _y <= _height;
+                        _x <= $signed(0);
+                        if ($signed(!(_valid) && _ready)) begin
+                            _done <= 1;
+                            _state <= _state_idle;
+                        end else begin
+                            _state <= _state_done;
+                        end
                     end
-                    _state_11_while_1_t_0: begin
-                        _y <= $signed(_y - $signed(1));
-                        _state <= _state_11_while_0;
+                    _state_3: begin
+                        _out0 <= $signed(_s_x + _x);
+                        _out1 <= $signed(_s_y + _y);
+                        _valid <= 1;
+                        _state <= _state_2;
                     end
-                    _state_11_while_1_t_1: begin
-                        _d <= $signed($signed(_d + $signed($signed(4) * $signed(_x - _y))) + $signed(10));
-                        _state <= _state_11_while_1_t_0;
+                    _state_4: begin
+                        _out0 <= $signed(_s_x + _x);
+                        _out1 <= $signed(_s_y - _y);
+                        _valid <= 1;
+                        _state <= _state_3;
                     end
-                    _state_11_while_1_f_0: begin
-                        _d <= $signed($signed(_d + $signed($signed(4) * _x)) + $signed(6));
-                        _state <= _state_11_while_0;
+                    _state_5: begin
+                        _out0 <= $signed(_s_x - _x);
+                        _out1 <= $signed(_s_y + _y);
+                        _valid <= 1;
+                        _state <= _state_4;
+                    end
+                    _state_6: begin
+                        _out0 <= $signed(_s_x - _x);
+                        _out1 <= $signed(_s_y - _y);
+                        _valid <= 1;
+                        _state <= _state_5;
+                    end
+                    _state_7: begin
+                        _out0 <= $signed(_s_x + _y);
+                        _out1 <= $signed(_s_y + _x);
+                        _valid <= 1;
+                        _state <= _state_6;
+                    end
+                    _state_8: begin
+                        _out0 <= $signed(_s_x + _y);
+                        _out1 <= $signed(_s_y - _x);
+                        _valid <= 1;
+                        _state <= _state_7;
+                    end
+                    _state_9: begin
+                        _out0 <= $signed(_s_x - _y);
+                        _out1 <= $signed(_s_y + _x);
+                        _valid <= 1;
+                        _state <= _state_8;
                     end
                     _state_11_while_1: begin
                         if ($signed(_d > $signed(0))) begin
-                            _state <= _state_11_while_1_t_1;
+                            _d <= $signed($signed(_d + $signed($signed(4) * $signed(_x - _y))) + $signed(10));
+                            _y <= $signed(_y - $signed(1));
+                            _x <= $signed(_x + $signed(1));
+                            if ($signed($signed(_y - $signed(1)) >= $signed(_x + $signed(1)))) begin
+                                _out0 <= $signed(_s_x - $signed(_y - $signed(1)));
+                                _out1 <= $signed(_s_y - $signed(_x + $signed(1)));
+                                _valid <= 1;
+                                _state <= _state_11_while_8;
+                            end else begin
+                                _out0 <= $signed(_s_x - $signed(_y - $signed(1)));
+                                _out1 <= $signed(_s_y - $signed(_x + $signed(1)));
+                                _valid <= 1;
+                                _state <= _state_9;
+                            end
                         end else begin
-                            _state <= _state_11_while_1_f_0;
+                            _d <= $signed($signed(_d + $signed($signed(4) * _x)) + $signed(6));
+                            _x <= $signed(_x + $signed(1));
+                            if ($signed(_y >= $signed(_x + $signed(1)))) begin
+                                _out0 <= $signed(_s_x - _y);
+                                _out1 <= $signed(_s_y - $signed(_x + $signed(1)));
+                                _valid <= 1;
+                                _state <= _state_11_while_8;
+                            end else begin
+                                _out0 <= $signed(_s_x - _y);
+                                _out1 <= $signed(_s_y - $signed(_x + $signed(1)));
+                                _valid <= 1;
+                                _state <= _state_9;
+                            end
                         end
                     end
                     _state_11_while_2: begin
@@ -159,85 +233,12 @@ module circle_lines (
                         _valid <= 1;
                         _state <= _state_11_while_7;
                     end
-                    _state_11_while_9: begin
-                        _out0 <= $signed(_s_x - _y);
-                        _out1 <= $signed(_s_y - _x);
-                        _valid <= 1;
-                        _state <= _state_11_while_8;
-                    end
                     _state_done: begin
                         if ($signed(!(_valid) && _ready)) begin
                             _done <= 1;
                             _state <= _state_idle;
                         end else begin
                             _state <= _state_done;
-                        end
-                    end
-                    _state_0: begin
-                        _x <= $signed(0);
-                        _state <= _state_done;
-                    end
-                    _state_1: begin
-                        _y <= _height;
-                        _state <= _state_0;
-                    end
-                    _state_2: begin
-                        _d <= $signed($signed(3) - $signed($signed(2) * _y));
-                        _state <= _state_1;
-                    end
-                    _state_3: begin
-                        _out0 <= $signed(_s_x + _x);
-                        _out1 <= $signed(_s_y + _y);
-                        _valid <= 1;
-                        _state <= _state_2;
-                    end
-                    _state_4: begin
-                        _out0 <= $signed(_s_x + _x);
-                        _out1 <= $signed(_s_y - _y);
-                        _valid <= 1;
-                        _state <= _state_3;
-                    end
-                    _state_5: begin
-                        _out0 <= $signed(_s_x - _x);
-                        _out1 <= $signed(_s_y + _y);
-                        _valid <= 1;
-                        _state <= _state_4;
-                    end
-                    _state_6: begin
-                        _out0 <= $signed(_s_x - _x);
-                        _out1 <= $signed(_s_y - _y);
-                        _valid <= 1;
-                        _state <= _state_5;
-                    end
-                    _state_7: begin
-                        _out0 <= $signed(_s_x + _y);
-                        _out1 <= $signed(_s_y + _x);
-                        _valid <= 1;
-                        _state <= _state_6;
-                    end
-                    _state_8: begin
-                        _out0 <= $signed(_s_x + _y);
-                        _out1 <= $signed(_s_y - _x);
-                        _valid <= 1;
-                        _state <= _state_7;
-                    end
-                    _state_9: begin
-                        _out0 <= $signed(_s_x - _y);
-                        _out1 <= $signed(_s_y + _x);
-                        _valid <= 1;
-                        _state <= _state_8;
-                    end
-                    _state_10: begin
-                        _out0 <= $signed(_s_x - _y);
-                        _out1 <= $signed(_s_y - _x);
-                        _valid <= 1;
-                        _state <= _state_9;
-                    end
-                    _state_11_while: begin
-                        if ($signed(_y >= _x)) begin
-                            _state <= _state_11_while_9;
-                        end else begin
-                            _state <= _state_10;
                         end
                     end
                 endcase
