@@ -1,9 +1,7 @@
 /*
 
 # Python Function
-        @verilogify(
-            namespace=goal_namespace, mode=Modes.OVERWRITE, optimization_level=1
-        )
+        @verilogify(namespace=ns, mode=Modes.OVERWRITE)
         def circle_lines(s_x, s_y, height) -> tuple[int, int, int, int, int, int]:
             x = 0
             y = height
@@ -225,9 +223,7 @@ endmodule
 /*
 
 # Python Function
-        @verilogify(
-            namespace=goal_namespace, mode=Modes.OVERWRITE, optimization_level=0
-        )
+        @verilogify(namespace=ns, mode=Modes.OVERWRITE, optimization_level=0)
         def triple_circle(centre_x, centre_y, radius):
             # noqa
             c_x = centre_x

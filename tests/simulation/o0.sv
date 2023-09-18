@@ -3,7 +3,7 @@
 # Python Function
         @verilogify(
             mode=Modes.OVERWRITE,
-            namespace=goal_namespace,
+            namespace=ns,
         )
         def hrange(n):
             i = 0
@@ -110,7 +110,7 @@ endmodule
 # Python Function
         @verilogify(
             mode=Modes.OVERWRITE,
-            namespace=goal_namespace,
+            namespace=ns,
             optimization_level=0,
         )
         def dup_range_goal(n):
