@@ -524,7 +524,7 @@ class CaseBuilder:
         Creates a new case item with the root's unique id as identifier
         """
         stmts = self.do_vertex(root)
-        logging.debug(f"new caseitem {root.unique_id} {root}")
+        logging.debug(f"new caseitem {root.unique_id}")
         item = ver.CaseItem(condition=ir.State(root.unique_id), statements=stmts)
 
         return item
@@ -533,7 +533,6 @@ class CaseBuilder:
         """
         Processes a node
         """
-        logging.debug(f"do vertex {vertex.unique_id}")
 
         assert isinstance(vertex, ir.Node), str(vertex)
         self.visited.add(vertex.unique_id)
@@ -584,23 +583,6 @@ class CaseBuilder:
                 )
 
             stmts += outputs + state_change
-
-        elif isinstance(vertex, ir.StopperNode):
-            logging.debug(
-                f"stopper node {vertex.unique_id} -> {vertex.optimal_child.optimal_child.unique_id} {vertex.optimal_child.optimal_child}"
-            )
-            self.case.case_items.append(
-                self.new_caseitem(vertex.optimal_child.optimal_child)
-            )
-            logging.debug(
-                f"post-stopper {[str(case.condition) for case in self.case.case_items]}"
-            )
-            stmts.append(
-                ver.NonBlockingSubsitution(
-                    self.context.state_var,
-                    ir.State(vertex.optimal_child.optimal_child.unique_id),
-                )
-            )
 
         else:
             raise TypeError(type(vertex))

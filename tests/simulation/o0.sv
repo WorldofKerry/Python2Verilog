@@ -143,7 +143,7 @@ module dup_range_goal (
     output reg signed [31:0] _out0
 );
     // State variables
-    typedef enum{_state_0_for_0,_state_0_for_8,_state_0_for_body_0,_state_1_call_0,_state_done,_state_idle} _state_t;
+    typedef enum{_state_0_for_0,_state_0_for_body_0,_state_1_call_0,_state_done,_state_idle} _state_t;
     _state_t _state;
     // Global variables
     reg signed [31:0] _i;
@@ -199,7 +199,7 @@ module dup_range_goal (
                     _state_0_for_body_0: begin
                         _out0 <= _i;
                         _valid <= 1;
-                        _state <= _state_0_for_8;
+                        _state <= _state_0_for_0;
                     end
                     _state_0_for_0: begin
                         _inst_hrange__ready <= 1;
@@ -221,14 +221,11 @@ module dup_range_goal (
                             end
                         end
                     end
-                    _state_0_for_8: begin
-                        _state <= _state_0_for_0;
-                    end
                     _state_1_call_0: begin
                         _inst_hrange__ready <= 0;
                         _inst_hrange__start <= 1;
                         _inst_hrange_n <= _n;
-                        _state <= _state_0_for_8;
+                        _state <= _state_0_for_0;
                     end
                 endcase
             end

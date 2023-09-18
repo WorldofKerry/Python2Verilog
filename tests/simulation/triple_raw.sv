@@ -274,7 +274,7 @@ module triple_circle (
     output reg signed [31:0] _out1
 );
     // State variables
-    typedef enum{_state_0_for_0,_state_0_for_8,_state_0_for_body_0,_state_10,_state_11,_state_12,_state_13,_state_1_call_0,_state_2_for_0,_state_2_for_8,_state_2_for_body_0,_state_3_call_0,_state_4_for_0,_state_4_for_8,_state_4_for_body_0,_state_5_call_0,_state_6,_state_7,_state_8,_state_9,_state_done,_state_idle} _state_t;
+    typedef enum{_state_0_for_0,_state_0_for_body_0,_state_10,_state_11,_state_12,_state_13,_state_1_call_0,_state_2_for_0,_state_2_for_body_0,_state_3_call_0,_state_4_for_0,_state_4_for_body_0,_state_5_call_0,_state_6,_state_7,_state_8,_state_9,_state_done,_state_idle} _state_t;
     _state_t _state;
     // Global variables
     reg signed [31:0] _x;
@@ -370,7 +370,7 @@ module triple_circle (
                         _out0 <= _x;
                         _out1 <= _y;
                         _valid <= 1;
-                        _state <= _state_0_for_8;
+                        _state <= _state_0_for_0;
                     end
                     _state_0_for_0: begin
                         _gen0_circle_lines__ready <= 1;
@@ -392,22 +392,19 @@ module triple_circle (
                             end
                         end
                     end
-                    _state_0_for_8: begin
-                        _state <= _state_0_for_0;
-                    end
                     _state_1_call_0: begin
                         _gen0_circle_lines__ready <= 0;
                         _gen0_circle_lines__start <= 1;
                         _gen0_circle_lines_s_x <= _c_x3;
                         _gen0_circle_lines_s_y <= _c_y3;
                         _gen0_circle_lines_height <= _radius;
-                        _state <= _state_0_for_8;
+                        _state <= _state_0_for_0;
                     end
                     _state_2_for_body_0: begin
                         _out0 <= _x;
                         _out1 <= _y;
                         _valid <= 1;
-                        _state <= _state_2_for_8;
+                        _state <= _state_2_for_0;
                     end
                     _state_2_for_0: begin
                         _gen1_circle_lines__ready <= 1;
@@ -429,22 +426,19 @@ module triple_circle (
                             end
                         end
                     end
-                    _state_2_for_8: begin
-                        _state <= _state_2_for_0;
-                    end
                     _state_3_call_0: begin
                         _gen1_circle_lines__ready <= 0;
                         _gen1_circle_lines__start <= 1;
                         _gen1_circle_lines_s_x <= _c_x2;
                         _gen1_circle_lines_s_y <= _c_y2;
                         _gen1_circle_lines_height <= _radius;
-                        _state <= _state_2_for_8;
+                        _state <= _state_2_for_0;
                     end
                     _state_4_for_body_0: begin
                         _out0 <= _x;
                         _out1 <= _y;
                         _valid <= 1;
-                        _state <= _state_4_for_8;
+                        _state <= _state_4_for_0;
                     end
                     _state_4_for_0: begin
                         _gen0_circle_lines__ready <= 1;
@@ -466,16 +460,13 @@ module triple_circle (
                             end
                         end
                     end
-                    _state_4_for_8: begin
-                        _state <= _state_4_for_0;
-                    end
                     _state_5_call_0: begin
                         _gen0_circle_lines__ready <= 0;
                         _gen0_circle_lines__start <= 1;
                         _gen0_circle_lines_s_x <= _c_x1;
                         _gen0_circle_lines_s_y <= _c_y1;
                         _gen0_circle_lines_height <= _radius;
-                        _state <= _state_4_for_8;
+                        _state <= _state_4_for_0;
                     end
                     _state_6: begin
                         _c_y3 <= $signed(_c_y - ($signed($signed($signed(_radius * $signed(2)) % $signed(6)) === $signed(0)) ? $signed($signed(_radius * $signed(2)) / $signed(6)) : $signed($signed($signed(_radius * $signed(2)) / $signed(6)) - $signed(($signed($signed(_radius * $signed(2)) < $signed(0)) ^ $signed($signed(6) < $signed(0))) & $signed(1)))));

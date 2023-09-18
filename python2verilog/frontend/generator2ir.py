@@ -313,11 +313,11 @@ class Generator2Graph:
             child=ir.NonClockedEdge(unique_id=next(unique_edge), child=head),
         )
         body_node = self.__parse_statements(
-            stmts=stmt.body, prefix=f"{prefix}_for_body", nextt=stopper
+            stmts=stmt.body, prefix=f"{prefix}_for_body", nextt=head
         )
         loop_edge.child = body_node
 
-        return stopper
+        return head
 
     def __parse_ifelse(self, stmt: pyast.If, nextt: ir.Element, prefix: str):
         """
