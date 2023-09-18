@@ -11,10 +11,6 @@ module circle_lines_tb (
     wire _valid;
     wire signed [31:0] _out0;
     wire signed [31:0] _out1;
-    wire signed [31:0] _out2;
-    wire signed [31:0] _out3;
-    wire signed [31:0] _out4;
-    wire signed [31:0] _out5;
     circle_lines DUT (
         ._clock(_clock),
         ._start(_start),
@@ -26,11 +22,7 @@ module circle_lines_tb (
         ._done(_done),
         ._valid(_valid),
         ._out0(_out0),
-        ._out1(_out1),
-        ._out2(_out2),
-        ._out3(_out3),
-        ._out4(_out4),
-        ._out5(_out5)
+        ._out1(_out1)
         );
     always #5 _clock = !_clock;
     initial begin
@@ -53,12 +45,52 @@ module circle_lines_tb (
         while ((!(_done) || !(_ready))) begin
             // `if (_ready && _valid)` also works as a conditional
             if (_ready) begin
-                $display("%0d, %0d, %0d, %0d, %0d, %0d, %0d, %0d", _valid, _ready, _out0, _out1, _out2, _out3, _out4, _out5);
+                $display("%0d, %0d, %0d, %0d", _valid, _ready, _out0, _out1);
             end
             @(negedge _clock);
         end
         if (_ready) begin
-            $display("%0d, %0d, %0d, %0d, %0d, %0d, %0d, %0d", _valid, _ready, _out0, _out1, _out2, _out3, _out4, _out5);
+            $display("%0d, %0d, %0d, %0d", _valid, _ready, _out0, _out1);
+        end
+        // ============ Test Case 1 with arguments (46, 52, 8) ============
+        s_x = $signed(46);
+        s_y = $signed(52);
+        height = $signed(8);
+        _start = 1;
+        @(negedge _clock);
+        s_x = 'x; // only need inputs when start is set
+        s_y = 'x; // only need inputs when start is set
+        height = 'x; // only need inputs when start is set
+        _start = 0;
+        while ((!(_done) || !(_ready))) begin
+            // `if (_ready && _valid)` also works as a conditional
+            if (_ready) begin
+                $display("%0d, %0d, %0d, %0d", _valid, _ready, _out0, _out1);
+            end
+            @(negedge _clock);
+        end
+        if (_ready) begin
+            $display("%0d, %0d, %0d, %0d", _valid, _ready, _out0, _out1);
+        end
+        // ============ Test Case 2 with arguments (50, 48, 8) ============
+        s_x = $signed(50);
+        s_y = $signed(48);
+        height = $signed(8);
+        _start = 1;
+        @(negedge _clock);
+        s_x = 'x; // only need inputs when start is set
+        s_y = 'x; // only need inputs when start is set
+        height = 'x; // only need inputs when start is set
+        _start = 0;
+        while ((!(_done) || !(_ready))) begin
+            // `if (_ready && _valid)` also works as a conditional
+            if (_ready) begin
+                $display("%0d, %0d, %0d, %0d", _valid, _ready, _out0, _out1);
+            end
+            @(negedge _clock);
+        end
+        if (_ready) begin
+            $display("%0d, %0d, %0d, %0d", _valid, _ready, _out0, _out1);
         end
         $finish;
     end

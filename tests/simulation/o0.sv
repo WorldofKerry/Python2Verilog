@@ -46,7 +46,7 @@ module hrange (
     // Core
     always @(posedge _clock) begin
         `ifdef DEBUG
-        $display("hrange,%s,_start:%0d,_done:%0d,_ready:%0d,_valid:%0d,_reset:%0d,_clock:%0d,n:%0d,_n:%0d,_out0:%0d,_out1:%0d,_i%0d", _state.name, _start, _done, _ready, _valid, _reset, _clock, n, _n, _out0, _out1, _i);
+        $display("hrange,%s,_start=%0d,_done=%0d,_ready=%0d,_valid=%0d,n=%0d,_n=%0d,_out0=%0d,_out1=%0d,_i=%0d", _state.name, _start, _done, _ready, _valid, n, _n, _out0, _out1, _i);
         `endif
         _done <= 0;
         if (_ready) begin
@@ -171,7 +171,7 @@ module dup_range_goal (
     // Core
     always @(posedge _clock) begin
         `ifdef DEBUG
-        $display("dup_range_goal,%s,_start:%0d,_done:%0d,_ready:%0d,_valid:%0d,_reset:%0d,_clock:%0d,n:%0d,_n:%0d,_out0:%0d,_i:%0d,_j%0d", _state.name, _start, _done, _ready, _valid, _reset, _clock, n, _n, _out0, _i, _j);
+        $display("dup_range_goal,%s,_start=%0d,_done=%0d,_ready=%0d,_valid=%0d,n=%0d,_n=%0d,_out0=%0d,_i=%0d,_j=%0d", _state.name, _start, _done, _ready, _valid, n, _n, _out0, _i, _j);
         `endif
         _done <= 0;
         if (_ready) begin
