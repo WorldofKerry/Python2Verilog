@@ -57,7 +57,7 @@ class TestSimulation(unittest.TestCase):
             f.write(str(module))
         with open(Path(__file__).parent / "o0_tb.sv", mode="w") as f:
             f.write(str(testbench))
-        logging.error(str(module))
+        # logging.error(str(module))
         # with open(__file__)
         self.assertListEqual(
             list(get_actual(dup_range_goal, module, testbench, timeout=1)),

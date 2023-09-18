@@ -54,10 +54,10 @@ class Context(GenericReprAndStr):
     _states: set[str] = field(default_factory=set)
 
     signals: ProtocolSignals = ProtocolSignals(
-        start_signal=Var("start"),
-        done_signal=Var("done"),
-        ready_signal=Var("ready"),
-        valid_signal=Var("valid"),
+        start=Var("start"),
+        done=Var("done"),
+        ready=Var("ready"),
+        valid=Var("valid"),
     )
 
     state_var: Var = Var("state")

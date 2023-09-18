@@ -16,11 +16,11 @@ class InstanceSignals:
     """
 
     # pylint: disable=too-many-instance-attributes
-    start_signal: Var
-    done_signal: Var
+    start: Var
+    done: Var
 
-    ready_signal: Var
-    valid_signal: Var
+    ready: Var
+    valid: Var
 
 
 @dataclass(frozen=True)
@@ -32,14 +32,14 @@ class ProtocolSignals:
     """
 
     # pylint: disable=too-many-instance-attributes
-    start_signal: Var
-    done_signal: Var
+    start: Var
+    done: Var
 
-    ready_signal: Var
-    valid_signal: Var
+    ready: Var
+    valid: Var
 
-    reset_signal: Var = Var("reset")
-    clock_signal: Var = Var("clock")
+    reset: Var = Var("reset")
+    clock: Var = Var("clock")
 
     def __iter__(self):
         for key in self.__dict__:

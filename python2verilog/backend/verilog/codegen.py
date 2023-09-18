@@ -87,22 +87,18 @@ class CodeGen:
             return str_
 
         always = ver.PosedgeSyncAlways(
-            context.signals.clock_signal,
+            context.signals.clock,
             body=[
                 ver.Statement("`ifdef DEBUG"),
                 ver.Statement(make_debug_display(context)),
                 ver.Statement("`endif"),
-                ver.NonBlockingSubsitution(context.signals.done_signal, ir.UInt(0)),
+                ver.NonBlockingSubsitution(context.signals.done, ir.UInt(0)),
                 ver.Statement(),
                 ver.IfElse(
-                    context.signals.ready_signal,
+                    context.signals.ready,
                     typing.cast(
                         list[ver.Statement],
-                        [
-                            ver.NonBlockingSubsitution(
-                                context.signals.valid_signal, ir.UInt(0)
-                            )
-                        ],
+                        [ver.NonBlockingSubsitution(context.signals.valid, ir.UInt(0))],
                     ),
                     [],
                 ),
@@ -111,7 +107,7 @@ class CodeGen:
                 ver.Statement(),
                 ver.Statement(comment="Start signal takes precedence over reset"),
                 ver.IfElse(
-                    context.signals.reset_signal,
+                    context.signals.reset,
                     then_body=[
                         ver.NonBlockingSubsitution(
                             lvalue=context.state_var,
@@ -148,33 +144,25 @@ class CodeGen:
             )
             module = context.namespace[instance.module_name]
             defaults = {
-                module.signals.valid_signal: instance.signals.valid_signal,
-                module.signals.done_signal: instance.signals.done_signal,
-                module.signals.clock_signal: context.signals.clock_signal,
-                module.signals.start_signal: instance.signals.start_signal,
-                module.signals.reset_signal: instance.signals.reset_signal,
-                module.signals.ready_signal: instance.signals.ready_signal,
+                module.signals.valid: instance.signals.valid,
+                module.signals.done: instance.signals.done,
+                module.signals.clock: context.signals.clock,
+                module.signals.start: instance.signals.start,
+                module.signals.reset: instance.signals.reset,
+                module.signals.ready: instance.signals.ready,
             }
             # defaults = dict(zip(module.signals.values(), instance.signals.values()))
             for var in instance.inputs:
                 body.append(ver.Declaration(name=var.ver_name, reg=True))
             for var in instance.outputs:
                 body.append(ver.Declaration(name=var.ver_name))
+            body.append(ver.Declaration(name=instance.signals.valid.ver_name, size=1))
+            body.append(ver.Declaration(name=instance.signals.done.ver_name, size=1))
             body.append(
-                ver.Declaration(name=instance.signals.valid_signal.ver_name, size=1)
+                ver.Declaration(name=instance.signals.start.ver_name, size=1, reg=True)
             )
             body.append(
-                ver.Declaration(name=instance.signals.done_signal.ver_name, size=1)
-            )
-            body.append(
-                ver.Declaration(
-                    name=instance.signals.start_signal.ver_name, size=1, reg=True
-                )
-            )
-            body.append(
-                ver.Declaration(
-                    name=instance.signals.ready_signal.ver_name, size=1, reg=True
-                )
+                ver.Declaration(name=instance.signals.ready.ver_name, size=1, reg=True)
             )
             body.append(
                 ver.Instantiation(
@@ -284,9 +272,9 @@ class CodeGen:
                 ),
                 ver.IfElse(
                     ir.UBinOp(
-                        context.signals.ready_signal,
+                        context.signals.ready,
                         "||",
-                        ir.UnaryOp("!", context.signals.valid_signal),
+                        ir.UnaryOp("!", context.signals.valid),
                     ),
                     [root],
                     [],
@@ -371,23 +359,13 @@ class CodeGen:
         setups.append(ver.Statement(literal="always #5 _clock = !_clock;"))
 
         initial_body: list[ver.Statement | ver.While] = []
-        initial_body.append(
-            ver.BlockingSub(self.context.signals.clock_signal, ir.UInt(0))
-        )
-        initial_body.append(
-            ver.BlockingSub(self.context.signals.start_signal, ir.UInt(0))
-        )
-        initial_body.append(
-            ver.BlockingSub(self.context.signals.ready_signal, ir.UInt(1))
-        )
-        initial_body.append(
-            ver.BlockingSub(self.context.signals.reset_signal, ir.UInt(1))
-        )
+        initial_body.append(ver.BlockingSub(self.context.signals.clock, ir.UInt(0)))
+        initial_body.append(ver.BlockingSub(self.context.signals.start, ir.UInt(0)))
+        initial_body.append(ver.BlockingSub(self.context.signals.ready, ir.UInt(1)))
+        initial_body.append(ver.BlockingSub(self.context.signals.reset, ir.UInt(1)))
 
-        initial_body.append(ver.AtNegedgeStatement(self.context.signals.clock_signal))
-        initial_body.append(
-            ver.BlockingSub(self.context.signals.reset_signal, ir.UInt(0))
-        )
+        initial_body.append(ver.AtNegedgeStatement(self.context.signals.clock))
+        initial_body.append(ver.BlockingSub(self.context.signals.reset, ir.UInt(0)))
         initial_body.append(ver.Statement())
 
         for i, test_case in enumerate(self.context.test_cases):
@@ -404,15 +382,11 @@ class CodeGen:
                         ir.Expression(var.py_name), ir.Int(int(test_case[i]))
                     )
                 )
-            initial_body.append(
-                ver.BlockingSub(self.context.signals.start_signal, ir.UInt(1))
-            )
+            initial_body.append(ver.BlockingSub(self.context.signals.start, ir.UInt(1)))
 
             # Post-start
             initial_body.append(ver.Statement())
-            initial_body.append(
-                ver.AtNegedgeStatement(self.context.signals.clock_signal)
-            )
+            initial_body.append(ver.AtNegedgeStatement(self.context.signals.clock))
             for i, var in enumerate(self.context.input_vars):
                 initial_body.append(
                     ver.BlockingSub(
@@ -421,9 +395,7 @@ class CodeGen:
                         comment="only need inputs when start is set",
                     )
                 )
-            initial_body.append(
-                ver.BlockingSub(self.context.signals.start_signal, ir.UInt(0))
-            )
+            initial_body.append(ver.BlockingSub(self.context.signals.start, ir.UInt(0)))
             initial_body.append(ver.Statement())
 
             # While loop waitng for ready signal
@@ -443,14 +415,14 @@ class CodeGen:
                     else_body=[],
                 )
             )
-            while_body.append(ver.AtNegedgeStatement(self.context.signals.clock_signal))
+            while_body.append(ver.AtNegedgeStatement(self.context.signals.clock))
 
             initial_body.append(
                 ver.While(
                     condition=ir.UBinOp(
-                        ir.UnaryOp("!", self.context.signals.done_signal),
+                        ir.UnaryOp("!", self.context.signals.done),
                         "||",
-                        ir.UnaryOp("!", self.context.signals.ready_signal),
+                        ir.UnaryOp("!", self.context.signals.ready),
                     ),
                     body=while_body,
                 )
@@ -510,6 +482,40 @@ class CaseBuilder:
         # Work
         logging.debug(f"{self.__class__.__name__} {root.unique_id} {root}")
         self.case.case_items.append(self.new_caseitem(root))
+        has_done = False
+        for case in self.case.case_items:
+            if case.condition == context.done_state:
+                has_done = True
+        if not has_done:
+            self.case.case_items.append(
+                ver.CaseItem(
+                    condition=context.done_state,
+                    statements=[self.create_quick_done(context)],
+                )
+            )
+
+    @staticmethod
+    def create_quick_done(context: ir.Context) -> ver.IfElse:
+        """
+        if ready:
+            done = 1
+            state = idle
+        else:
+            state = done
+        """
+        return ver.IfElse(
+            condition=ir.BinOp(
+                ir.UnaryOp("!", context.signals.valid), "&&", context.signals.ready
+            ),
+            # condition=context.signals.ready,
+            then_body=[
+                ver.NonBlockingSubsitution(context.signals.done, ir.UInt(1)),
+                ver.NonBlockingSubsitution(context.state_var, context.idle_state),
+            ],
+            else_body=[
+                ver.NonBlockingSubsitution(context.state_var, context.done_state),
+            ],
+        )
 
     def new_caseitem(self, root: ir.Node):
         """
@@ -526,32 +532,13 @@ class CaseBuilder:
         Processes a node
         """
 
-        def create_quick_done(context: ir.Context) -> ver.IfElse:
-            """
-            if ready:
-                done = 1
-                state = idle
-            else:
-                state = done
-            """
-            return ver.IfElse(
-                condition=context.signals.ready_signal,
-                then_body=[
-                    ver.NonBlockingSubsitution(context.signals.done_signal, ir.UInt(1)),
-                    ver.NonBlockingSubsitution(context.state_var, context.idle_state),
-                ],
-                else_body=[
-                    ver.NonBlockingSubsitution(context.state_var, context.done_state),
-                ],
-            )
-
         assert isinstance(vertex, ir.Node), str(vertex)
         self.visited.add(vertex.unique_id)
 
         stmts: list[ver.Statement] = []
 
         if isinstance(vertex, ir.DoneNode):
-            stmts.append(create_quick_done(self.context))
+            stmts.append(self.create_quick_done(self.context))
 
         elif isinstance(vertex, ir.AssignNode):
             stmts.append(ver.NonBlockingSubsitution(vertex.lvalue, vertex.rvalue))
@@ -575,14 +562,12 @@ class CaseBuilder:
                 for var, expr in zip(self.context.output_vars, vertex.stmts)
             ]
             outputs += [
-                ver.NonBlockingSubsitution(
-                    self.context.signals.valid_signal, ir.UInt(1)
-                )
+                ver.NonBlockingSubsitution(self.context.signals.valid, ir.UInt(1))
             ]
             state_change: list[ver.Statement] = []
 
             if isinstance(vertex.optimal_child.optimal_child, ir.DoneNode):
-                outputs.append(create_quick_done(self.context))
+                outputs.append(self.create_quick_done(self.context))
 
             state_change.append(
                 ver.NonBlockingSubsitution(

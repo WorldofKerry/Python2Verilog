@@ -236,7 +236,7 @@ class Generator2Graph:
 
         head = ir.AssignNode(
             unique_id=next(unique_node),
-            lvalue=inst.signals.ready_signal,
+            lvalue=inst.signals.ready,
             rvalue=ir.UInt(1),
         )
         node: ir.BasicElement = head
@@ -244,7 +244,7 @@ class Generator2Graph:
         node = node.child
         node.child = ir.AssignNode(
             unique_id=next(unique_node),
-            lvalue=inst.signals.start_signal,
+            lvalue=inst.signals.start,
             rvalue=ir.UInt(0),
         )
         node = node.child
@@ -254,7 +254,7 @@ class Generator2Graph:
         edge_to_head = ir.ClockedEdge(unique_id=next(unique_edge), child=head)
         second_ifelse0 = ir.IfElseNode(
             unique_id=next(unique_node),
-            condition=inst.signals.done_signal,
+            condition=inst.signals.done,
             true_edge=done_edge,
             false_edge=loop_edge,
         )
@@ -263,7 +263,7 @@ class Generator2Graph:
         )
         second_ifelse1 = ir.IfElseNode(
             unique_id=next(unique_node),
-            condition=inst.signals.done_signal,
+            condition=inst.signals.done,
             true_edge=done_edge,
             false_edge=edge_to_head,
         )
@@ -277,7 +277,7 @@ class Generator2Graph:
         assert len(outputs) == len(inst.outputs)
         capture_head = ir.AssignNode(
             unique_id=next(unique_node),
-            lvalue=inst.signals.ready_signal,
+            lvalue=inst.signals.ready,
             rvalue=ir.UInt(0),
         )
         capture_node: ir.BasicElement = capture_head
@@ -302,9 +302,7 @@ class Generator2Graph:
         )
         first_ifelse = ir.IfElseNode(
             unique_id=next(unique_node),
-            condition=ir.UBinOp(
-                inst.signals.ready_signal, "&&", inst.signals.valid_signal
-            ),
+            condition=ir.UBinOp(inst.signals.ready, "&&", inst.signals.valid),
             true_edge=edge_to_capture_head,  # replaced with linked list for output
             false_edge=edge_to_second_ifelse1,
         )
@@ -480,7 +478,7 @@ class Generator2Graph:
 
         head = ir.AssignNode(
             unique_id=next(unique_node),
-            lvalue=inst.signals.ready_signal,
+            lvalue=inst.signals.ready,
             rvalue=ir.UInt(0),
         )
         node: ir.BasicElement = head
@@ -488,7 +486,7 @@ class Generator2Graph:
         node = node.child
         node.child = ir.AssignNode(
             unique_id=next(unique_node),
-            lvalue=inst.signals.start_signal,
+            lvalue=inst.signals.start,
             rvalue=ir.UInt(1),
         )
         node = node.child

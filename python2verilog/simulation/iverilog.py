@@ -147,7 +147,7 @@ def run_with_files(
         top_level_module=top_level_module,
         files=input_files.keys(),
     )
-    logging.debug(f"Running {iverilog_cmd}")
+    logging.info(f"Running {iverilog_cmd}")
     return _run_cmd_with_files(
         command=iverilog_cmd, input_files=input_files, timeout=timeout
     )

@@ -65,7 +65,7 @@ module hrange (
                 _valid <= 1;
                 _state <= _state_0_while_0;
             end else begin
-                if (_ready) begin
+                if ($signed(!(_valid) && _ready)) begin
                     _done <= 1;
                     _state <= _state_idle;
                 end else begin
@@ -84,12 +84,20 @@ module hrange (
                             _valid <= 1;
                             _state <= _state_0_while_0;
                         end else begin
-                            if (_ready) begin
+                            if ($signed(!(_valid) && _ready)) begin
                                 _done <= 1;
                                 _state <= _state_idle;
                             end else begin
                                 _state <= _state_done;
                             end
+                        end
+                    end
+                    _state_done: begin
+                        if ($signed(!(_valid) && _ready)) begin
+                            _done <= 1;
+                            _state <= _state_idle;
+                        end else begin
+                            _state <= _state_done;
                         end
                     end
                 endcase
@@ -181,7 +189,7 @@ module dup_range_goal (
             if ((_ready || !(_valid))) begin
                 case (_state)
                     _state_done: begin
-                        if (_ready) begin
+                        if ($signed(!(_valid) && _ready)) begin
                             _done <= 1;
                             _state <= _state_idle;
                         end else begin
