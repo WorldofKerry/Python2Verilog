@@ -3,6 +3,7 @@ Verilog Codegen
 """
 
 import itertools
+import logging
 import typing
 import warnings
 
@@ -32,6 +33,9 @@ class CodeGen:
         ]
 
         root_case = CaseBuilder(root, context).case
+        logging.debug(
+            f"{self.__class__.__name__} {[case.condition.ver_name for case in root_case.case_items]}"
+        )
 
         for item in root_case.case_items:
             self.context.add_state_weak(
@@ -50,7 +54,7 @@ class CodeGen:
 
         Requires context for I/O and declarations
         """
-        assert isinstance(root, ver.Statement)
+        assert isinstance(root, ver.Case)
         assert isinstance(context, ir.Context)
 
         inputs = []
@@ -68,14 +72,17 @@ class CodeGen:
             $display("%0d, ...", ...);
             """
             vars_: list[ir.Var] = []
-            vars_ += context.signals.instance_specific_values()
-            # vars_ += context.global_vars
-            # vars_ += context.input_vars
-            vars_ += context.output_vars
+            vars_ += map(
+                lambda x: x.ver_name, context.signals.instance_specific_values()
+            )
+            vars_ += map(lambda x: x.py_name, context.input_vars)
+            vars_ += map(lambda x: x.ver_name, context.input_vars)
+            vars_ += map(lambda x: x.ver_name, context.output_vars)
+            vars_ += map(lambda x: x.ver_name, context.global_vars)
             str_ = f'$display("{context.name},%s,'
-            str_ += "%0d,".join(map(lambda var: f"{var.py_name}:", vars_)) + '%0d", '
+            str_ += ":%0d,".join(vars_) + '%0d", '
             str_ += f"{context.state_var.ver_name}.name, "
-            str_ += ", ".join(map(lambda var: var.ver_name, vars_))
+            str_ += ", ".join(vars_)
             str_ += ");"
             return str_
 
@@ -286,6 +293,7 @@ class CodeGen:
                 ),
             ],
         )
+        # logging.debug(f"make start if else {if_else}")
         return [if_else]
 
     @property
@@ -501,6 +509,7 @@ class CaseBuilder:
         self.next_unique = lambda: next(instance)
 
         # Work
+        logging.debug(f"{self.__class__.__name__} {root.unique_id} {root}")
         self.case.case_items.append(self.new_caseitem(root))
         have_done_state = False
         for caseitem in self.case.case_items:
@@ -518,14 +527,12 @@ class CaseBuilder:
                 )
             )
 
-        # If optimizer removes done node
-        # if ir.Expression(context)
-
     def new_caseitem(self, root: ir.Vertex):
         """
         Creates a new case item with the root's unique id as identifier
         """
         stmts = self.do_vertex(root)
+        logging.debug(f"new caseitem {root.unique_id}")
         item = ver.CaseItem(condition=ir.State(root.unique_id), statements=stmts)
 
         return item
@@ -541,9 +548,9 @@ class CaseBuilder:
 
         if isinstance(vertex, ir.DoneNode):
             stmts += [
-                ver.NonBlockingSubsitution(
-                    self.context.signals.done_signal, ir.UInt(1)
-                ),
+                # ver.NonBlockingSubsitution(
+                #     self.context.signals.done_signal, ir.UInt(1)
+                # ),
                 ver.NonBlockingSubsitution(
                     self.case.condition, self.context.done_state
                 ),

@@ -41,7 +41,7 @@ module hrange (
     output reg signed [31:0] _out1
 );
     // State variables
-    typedef enum{_state_0_while_0,_state_1,_state_1_while,_state_done} _state_t;
+    typedef enum{_state_0_while_0,_state_1,_state_done} _state_t;
     _state_t _state;
     // Global variables
     reg signed [31:0] _i;
@@ -65,14 +65,13 @@ module hrange (
             _base <= base;
             _limit <= limit;
             _step <= step;
-            if ((_i < limit)) begin
-                _i <= $signed(_i + step);
-                _out0 <= $signed(_i + step);
-                _out1 <= $signed(_i + step);
+            _i <= base;
+            if ((base < limit)) begin
+                _out0 <= base;
+                _out1 <= base;
                 _valid <= 1;
-                _state <= _state_1_while;
+                _state <= _state_0_while_0;
             end else begin
-                _i <= base;
                 _done <= 1;
                 _state <= _state_done;
             end
@@ -80,6 +79,18 @@ module hrange (
             // If ready or not valid, then continue computation
             if ((_ready || !(_valid))) begin
                 case (_state)
+                    _state_0_while_0: begin
+                        _i <= $signed(_i + _step);
+                        if (($signed(_i + _step) < _limit)) begin
+                            _out0 <= $signed(_i + _step);
+                            _out1 <= $signed(_i + _step);
+                            _valid <= 1;
+                            _state <= _state_0_while_0;
+                        end else begin
+                            _done <= 1;
+                            _state <= _state_done;
+                        end
+                    end
                     _state_done: begin
                         _done <= 1;
                     end
@@ -94,14 +105,15 @@ endmodule
         @verilogify(
             mode=Modes.OVERWRITE,
             namespace=goal_namespace,
-            optimization_level=1,
+            optimization_level=0,
         )
         def dup_range_goal(base, limit, step):
             inst = hrange(base, limit, step)
             for i, j in inst:
-                if i > 4:
-                    yield i
-                yield j
+                yield i
+                # if i > 4:
+                #     yield i
+                # yield j
 
 
 # Test Cases
@@ -130,7 +142,7 @@ module dup_range_goal (
     output reg signed [31:0] _out0
 );
     // State variables
-    typedef enum{_state_0_for_0,_state_0_for_body_0,_state_1_call_0,_state_1_for_0,_state_1_for_body_0,_state_done} _state_t;
+    typedef enum{_state_0_for_0,_state_0_for_body_0,_state_1_call_0,_state_done} _state_t;
     _state_t _state;
     // Global variables
     reg signed [31:0] _i;
@@ -178,76 +190,46 @@ module dup_range_goal (
             _base <= base;
             _limit <= limit;
             _step <= step;
-            _inst_hrange__ready <= 0;
-            _inst_hrange__start <= 1;
-            _inst_hrange_base <= base;
-            _inst_hrange_limit <= limit;
-            _inst_hrange_step <= step;
-            _inst_hrange__ready <= 1;
-            _inst_hrange__start <= 0;
-            if ((1 && _inst_hrange__valid)) begin
-                _inst_hrange__ready <= 0;
-                _i <= _inst_hrange_out0;
-                _j <= _inst_hrange_out1;
-                if (_inst_hrange__done) begin
-                    _done <= 1;
-                    _state <= _state_done;
-                end else begin
-                    if ($signed(_inst_hrange_out0 > $signed(4))) begin
-                        _out0 <= _inst_hrange_out0;
-                        _valid <= 1;
-                        _state <= _state_0_for_body_0;
-                    end else begin
-                        _out0 <= _inst_hrange_out1;
-                        _valid <= 1;
-                        _state <= _state_0_for_0;
-                    end
-                end
-            end else begin
-                if (_inst_hrange__done) begin
-                    _done <= 1;
-                    _state <= _state_done;
-                end else begin
-                    _state <= _state_0_for_0;
-                end
-            end
+            _state <= _state_1_call_0;
         end else begin
             // If ready or not valid, then continue computation
             if ((_ready || !(_valid))) begin
                 case (_state)
+                    _state_done: begin
+                        _done <= 1;
+                        _state <= _state_done;
+                    end
+                    _state_0_for_body_0: begin
+                        _out0 <= _i;
+                        _valid <= 1;
+                        _state <= _state_0_for_0;
+                    end
                     _state_0_for_0: begin
                         _inst_hrange__ready <= 1;
                         _inst_hrange__start <= 0;
-                        if ((1 && _inst_hrange__valid)) begin
+                        if ((_inst_hrange__ready && _inst_hrange__valid)) begin
                             _inst_hrange__ready <= 0;
                             _i <= _inst_hrange_out0;
                             _j <= _inst_hrange_out1;
                             if (_inst_hrange__done) begin
-                                _done <= 1;
                                 _state <= _state_done;
                             end else begin
-                                if ($signed(_inst_hrange_out0 > $signed(4))) begin
-                                    _out0 <= _inst_hrange_out0;
-                                    _valid <= 1;
-                                    _state <= _state_0_for_body_0;
-                                end else begin
-                                    _out0 <= _inst_hrange_out1;
-                                    _valid <= 1;
-                                    _state <= _state_0_for_0;
-                                end
+                                _state <= _state_0_for_body_0;
                             end
                         end else begin
                             if (_inst_hrange__done) begin
-                                _done <= 1;
                                 _state <= _state_done;
                             end else begin
                                 _state <= _state_0_for_0;
                             end
                         end
                     end
-                    _state_0_for_body_0: begin
-                        _out0 <= _j;
-                        _valid <= 1;
+                    _state_1_call_0: begin
+                        _inst_hrange__ready <= 0;
+                        _inst_hrange__start <= 1;
+                        _inst_hrange_base <= _base;
+                        _inst_hrange_limit <= _limit;
+                        _inst_hrange_step <= _step;
                         _state <= _state_0_for_0;
                     end
                     _state_done: begin

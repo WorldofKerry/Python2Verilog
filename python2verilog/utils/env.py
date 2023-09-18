@@ -57,5 +57,4 @@ def get_var(name: Vars):
     Get an env var
     """
     assert isinstance(name, Vars)
-    logging.debug(f"Get {name}")
     return os.getenv(str(name))

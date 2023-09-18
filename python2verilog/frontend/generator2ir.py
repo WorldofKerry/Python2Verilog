@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ast as pyast
+import logging
 
 from .. import ir
 from ..utils.assertions import get_typed, get_typed_list
@@ -49,6 +50,7 @@ class Generator2Graph:
                                 instance = cxt.create_instance(target.id)
                                 self._context.instances[target.id] = instance
 
+        logging.debug(f"\n\n========> Parsing {context.name} <========")
         self._root = self.__parse_statements(
             stmts=context.py_ast.body,
             prefix="_state",
@@ -56,6 +58,7 @@ class Generator2Graph:
         )
 
         self._context.entry_state = ir.State(self._root.unique_id)
+        logging.debug(f"Entry state is {self._context.entry_state}")
 
     @property
     def root(self):
@@ -165,6 +168,9 @@ class Generator2Graph:
             cur_node, end_node = self.__parse_assign(stmt, prefix=prefix)
             edge = ir.ClockedEdge(unique_id=f"{prefix}_e", child=nextt)
             end_node.child = edge
+            logging.debug(
+                f"Assign {cur_node.unique_id} {cur_node} -> {end_node} -> {nextt.unique_id}"
+            )
         elif isinstance(stmt, pyast.Yield):
             cur_node = self.__parse_yield(stmt, prefix=prefix)
             edge = ir.ClockedEdge(unique_id=f"{prefix}_e", child=nextt)
@@ -173,6 +179,7 @@ class Generator2Graph:
             cur_node = self.__parse_while(stmt, nextt=nextt, prefix=prefix)
         elif isinstance(stmt, pyast.For):
             cur_node = self.__parse_for(stmt, nextt=nextt, prefix=prefix)
+            logging.debug(f"For {cur_node.unique_id} {cur_node} -> {nextt.unique_id}")
         elif isinstance(stmt, pyast.If):
             cur_node = self.__parse_ifelse(stmt=stmt, nextt=nextt, prefix=prefix)
         elif isinstance(stmt, pyast.Expr):
@@ -451,7 +458,6 @@ class Generator2Graph:
         """
         instance = func(args, ...)
         """
-        # print(pyast.dump(assign))
         assert len(assign.targets) == 1
         target = assign.targets[0]
         assert isinstance(target, pyast.Name)
