@@ -354,6 +354,16 @@ class DoneNode(Node, Element):
     """
 
 
+class StopperNode(Node, BasicElement):
+    """
+    Node that indicates that all optimizations must stop here
+
+    In the future, this will be converted to a MutuallyExclusiveNode,
+    where if optimizer visited another node that has the same mutual exclusion,
+    optimization must end.
+    """
+
+
 class Edge(BasicElement):
     """
     Represents an edge between two vertices
