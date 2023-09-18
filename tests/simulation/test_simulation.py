@@ -1,5 +1,6 @@
 import logging
 import unittest
+import warnings
 from pathlib import Path
 
 import pytest
@@ -125,7 +126,7 @@ class TestSimulation(unittest.TestCase):
         )
 
     def test_triple(self):
-        ns = new_namespace(Path(__file__).parent / "new_namespace")
+        ns = new_namespace(Path(__file__).parent / "triple_ns")
 
         @verilogify(namespace=ns, mode=Modes.OVERWRITE)
         def circle_lines(s_x, s_y, height) -> tuple[int, int, int, int, int, int]:
@@ -189,7 +190,14 @@ class TestSimulation(unittest.TestCase):
             list(get_actual(triple_circle, module, testbench, timeout=1)),
             list(get_expected(triple_circle)),
         )
-        with open(Path(__file__).parent / "triple_o1.sv", mode="w") as f:
+        mod_path = Path(__file__).parent / "triple_raw.sv"
+        tb_path = Path(__file__).parent / "triple_raw_tb.sv"
+        with open(mod_path, mode="w") as f:
             f.write(str(module))
-        with open(Path(__file__).parent / "triple_o1_tb.sv", mode="w") as f:
+        with open(tb_path, mode="w") as f:
             f.write(str(testbench))
+        cmd = iverilog.make_cmd(
+            "triple_circle_tb",
+            [mod_path, tb_path],
+        )
+        warnings.warn(cmd)

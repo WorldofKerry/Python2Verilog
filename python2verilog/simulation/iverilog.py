@@ -13,7 +13,7 @@ from python2verilog.utils import env
 from python2verilog.utils.assertions import assert_typed_dict
 
 
-def make_cmd(top_level_module: str, files: Iterable[str]):
+def make_cmd(top_level_module: str, files: Iterable[str | os.PathLike[str]]):
     """
     Returns an iverilog command
 
@@ -22,7 +22,7 @@ def make_cmd(top_level_module: str, files: Iterable[str]):
     cmd = (
         f"{env.get_var(env.Vars.IVERILOG_PATH)} -g2005-sv -Wall -s {top_level_module} "
     )
-    cmd += " ".join(files) + " "
+    cmd += " ".join(map(str, files)) + " "
     # pylint: disable=consider-using-with
     cache_file = tempfile.NamedTemporaryFile(mode="r", encoding="utf8")
     cache_path = cache_file.name
