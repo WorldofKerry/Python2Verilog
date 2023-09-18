@@ -9,6 +9,7 @@ import subprocess
 import tempfile
 from typing import Iterable, Optional
 
+from python2verilog.utils import env
 from python2verilog.utils.assertions import assert_typed_dict
 
 
@@ -18,7 +19,9 @@ def make_cmd(top_level_module: str, files: Iterable[str]):
 
     :param files: set of absolute paths to files required for simulation
     """
-    cmd = f"iverilog -g2005-sv -Wall -s {top_level_module} "
+    cmd = (
+        f"{env.get_var(env.Vars.IVERILOG_PATH)} -g2005-sv -Wall -s {top_level_module} "
+    )
     cmd += " ".join(files) + " "
     # pylint: disable=consider-using-with
     cache_file = tempfile.NamedTemporaryFile(mode="r", encoding="utf8")
@@ -68,11 +71,13 @@ def _run_cmd_with_fifos(
             assert process.stderr
             return process.stdout.read(), process.stderr.read()
         except subprocess.TimeoutExpired as e:
-            logging.error(e)
             os.killpg(os.getpgid(process.pid), signal.SIGTERM)
             assert process.stdout
             assert process.stderr
-            return process.stdout.read(), process.stderr.read()
+            stdout = process.stdout.read()
+            stderr = process.stderr.read()
+            logging.error(f"{e}, {stdout}, {stderr}")
+            return stdout, stderr
 
 
 def _run_cmd_with_files(
@@ -103,11 +108,13 @@ def _run_cmd_with_files(
             assert process.stderr
             return process.stdout.read(), process.stderr.read()
         except subprocess.TimeoutExpired as e:
-            logging.error(e)
             os.killpg(os.getpgid(process.pid), signal.SIGTERM)
             assert process.stdout
             assert process.stderr
-            return process.stdout.read(), process.stderr.read()
+            stdout = process.stdout.read()
+            stderr = process.stderr.read()
+            logging.error(f"{e}, {stdout}, {stderr}")
+            return stdout, stderr
 
 
 def run_with_fifos(
@@ -144,7 +151,7 @@ def run_with_files(
         top_level_module=top_level_module,
         files=input_files.keys(),
     )
-    logging.debug(f"Running {iverilog_cmd}")
+    logging.info(f"Running {iverilog_cmd}")
     return _run_cmd_with_files(
         command=iverilog_cmd, input_files=input_files, timeout=timeout
     )

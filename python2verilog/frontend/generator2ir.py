@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ast as pyast
+import logging
 
 from .. import ir
 from ..utils.assertions import get_typed, get_typed_list
@@ -49,13 +50,15 @@ class Generator2Graph:
                                 instance = cxt.create_instance(target.id)
                                 self._context.instances[target.id] = instance
 
+        logging.debug(f"\n\n========> Parsing {context.name} <========")
         self._root = self.__parse_statements(
             stmts=context.py_ast.body,
             prefix="_state",
-            nextt=ir.DoneNode(unique_id=context.done_state, name="done"),
+            nextt=ir.DoneNode(unique_id=str(context.done_state), name="done"),
         )
 
-        self._context.entry_state = self._root.unique_id
+        self._context.entry_state = ir.State(self._root.unique_id)
+        logging.debug(f"Entry state is {self._context.entry_state}")
 
     @property
     def root(self):
@@ -165,6 +168,9 @@ class Generator2Graph:
             cur_node, end_node = self.__parse_assign(stmt, prefix=prefix)
             edge = ir.ClockedEdge(unique_id=f"{prefix}_e", child=nextt)
             end_node.child = edge
+            logging.debug(
+                f"Assign {cur_node.unique_id} {cur_node} -> {end_node} -> {nextt.unique_id}"
+            )
         elif isinstance(stmt, pyast.Yield):
             cur_node = self.__parse_yield(stmt, prefix=prefix)
             edge = ir.ClockedEdge(unique_id=f"{prefix}_e", child=nextt)
@@ -173,6 +179,7 @@ class Generator2Graph:
             cur_node = self.__parse_while(stmt, nextt=nextt, prefix=prefix)
         elif isinstance(stmt, pyast.For):
             cur_node = self.__parse_for(stmt, nextt=nextt, prefix=prefix)
+            logging.debug(f"For {cur_node.unique_id} {cur_node} -> {nextt.unique_id}")
         elif isinstance(stmt, pyast.If):
             cur_node = self.__parse_ifelse(stmt=stmt, nextt=nextt, prefix=prefix)
         elif isinstance(stmt, pyast.Expr):
@@ -215,13 +222,13 @@ class Generator2Graph:
         def unique_node_gen():
             counter = 0
             while True:
-                yield f"{prefix}_call_{counter}"
+                yield f"{prefix}_for_{counter}"
                 counter += 1
 
         def unique_edge_gen():
             counter = 0
             while True:
-                yield f"{prefix}_call_{counter}_e"
+                yield f"{prefix}_for_{counter}_e"
                 counter += 1
 
         unique_node = unique_node_gen()
@@ -229,7 +236,7 @@ class Generator2Graph:
 
         head = ir.AssignNode(
             unique_id=next(unique_node),
-            lvalue=inst.signals.ready_signal,
+            lvalue=inst.signals.ready,
             rvalue=ir.UInt(1),
         )
         node: ir.BasicElement = head
@@ -237,7 +244,7 @@ class Generator2Graph:
         node = node.child
         node.child = ir.AssignNode(
             unique_id=next(unique_node),
-            lvalue=inst.signals.start_signal,
+            lvalue=inst.signals.start,
             rvalue=ir.UInt(0),
         )
         node = node.child
@@ -247,7 +254,7 @@ class Generator2Graph:
         edge_to_head = ir.ClockedEdge(unique_id=next(unique_edge), child=head)
         second_ifelse0 = ir.IfElseNode(
             unique_id=next(unique_node),
-            condition=inst.signals.done_signal,
+            condition=inst.signals.done,
             true_edge=done_edge,
             false_edge=loop_edge,
         )
@@ -256,7 +263,7 @@ class Generator2Graph:
         )
         second_ifelse1 = ir.IfElseNode(
             unique_id=next(unique_node),
-            condition=inst.signals.done_signal,
+            condition=inst.signals.done,
             true_edge=done_edge,
             false_edge=edge_to_head,
         )
@@ -270,7 +277,7 @@ class Generator2Graph:
         assert len(outputs) == len(inst.outputs)
         capture_head = ir.AssignNode(
             unique_id=next(unique_node),
-            lvalue=inst.signals.ready_signal,
+            lvalue=inst.signals.ready,
             rvalue=ir.UInt(0),
         )
         capture_node: ir.BasicElement = capture_head
@@ -295,15 +302,13 @@ class Generator2Graph:
         )
         first_ifelse = ir.IfElseNode(
             unique_id=next(unique_node),
-            condition=ir.UBinOp(
-                inst.signals.ready_signal, "&&", inst.signals.valid_signal
-            ),
+            condition=ir.UBinOp(inst.signals.ready, "&&", inst.signals.valid),
             true_edge=edge_to_capture_head,  # replaced with linked list for output
             false_edge=edge_to_second_ifelse1,
         )
         node.child = first_ifelse
 
-        body_node = self.__parse_statements(stmt.body, f"{prefix}_for", head)
+        body_node = self.__parse_statements(stmt.body, f"{prefix}_for_body", head)
         loop_edge.child = body_node
 
         return head
@@ -436,12 +441,11 @@ class Generator2Graph:
             return self.__parse_compare(expr)
         if isinstance(expr, pyast.BoolOp):
             if isinstance(expr.op, pyast.And):
-                return ir.Expression(
-                    f"({self.__parse_expression(expr.values[0]).to_string()}) \
-                    && ({self.__parse_expression(expr.values[1]).to_string()})"
+                return ir.UBinOp(
+                    self.__parse_expression(expr.values[0]),
+                    "&&",
+                    self.__parse_expression(expr.values[1]),
                 )
-        # if isinstance(expr, pyast.Call):
-        #     return self.__parse_call(expr)
         raise TypeError(
             "Error: unexpected expression type", type(expr), pyast.dump(expr)
         )
@@ -452,7 +456,6 @@ class Generator2Graph:
         """
         instance = func(args, ...)
         """
-        # print(pyast.dump(assign))
         assert len(assign.targets) == 1
         target = assign.targets[0]
         assert isinstance(target, pyast.Name)
@@ -462,18 +465,20 @@ class Generator2Graph:
             counter = 0
             while True:
                 yield f"{prefix}_call_{counter}"
+                counter += 1
 
         def unique_edge_gen():
             counter = 0
             while True:
                 yield f"{prefix}_call_{counter}_e"
+                counter += 1
 
         unique_node = unique_node_gen()
         unique_edge = unique_edge_gen()
 
         head = ir.AssignNode(
             unique_id=next(unique_node),
-            lvalue=inst.signals.ready_signal,
+            lvalue=inst.signals.ready,
             rvalue=ir.UInt(0),
         )
         node: ir.BasicElement = head
@@ -481,7 +486,7 @@ class Generator2Graph:
         node = node.child
         node.child = ir.AssignNode(
             unique_id=next(unique_node),
-            lvalue=inst.signals.start_signal,
+            lvalue=inst.signals.start,
             rvalue=ir.UInt(1),
         )
         node = node.child

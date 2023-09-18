@@ -146,5 +146,5 @@ def get_actual(
             {module_fifo: module, tb_fifo: testbench},
             timeout=timeout,
         )
-        assert not err
+        assert not err, stdout
         yield from strip_signals(parse_stdout(stdout))

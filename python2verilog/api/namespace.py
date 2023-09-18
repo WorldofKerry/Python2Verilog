@@ -69,8 +69,7 @@ def namespace_to_verilog(namespace: dict[str, ir.Context]) -> tuple[str, str]:
     module = ""
     testbench = ""
     for context in namespace.values():
-        if Modes.write(context.mode):
-            mod, tb = context_to_verilog(context=context)
-            module += mod
-            testbench += tb
+        mod, tb = context_to_verilog(context=context)
+        module += mod
+        testbench += tb
     return module, testbench

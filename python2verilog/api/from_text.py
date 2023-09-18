@@ -165,7 +165,7 @@ def text_to_context(
     lines = code.splitlines()
     func_lines = lines[generator_ast.lineno - 1 : generator_ast.end_lineno]
     func_str = "\n".join(func_lines)
-    logging.debug(func_str)
+    # logging.debug(func_str)
     exec(func_str, None, locals_)
     try:
         generator_func = locals_[function_name]

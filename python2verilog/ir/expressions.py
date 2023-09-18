@@ -20,6 +20,8 @@ class Expression(GenericRepr):
 
     def __init__(self, string: str):
         assert isinstance(string, str)
+        if "_state" in string and self.__class__ == Expression:
+            raise RuntimeError()
         self.string = string
 
     def to_string(self) -> str:
@@ -115,13 +117,15 @@ class Var(Expression):
 
 class State(Var):
     """
-    State variable
+    State constant
     """
 
     def __init__(
         self, name, width: int = 32, isSigned: bool = True, initial_value: str = "0"
     ):
-        super().__init__(name, name, width, isSigned, initial_value)
+        super().__init__(
+            name, name, width=width, is_signed=isSigned, initial_value=initial_value
+        )
 
 
 class Ternary(Expression):

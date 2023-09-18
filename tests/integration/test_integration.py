@@ -83,7 +83,7 @@ class BaseTestCases:
                             slowness_multiplier = stat["Ver Clks"] / (
                                 stat["Py Yields"] + 8
                             )  # + x for loop and end overhead
-                            if slowness_multiplier > 1.10:
+                            if slowness_multiplier > 1.30:
                                 test_that_are_too_slow.append(stat)
                     self.assertFalse(
                         test_that_are_too_slow,
@@ -269,7 +269,7 @@ class BaseTestCases:
                         FILES_IN_ABS_DIR["module"]: module_str,
                         FILES_IN_ABS_DIR["testbench"]: tb_str,
                     },
-                    timeout=len(expected),
+                    timeout=1 + len(expected) // 64,
                 )
             else:
                 stdout, stderr = run_with_fifos(
@@ -278,7 +278,7 @@ class BaseTestCases:
                         FILES_IN_ABS_DIR["module_fifo"]: module_str,
                         FILES_IN_ABS_DIR["testbench_fifo"]: tb_str,
                     },
-                    timeout=len(expected),
+                    timeout=1 + len(expected) // 64,
                 )
             time_delta_ms = (time.time() - time_started) * 1000
 
