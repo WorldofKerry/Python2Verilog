@@ -73,7 +73,7 @@ class CodeGen:
             """
             vars_: list[ir.Var] = []
             vars_ += map(
-                lambda x: x.ver_name, context.signals.instance_specific_values()
+                lambda x: x.ver_name, context.signals.values()
             )
             vars_ += map(lambda x: x.py_name, context.input_vars)
             vars_ += map(lambda x: x.ver_name, context.input_vars)

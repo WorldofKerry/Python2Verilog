@@ -4,9 +4,7 @@ module hrange_tb (
     reg _start;
     reg _reset;
     reg _ready;
-    reg signed [31:0] base;
-    reg signed [31:0] limit;
-    reg signed [31:0] step;
+    reg signed [31:0] n;
     wire _done;
     wire _valid;
     wire signed [31:0] _out0;
@@ -16,9 +14,7 @@ module hrange_tb (
         ._start(_start),
         ._reset(_reset),
         ._ready(_ready),
-        .base(base),
-        .limit(limit),
-        .step(step),
+        .n(n),
         ._done(_done),
         ._valid(_valid),
         ._out0(_out0),
@@ -32,15 +28,11 @@ module hrange_tb (
         _reset = 1;
         @(negedge _clock);
         _reset = 0;
-        // ============ Test Case 0 with arguments (1, 11, 3) ============
-        base = $signed(1);
-        limit = $signed(11);
-        step = $signed(3);
+        // ============ Test Case 0 with arguments (10,) ============
+        n = $signed(10);
         _start = 1;
         @(negedge _clock);
-        base = 'x; // only need inputs when start is set
-        limit = 'x; // only need inputs when start is set
-        step = 'x; // only need inputs when start is set
+        n = 'x; // only need inputs when start is set
         _start = 0;
         while ((!(_done) || !(_ready))) begin
             // `if (_ready && _valid)` also works as a conditional
@@ -52,35 +44,11 @@ module hrange_tb (
         if (_ready) begin
             $display("%0d, %0d, %0d, %0d", _valid, _ready, _out0, _out1);
         end
-        // ============ Test Case 1 with arguments (0, 10, 2) ============
-        base = $signed(0);
-        limit = $signed(10);
-        step = $signed(2);
+        // ============ Test Case 1 with arguments (10,) ============
+        n = $signed(10);
         _start = 1;
         @(negedge _clock);
-        base = 'x; // only need inputs when start is set
-        limit = 'x; // only need inputs when start is set
-        step = 'x; // only need inputs when start is set
-        _start = 0;
-        while ((!(_done) || !(_ready))) begin
-            // `if (_ready && _valid)` also works as a conditional
-            if (_ready) begin
-                $display("%0d, %0d, %0d, %0d", _valid, _ready, _out0, _out1);
-            end
-            @(negedge _clock);
-        end
-        if (_ready) begin
-            $display("%0d, %0d, %0d, %0d", _valid, _ready, _out0, _out1);
-        end
-        // ============ Test Case 2 with arguments (0, 10, 2) ============
-        base = $signed(0);
-        limit = $signed(10);
-        step = $signed(2);
-        _start = 1;
-        @(negedge _clock);
-        base = 'x; // only need inputs when start is set
-        limit = 'x; // only need inputs when start is set
-        step = 'x; // only need inputs when start is set
+        n = 'x; // only need inputs when start is set
         _start = 0;
         while ((!(_done) || !(_ready))) begin
             // `if (_ready && _valid)` also works as a conditional
@@ -101,9 +69,7 @@ module dup_range_goal_tb (
     reg _start;
     reg _reset;
     reg _ready;
-    reg signed [31:0] base;
-    reg signed [31:0] limit;
-    reg signed [31:0] step;
+    reg signed [31:0] n;
     wire _done;
     wire _valid;
     wire signed [31:0] _out0;
@@ -112,9 +78,7 @@ module dup_range_goal_tb (
         ._start(_start),
         ._reset(_reset),
         ._ready(_ready),
-        .base(base),
-        .limit(limit),
-        .step(step),
+        .n(n),
         ._done(_done),
         ._valid(_valid),
         ._out0(_out0)
@@ -127,15 +91,11 @@ module dup_range_goal_tb (
         _reset = 1;
         @(negedge _clock);
         _reset = 0;
-        // ============ Test Case 0 with arguments (0, 10, 2) ============
-        base = $signed(0);
-        limit = $signed(10);
-        step = $signed(2);
+        // ============ Test Case 0 with arguments (10,) ============
+        n = $signed(10);
         _start = 1;
         @(negedge _clock);
-        base = 'x; // only need inputs when start is set
-        limit = 'x; // only need inputs when start is set
-        step = 'x; // only need inputs when start is set
+        n = 'x; // only need inputs when start is set
         _start = 0;
         while ((!(_done) || !(_ready))) begin
             // `if (_ready && _valid)` also works as a conditional

@@ -31,27 +31,23 @@ class TestSimulation(unittest.TestCase):
             mode=Modes.OVERWRITE,
             namespace=goal_namespace,
         )
-        def hrange(base, limit, step):
-            i = base
-            while i < limit:
+        def hrange(n):
+            i = 0
+            while i < n:
                 yield i, i
-                i += step
+                i += 1
 
         @verilogify(
             mode=Modes.OVERWRITE,
             namespace=goal_namespace,
             optimization_level=0,
         )
-        def dup_range_goal(base, limit, step):
-            inst = hrange(base, limit, step)
+        def dup_range_goal(n):
+            inst = hrange(n)
             for i, j in inst:
                 yield i
-                # if i > 4:
-                #     yield i
-                # yield j
 
-        list(hrange(1, 11, 3))
-        list(dup_range_goal(0, 10, 2))
+        list(dup_range_goal(10))
 
         # with open("./cyto.log", mode="w") as f:
         #     _, _, cy = context_to_verilog_and_dump(get_context(dup_range_goal))
@@ -59,12 +55,14 @@ class TestSimulation(unittest.TestCase):
         module, testbench = namespace_to_verilog(goal_namespace)
         with open(Path(__file__).parent / "o0.sv", mode="w") as f:
             f.write(str(module))
+        with open(Path(__file__).parent / "o0_tb.sv", mode="w") as f:
+            f.write(str(testbench))
         logging.error(str(module))
         # with open(__file__)
-        # self.assertListEqual(
-        #     list(get_actual(dup_range_goal, module, testbench, timeout=1)),
-        #     list(get_expected(dup_range_goal)),
-        # )
+        self.assertListEqual(
+            list(get_actual(dup_range_goal, module, testbench, timeout=1)),
+            list(get_expected(dup_range_goal)),
+        )
 
     # def test_o1(self):
     #     goal_namespace = new_namespace(Path(__file__).parent / "o1")

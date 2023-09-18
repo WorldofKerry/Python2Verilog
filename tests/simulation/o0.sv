@@ -5,25 +5,22 @@
             mode=Modes.OVERWRITE,
             namespace=goal_namespace,
         )
-        def hrange(base, limit, step):
-            i = base
-            while i < limit:
+        def hrange(n):
+            i = 0
+            while i < n:
                 yield i, i
-                i += step
+                i += 1
 
 
 # Test Cases
-print(list(hrange(*(1, 11, 3))))
-print(list(hrange(*(0, 10, 2))))
-print(list(hrange(*(0, 10, 2))))
+print(list(hrange(*(10,))))
+print(list(hrange(*(10,))))
 
 */
 
 module hrange (
     // Function parameters (only need to be set when start is high):
-    input wire signed [31:0] base,
-    input wire signed [31:0] limit,
-    input wire signed [31:0] step,
+    input wire signed [31:0] n,
 
     input wire _clock, // clock for sync
     input wire _reset, // set high to reset, i.e. done will be high
@@ -45,55 +42,23 @@ module hrange (
     _state_t _state;
     // Global variables
     reg signed [31:0] _i;
-    reg signed [31:0] _base;
-    reg signed [31:0] _limit;
-    reg signed [31:0] _step;
+    reg signed [31:0] _n;
     assign _done = _state == _state_done;
     // Core
-    always @(posedge _clock) begin
+    always @(negedge _clock)
         `ifdef DEBUG
-        $display("hrange,%s,_start:%0d,_done:%0d,_ready:%0d,_valid:%0d,base:%0d,limit:%0d,step:%0d,_base:%0d,_limit:%0d,_step:%0d,_out0:%0d,_out1:%0d,_i%0d", _state.name, _start, _done, _ready, _valid, base, limit, step, _base, _limit, _step, _out0, _out1, _i);
+        $display("hrange,%s,_start:%0d,_done:%0d,_ready:%0d,_valid:%0d,n:%0d,_n:%0d,_out0:%0d,_out1:%0d,_i%0d", _state.name, _start, _done, _ready, _valid, n, _n, _out0, _out1, _i);
         `endif
-        if (_ready) begin
-            _valid <= 0;
-        end
+    always @(posedge _clock) begin
+        // if (_ready) begin
+        //     _valid <= 0;
+        // end
         // Start signal takes precedence over reset
         if (_reset) begin
             _state <= _state_done;
         end
-        if (_start) begin
-            _base <= base;
-            _limit <= limit;
-            _step <= step;
-            _i <= base;
-            if ((base < limit)) begin
-                _out0 <= base;
-                _out1 <= base;
-                _valid <= 1;
-                _state <= _state_0_while_0;
-            end else begin
-                _state <= _state_done;
-            end
-        end else begin
-            // If ready or not valid, then continue computation
-            if ((_ready || !(_valid))) begin
-                case (_state)
-                    _state_0_while_0: begin
-                        _i <= $signed(_i + _step);
-                        if (($signed(_i + _step) < _limit)) begin
-                            _out0 <= $signed(_i + _step);
-                            _out1 <= $signed(_i + _step);
-                            _valid <= 1;
-                            _state <= _state_0_while_0;
-                        end else begin
-                            _state <= _state_done;
-                        end
-                    end
-                    _state_done: begin
-                    end
-                endcase
-            end
-        end
+        if (_start) _state <= _state_0_while_0;
+        $display("reset %0d", _reset);
     end
 endmodule
 /*
@@ -104,25 +69,20 @@ endmodule
             namespace=goal_namespace,
             optimization_level=0,
         )
-        def dup_range_goal(base, limit, step):
-            inst = hrange(base, limit, step)
+        def dup_range_goal(n):
+            inst = hrange(n)
             for i, j in inst:
                 yield i
-                # if i > 4:
-                #     yield i
-                # yield j
 
 
 # Test Cases
-print(list(dup_range_goal(*(0, 10, 2))))
+print(list(dup_range_goal(*(10,))))
 
 */
 
 module dup_range_goal (
     // Function parameters (only need to be set when start is high):
-    input wire signed [31:0] base,
-    input wire signed [31:0] limit,
-    input wire signed [31:0] step,
+    input wire signed [31:0] n,
 
     input wire _clock, // clock for sync
     input wire _reset, // set high to reset, i.e. done will be high
@@ -144,13 +104,9 @@ module dup_range_goal (
     // Global variables
     reg signed [31:0] _i;
     reg signed [31:0] _j;
-    reg signed [31:0] _base;
-    reg signed [31:0] _limit;
-    reg signed [31:0] _step;
+    reg signed [31:0] _n;
     // ================ Function Instance ================
-    reg [31:0] _inst_hrange_base;
-    reg [31:0] _inst_hrange_limit;
-    reg [31:0] _inst_hrange_step;
+    reg [31:0] _inst_hrange_n;
     wire [31:0] _inst_hrange_out0;
     wire [31:0] _inst_hrange_out1;
     wire _inst_hrange__valid;
@@ -158,9 +114,7 @@ module dup_range_goal (
     reg _inst_hrange__start;
     reg _inst_hrange__ready;
     hrange _inst (
-        .base(_inst_hrange_base),
-        .limit(_inst_hrange_limit),
-        .step(_inst_hrange_step),
+        .n(_inst_hrange_n),
         ._out0(_inst_hrange_out0),
         ._out1(_inst_hrange_out1),
         ._valid(_inst_hrange__valid),
@@ -174,7 +128,7 @@ module dup_range_goal (
     // Core
     always @(posedge _clock) begin
         `ifdef DEBUG
-        $display("dup_range_goal,%s,_start:%0d,_done:%0d,_ready:%0d,_valid:%0d,base:%0d,limit:%0d,step:%0d,_base:%0d,_limit:%0d,_step:%0d,_out0:%0d,_i:%0d,_j%0d", _state.name, _start, _done, _ready, _valid, base, limit, step, _base, _limit, _step, _out0, _i, _j);
+        $display("dup_range_goal,%s,_start:%0d,_done:%0d,_ready:%0d,_valid:%0d,n:%0d,_n:%0d,_out0:%0d,_i:%0d,_j%0d", _state.name, _start, _done, _ready, _valid, n, _n, _out0, _i, _j);
         `endif
         if (_ready) begin
             _valid <= 0;
@@ -184,9 +138,7 @@ module dup_range_goal (
             _state <= _state_done;
         end
         if (_start) begin
-            _base <= base;
-            _limit <= limit;
-            _step <= step;
+            _n <= n;
             _state <= _state_1_call_0;
         end else begin
             // If ready or not valid, then continue computation
@@ -207,6 +159,7 @@ module dup_range_goal (
                             _inst_hrange__ready <= 0;
                             _i <= _inst_hrange_out0;
                             _j <= _inst_hrange_out1;
+                            // if (_inst_hrange__done && !_inst_hrange__start) begin
                             if (_inst_hrange__done) begin
                                 _state <= _state_done;
                             end else begin
@@ -214,6 +167,7 @@ module dup_range_goal (
                             end
                         end else begin
                             if (_inst_hrange__done) begin
+                            // if (_inst_hrange__done && !_inst_hrange__start) begin
                                 _state <= _state_done;
                             end else begin
                                 _state <= _state_0_for_0;
@@ -223,9 +177,7 @@ module dup_range_goal (
                     _state_1_call_0: begin
                         _inst_hrange__ready <= 0;
                         _inst_hrange__start <= 1;
-                        _inst_hrange_base <= _base;
-                        _inst_hrange_limit <= _limit;
-                        _inst_hrange_step <= _step;
+                        _inst_hrange_n <= _n;
                         _state <= _state_0_for_0;
                     end
                     _state_done: begin
