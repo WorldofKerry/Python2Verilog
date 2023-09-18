@@ -1,17 +1,20 @@
-# Function Calls
+# For Loop Limitation
 
 With the addition of function call support, modules can no longer have `valid` and `done` both be set in the same cycle. That is, `done` must be set after the last valid output cycle. Why is this?
 
-Callers that use the `for .. in ...:` construct currently do not support the "rememberance of done", at each new iteration of the for loop. For python like:
+Users for the `for .. in ...:` construct currently do not support the "rememberance of done", at each iteration of the for loop. As an example, with the following Python Code:
 
 ```python
+instance = generator_creator(a, b, c)
+...
 # start
 for out0, out1 in instance:
     # work
+    pass
 # continue
 ```
 
-The generated FSM is as follows:
+The generated FSM for is as follows:
 
 ```mermaid
 stateDiagram-v2
