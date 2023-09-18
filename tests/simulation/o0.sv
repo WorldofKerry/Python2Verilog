@@ -31,34 +31,62 @@ module hrange (
     input wire _ready, // set high when caller is ready for output
     output reg _valid, // is high if output values are valid
 
-    output wire _done, // is high if module done outputting
+    output reg _done, // is high if module done outputting
 
     // Output values as a tuple with respective index(es)
     output reg signed [31:0] _out0,
     output reg signed [31:0] _out1
 );
     // State variables
-    typedef enum{_state_0_while_0,_state_1,_state_done} _state_t;
+    typedef enum{_state_0_while_0,_state_1,_state_done,_state_idle} _state_t;
     _state_t _state;
     // Global variables
     reg signed [31:0] _i;
     reg signed [31:0] _n;
-    assign _done = _state == _state_done;
     // Core
-    always @(negedge _clock)
-        `ifdef DEBUG
-        $display("hrange,%s,_start:%0d,_done:%0d,_ready:%0d,_valid:%0d,n:%0d,_n:%0d,_out0:%0d,_out1:%0d,_i%0d", _state.name, _start, _done, _ready, _valid, n, _n, _out0, _out1, _i);
-        `endif
     always @(posedge _clock) begin
-        // if (_ready) begin
-        //     _valid <= 0;
-        // end
+        `ifdef DEBUG
+        $display("hrange,%s,_start:%0d,_done:%0d,_ready:%0d,_valid:%0d,_reset:%0d,_clock:%0d,n:%0d,_n:%0d,_out0:%0d,_out1:%0d,_i%0d", _state.name, _start, _done, _ready, _valid, _reset, _clock, n, _n, _out0, _out1, _i);
+        `endif
+        _done <= 0;
+        if (_ready) begin
+            _valid <= 0;
+        end
         // Start signal takes precedence over reset
         if (_reset) begin
-            _state <= _state_done;
+            _state <= _state_idle;
         end
-        if (_start) _state <= _state_0_while_0;
-        $display("reset %0d", _reset);
+        if (_start) begin
+            _n <= n;
+            _i <= $signed(0);
+            if (($signed(0) < n)) begin
+                _out0 <= $signed(0);
+                _out1 <= $signed(0);
+                _valid <= 1;
+                _state <= _state_0_while_0;
+            end else begin
+                _done <= 1;
+                _state <= _state_idle;
+            end
+        end else begin
+            // If ready or not valid, then continue computation
+            if ((_ready || !(_valid))) begin
+                case (_state)
+                    _state_0_while_0: begin
+                        _i <= $signed(_i + $signed(1));
+                        if (($signed(_i + $signed(1)) < _n)) begin
+                            _out0 <= $signed(_i + $signed(1));
+                            _out1 <= $signed(_i + $signed(1));
+                            _valid <= 1;
+                            _state <= _state_0_while_0;
+                        end else begin
+                            _done <= 1;
+                            _state <= _state_idle;
+                        end
+                    end
+                endcase
+            end
+        end
     end
 endmodule
 /*
@@ -93,13 +121,13 @@ module dup_range_goal (
     input wire _ready, // set high when caller is ready for output
     output reg _valid, // is high if output values are valid
 
-    output wire _done, // is high if module done outputting
+    output reg _done, // is high if module done outputting
 
     // Output values as a tuple with respective index(es)
     output reg signed [31:0] _out0
 );
     // State variables
-    typedef enum{_state_0_for_0,_state_0_for_body_0,_state_1_call_0,_state_done} _state_t;
+    typedef enum{_state_0_for_0,_state_0_for_body_0,_state_1_call_0,_state_done,_state_idle} _state_t;
     _state_t _state;
     // Global variables
     reg signed [31:0] _i;
@@ -124,18 +152,18 @@ module dup_range_goal (
         ._reset(_reset),
         ._ready(_inst_hrange__ready)
         );
-    assign _done = _state == _state_done;
     // Core
     always @(posedge _clock) begin
         `ifdef DEBUG
-        $display("dup_range_goal,%s,_start:%0d,_done:%0d,_ready:%0d,_valid:%0d,n:%0d,_n:%0d,_out0:%0d,_i:%0d,_j%0d", _state.name, _start, _done, _ready, _valid, n, _n, _out0, _i, _j);
+        $display("dup_range_goal,%s,_start:%0d,_done:%0d,_ready:%0d,_valid:%0d,_reset:%0d,_clock:%0d,n:%0d,_n:%0d,_out0:%0d,_i:%0d,_j%0d", _state.name, _start, _done, _ready, _valid, _reset, _clock, n, _n, _out0, _i, _j);
         `endif
+        _done <= 0;
         if (_ready) begin
             _valid <= 0;
         end
         // Start signal takes precedence over reset
         if (_reset) begin
-            _state <= _state_done;
+            _state <= _state_idle;
         end
         if (_start) begin
             _n <= n;
@@ -145,7 +173,8 @@ module dup_range_goal (
             if ((_ready || !(_valid))) begin
                 case (_state)
                     _state_done: begin
-                        _state <= _state_done;
+                        _done <= 1;
+                        _state <= _state_idle;
                     end
                     _state_0_for_body_0: begin
                         _out0 <= _i;
@@ -159,7 +188,6 @@ module dup_range_goal (
                             _inst_hrange__ready <= 0;
                             _i <= _inst_hrange_out0;
                             _j <= _inst_hrange_out1;
-                            // if (_inst_hrange__done && !_inst_hrange__start) begin
                             if (_inst_hrange__done) begin
                                 _state <= _state_done;
                             end else begin
@@ -167,7 +195,6 @@ module dup_range_goal (
                             end
                         end else begin
                             if (_inst_hrange__done) begin
-                            // if (_inst_hrange__done && !_inst_hrange__start) begin
                                 _state <= _state_done;
                             end else begin
                                 _state <= _state_0_for_0;
@@ -179,8 +206,6 @@ module dup_range_goal (
                         _inst_hrange__start <= 1;
                         _inst_hrange_n <= _n;
                         _state <= _state_0_for_0;
-                    end
-                    _state_done: begin
                     end
                 endcase
             end
