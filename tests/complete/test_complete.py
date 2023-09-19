@@ -2,6 +2,7 @@ import inspect
 import logging
 from pathlib import Path
 from types import FunctionType
+from typing import Union
 from unittest import TestCase
 
 import pytest
@@ -54,7 +55,7 @@ class TestComplete(TestCase):
         name_func=name_func,
     )
     def test_performance(
-        self, func: FunctionType, test_cases: list[tuple[int, ...] | int]
+        self, func: FunctionType, test_cases: list[Union[tuple[int, ...], int]]
     ):
         for opti_level in self.args.optimization_levels:
             ns = {}
