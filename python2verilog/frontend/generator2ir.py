@@ -242,14 +242,6 @@ class Generator2Graph:
         node: ir.BasicElement = head
         node.child = ir.NonClockedEdge(unique_id=next(unique_edge))
         node = node.child
-        node.child = ir.AssignNode(
-            unique_id=next(unique_node),
-            lvalue=inst.signals.start,
-            rvalue=ir.UInt(0),
-        )
-        node = node.child
-        node.child = ir.NonClockedEdge(unique_id=next(unique_edge))
-        node = node.child
 
         edge_to_head = ir.ClockedEdge(unique_id=next(unique_edge), child=head)
         second_ifelse0 = ir.IfElseNode(
@@ -478,18 +470,10 @@ class Generator2Graph:
 
         head = ir.AssignNode(
             unique_id=next(unique_node),
-            lvalue=inst.signals.ready,
-            rvalue=ir.UInt(0),
-        )
-        node: ir.BasicElement = head
-        node.child = ir.NonClockedEdge(unique_id=next(unique_edge))
-        node = node.child
-        node.child = ir.AssignNode(
-            unique_id=next(unique_node),
             lvalue=inst.signals.start,
             rvalue=ir.UInt(1),
         )
-        node = node.child
+        node: ir.BasicElement = head
 
         assert isinstance(assign.value, pyast.Call)
 

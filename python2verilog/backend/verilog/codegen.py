@@ -4,8 +4,8 @@ Verilog Codegen
 
 import itertools
 import logging
-import typing
 import warnings
+from typing import Generator, cast
 
 from python2verilog.optimizer.optimizer import backwards_replace
 from python2verilog.utils.lines import Lines
@@ -88,6 +88,14 @@ class CodeGen:
             str_ += ");"
             return str_
 
+        def create_instance_zeroed_signals() -> Generator[ver.Statement, None, None]:
+            """
+            Instance signals that should always be set to zero be default
+            """
+            for instance in context.instances.values():
+                yield ver.NonBlockingSubsitution(instance.signals.ready, ir.UInt(0))
+                yield ver.NonBlockingSubsitution(instance.signals.start, ir.UInt(0))
+
         always = ver.PosedgeSyncAlways(
             context.signals.clock,
             body=[
@@ -96,9 +104,13 @@ class CodeGen:
                 ver.Statement("`endif"),
                 ver.NonBlockingSubsitution(context.signals.done, ir.UInt(0)),
                 ver.Statement(),
+            ]
+            + list(create_instance_zeroed_signals())
+            + [
+                ver.Statement(),
                 ver.IfElse(
                     context.signals.ready,
-                    typing.cast(
+                    cast(
                         list[ver.Statement],
                         [ver.NonBlockingSubsitution(context.signals.valid, ir.UInt(0))],
                     ),
@@ -224,6 +236,7 @@ class CodeGen:
         then_body: list[ver.Statement] = []
         if context.optimization_level > 0:
             # The first case can be included here
+            # Known as Quick Start
             mapping = {
                 ir.Expression(var.ver_name): ir.Expression(var.py_name)
                 for var in context.input_vars
@@ -495,6 +508,7 @@ class CaseBuilder:
                     statements=[self.create_quick_done(context)],
                 )
             )
+        self.case.case_items = list(reversed(self.case.case_items))
 
     @staticmethod
     def create_quick_done(context: ir.Context) -> ver.IfElse:
