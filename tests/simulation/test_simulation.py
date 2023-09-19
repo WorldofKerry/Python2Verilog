@@ -5,7 +5,6 @@ from pathlib import Path
 import pytest
 
 from python2verilog.api import verilogify
-from python2verilog.api.exit_handler import namespace_exit_handler
 from python2verilog.api.modes import Modes
 from python2verilog.api.namespace import namespace_to_verilog, new_namespace
 from python2verilog.api.verilogify import get_actual, get_expected
@@ -52,7 +51,6 @@ class TestSimulation(unittest.TestCase):
         self.assertListEqual(
             list(get_actual(dup_range_goal, module, testbench, timeout=1)),
             list(get_expected(dup_range_goal)),
-            namespace_exit_handler(),
         )
 
     def test_o1(self):
@@ -95,7 +93,6 @@ class TestSimulation(unittest.TestCase):
         self.assertListEqual(
             list(get_actual(dup_range_goal, module, testbench, timeout=1)),
             list(get_expected(dup_range_goal)),
-            namespace_exit_handler(),
         )
 
     def test_triple0(self):
@@ -172,7 +169,6 @@ class TestSimulation(unittest.TestCase):
         self.assertListEqual(
             list(get_actual(triple_circle, module, testbench, timeout=1)),
             list(get_expected(triple_circle)),
-            namespace_exit_handler(),
         )
 
     def test_triple(self):
@@ -250,7 +246,6 @@ class TestSimulation(unittest.TestCase):
         self.assertListEqual(
             list(get_actual(triple_circle, module, testbench, timeout=1)),
             list(get_expected(triple_circle)),
-            namespace_exit_handler(),
         )
 
     def test_bell(self):
@@ -291,5 +286,4 @@ class TestSimulation(unittest.TestCase):
         self.assertListEqual(
             list(get_actual(bell, module, testbench, timeout=1)),
             list(get_expected(bell)),
-            namespace_exit_handler(),
         )

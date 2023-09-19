@@ -28,7 +28,7 @@ def verilogify(
     func: FunctionType,
     namespace: Optional[dict[str, ir.Context]] = None,
     optimization_level: int = 1,
-    mode: Modes = Modes.NO_WRITE,
+    mode: Modes = Modes.OVERWRITE,
 ):
     """
     :param namespace: the namespace to put this function, for linking purposes

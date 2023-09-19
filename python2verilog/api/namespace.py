@@ -52,8 +52,14 @@ def namespace_to_file(path: Path, namespace: dict[str, ir.Context]):
     """
     logging.info(namespace_to_file.__name__)
 
-    with open(str(path) + ".sv", mode="w", encoding="utf8") as module_file, open(
-        str(path) + "_tb.sv", mode="w", encoding="utf8"
+    if all(map(lambda ns: ns.mode == Modes.OVERWRITE, namespace.values())):
+        mode = "w"
+    elif all(map(lambda ns: Modes.write(ns.mode), namespace.values())):
+        mode = "x"
+    else:
+        return
+    with open(str(path) + ".sv", mode=mode, encoding="utf8") as module_file, open(
+        str(path) + "_tb.sv", mode=mode, encoding="utf8"
     ) as testbench_file:
         module, testbench = namespace_to_verilog(namespace)
         module_file.write(module)
