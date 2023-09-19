@@ -81,8 +81,6 @@ def namespace_to_verilog(namespace: dict[str, ir.Context]) -> tuple[str, str]:
     module = []
     testbench = []
     for context in namespace.values():
-        for var in context.output_vars:
-            assert "out" in var.ver_name, context.name
         mod, tb = context_to_verilog(context=context)
         module.append(mod)
         testbench.append(tb)

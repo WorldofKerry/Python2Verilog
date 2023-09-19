@@ -20,8 +20,6 @@ def context_to_codegen(context: ir.Context):
     :return: (codegen, ir)
     """
     context = copy.copy(context)
-    for var in context.output_vars:
-        assert "out" in var.ver_name, context.name
     ir_root, context = Generator2Graph(context).results
     logging.debug(
         f"context to codegen {ir_root.unique_id} {context.name} -O{context.optimization_level}"
@@ -37,8 +35,6 @@ def context_to_verilog(context: ir.Context) -> tuple[str, str]:
 
     :return: (module, testbench)
     """
-    for var in context.output_vars:
-        assert "out" in var.ver_name, context.name
     get_typed(context, ir.Context)
     ver_code_gen, _ = context_to_codegen(context)
 

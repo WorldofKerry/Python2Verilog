@@ -109,8 +109,6 @@ class Context(GenericReprAndStr):
 
         assert check_list(self.output_types), self
         assert check_list(self.output_vars), self
-        for var in self.output_vars:
-            assert "out" in var.ver_name, self.name
 
         assert isinstance(self.optimization_level, int), self
         assert self.optimization_level >= 0, f"{self.optimization_level} {self.name}"
@@ -208,8 +206,6 @@ class Context(GenericReprAndStr):
 
     @output_vars.setter
     def output_vars(self, other: list[Var]):
-        for var in other:
-            assert "out" in var.ver_name
         self._output_vars = get_typed_list(other, Var)
 
     def default_output_vars(self):
