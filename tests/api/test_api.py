@@ -9,7 +9,7 @@ from python2verilog.api.from_context import (
     context_to_verilog,
     context_to_verilog_and_dump,
 )
-from python2verilog.api.from_text import text_to_context
+from python2verilog.api.from_text import py_to_context
 
 
 class TestParsePython(unittest.TestCase):
@@ -27,7 +27,7 @@ inst = nuts(50, 51)
 inst = nuts(15, 16)
 inst = deeznuts(420)
 """
-        text_to_context(
+        py_to_context(
             code,
             "nuts",
             Path(__file__).parent / "bruh_nuts",
@@ -56,7 +56,7 @@ inst = nuts2(15, "16")
 inst = deeznuts(420)
 """
         self.assertRaises(
-            AssertionError, text_to_context, code, "nuts2", __file__, True, 1
+            AssertionError, py_to_context, code, "nuts2", __file__, True, 1
         )
 
         code = """
@@ -73,7 +73,7 @@ inst = nuts3(15, 16)
 inst = deeznuts(420)
 """
         self.assertRaises(
-            AssertionError, text_to_context, code, "nuts3", __file__, True, 1
+            AssertionError, py_to_context, code, "nuts3", __file__, True, 1
         )
 
 

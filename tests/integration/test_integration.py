@@ -15,7 +15,7 @@ import pytest
 from matplotlib import pyplot as plt
 
 from python2verilog import ir, simulation
-from python2verilog.api.from_text import text_to_verilog
+from python2verilog.api.from_text import py_to_codegen
 from python2verilog.simulation.iverilog import run_with_fifos, run_with_files
 from python2verilog.utils.assertions import get_typed
 from python2verilog.utils.visualization import make_visual
@@ -234,7 +234,7 @@ class BaseTestCases:
                 f'For debugging, try running `iverilog -s {function_name}_tb {FILES_IN_ABS_DIR["module"]} {FILES_IN_ABS_DIR["testbench"]} -o iverilog.log && unbuffer vvp iverilog.log && rm iverilog.log`'
             )
 
-            verilog, root = text_to_verilog(
+            verilog, root = py_to_codegen(
                 code=python_text,
                 function_name=function_name,
                 extra_test_cases=test_cases,

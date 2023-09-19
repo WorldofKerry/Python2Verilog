@@ -4,10 +4,9 @@ Handles namespaces
 
 from __future__ import annotations
 
-import warnings
 from typing import Any, Callable
 
-from python2verilog.api.file_namespaces import file_namespaces
+from python2verilog.api.file_namespaces import _file_namespaces
 from python2verilog.api.namespace import namespace_to_file
 from python2verilog.utils import env
 
@@ -43,5 +42,5 @@ def namespace_exit_handler():
     """
     Handles the conversions in each namespace for program exit
     """
-    for stem, namespace in file_namespaces.items():
+    for stem, namespace in _file_namespaces.items():
         namespace_to_file(stem, namespace)

@@ -10,7 +10,7 @@ import logging
 import os
 
 from python2verilog import ir
-from python2verilog.api import text_to_text
+from python2verilog.api import py_to_verilog
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -104,7 +104,7 @@ if __name__ == "__main__":
         test_cases = ast.literal_eval(args.test_cases) if args.test_cases else []
 
         logging.info(f"Extra test cases: {test_cases}")
-        module_str, testbench_str = text_to_text(
+        module_str, testbench_str = py_to_verilog(
             code=python,
             function_name=args.name,
             extra_test_cases=test_cases,

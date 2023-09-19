@@ -8,9 +8,12 @@ import ast
 import inspect
 import logging
 import textwrap
+import warnings
 from functools import wraps
 from types import FunctionType
 from typing import Generator, Optional, Protocol, Union, cast
+
+import __main__ as main
 
 from python2verilog import ir
 from python2verilog.api.modes import Modes
@@ -37,6 +40,13 @@ def verilogify(
     get_typed(func, FunctionType)
     assert_typed(mode, Modes)
 
+    if not hasattr(main, "__file__"):
+        # No way to query caller filename in IPython / Jupyter notebook
+        raise RuntimeError(
+            f"{verilogify.__name__}: parameter `{f'{namespace=}'.partition('=')[0]}`"
+            f" is required in IPython / Jupyter notebook instances"
+        )
+
     # Get caller filename for default output paths
     # .stack()[2] as this function uses a decorator, so the first frames' filename
     # is the filename that contains that decorator
@@ -47,7 +57,7 @@ def verilogify(
     assert_typed_dict(namespace, str, ir.Context)  # type: ignore[misc]
 
     if func.__name__ in namespace:
-        raise RuntimeError(f"{func.__name__} has already been decorated")
+        warnings.warn(f"{func.__name__} has already been decorated, replacing old one")
 
     tree = ast.parse(textwrap.dedent(inspect.getsource(func)))
     assert len(tree.body) == 1
