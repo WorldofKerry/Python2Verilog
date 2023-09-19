@@ -5,11 +5,8 @@ from functools import wraps
 from pathlib import Path
 
 from python2verilog.api import Modes, new_namespace, verilogify
-from python2verilog.api.from_context import (
-    context_to_verilog,
-    context_to_verilog_and_dump,
-)
-from python2verilog.api.from_text import py_to_context
+from python2verilog.api.context import context_to_verilog, context_to_verilog_and_dump
+from python2verilog.api.python import py_to_context
 
 
 class TestParsePython(unittest.TestCase):

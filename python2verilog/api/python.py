@@ -8,7 +8,7 @@ from types import FunctionType
 from typing import Any, Optional
 
 from python2verilog import ir
-from python2verilog.api.from_context import context_to_codegen
+from python2verilog.api.context import context_to_codegen
 from python2verilog.api.modes import Modes
 from python2verilog.api.namespace import get_namespace
 from python2verilog.backend import verilog

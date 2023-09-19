@@ -8,8 +8,8 @@ import logging
 from pathlib import Path
 
 from python2verilog import ir
+from python2verilog.api.context import context_to_verilog
 from python2verilog.api.file_namespaces import _file_namespaces
-from python2verilog.api.from_context import context_to_verilog
 from python2verilog.api.modes import Modes
 
 
@@ -48,24 +48,28 @@ def new_namespace(path: Path | str) -> dict[str, ir.Context]:
     return get_namespace(namespace)
 
 
-def namespace_to_file(path: Path, namespace: dict[str, ir.Context]):
+def namespace_to_file(path: Path, namespace: dict[str, ir.Context]) -> tuple[str, str]:
     """
-    Namespace to modules and testbneches files
+    Writes modules and testbenches files
+
+    :return: (modules, testbenches) for convenience
     """
-    logging.info(namespace_to_file.__name__)
+
+    module, testbench = namespace_to_verilog(namespace)
 
     if all(map(lambda ns: ns.mode == Modes.OVERWRITE, namespace.values())):
         mode = "w"
     elif all(map(lambda ns: Modes.write(ns.mode), namespace.values())):
         mode = "x"
     else:
-        return
+        return module, testbench
+
     with open(str(path) + ".sv", mode=mode, encoding="utf8") as module_file, open(
         str(path) + "_tb.sv", mode=mode, encoding="utf8"
     ) as testbench_file:
-        module, testbench = namespace_to_verilog(namespace)
         module_file.write(module)
         testbench_file.write(testbench)
+    return module, testbench
 
 
 def namespace_to_verilog(namespace: dict[str, ir.Context]) -> tuple[str, str]:

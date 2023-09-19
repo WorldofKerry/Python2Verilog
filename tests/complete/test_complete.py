@@ -13,6 +13,7 @@ from python2verilog import (
     get_actual,
     get_context,
     get_expected,
+    namespace_to_file,
     namespace_to_verilog,
     verilogify,
 )
@@ -67,21 +68,29 @@ class TestComplete(TestCase):
                 case = self.make_tuple(case)
                 verilogified(*case)
 
+                test_name = str(
+                    Path(__file__).parent
+                    / (self.__dict__["_testMethodName"] + f"::O{opti_level}").replace(
+                        "::", "_"
+                    )
+                )
+
             module, testbench = namespace_to_verilog(ns)
+            other_mod, other_tb = namespace_to_file(test_name, ns)
+            bruv = reversed(["lmao"])
 
             if self.args.write:
-                test_name: str = self.__dict__["_testMethodName"] + f"::O{opti_level}"
-                mod_path = Path(__file__).parent / (test_name + ".sv")
-                tb_path = Path(__file__).parent / (test_name + "_tb.sv")
-                with open(mod_path, mode="w") as f:
+                # mod_path = Path(__file__).parent / (test_name + ".sv")
+                # tb_path = Path(__file__).parent / (test_name + "_tb.sv")
+                with open(Path(__file__).parent / ("other.sv"), mode="w") as f:
                     f.write(str(module))
-                with open(tb_path, mode="w") as f:
-                    f.write(str(testbench))
+                # with open(tb_path, mode="w") as f:
+                #     f.write(str(testbench))
 
                 context = get_context(verilogified)
                 cmd = iverilog.make_cmd(
                     context.testbench_name,
-                    [mod_path, tb_path],
+                    [test_name + ".sv", test_name + "_tb.sv"],
                 )
                 logging.error(cmd)
 
@@ -91,5 +100,6 @@ class TestComplete(TestCase):
                     verilogified, module, testbench, timeout=1 + len(expected) // 64
                 )
             )
+            logging.warning(actual)
             self.assertTrue(len(actual) > 0)
             self.assertListEqual(actual, expected)

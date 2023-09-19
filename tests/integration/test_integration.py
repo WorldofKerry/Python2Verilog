@@ -15,7 +15,7 @@ import pytest
 from matplotlib import pyplot as plt
 
 from python2verilog import ir, simulation
-from python2verilog.api.from_text import py_to_codegen
+from python2verilog.api.python import py_to_codegen
 from python2verilog.simulation.iverilog import run_with_fifos, run_with_files
 from python2verilog.utils.assertions import get_typed
 from python2verilog.utils.visualization import make_visual
