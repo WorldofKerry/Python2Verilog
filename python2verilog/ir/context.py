@@ -70,6 +70,13 @@ class Context(GenericReprAndStr):
     namespace: dict[str, Context] = field(default_factory=dict)  # callable functions
     instances: dict[str, Instance] = field(default_factory=dict)  # generator instances
 
+    @property
+    def testbench_name(self) -> str:
+        """
+        Returns test bench module name in the generated verilog
+        """
+        return f"{self.name}{self.testbench_suffix}"
+
     def _repr(self):
         """
         Avoids recursion on itself

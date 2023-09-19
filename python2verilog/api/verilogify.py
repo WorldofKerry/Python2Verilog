@@ -152,7 +152,7 @@ def get_actual(
     context = get_context(verilogified)
     with temp_fifo() as module_fifo, temp_fifo() as tb_fifo:
         stdout, err = iverilog.run_with_fifos(
-            f"{context.name}{context.testbench_suffix}",
+            context.testbench_name,
             {module_fifo: module, tb_fifo: testbench},
             timeout=timeout,
         )
