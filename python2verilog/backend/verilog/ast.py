@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import itertools
 import logging
+import warnings
 from typing import Iterable, Optional
 
 from python2verilog.utils import env

@@ -1,4 +1,5 @@
 import unittest
+import warnings
 from pathlib import Path
 
 import pytest
@@ -164,7 +165,7 @@ class TestSimulation(unittest.TestCase):
             "triple_circle_tb",
             [mod_path, tb_path],
         )
-        # warnings.warn(cmd)
+        warnings.warn(cmd)
         self.assertListEqual(
             list(get_actual(triple_circle, module, testbench, timeout=1)),
             list(get_expected(triple_circle)),

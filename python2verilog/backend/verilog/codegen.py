@@ -28,9 +28,9 @@ class CodeGen:
         get_typed(context, ir.Context)
         self.context = context
 
-        self.context.output_vars = [
-            ir.Var(f"out{i}") for i in range(len(self.context.output_types))
-        ]
+        # self.context.output_vars = [
+        #     ir.Var(f"out{i}") for i in range(len(self.context.output_types))
+        # ]
 
         root_case = CaseBuilder(root, context).case
         logging.debug(
