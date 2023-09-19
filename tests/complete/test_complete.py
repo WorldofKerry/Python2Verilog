@@ -68,31 +68,20 @@ class TestComplete(TestCase):
                 case = self.make_tuple(case)
                 verilogified(*case)
 
-                test_name = str(
+            module, testbench = namespace_to_verilog(ns)
+            if self.args.write:
+                file_stem = str(
                     Path(__file__).parent
                     / (self.__dict__["_testMethodName"] + f"::O{opti_level}").replace(
                         "::", "_"
                     )
                 )
-
-            module, testbench = namespace_to_verilog(ns)
-            other_mod, other_tb = namespace_to_file(test_name, ns)
-            bruv = reversed(["lmao"])
-
-            if self.args.write:
-                # mod_path = Path(__file__).parent / (test_name + ".sv")
-                # tb_path = Path(__file__).parent / (test_name + "_tb.sv")
-                with open(Path(__file__).parent / ("other.sv"), mode="w") as f:
-                    f.write(str(module))
-                # with open(tb_path, mode="w") as f:
-                #     f.write(str(testbench))
-
+                namespace_to_file(file_stem, ns)
                 context = get_context(verilogified)
                 cmd = iverilog.make_cmd(
                     context.testbench_name,
-                    [test_name + ".sv", test_name + "_tb.sv"],
+                    [file_stem + ".sv", file_stem + "_tb.sv"],
                 )
-                logging.error(cmd)
 
             expected = list(get_expected(verilogified))
             actual = list(
@@ -100,6 +89,5 @@ class TestComplete(TestCase):
                     verilogified, module, testbench, timeout=1 + len(expected) // 64
                 )
             )
-            logging.warning(actual)
             self.assertTrue(len(actual) > 0)
             self.assertListEqual(actual, expected)
