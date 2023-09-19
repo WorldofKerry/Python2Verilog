@@ -37,7 +37,6 @@ def context_to_verilog(context: ir.Context) -> tuple[str, str]:
     ver_code_gen, _ = context_to_codegen(context)
 
     module_str = ver_code_gen.get_module_str()
-    # logging.debug(f"context to verilog {module_str}")
     tb_str = ver_code_gen.get_testbench_str()
 
     return module_str, tb_str

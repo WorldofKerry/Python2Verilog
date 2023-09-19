@@ -35,8 +35,7 @@ jobs:
 
       - name: Install package
         run: |
-          mkdir build && cd build
-          python3 -m pip install ..
+          mkdir build -p && cd build && python3 -m pip install .. && cd ..
 
       - name: Install requirements for examples
         working-directory: examples

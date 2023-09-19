@@ -66,10 +66,10 @@ def namespace_to_verilog(namespace: dict[str, ir.Context]) -> tuple[str, str]:
 
     :return: (modules, testbenches)
     """
-    module = ""
-    testbench = ""
+    module = []
+    testbench = []
     for context in namespace.values():
         mod, tb = context_to_verilog(context=context)
-        module += mod
-        testbench += tb
-    return module, testbench
+        module.append(mod)
+        testbench.append(tb)
+    return "\n".join(module), "\n".join(testbench)
