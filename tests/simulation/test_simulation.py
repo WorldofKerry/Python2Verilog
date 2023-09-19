@@ -17,7 +17,7 @@ class TestSimulation(unittest.TestCase):
     def test_o0(self):
         ns = {}
 
-        @verilogify(mode=Modes.OVERWRITE, namespace=ns, optimization_level=0)
+        @verilogify(mode=Modes.OVERWRITE, namespace=ns)
         def hrange(n):
             i = 0
             while i < n:
@@ -48,7 +48,7 @@ class TestSimulation(unittest.TestCase):
             "dup_range_goal_tb",
             [mod_path, tb_path],
         )
-        warnings.warn(cmd)
+        # warnings.warn(cmd)
         self.assertListEqual(
             list(get_actual(dup_range_goal, module, testbench, timeout=1)),
             list(get_expected(dup_range_goal)),
@@ -104,7 +104,7 @@ class TestSimulation(unittest.TestCase):
         """
         ns = {}
 
-        @verilogify(namespace=ns, mode=Modes.OVERWRITE, optimization_level=0)
+        @verilogify(namespace=ns, mode=Modes.OVERWRITE)
         def circle_lines(s_x, s_y, height) -> tuple[int, int, int, int, int, int]:
             x = 0
             y = height
@@ -168,7 +168,7 @@ class TestSimulation(unittest.TestCase):
             "triple_circle_tb",
             [mod_path, tb_path],
         )
-        warnings.warn(cmd)
+        # warnings.warn(cmd)
         self.assertListEqual(
             list(get_actual(triple_circle, module, testbench, timeout=1)),
             list(get_expected(triple_circle)),
@@ -178,7 +178,7 @@ class TestSimulation(unittest.TestCase):
     def test_triple(self):
         ns = new_namespace(Path(__file__).parent / "triple_ns")
 
-        @verilogify(namespace=ns, mode=Modes.OVERWRITE, optimization_level=0)
+        @verilogify(namespace=ns, mode=Modes.OVERWRITE)
         def circle_lines(s_x, s_y, height) -> tuple[int, int, int, int, int, int]:
             x = 0
             y = height
@@ -207,7 +207,7 @@ class TestSimulation(unittest.TestCase):
                 yield (s_x - y, s_y + x)
                 yield (s_x - y, s_y - x)
 
-        @verilogify(namespace=ns, mode=Modes.OVERWRITE, optimization_level=0)
+        @verilogify(namespace=ns, mode=Modes.OVERWRITE, optimization_level=1)
         def triple_circle(centre_x, centre_y, radius):
             # noqa
             c_x = centre_x
@@ -256,14 +256,14 @@ class TestSimulation(unittest.TestCase):
     def test_bell(self):
         ns = {}
 
-        @verilogify(namespace=ns, optimization_level=0)
+        @verilogify(namespace=ns)
         def hrange(base, limit):
             i = base
             while i < limit:
                 yield i
                 i += 1
 
-        @verilogify(namespace=ns, optimization_level=0)
+        @verilogify(namespace=ns)
         def bell(a, b):
             res = 0
             gen = hrange(a, b)
@@ -287,7 +287,7 @@ class TestSimulation(unittest.TestCase):
             "bell_tb",
             [mod_path, tb_path],
         )
-        warnings.warn(cmd)
+        # warnings.warn(cmd)
         self.assertListEqual(
             list(get_actual(bell, module, testbench, timeout=1)),
             list(get_expected(bell)),
