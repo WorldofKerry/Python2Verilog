@@ -56,9 +56,6 @@ def verilogify(
         namespace = get_namespace(filename)
     assert_typed_dict(namespace, str, ir.Context)  # type: ignore[misc]
 
-    if func.__name__ in namespace:
-        warnings.warn(f"{func.__name__} has already been decorated, replacing old one")
-
     tree = ast.parse(textwrap.dedent(inspect.getsource(func)))
     assert len(tree.body) == 1
     func_ast = tree.body[0]

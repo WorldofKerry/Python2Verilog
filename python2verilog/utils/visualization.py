@@ -26,7 +26,7 @@ def make_visual(generator_inst, directory: Optional[str] = None):
         for idx, output in enumerate(inst):
             if isinstance(output, int):
                 output = (output,)
-            if max(output) > 100 or idx > 1000:
+            if max(output) > 1000 or idx > 1000:
                 return  # plot will be too big
             if len(output) >= 3:
                 yield cast(tuple[int, int, int], output[:3])
@@ -105,3 +105,5 @@ def make_visual(generator_inst, directory: Optional[str] = None):
         plt.close()
     except IndexError as e:
         logging.warning(f"Skipping make_visual for {data} due to negative outputs {e}")
+
+    return data
