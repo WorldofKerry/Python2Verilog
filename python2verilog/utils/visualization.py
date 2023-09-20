@@ -81,7 +81,9 @@ def make_visual(generator_inst, directory: Optional[str] = None):
 
         plt.pcolor(
             grid,
-            cmap=matplotlib.colors.LinearSegmentedColormap("my_colormap", cdict, 256),
+            cmap=matplotlib.colors.LinearSegmentedColormap(
+                "my_colormap", cdict, 256  # type: ignore
+            ),
         )
         cbar = plt.colorbar()
         cbar.set_label("Z")
