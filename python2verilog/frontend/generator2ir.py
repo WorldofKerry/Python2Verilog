@@ -370,14 +370,15 @@ class Generator2Graph:
                 stmts=[self.__parse_expression(c) for c in node.value.elts],
             )
         if isinstance(
-            node.value, (pyast.Name, pyast.BinOp, pyast.Compare, pyast.UnaryOp)
+            node.value,
+            (pyast.Name, pyast.BinOp, pyast.Compare, pyast.UnaryOp, pyast.Constant),
         ):
             return ir.YieldNode(
                 unique_id=prefix,
                 name="Yield",
                 stmts=[self.__parse_expression(c) for c in [node.value]],
             )
-        raise TypeError(f"Expected tuple {type(node.value)}")
+        raise TypeError(f"Expected tuple {type(node.value)} {pyast.dump(node)}")
 
     def __parse_binop(self, expr: pyast.BinOp) -> ir.Expression:
         """
@@ -477,7 +478,8 @@ class Generator2Graph:
 
         assert isinstance(assign.value, pyast.Call)
 
-        arguments = list(map(name_to_var, assign.value.args))
+        arguments = list(map(self.__parse_expression, assign.value.args))
+
         assert len(arguments) == len(inst.inputs)
 
         for arg, param in zip(arguments, inst.inputs):

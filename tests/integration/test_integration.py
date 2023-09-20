@@ -271,6 +271,7 @@ class BaseTestCases:
                     },
                     timeout=1 + len(expected) // 64,
                 )
+                logging.debug(f"stdout {stdout}, stderr {stderr}")
             else:
                 stdout, stderr = run_with_fifos(
                     f"{function_name}_tb",
@@ -291,6 +292,7 @@ class BaseTestCases:
             )
 
             actual_raw = list(simulation.parse_stdout(stdout))
+            logging.debug("Done parsing stdout")
 
             if args.write:
                 with open(FILES_IN_ABS_DIR["actual"], mode="w") as filtered_f:
@@ -307,12 +309,16 @@ class BaseTestCases:
                     f"{function_name} {len(filtered_actual)} {e}\n{FILES_IN_ABS_DIR['module']}\n{FILES_IN_ABS_DIR['testbench']}"
                 )
 
+            logging.debug("Stripped signals")
+
             if args.write:
                 with open(FILES_IN_ABS_DIR["filtered_actual"], mode="w") as filtered_f:
                     for output in filtered_actual:
                         filtered_f.write(f"{str(output)[1:-1]}\n")
 
+                logging.debug("Wrote actual")
                 make_visual(filtered_actual, FILES_IN_ABS_DIR["actual_visual"])
+                logging.debug("Made visual")
 
             err_msg = "\nactual_coords vs expected_coords"
             if len(filtered_actual) == len(expected):
@@ -325,6 +331,7 @@ class BaseTestCases:
             )
 
             if args.write and args.synthesis:
+                logging.info("Running yosys for synthesis")
                 with subprocess.Popen(
                     " ".join(
                         [

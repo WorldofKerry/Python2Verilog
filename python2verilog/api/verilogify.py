@@ -40,7 +40,7 @@ def verilogify(
     get_typed(func, FunctionType)
     assert_typed(mode, Modes)
 
-    if not hasattr(main, "__file__"):
+    if not hasattr(main, "__file__") and namespace is None:
         # No way to query caller filename in IPython / Jupyter notebook
         raise RuntimeError(
             f"{verilogify.__name__}: parameter `{f'{namespace=}'.partition('=')[0]}`"
@@ -106,7 +106,10 @@ def verilogify(
 
     @wraps(func)
     def function_wrapper(*_0, **_1):
-        raise TypeError("Non-generator functions currently not supported")
+        raise TypeError(
+            "Non-generator functions currently not supported, "
+            "make sure your function has at least one `yield` statement"
+        )
 
     wrapper = (
         generator_wrapper if inspect.isgeneratorfunction(func) else function_wrapper

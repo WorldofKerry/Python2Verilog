@@ -3,8 +3,9 @@ Visualization Tools
 """
 
 import logging
-from typing import Optional
+from typing import Generator, Optional, Union, cast
 
+import matplotlib
 import matplotlib.pyplot as plt  # type: ignore
 import numpy as np
 
@@ -15,22 +16,27 @@ def make_visual(generator_inst, directory: Optional[str] = None):
     Visualizes the first 3 elements of each tuple as (x, y, colour)
     """
 
-    # Generate the data using the generator function
-    data_triple_list = []
+    def make_triple(
+        inst: Generator[Union[tuple[int, ...], int], None, None]
+    ) -> Generator[tuple[int, int, int], None, None]:
+        """
+        Makes a generator yield 3 values by
+        truncating or padding values
+        """
+        for idx, output in enumerate(inst):
+            if isinstance(output, int):
+                output = (output,)
+            if max(output) > 100 or idx > 1000:
+                return  # plot will be too big
+            if len(output) >= 3:
+                yield cast(tuple[int, int, int], output[:3])
+            elif len(output) == 2:
+                yield cast(tuple[int, int, int], ((*output, 1)))
+            else:
+                yield cast(tuple[int, int, int], ((*output, idx, 1)))
 
-    for idx, yields in enumerate(generator_inst):
-        if isinstance(yields, int):
-            yields = (yields,)
-        if len(yields) >= 3:
-            data_triple_list.append(yields[:3])
-        elif len(yields) >= 2:
-            data_triple_list.append((*yields[:2], 1))
-        else:
-            data_triple_list.append((yields[0], idx, 1))
-        if idx > 1000:
-            break
-
-    data_triple = np.array(data_triple_list)
+    data = list(make_triple(generator_inst))
+    data_triple = np.array(data)
 
     try:
         height = max(data_triple[:, 0])
@@ -45,9 +51,45 @@ def make_visual(generator_inst, directory: Optional[str] = None):
         # Set labels and title
         plt.xlabel("X")
         plt.ylabel("Y")
-        plt.title("Pixel-like Plot")
+        plt.title("Colorbar Plot")
 
         # Add color bar
+        cdict = {
+            "red": (
+                (0.0, 0.0, 0.0),
+                (0.1, 0.5, 0.5),
+                (0.2, 0.0, 0.0),
+                (0.4, 0.2, 0.2),
+                (0.6, 0.0, 0.0),
+                (0.8, 1.0, 1.0),
+                (1.0, 1.0, 1.0),
+            ),
+            "green": (
+                (0.0, 0.0, 0.0),
+                (0.1, 0.0, 0.0),
+                (0.2, 0.0, 0.0),
+                (0.4, 1.0, 1.0),
+                (0.6, 1.0, 1.0),
+                (0.8, 1.0, 1.0),
+                (1.0, 0.0, 0.0),
+            ),
+            "blue": (
+                (0.0, 0.0, 0.0),
+                (0.1, 0.5, 0.5),
+                (0.2, 1.0, 1.0),
+                (0.4, 1.0, 1.0),
+                (0.6, 0.0, 0.0),
+                (0.8, 0.0, 0.0),
+                (1.0, 0.0, 0.0),
+            ),
+        }
+
+        plt.pcolor(
+            grid,
+            cmap=matplotlib.colors.LinearSegmentedColormap(
+                "my_colormap", cdict, 256  # type: ignore
+            ),
+        )
         cbar = plt.colorbar()
         cbar.set_label("Z")
 
@@ -62,6 +104,4 @@ def make_visual(generator_inst, directory: Optional[str] = None):
         plt.cla()
         plt.close()
     except IndexError as e:
-        logging.info(
-            f"Skipping make_visual for {str(generator_inst)} due to negative outputs {e}"
-        )
+        logging.warning(f"Skipping make_visual for {data} due to negative outputs {e}")
