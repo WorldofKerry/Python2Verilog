@@ -1,6 +1,6 @@
 [project]
 name = "python2verilog"
-version = "0.2.1"
+version = "0.2.2"
 authors = [{ name = "Kerry Wang", email = "kerrywang369@gmail.com" }]
 description = "Converts a subset of python generator functions into synthesizable sequential SystemVerilog"
 readme = "README.md"
@@ -32,4 +32,5 @@ warn_return_any = true
 warn_unused_configs = true
 warn_redundant_casts = true
 disallow_any_generics = true
+ignore_missing_imports = true
 # disallow_untyped_defs = true # TODO: require

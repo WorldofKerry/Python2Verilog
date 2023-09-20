@@ -323,11 +323,14 @@ class CodeGen:
         :param random_wait: whether or not to have random _wait signal in the while loop
         """
         if len(self.context.input_vars) == 0:
-            raise RuntimeError(f"Input var names not deduced for {self.context.name}")
+            raise RuntimeError(
+                f"Input var names not deduced for {self.context.name}, "
+                f"use {self.context.name} in your Python code"
+            )
         if len(self.context.output_vars) == 0:
             raise RuntimeError(
-                f"Output var types not deduced for {self.context.name}, \
-                    types are {self.context.output_types}"
+                f"Output var types not deduced for {self.context.name}, "
+                f"use {self.context.name} in your Python code"
             )
 
         def make_display_stmt():

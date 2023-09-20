@@ -5,6 +5,7 @@ Visualization Tools
 import logging
 from typing import Optional
 
+import matplotlib
 import matplotlib.pyplot as plt  # type: ignore
 import numpy as np
 
@@ -24,9 +25,9 @@ def make_visual(generator_inst, directory: Optional[str] = None):
         if len(yields) >= 3:
             data_triple_list.append(yields[:3])
         elif len(yields) >= 2:
-            data_triple_list.append((*yields[:2], 1))
+            data_triple_list.append((*yields[:2], idx))
         else:
-            data_triple_list.append((yields[0], idx, 1))
+            data_triple_list.append((yields[0], idx, 0))
         if idx > 1000:
             break
 
@@ -45,9 +46,43 @@ def make_visual(generator_inst, directory: Optional[str] = None):
         # Set labels and title
         plt.xlabel("X")
         plt.ylabel("Y")
-        plt.title("Pixel-like Plot")
+        plt.title("Colorbar Plot")
 
         # Add color bar
+        cdict = {
+            "red": (
+                (0.0, 0.0, 0.0),
+                (0.1, 0.5, 0.5),
+                (0.2, 0.0, 0.0),
+                (0.4, 0.2, 0.2),
+                (0.6, 0.0, 0.0),
+                (0.8, 1.0, 1.0),
+                (1.0, 1.0, 1.0),
+            ),
+            "green": (
+                (0.0, 0.0, 0.0),
+                (0.1, 0.0, 0.0),
+                (0.2, 0.0, 0.0),
+                (0.4, 1.0, 1.0),
+                (0.6, 1.0, 1.0),
+                (0.8, 1.0, 1.0),
+                (1.0, 0.0, 0.0),
+            ),
+            "blue": (
+                (0.0, 0.0, 0.0),
+                (0.1, 0.5, 0.5),
+                (0.2, 1.0, 1.0),
+                (0.4, 1.0, 1.0),
+                (0.6, 0.0, 0.0),
+                (0.8, 0.0, 0.0),
+                (1.0, 0.0, 0.0),
+            ),
+        }
+
+        plt.pcolor(
+            grid,
+            cmap=matplotlib.colors.LinearSegmentedColormap("my_colormap", cdict, 256),
+        )
         cbar = plt.colorbar()
         cbar.set_label("Z")
 
