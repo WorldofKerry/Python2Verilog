@@ -8,9 +8,12 @@ import ast
 import inspect
 import logging
 import textwrap
+import warnings
 from functools import wraps
 from types import FunctionType
 from typing import Generator, Optional, Protocol, Union, cast
+
+import __main__ as main
 
 from python2verilog import ir
 from python2verilog.api.modes import Modes
@@ -28,7 +31,7 @@ def verilogify(
     func: FunctionType,
     namespace: Optional[dict[str, ir.Context]] = None,
     optimization_level: int = 1,
-    mode: Modes = Modes.NO_WRITE,
+    mode: Modes = Modes.OVERWRITE,
 ):
     """
     :param namespace: the namespace to put this function, for linking purposes
@@ -36,6 +39,13 @@ def verilogify(
     """
     get_typed(func, FunctionType)
     assert_typed(mode, Modes)
+
+    if not hasattr(main, "__file__"):
+        # No way to query caller filename in IPython / Jupyter notebook
+        raise RuntimeError(
+            f"{verilogify.__name__}: parameter `{f'{namespace=}'.partition('=')[0]}`"
+            f" is required in IPython / Jupyter notebook instances"
+        )
 
     # Get caller filename for default output paths
     # .stack()[2] as this function uses a decorator, so the first frames' filename
@@ -47,7 +57,7 @@ def verilogify(
     assert_typed_dict(namespace, str, ir.Context)  # type: ignore[misc]
 
     if func.__name__ in namespace:
-        raise RuntimeError(f"{func.__name__} has already been decorated")
+        warnings.warn(f"{func.__name__} has already been decorated, replacing old one")
 
     tree = ast.parse(textwrap.dedent(inspect.getsource(func)))
     assert len(tree.body) == 1
@@ -142,9 +152,9 @@ def get_actual(
     context = get_context(verilogified)
     with temp_fifo() as module_fifo, temp_fifo() as tb_fifo:
         stdout, err = iverilog.run_with_fifos(
-            f"{context.name}{context.testbench_suffix}",
+            context.testbench_name,
             {module_fifo: module, tb_fifo: testbench},
             timeout=timeout,
         )
-        assert not err, stdout
+        assert not err, f"{stdout} {err}"
         yield from strip_signals(parse_stdout(stdout))

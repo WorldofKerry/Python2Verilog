@@ -65,6 +65,10 @@ def pytest_addoption(parser: pytest.Parser):
         param.add_to_parser(parser)
 
 
+env.set_var(env.Vars.NO_WRITE_TO_FS, "1")
+env.set_var(env.Vars.DEBUG_MODE, "1")
+
+
 @pytest.fixture()
 def argparse(request):
     """
@@ -79,7 +83,6 @@ def argparse(request):
     )
     if max(args["optimization_levels"]) > 8:
         sys.setrecursionlimit(2000)
-    env.set_var(env.Vars.DEBUG_MODE, "1")
     env.set_var(env.Vars.IVERILOG_PATH, args["iverilog_path"])
     if args["synthesis"]:
         # Synthesis tool yosys does not support SystemVerilog features

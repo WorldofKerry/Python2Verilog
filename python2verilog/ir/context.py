@@ -13,7 +13,7 @@ from types import FunctionType
 from typing import Any, Optional
 
 from python2verilog.api.modes import Modes
-from python2verilog.ir.expressions import State, Var
+from python2verilog.ir.expressions import ExclusiveVar, State, Var
 from python2verilog.ir.graph import DoneNode
 from python2verilog.ir.instance import Instance
 from python2verilog.ir.signals import ProtocolSignals
@@ -69,6 +69,13 @@ class Context(GenericReprAndStr):
     # Function calls
     namespace: dict[str, Context] = field(default_factory=dict)  # callable functions
     instances: dict[str, Instance] = field(default_factory=dict)  # generator instances
+
+    @property
+    def testbench_name(self) -> str:
+        """
+        Returns test bench module name in the generated verilog
+        """
+        return f"{self.name}{self.testbench_suffix}"
 
     def _repr(self):
         """
@@ -206,7 +213,7 @@ class Context(GenericReprAndStr):
         Sets own output vars to default based on number of output variables
         """
         assert self.output_types and len(self.output_types) > 0
-        self._output_vars = [Var(str(i)) for i in range(len(self.output_types))]
+        self._output_vars = [Var(f"out{i}") for i in range(len(self.output_types))]
 
     @property
     def global_vars(self):
@@ -300,14 +307,20 @@ class Context(GenericReprAndStr):
         """
         Create generator instance
         """
-        inst_input_vars = list(
-            map(lambda var: Var(f"{name}_{self.name}_{var.py_name}"), self.input_vars)
+        inst_input_vars: list[Var] = list(
+            map(
+                lambda var: ExclusiveVar(f"{name}_{self.name}_{var.py_name}"),
+                self.input_vars,
+            )
         )
-        inst_output_vars = list(
-            map(lambda var: Var(f"{name}_{self.name}_{var.py_name}"), self.output_vars)
+        inst_output_vars: list[Var] = list(
+            map(
+                lambda var: ExclusiveVar(f"{name}_{self.name}_{var.py_name}"),
+                self.output_vars,
+            )
         )
-        args = {
-            key: Var(f"{name}_{self.name}__{value.py_name}")
+        args: dict[str, Var] = {
+            key: ExclusiveVar(f"{name}_{self.name}__{value.py_name}")
             for key, value in self.signals.instance_specific_items()
         }
 

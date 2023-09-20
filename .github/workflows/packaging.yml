@@ -35,8 +35,7 @@ jobs:
 
       - name: Install package
         run: |
-          mkdir build && cd build
-          python3 -m pip install ..
+          mkdir build -p && cd build && python3 -m pip install .. && cd ..
 
       - name: Install requirements for examples
         working-directory: examples
@@ -46,8 +45,8 @@ jobs:
       - name: Run examples
         working-directory: examples
         run: |
-          python3 decorator.py
-          cat decorator.sv
+          python3 decorators.py
+          cat decorators.sv
 
           python3 -m python2verilog cli_basic.py -n draw_circle -c "[(5, 7, 3)]"
           cat cli_basic.sv

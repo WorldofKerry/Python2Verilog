@@ -1,10 +1,7 @@
-import logging
-
-logging.root.setLevel(logging.DEBUG)
-from python2verilog.api import Modes, verilogify
+from python2verilog.api import verilogify
 
 
-@verilogify(mode=Modes.OVERWRITE)
+@verilogify
 def fib(n):
     a = 0
     b = 1

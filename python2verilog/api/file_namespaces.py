@@ -8,4 +8,4 @@ from pathlib import Path
 
 from python2verilog import ir
 
-file_namespaces: dict[Path, dict[str, ir.Context]] = {}
+_file_namespaces: dict[Path, dict[str, ir.Context]] = {}
