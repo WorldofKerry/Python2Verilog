@@ -104,7 +104,7 @@ class Context(GenericReprAndStr):
         def check_list(list_: list):
             return isinstance(list_, list) and len(list_) > 0
 
-        assert check_list(self.input_types), "Input types not inferred"
+        assert check_list(self.input_types), f"Input types not inferred for {self.name}"
         assert check_list(self.input_vars), self
 
         assert check_list(self.output_types), self
