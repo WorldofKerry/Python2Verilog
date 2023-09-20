@@ -3,7 +3,7 @@ Visualization Tools
 """
 
 import logging
-from typing import Optional
+from typing import Generator, Optional, Union, cast
 
 import matplotlib
 import matplotlib.pyplot as plt  # type: ignore
@@ -16,22 +16,26 @@ def make_visual(generator_inst, directory: Optional[str] = None):
     Visualizes the first 3 elements of each tuple as (x, y, colour)
     """
 
-    # Generate the data using the generator function
-    data_triple_list = []
+    def make_triple(
+        inst: Generator[Union[tuple[int, ...], int], None, None]
+    ) -> Generator[tuple[int, int, int], None, None]:
+        """
+        Makes a generator yield 3 values by
+        truncating or padding values
+        """
+        for idx, output in enumerate(inst):
+            if isinstance(output, int):
+                output = (output,)
+            if max(output) > 100 or idx > 1000:
+                return  # plot will be too big
+            if len(output) >= 3:
+                yield cast(tuple[int, int, int], output[:3])
+            elif len(output) == 2:
+                yield cast(tuple[int, int, int], ((*output, idx)))
+            else:
+                yield cast(tuple[int, int, int], ((*output, idx, idx)))
 
-    for idx, yields in enumerate(generator_inst):
-        if isinstance(yields, int):
-            yields = (yields,)
-        if len(yields) >= 3:
-            data_triple_list.append(yields[:3])
-        elif len(yields) >= 2:
-            data_triple_list.append((*yields[:2], idx))
-        else:
-            data_triple_list.append((yields[0], idx, 0))
-        if idx > 1000:
-            break
-
-    data_triple = np.array(data_triple_list)
+    data_triple = np.array(make_triple(generator_inst))
 
     try:
         height = max(data_triple[:, 0])

@@ -91,7 +91,7 @@ def _run_cmd_with_files(
     :return: (stdout, stderr/exception)
     """
     assert_typed_dict(input_files, str, str)  # type: ignore
-    _write_data_to_paths(input_files)
+    # _write_data_to_paths(input_files)
     # pylint: disable=subprocess-popen-preexec-fn
     with subprocess.Popen(
         command,
@@ -151,7 +151,7 @@ def run_with_files(
         top_level_module=top_level_module,
         files=input_files.keys(),
     )
-    logging.info(f"Running {iverilog_cmd}")
+    logging.info(f"Made command `{iverilog_cmd}`")
     return _run_cmd_with_files(
         command=iverilog_cmd, input_files=input_files, timeout=timeout
     )
