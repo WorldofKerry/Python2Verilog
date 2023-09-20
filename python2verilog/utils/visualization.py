@@ -31,11 +31,12 @@ def make_visual(generator_inst, directory: Optional[str] = None):
             if len(output) >= 3:
                 yield cast(tuple[int, int, int], output[:3])
             elif len(output) == 2:
-                yield cast(tuple[int, int, int], ((*output, idx)))
+                yield cast(tuple[int, int, int], ((*output, 1)))
             else:
-                yield cast(tuple[int, int, int], ((*output, idx, idx)))
+                yield cast(tuple[int, int, int], ((*output, idx, 1)))
 
-    data_triple = np.array(make_triple(generator_inst))
+    data = list(make_triple(generator_inst))
+    data_triple = np.array(data)
 
     try:
         height = max(data_triple[:, 0])
@@ -103,6 +104,4 @@ def make_visual(generator_inst, directory: Optional[str] = None):
         plt.cla()
         plt.close()
     except IndexError as e:
-        logging.info(
-            f"Skipping make_visual for {str(generator_inst)} due to negative outputs {e}"
-        )
+        logging.warning(f"Skipping make_visual for {data} due to negative outputs {e}")
