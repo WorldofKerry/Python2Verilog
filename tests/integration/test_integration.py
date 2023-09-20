@@ -325,6 +325,7 @@ class BaseTestCases:
             )
 
             if args.write and args.synthesis:
+                logging.info("Running yosys for synthesis")
                 with subprocess.Popen(
                     " ".join(
                         [
