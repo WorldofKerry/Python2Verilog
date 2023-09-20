@@ -25,7 +25,7 @@ from .functions import *
 @pytest.mark.usefixtures("argparse")
 class TestComplete(TestCase):
     @staticmethod
-    def make_tuple(input: int | tuple[int]) -> tuple[int]:
+    def make_tuple(input: Union[int, tuple[int]]) -> tuple[int]:
         """
         Makes input into a tuple if it is not a tuple
         """
