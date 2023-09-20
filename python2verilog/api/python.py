@@ -8,7 +8,7 @@ from types import FunctionType
 from typing import Any, Optional
 
 from python2verilog import ir
-from python2verilog.api.from_context import context_to_codegen
+from python2verilog.api.context import context_to_codegen
 from python2verilog.api.modes import Modes
 from python2verilog.api.namespace import get_namespace
 from python2verilog.backend import verilog
@@ -17,7 +17,7 @@ from python2verilog.optimizer.optimizer import OptimizeGraph
 from python2verilog.utils.assertions import get_typed, get_typed_list
 
 
-def text_to_verilog(
+def py_to_codegen(
     code: str,
     function_name: str,
     write: bool,
@@ -30,7 +30,7 @@ def text_to_verilog(
 
     :return: (context, ir)
     """
-    context = text_to_context(
+    context = py_to_context(
         code=code,
         function_name=function_name,
         extra_test_cases=extra_test_cases,
@@ -45,7 +45,7 @@ def text_to_verilog(
     return context_to_codegen(context)
 
 
-def text_to_text(
+def py_to_verilog(
     code: str,
     function_name: str,
     extra_test_cases: Optional[list[tuple[int]]] = None,
@@ -64,7 +64,7 @@ def text_to_text(
     get_typed_list(extra_test_cases, tuple)  # type: ignore[misc]
     get_typed(file_path, str)
 
-    code_gen, _ = text_to_verilog(
+    code_gen, _ = py_to_codegen(
         code=code,
         function_name=function_name,
         extra_test_cases=extra_test_cases,
@@ -75,7 +75,7 @@ def text_to_text(
     return code_gen.get_module_str(), code_gen.get_testbench_str()
 
 
-def text_to_context(
+def py_to_context(
     code: str,
     function_name: str,
     file_path: str,

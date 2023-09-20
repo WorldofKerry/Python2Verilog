@@ -15,9 +15,17 @@ class Vars(Enum):
     Env var names
     """
 
+    # Set to turn on compute-heavy assertions
     DEBUG_MODE = PREFIX + "DEBUG"
+
+    # Path to iverilog
     IVERILOG_PATH = PREFIX + "IVERILOG_PATH"
+
+    # Set to enable new SystemVerilog features
     IS_SYSTEM_VERILOG = PREFIX + "SYSTEM_VERILOG"
+
+    # Set if no write to filesystem at system exit
+    NO_WRITE_TO_FS = PREFIX + "NO_WRITE_TO_FS"
 
 
 def set_debug_mode(mode: bool):

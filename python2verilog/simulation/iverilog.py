@@ -7,13 +7,13 @@ import os
 import signal
 import subprocess
 import tempfile
-from typing import Iterable, Optional
+from typing import Iterable, Optional, Union
 
 from python2verilog.utils import env
 from python2verilog.utils.assertions import assert_typed_dict
 
 
-def make_cmd(top_level_module: str, files: Iterable[str]):
+def make_cmd(top_level_module: str, files: Iterable[Union[str, os.PathLike[str]]]):
     """
     Returns an iverilog command
 
@@ -22,7 +22,7 @@ def make_cmd(top_level_module: str, files: Iterable[str]):
     cmd = (
         f"{env.get_var(env.Vars.IVERILOG_PATH)} -g2005-sv -Wall -s {top_level_module} "
     )
-    cmd += " ".join(files) + " "
+    cmd += " ".join(map(str, files)) + " "
     # pylint: disable=consider-using-with
     cache_file = tempfile.NamedTemporaryFile(mode="r", encoding="utf8")
     cache_path = cache_file.name
@@ -91,7 +91,7 @@ def _run_cmd_with_files(
     :return: (stdout, stderr/exception)
     """
     assert_typed_dict(input_files, str, str)  # type: ignore
-    _write_data_to_paths(input_files)
+    # _write_data_to_paths(input_files)
     # pylint: disable=subprocess-popen-preexec-fn
     with subprocess.Popen(
         command,
@@ -131,7 +131,7 @@ def run_with_fifos(
         top_level_module=top_level_module,
         files=input_fifos.keys(),
     )
-    logging.debug(f"Running {iverilog_cmd}")
+    logging.info(f"{iverilog_cmd}")
     return _run_cmd_with_fifos(
         command=iverilog_cmd, input_fifos=input_fifos, timeout=timeout
     )
@@ -151,7 +151,7 @@ def run_with_files(
         top_level_module=top_level_module,
         files=input_files.keys(),
     )
-    logging.info(f"Running {iverilog_cmd}")
+    logging.info(f"Made command `{iverilog_cmd}`")
     return _run_cmd_with_files(
         command=iverilog_cmd, input_files=input_files, timeout=timeout
     )

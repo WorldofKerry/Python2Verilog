@@ -3,6 +3,7 @@ Functions that take text as input
 """
 
 
+import copy
 import logging
 
 from python2verilog import ir
@@ -18,6 +19,7 @@ def context_to_codegen(context: ir.Context):
 
     :return: (codegen, ir)
     """
+    context = copy.copy(context)
     ir_root, context = Generator2Graph(context).results
     logging.debug(
         f"context to codegen {ir_root.unique_id} {context.name} -O{context.optimization_level}"
@@ -37,7 +39,6 @@ def context_to_verilog(context: ir.Context) -> tuple[str, str]:
     ver_code_gen, _ = context_to_codegen(context)
 
     module_str = ver_code_gen.get_module_str()
-    # logging.debug(f"context to verilog {module_str}")
     tb_str = ver_code_gen.get_testbench_str()
 
     return module_str, tb_str

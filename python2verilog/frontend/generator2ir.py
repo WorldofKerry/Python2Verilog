@@ -242,14 +242,6 @@ class Generator2Graph:
         node: ir.BasicElement = head
         node.child = ir.NonClockedEdge(unique_id=next(unique_edge))
         node = node.child
-        node.child = ir.AssignNode(
-            unique_id=next(unique_node),
-            lvalue=inst.signals.start,
-            rvalue=ir.UInt(0),
-        )
-        node = node.child
-        node.child = ir.NonClockedEdge(unique_id=next(unique_edge))
-        node = node.child
 
         edge_to_head = ir.ClockedEdge(unique_id=next(unique_edge), child=head)
         second_ifelse0 = ir.IfElseNode(
@@ -378,14 +370,15 @@ class Generator2Graph:
                 stmts=[self.__parse_expression(c) for c in node.value.elts],
             )
         if isinstance(
-            node.value, (pyast.Name, pyast.BinOp, pyast.Compare, pyast.UnaryOp)
+            node.value,
+            (pyast.Name, pyast.BinOp, pyast.Compare, pyast.UnaryOp, pyast.Constant),
         ):
             return ir.YieldNode(
                 unique_id=prefix,
                 name="Yield",
                 stmts=[self.__parse_expression(c) for c in [node.value]],
             )
-        raise TypeError(f"Expected tuple {type(node.value)}")
+        raise TypeError(f"Expected tuple {type(node.value)} {pyast.dump(node)}")
 
     def __parse_binop(self, expr: pyast.BinOp) -> ir.Expression:
         """
@@ -478,22 +471,15 @@ class Generator2Graph:
 
         head = ir.AssignNode(
             unique_id=next(unique_node),
-            lvalue=inst.signals.ready,
-            rvalue=ir.UInt(0),
-        )
-        node: ir.BasicElement = head
-        node.child = ir.NonClockedEdge(unique_id=next(unique_edge))
-        node = node.child
-        node.child = ir.AssignNode(
-            unique_id=next(unique_node),
             lvalue=inst.signals.start,
             rvalue=ir.UInt(1),
         )
-        node = node.child
+        node: ir.BasicElement = head
 
         assert isinstance(assign.value, pyast.Call)
 
-        arguments = list(map(name_to_var, assign.value.args))
+        arguments = list(map(self.__parse_expression, assign.value.args))
+
         assert len(arguments) == len(inst.inputs)
 
         for arg, param in zip(arguments, inst.inputs):

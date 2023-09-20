@@ -24,19 +24,12 @@ class InstanceSignals:
 
 
 @dataclass(frozen=True)
-class ProtocolSignals:
+class ProtocolSignals(InstanceSignals):
     """
     Protocol signals
 
     Includes ready, valid, clock, reset, done, etc.
     """
-
-    # pylint: disable=too-many-instance-attributes
-    start: Var
-    done: Var
-
-    ready: Var
-    valid: Var
 
     reset: Var = Var("reset")
     clock: Var = Var("clock")

@@ -121,3 +121,9 @@ else:
         """
         assert isinstance(obj, type_), f"Expected {type_} got {type(obj)} instead"
         return True
+
+    def get_typed_optional(obj: _ValueType, type_: _ValueType):
+        """
+        Asserts that obj is of type type_, then returns obj or None if obj is None
+        """
+        return get_typed(obj, type_)
