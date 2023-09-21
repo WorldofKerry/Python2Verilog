@@ -199,9 +199,19 @@ class Generator2Graph:
                 ),
                 child=edge,
             )
+        elif isinstance(stmt, pyast.Constant):
+            assert "\n" in stmt.value, f"Error: parsing {pyast.dump(stmt)}"
+            # Fix for triple-quote comments in code
+            edge = ir.ClockedEdge(unique_id=f"{prefix}_e", child=nextt)
+            cur_node = ir.AssignNode(
+                unique_id=prefix,
+                lvalue=self.context.state_var,
+                rvalue=self.context.state_var,
+                child=edge,
+            )
         else:
             raise TypeError(
-                "Error: unexpected statement type", type(stmt), pyast.dump(stmt)
+                f"Error: unexpected statement type {type(stmt)} {pyast.dump(stmt)}"
             )
         return cur_node
 
