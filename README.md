@@ -11,9 +11,9 @@
 - Testbenches can be automatically generated if the user uses the function within their Python code or provides explicit test cases
 
 ```python
-from python2verilog import verilogify, Modes
+from python2verilog import verilogify
 
-@verilogify(mode=Modes.WRITE)
+@verilogify
 def hrange(base, limit, step):
     i = base
     while i < limit:
