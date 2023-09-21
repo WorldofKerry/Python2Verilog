@@ -3,6 +3,9 @@ Functions that take text as input
 """
 
 
+import copy
+import logging
+
 from python2verilog import ir
 from python2verilog.backend import verilog
 from python2verilog.frontend.generator2ir import Generator2Graph
@@ -16,7 +19,11 @@ def context_to_codegen(context: ir.Context):
 
     :return: (codegen, ir)
     """
+    context = copy.copy(context)
     ir_root, context = Generator2Graph(context).results
+    logging.debug(
+        f"context to codegen {ir_root.unique_id} {context.name} -O{context.optimization_level}"
+    )
     if context.optimization_level > 0:
         OptimizeGraph(ir_root, threshold=context.optimization_level - 1)
     return verilog.CodeGen(ir_root, context), ir_root

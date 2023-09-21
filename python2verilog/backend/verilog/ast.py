@@ -4,8 +4,9 @@ Verilog Abstract Syntax Tree Components
 
 from __future__ import annotations
 
-import itertools
-from typing import Optional
+from typing import Iterable, Optional
+
+from python2verilog.utils import env
 
 from ... import ir
 from ...utils.assertions import assert_typed_dict, get_typed, get_typed_list
@@ -82,6 +83,34 @@ class LocalParam(Statement):
     def __init__(self, name: str, value: ir.UInt, *args, **kwargs):
         assert isinstance(value, ir.UInt)
         super().__init__(f"localparam {name} = {value.verilog()};", *args, **kwargs)
+
+
+class TypeDef(Statement):
+    """
+    typedef enum
+    {
+        <val0>, <val1>, ...
+    } _state_t;
+    """
+
+    def __init__(self, name: str, values: list[str]):
+        self.name = get_typed(name, str)
+        self.values = get_typed_list(values, str)
+        super().__init__()
+
+    def to_lines(self):
+        lines = Lines("typedef enum")
+        lines += "{"
+        values = Lines()
+        for value in self.values[:-1]:
+            values += f"{value},"
+        values += f"{self.values[-1]}"
+        lines.concat(values, indent=1)
+        lines += f"}} {self.name};"
+
+        # condense
+        lines = Lines(lines.to_string().replace("\n", "").replace("  ", ""))
+        return lines
 
 
 class AtPosedgeStatement(Statement):
@@ -206,10 +235,17 @@ class Module(ImplementsToLines):
             self.body = []
 
         if localparams:
-            assert_typed_dict(localparams, str, ir.UInt)  # type: ignore[misc]
-            self.local_params = Lines()
-            for key, value in localparams.items():
-                self.local_params.concat(LocalParam(key, value).to_lines())
+            if env.get_var(env.Vars.IS_SYSTEM_VERILOG) is not None:
+                self.local_params = Lines("// State variables")
+                self.local_params.concat(
+                    TypeDef("_state_t", list(localparams.keys())).to_lines()
+                )
+                self.local_params += "_state_t _state;"
+            else:
+                self.local_params = Lines("// State variables")
+                for key, value in localparams.items():
+                    self.local_params.concat(LocalParam(key, value).to_lines())
+                self.local_params.concat(Declaration("_state", reg=True).to_lines())
         else:
             self.local_params = Lines()
 

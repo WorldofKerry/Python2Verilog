@@ -9,7 +9,7 @@ on:
     branches: ["main"]
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
   cancel-in-progress: true
 
 jobs:
@@ -22,6 +22,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+        with:
+          submodules: True
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v3
         with:
@@ -33,8 +35,7 @@ jobs:
 
       - name: Install package
         run: |
-          mkdir build && cd build
-          python3 -m pip install ..
+          mkdir build -p && cd build && python3 -m pip install .. && cd ..
 
       - name: Install requirements for examples
         working-directory: examples
@@ -44,8 +45,8 @@ jobs:
       - name: Run examples
         working-directory: examples
         run: |
-          python3 decorator.py
-          cat decorator.sv
+          python3 decorators.py
+          cat decorators.sv
 
           python3 -m python2verilog cli_basic.py -n draw_circle -c "[(5, 7, 3)]"
           cat cli_basic.sv

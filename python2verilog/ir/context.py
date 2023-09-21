@@ -13,12 +13,12 @@ from types import FunctionType
 from typing import Any, Optional
 
 from python2verilog.api.modes import Modes
-from python2verilog.ir.expressions import Var
+from python2verilog.ir.expressions import ExclusiveVar, State, Var
 from python2verilog.ir.graph import DoneNode
 from python2verilog.ir.instance import Instance
 from python2verilog.ir.signals import ProtocolSignals
 from python2verilog.utils.assertions import assert_typed_dict, get_typed, get_typed_list
-from python2verilog.utils.env_vars import is_debug_mode
+from python2verilog.utils.env import is_debug_mode
 from python2verilog.utils.generics import GenericReprAndStr
 
 DEFAULT_STATE_NAME = "___PYTHON_2_VERILOG_STATE___"
@@ -54,20 +54,28 @@ class Context(GenericReprAndStr):
     _states: set[str] = field(default_factory=set)
 
     signals: ProtocolSignals = ProtocolSignals(
-        start_signal=Var("start"),
-        done_signal=Var("done"),
-        ready_signal=Var("ready"),
-        valid_signal=Var("valid"),
+        start=Var("start"),
+        done=Var("done"),
+        ready=Var("ready"),
+        valid=Var("valid"),
     )
 
     state_var: Var = Var("state")
 
-    _done_state: str = "_state_done"
-    _entry_state: Optional[str] = None
+    _done_state: State = State("_state_done")
+    idle_state: State = State("_state_idle")
+    _entry_state: Optional[State] = None
 
     # Function calls
     namespace: dict[str, Context] = field(default_factory=dict)  # callable functions
     instances: dict[str, Instance] = field(default_factory=dict)  # generator instances
+
+    @property
+    def testbench_name(self) -> str:
+        """
+        Returns test bench module name in the generated verilog
+        """
+        return f"{self.name}{self.testbench_suffix}"
 
     def _repr(self):
         """
@@ -96,7 +104,7 @@ class Context(GenericReprAndStr):
         def check_list(list_: list):
             return isinstance(list_, list) and len(list_) > 0
 
-        assert check_list(self.input_types), "Input types not inferred"
+        assert check_list(self.input_types), f"Input types not inferred for {self.name}"
         assert check_list(self.input_vars), self
 
         assert check_list(self.output_types), self
@@ -106,7 +114,7 @@ class Context(GenericReprAndStr):
         assert self.optimization_level >= 0, f"{self.optimization_level} {self.name}"
 
         if self._entry_state:
-            assert self.entry_state in self.states, self
+            assert str(self.entry_state) in self.states, self
 
         for value in self.signals.values():
             assert get_typed(value, Var)
@@ -157,12 +165,12 @@ class Context(GenericReprAndStr):
         """
         The first state that does work in the graph representation
         """
-        assert isinstance(self._entry_state, str), self
+        assert isinstance(self._entry_state, State), self
         return self._entry_state
 
     @entry_state.setter
-    def entry_state(self, other: str):
-        assert isinstance(other, str)
+    def entry_state(self, other: State):
+        assert isinstance(other, State)
         self._entry_state = other
 
     @property
@@ -170,12 +178,12 @@ class Context(GenericReprAndStr):
         """
         The ready state
         """
-        assert isinstance(self._done_state, str), self
+        assert isinstance(self._done_state, State), self
         return self._done_state
 
     @done_state.setter
-    def done_state(self, other: str):
-        assert isinstance(other, str)
+    def done_state(self, other: State):
+        assert isinstance(other, State)
         self._done_state = other
 
     @property
@@ -205,7 +213,7 @@ class Context(GenericReprAndStr):
         Sets own output vars to default based on number of output variables
         """
         assert self.output_types and len(self.output_types) > 0
-        self._output_vars = [Var(str(i)) for i in range(len(self.output_types))]
+        self._output_vars = [Var(f"out{i}") for i in range(len(self.output_types))]
 
     @property
     def global_vars(self):
@@ -299,15 +307,21 @@ class Context(GenericReprAndStr):
         """
         Create generator instance
         """
-        inst_input_vars = list(
-            map(lambda var: Var(f"{name}_{self.name}_{var.py_name}"), self.input_vars)
+        inst_input_vars: list[Var] = list(
+            map(
+                lambda var: ExclusiveVar(f"{name}_{self.name}_{var.py_name}"),
+                self.input_vars,
+            )
         )
-        inst_output_vars = list(
-            map(lambda var: Var(f"{name}_{self.name}_{var.py_name}"), self.output_vars)
+        inst_output_vars: list[Var] = list(
+            map(
+                lambda var: ExclusiveVar(f"{name}_{self.name}_{var.py_name}"),
+                self.output_vars,
+            )
         )
-        args = {
-            key: Var(f"{name}_{self.name}__{value.py_name}")
-            for key, value in self.signals.instance_specific()
+        args: dict[str, Var] = {
+            key: ExclusiveVar(f"{name}_{self.name}__{value.py_name}")
+            for key, value in self.signals.instance_specific_items()
         }
 
         signals = ProtocolSignals(**args)

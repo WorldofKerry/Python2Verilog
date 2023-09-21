@@ -5,6 +5,9 @@ Optimizer for the Graph IR
 import copy
 import logging
 import typing
+from functools import reduce
+
+from python2verilog.utils.assertions import get_typed
 
 from .. import ir
 
@@ -46,7 +49,7 @@ def backwards_replace(expr: ir.Expression, mapping: dict[ir.Expression, ir.Expre
     elif isinstance(expr, ir.UnaryOp):
         expr.expr = backwards_replace(expr.expr, mapping)
     else:
-        logging.debug(f"TODO: use the State class {type(expr)} {expr.to_string()}")
+        logging.debug(f"TODO: use the State class {expr.to_string()}")
     return expr
 
 
@@ -127,16 +130,27 @@ class OptimizeGraph:
             return self.unique_counter
 
         def should_i_be_clocked(
-            regular: ir.Element,
+            node: ir.Element,
             visited: dict[str, int],
             threshold: int,
         ):
-            if regular.unique_id not in visited:
-                return False
-            return visited[regular.unique_id] > threshold
+            """
+            Returns true if edge should be clocked,
+            that is visited this node more than threshold times
+            """
+            be_clocked = False
+            if node.unique_id in visited and visited[node.unique_id] > threshold:
+                be_clocked = True
+            if (
+                isinstance(node, ir.AssignNode)
+                and isinstance(node.lvalue, ir.ExclusiveVar)
+                and node.lvalue.ver_name in visited
+            ):
+                be_clocked = True
+            return be_clocked
 
         def helper(
-            element: ir.Element,
+            element: ir.Node,
             mapping: dict[ir.Expression, ir.Expression],
             visited: dict[str, int],
             threshold: int,
@@ -144,14 +158,17 @@ class OptimizeGraph:
             """
             Helper
             """
-            if threshold <= 0 and element.unique_id in visited:
+            get_typed(element, ir.Node)
+            if should_i_be_clocked(element, visited, threshold):
                 return element
             visited[element.unique_id] = visited.get(element.unique_id, 0) + 1
 
             edge: ir.Edge
-            if isinstance(element, ir.Edge):
-                raise RuntimeError(f"no edges allowed {element.child}")
             if isinstance(element, ir.AssignNode):
+                if isinstance(element.lvalue, ir.ExclusiveVar):
+                    logging.debug(f"found instance signal {element.lvalue}")
+                    visited[element.lvalue.ver_name] = 1
+
                 new_node = graph_apply_mapping(element, mapping)
                 new_node.unique_id = f"{element.unique_id}_{make_unique()}_optimal"
 
@@ -178,6 +195,20 @@ class OptimizeGraph:
 
             if isinstance(element, ir.IfElseNode):
                 new_condition = backwards_replace(element.condition, mapping)
+
+                # If there is instance signal, most likely a for loop ifelse
+                if (
+                    len(
+                        list(
+                            filter(
+                                lambda x: isinstance(x, ir.ExclusiveVar),
+                                element.traverse_condition_vars(),
+                            )
+                        )
+                    )
+                    > 0
+                ):
+                    new_condition = copy.deepcopy(element.condition)
                 new_node = ir.IfElseNode(
                     unique_id=f"{element.unique_id}_{make_unique()}_optimal",
                     condition=new_condition,
@@ -270,17 +301,15 @@ class OptimizeGraph:
                 return new_node
 
             if isinstance(element, ir.DoneNode):
-                # logging.error("found done")
-                # print("found done node")
                 return element
 
             raise RuntimeError(f"unexpected {type(element)} {element}")
 
         if root.unique_id in visited:
             return root
-        # print(f"==> optimizing {str(root)}")
+        logging.debug(f"optimizing {root.unique_id} {root}")
         visited.add(root.unique_id)
-        if isinstance(root, ir.BasicElement):
+        if isinstance(root, ir.BasicElement) and isinstance(root, ir.Node):
             root.optimal_child = helper(root, {}, {}, threshold=threshold).optimal_child
             self.__graph_optimize(root.child.child, visited, threshold=threshold)
         elif isinstance(root, ir.IfElseNode):
@@ -294,7 +323,5 @@ class OptimizeGraph:
             self.__graph_optimize(root.false_edge.child, visited, threshold=threshold)
         elif isinstance(root, ir.DoneNode):
             pass
-        elif isinstance(root, ir.Edge):
-            raise RuntimeError()
         else:
             raise RuntimeError(f"{type(root)}")

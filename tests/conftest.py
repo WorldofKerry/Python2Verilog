@@ -3,6 +3,8 @@ import sys
 
 import pytest
 
+from python2verilog.utils import env
+
 from .utils import Argument
 
 """
@@ -40,6 +42,14 @@ params = [
         action="extend",
         help="Set which optimization levels tests run on",
     ),
+    Argument(
+        "I",
+        "iverilog_path",
+        default="iverilog",
+        type=str,
+        action="store",
+        help="Path to iverilog",
+    ),
 ]
 """
 Other useful flags
@@ -54,7 +64,9 @@ def pytest_addoption(parser: pytest.Parser):
     for param in params:
         param.add_to_parser(parser)
 
-    os.environ["PYTHON_2_VERILOG_DEBUG"] = "1"
+
+env.set_var(env.Vars.NO_WRITE_TO_FS, "1")
+env.set_var(env.Vars.DEBUG_MODE, "1")
 
 
 @pytest.fixture()
@@ -71,5 +83,11 @@ def argparse(request):
     )
     if max(args["optimization_levels"]) > 8:
         sys.setrecursionlimit(2000)
+    env.set_var(env.Vars.IVERILOG_PATH, args["iverilog_path"])
+    if args["synthesis"]:
+        # Synthesis tool yosys does not support SystemVerilog features
+        env.set_var(env.Vars.IS_SYSTEM_VERILOG, None)
+    else:
+        env.set_var(env.Vars.IS_SYSTEM_VERILOG, "")
 
     setattr(request.cls, "args", type("Args", (object,), args))

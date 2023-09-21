@@ -11,9 +11,9 @@
 - Testbenches can be automatically generated if the user uses the function within their Python code or provides explicit test cases
 
 ```python
-from python2verilog import verilogify, Modes
+from python2verilog import verilogify
 
-@verilogify(mode=Modes.WRITE)
+@verilogify
 def hrange(base, limit, step):
     i = base
     while i < limit:
@@ -41,7 +41,7 @@ Unsupported Python paradigms include but are not limited to the following:
 
 ## Usage and Installation
 
-Try it in [Google Collab](https://colab.research.google.com/github/WorldofKerry/Python2Verilog/blob/main/examples/decorator_advanced.ipynb) or check out [`examples/`](examples/)!
+Try it in [Google Collab](https://colab.research.google.com/github/WorldofKerry/Python2Verilog/blob/main/examples/notebook.ipynb) or check out [`examples/`](examples/)!
 
 `python3 -m pip install --upgrade pip`
 

@@ -8,9 +8,12 @@ import ast
 import inspect
 import logging
 import textwrap
+import warnings
 from functools import wraps
 from types import FunctionType
 from typing import Generator, Optional, Protocol, Union, cast
+
+import __main__ as main
 
 from python2verilog import ir
 from python2verilog.api.modes import Modes
@@ -28,7 +31,7 @@ def verilogify(
     func: FunctionType,
     namespace: Optional[dict[str, ir.Context]] = None,
     optimization_level: int = 1,
-    mode: Modes = Modes.NO_WRITE,
+    mode: Modes = Modes.OVERWRITE,
 ):
     """
     :param namespace: the namespace to put this function, for linking purposes
@@ -36,6 +39,13 @@ def verilogify(
     """
     get_typed(func, FunctionType)
     assert_typed(mode, Modes)
+
+    if not hasattr(main, "__file__") and namespace is None:
+        # No way to query caller filename in IPython / Jupyter notebook
+        raise RuntimeError(
+            f"{verilogify.__name__}: parameter `{f'{namespace=}'.partition('=')[0]}`"
+            f" is required in IPython / Jupyter notebook instances"
+        )
 
     # Get caller filename for default output paths
     # .stack()[2] as this function uses a decorator, so the first frames' filename
@@ -45,9 +55,6 @@ def verilogify(
     if namespace is None:
         namespace = get_namespace(filename)
     assert_typed_dict(namespace, str, ir.Context)  # type: ignore[misc]
-
-    if func.__name__ in namespace:
-        raise RuntimeError(f"{func.__name__} has already been decorated")
 
     tree = ast.parse(textwrap.dedent(inspect.getsource(func)))
     assert len(tree.body) == 1
@@ -96,7 +103,10 @@ def verilogify(
 
     @wraps(func)
     def function_wrapper(*_0, **_1):
-        raise TypeError("Non-generator functions currently not supported")
+        raise TypeError(
+            "Non-generator functions currently not supported, "
+            "make sure your function has at least one `yield` statement"
+        )
 
     wrapper = (
         generator_wrapper if inspect.isgeneratorfunction(func) else function_wrapper
@@ -142,9 +152,9 @@ def get_actual(
     context = get_context(verilogified)
     with temp_fifo() as module_fifo, temp_fifo() as tb_fifo:
         stdout, err = iverilog.run_with_fifos(
-            f"{context.name}{context.testbench_suffix}",
+            context.testbench_name,
             {module_fifo: module, tb_fifo: testbench},
             timeout=timeout,
         )
-        assert not err
+        assert not err, f"{stdout} {err}"
         yield from strip_signals(parse_stdout(stdout))

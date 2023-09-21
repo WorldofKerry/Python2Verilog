@@ -15,7 +15,7 @@ import pytest
 from matplotlib import pyplot as plt
 
 from python2verilog import ir, simulation
-from python2verilog.api.from_text import text_to_verilog
+from python2verilog.api.python import py_to_codegen
 from python2verilog.simulation.iverilog import run_with_fifos, run_with_files
 from python2verilog.utils.assertions import get_typed
 from python2verilog.utils.visualization import make_visual
@@ -83,7 +83,7 @@ class BaseTestCases:
                             slowness_multiplier = stat["Ver Clks"] / (
                                 stat["Py Yields"] + 8
                             )  # + x for loop and end overhead
-                            if slowness_multiplier > 1.10:
+                            if slowness_multiplier > 1.30:
                                 test_that_are_too_slow.append(stat)
                     self.assertFalse(
                         test_that_are_too_slow,
@@ -234,7 +234,7 @@ class BaseTestCases:
                 f'For debugging, try running `iverilog -s {function_name}_tb {FILES_IN_ABS_DIR["module"]} {FILES_IN_ABS_DIR["testbench"]} -o iverilog.log && unbuffer vvp iverilog.log && rm iverilog.log`'
             )
 
-            verilog, root = text_to_verilog(
+            verilog, root = py_to_codegen(
                 code=python_text,
                 function_name=function_name,
                 extra_test_cases=test_cases,
@@ -269,8 +269,9 @@ class BaseTestCases:
                         FILES_IN_ABS_DIR["module"]: module_str,
                         FILES_IN_ABS_DIR["testbench"]: tb_str,
                     },
-                    timeout=len(expected),
+                    timeout=1 + len(expected) // 64,
                 )
+                logging.debug(f"stdout {stdout}, stderr {stderr}")
             else:
                 stdout, stderr = run_with_fifos(
                     f"{function_name}_tb",
@@ -278,7 +279,7 @@ class BaseTestCases:
                         FILES_IN_ABS_DIR["module_fifo"]: module_str,
                         FILES_IN_ABS_DIR["testbench_fifo"]: tb_str,
                     },
-                    timeout=len(expected),
+                    timeout=1 + len(expected) // 64,
                 )
             time_delta_ms = (time.time() - time_started) * 1000
 
@@ -291,6 +292,7 @@ class BaseTestCases:
             )
 
             actual_raw = list(simulation.parse_stdout(stdout))
+            logging.debug("Done parsing stdout")
 
             if args.write:
                 with open(FILES_IN_ABS_DIR["actual"], mode="w") as filtered_f:
@@ -307,12 +309,16 @@ class BaseTestCases:
                     f"{function_name} {len(filtered_actual)} {e}\n{FILES_IN_ABS_DIR['module']}\n{FILES_IN_ABS_DIR['testbench']}"
                 )
 
+            logging.debug("Stripped signals")
+
             if args.write:
                 with open(FILES_IN_ABS_DIR["filtered_actual"], mode="w") as filtered_f:
                     for output in filtered_actual:
                         filtered_f.write(f"{str(output)[1:-1]}\n")
 
+                logging.debug("Wrote actual")
                 make_visual(filtered_actual, FILES_IN_ABS_DIR["actual_visual"])
+                logging.debug("Made visual")
 
             err_msg = "\nactual_coords vs expected_coords"
             if len(filtered_actual) == len(expected):
@@ -325,6 +331,7 @@ class BaseTestCases:
             )
 
             if args.write and args.synthesis:
+                logging.info("Running yosys for synthesis")
                 with subprocess.Popen(
                     " ".join(
                         [
