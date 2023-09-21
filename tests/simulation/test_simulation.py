@@ -36,17 +36,18 @@ class TestSimulation(unittest.TestCase):
         list(dup_range_goal(10))
 
         module, testbench = namespace_to_verilog(ns)
-        mod_path = Path(__file__).parent / "o0.sv"
-        tb_path = Path(__file__).parent / "o0_tb.sv"
-        with open(mod_path, mode="w") as f:
-            f.write(str(module))
-        with open(tb_path, mode="w") as f:
-            f.write(str(testbench))
-        cmd = iverilog.make_cmd(
-            "dup_range_goal_tb",
-            [mod_path, tb_path],
-        )
-        # warnings.warn(cmd)
+        if self.args.write:
+            mod_path = Path(__file__).parent / "o0.sv"
+            tb_path = Path(__file__).parent / "o0_tb.sv"
+            with open(mod_path, mode="w") as f:
+                f.write(str(module))
+            with open(tb_path, mode="w") as f:
+                f.write(str(testbench))
+            cmd = iverilog.make_cmd(
+                "dup_range_goal_tb",
+                [mod_path, tb_path],
+            )
+            # warnings.warn(cmd)
         self.assertListEqual(
             list(get_actual(dup_range_goal, module, testbench, timeout=1)),
             list(get_expected(dup_range_goal)),
@@ -78,17 +79,18 @@ class TestSimulation(unittest.TestCase):
         list(dup_range_goal(10))
 
         module, testbench = namespace_to_verilog(ns)
-        mod_path = Path(__file__).parent / "o1.sv"
-        tb_path = Path(__file__).parent / "o1_tb.sv"
-        with open(mod_path, mode="w") as f:
-            f.write(str(module))
-        with open(tb_path, mode="w") as f:
-            f.write(str(testbench))
-        cmd = iverilog.make_cmd(
-            "dup_range_goal_tb",
-            [mod_path, tb_path],
-        )
-        # warnings.warn(cmd)
+        if self.args.write:
+            mod_path = Path(__file__).parent / "o1.sv"
+            tb_path = Path(__file__).parent / "o1_tb.sv"
+            with open(mod_path, mode="w") as f:
+                f.write(str(module))
+            with open(tb_path, mode="w") as f:
+                f.write(str(testbench))
+            cmd = iverilog.make_cmd(
+                "dup_range_goal_tb",
+                [mod_path, tb_path],
+            )
+            # warnings.warn(cmd)
         self.assertListEqual(
             list(get_actual(dup_range_goal, module, testbench, timeout=1)),
             list(get_expected(dup_range_goal)),
@@ -154,17 +156,18 @@ class TestSimulation(unittest.TestCase):
         triple_circle(4, 4, 3)
 
         module, testbench = namespace_to_verilog(ns)
-        mod_path = Path(__file__).parent / "triple_o0.sv"
-        tb_path = Path(__file__).parent / "triple_o0_tb.sv"
-        with open(mod_path, mode="w") as f:
-            f.write(str(module))
-        with open(tb_path, mode="w") as f:
-            f.write(str(testbench))
-        cmd = iverilog.make_cmd(
-            "triple_circle_tb",
-            [mod_path, tb_path],
-        )
-        # warnings.warn(cmd)
+        if self.args.write:
+            mod_path = Path(__file__).parent / "triple_o0.sv"
+            tb_path = Path(__file__).parent / "triple_o0_tb.sv"
+            with open(mod_path, mode="w") as f:
+                f.write(str(module))
+            with open(tb_path, mode="w") as f:
+                f.write(str(testbench))
+            cmd = iverilog.make_cmd(
+                "triple_circle_tb",
+                [mod_path, tb_path],
+            )
+            # warnings.warn(cmd)
         self.assertListEqual(
             list(get_actual(triple_circle, module, testbench, timeout=1)),
             list(get_expected(triple_circle)),
@@ -179,7 +182,11 @@ class TestSimulation(unittest.TestCase):
             offset_x = radius
             crit = 1 - radius
             while offset_y <= offset_x:
-                yield (centre_x + offset_x, centre_y + offset_y, color)  # -- octant 1
+                yield (
+                    centre_x + offset_x,
+                    centre_y + offset_y,
+                    color,
+                )  # -- octant 1
                 yield (centre_x + offset_y, centre_y + offset_x, color)  # -- octant 2
                 yield (centre_x - offset_x, centre_y + offset_y, color)  # -- octant 4
                 yield (centre_x - offset_y, centre_y + offset_x, color)  # -- octant 3
@@ -219,17 +226,18 @@ class TestSimulation(unittest.TestCase):
         #     _, _, cy = context_to_verilog_and_dump(get_context(triple_circle))
         #     f.write(str(cy))
         module, testbench = namespace_to_verilog(ns)
-        mod_path = Path(__file__).parent / "olympic.sv"
-        tb_path = Path(__file__).parent / "olympic_tb.sv"
-        with open(mod_path, mode="w") as f:
-            f.write(str(module))
-        with open(tb_path, mode="w") as f:
-            f.write(str(testbench))
-        cmd = iverilog.make_cmd(
-            "olympic_logo_tb",
-            [mod_path, tb_path],
-        )
-        # warnings.warn(cmd)
+        if self.args.write:
+            mod_path = Path(__file__).parent / "olympic.sv"
+            tb_path = Path(__file__).parent / "olympic_tb.sv"
+            with open(mod_path, mode="w") as f:
+                f.write(str(module))
+            with open(tb_path, mode="w") as f:
+                f.write(str(testbench))
+            cmd = iverilog.make_cmd(
+                "olympic_logo_tb",
+                [mod_path, tb_path],
+            )
+            # warnings.warn(cmd)
         self.assertListEqual(
             list(get_actual(olympic_logo, module, testbench, timeout=1)),
             list(get_expected(olympic_logo)),
@@ -259,17 +267,18 @@ class TestSimulation(unittest.TestCase):
         #     _, _, cy = context_to_verilog_and_dump(get_context(triple_circle))
         #     f.write(str(cy))
         module, testbench = namespace_to_verilog(ns)
-        mod_path = Path(__file__).parent / "bell.sv"
-        tb_path = Path(__file__).parent / "bell_tb.sv"
-        with open(mod_path, mode="w") as f:
-            f.write(str(module))
-        with open(tb_path, mode="w") as f:
-            f.write(str(testbench))
-        cmd = iverilog.make_cmd(
-            "bell_tb",
-            [mod_path, tb_path],
-        )
-        # warnings.warn(cmd)
+        if self.args.write:
+            mod_path = Path(__file__).parent / "bell.sv"
+            tb_path = Path(__file__).parent / "bell_tb.sv"
+            with open(mod_path, mode="w") as f:
+                f.write(str(module))
+            with open(tb_path, mode="w") as f:
+                f.write(str(testbench))
+            cmd = iverilog.make_cmd(
+                "bell_tb",
+                [mod_path, tb_path],
+            )
+            # warnings.warn(cmd)
         self.assertListEqual(
             list(get_actual(bell, module, testbench, timeout=1)),
             list(get_expected(bell)),
