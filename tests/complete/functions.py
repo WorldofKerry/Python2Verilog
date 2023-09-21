@@ -28,6 +28,9 @@ def circle_lines(s_x, s_y, height):
 
 
 def fib(n: int):
+    """
+    Triple quote comment
+    """
     a = 0
     b = 1
     c = 0
