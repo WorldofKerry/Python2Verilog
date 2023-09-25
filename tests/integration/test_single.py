@@ -97,7 +97,7 @@ class TestComplete(TestCase):
             logging.info(
                 f"Actual len {len(actual)}: {str(actual[:min(len(actual), 5)])[:-1]}, ...]"
             )
-            self.assertTrue(len(actual) > 0)
+            self.assertTrue(len(actual) > 0, f"{actual} {expected}")
             self.assertListEqual(actual, expected)
 
             statistics = {
@@ -226,5 +226,5 @@ class TestComplete(TestCase):
             logging.info(
                 f"Actual len {len(actual)}: {str(actual[:min(len(actual), 5)])[:-1]}, ...]"
             )
-            self.assertTrue(len(actual) > 0)
+            self.assertTrue(len(actual) > 0, f"{actual} {expected}")
             self.assertListEqual(actual, expected)
