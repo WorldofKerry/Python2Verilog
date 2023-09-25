@@ -12,6 +12,7 @@ from python2verilog.api.context import context_to_codegen
 from python2verilog.api.modes import Modes
 from python2verilog.api.namespace import get_namespace
 from python2verilog.backend import verilog
+from python2verilog.backend.verilog.config import TestbenchConfig
 from python2verilog.frontend.generator2ir import Generator2Graph
 from python2verilog.optimizer.optimizer import OptimizeGraph
 from python2verilog.utils.assertions import get_typed, get_typed_list
@@ -72,7 +73,7 @@ def py_to_verilog(
         optimization_level=optimization_level,
         write=write,
     )
-    return code_gen.get_module_str(), code_gen.get_testbench_str(random_ready=False)
+    return code_gen.get_module_str(), code_gen.get_testbench_str(TestbenchConfig())
 
 
 def py_to_context(

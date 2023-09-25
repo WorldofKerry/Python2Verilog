@@ -7,6 +7,7 @@ import logging
 import warnings
 from typing import Generator, cast
 
+from python2verilog.backend.verilog.config import TestbenchConfig
 from python2verilog.optimizer.optimizer import backwards_replace
 from python2verilog.utils.lines import Lines
 
@@ -314,7 +315,7 @@ class CodeGen:
         """
         return self.get_module_lines().to_string()
 
-    def get_testbench(self, random_ready: bool):
+    def get_testbench(self, config: TestbenchConfig):
         """
         Creates testbench with multiple test cases
 
@@ -414,7 +415,7 @@ class CodeGen:
             # While loop waitng for ready signal
             while_body: list[ver.Statement] = []
             # while_body.append(make_display_stmt())
-            if random_ready:
+            if config.random_ready:
                 while_body.append(ver.Statement("_ready = $urandom_range(0, 4) === 0;"))
             while_body.append(
                 ver.Statement(
@@ -464,17 +465,17 @@ class CodeGen:
             return module
         raise RuntimeError("Needs the context")
 
-    def get_testbench_lines(self, random_ready: bool):
+    def get_testbench_lines(self, config: TestbenchConfig):
         """
         New Testbench as lines
         """
-        return self.get_testbench(random_ready=random_ready).to_lines()
+        return self.get_testbench(config=config).to_lines()
 
-    def get_testbench_str(self, random_ready: bool):
+    def get_testbench_str(self, config: TestbenchConfig):
         """
         New testbench as str
         """
-        return self.get_testbench_lines(random_ready=random_ready).to_string()
+        return self.get_testbench_lines(config=config).to_string()
 
 
 class CaseBuilder:

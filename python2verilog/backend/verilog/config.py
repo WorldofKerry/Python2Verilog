@@ -6,10 +6,17 @@ from dataclasses import dataclass
 
 
 @dataclass
-class CodegenConfig:
+class TestbenchConfig:
     """
-    Configurations
+    Configurations for test bench code generator
     """
 
-    # Enable random ready signal in testbench
+    # Enable random ready signal (for testing correctness)
     random_ready: bool = False
+
+
+@dataclass
+class CodegenConfig(TestbenchConfig):
+    """
+    Configurations for code generator
+    """
