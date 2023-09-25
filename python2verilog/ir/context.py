@@ -135,9 +135,11 @@ class Context(GenericReprAndStr):
                 raise TypeError(f"{ast.dump(arg)}")
 
             logging.info("Using type hints for return types")
-            assert isinstance(self.py_ast.returns, ast.Subscript)
-            assert isinstance(self.py_ast.returns.slice, ast.Tuple)
-            output_args: list[ast.arg] = self.py_ast.returns.slice.elts
+            if isinstance(self.py_ast.returns, ast.Subscript):
+                assert isinstance(self.py_ast.returns.slice, ast.Tuple)
+                output_args: list[ast.arg] = self.py_ast.returns.slice.elts
+            else:
+                output_args: list[ast.arg] = [self.py_ast.returns]
             self.output_types = list(map(output_mapper, output_args))
             self.default_output_vars()
 

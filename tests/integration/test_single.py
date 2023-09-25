@@ -1,5 +1,6 @@
 import inspect
 import logging
+import os
 import re
 import subprocess
 import warnings
@@ -43,6 +44,7 @@ PARAMETERS = [
 @pytest.mark.usefixtures("argparse")
 class TestComplete(TestCase):
     statistics: list[dict] = []
+    write: bool = False
 
     @parameterized.expand(
         input=PARAMETERS,
@@ -69,6 +71,7 @@ class TestComplete(TestCase):
             )
 
             if self.args.write:
+                TestComplete.write = True
                 file_stem = test_name.replace("::", "_")
                 namespace_to_file(file_stem, ns, config)
                 context = get_context(verilogified)
@@ -168,6 +171,15 @@ class TestComplete(TestCase):
             "\n" + "=" * (pad // 2) + title + "=" * (pad // 2 + pad % 2) + "\n" + table
         )
         logging.warning(result)
+        if cls.write:
+            stats_file_name = (
+                os.path.commonprefix(
+                    list(map(lambda e: e["Test Name"], cls.statistics))
+                ).replace("::", "")
+                + ".csv"
+            )
+            with open(Path(__file__).parent / stats_file_name, mode="w") as f:
+                f.write(df.to_csv(index=False))
 
     @parameterized.expand(
         input=PARAMETERS,
