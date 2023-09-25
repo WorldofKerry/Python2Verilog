@@ -222,7 +222,6 @@ class TestComplete(TestCase):
                     timeout=1 + len(expected) // 64,
                 )
             )
-
             logging.info(
                 f"Actual len {len(actual)}: {str(actual[:min(len(actual), 5)])[:-1]}, ...]"
             )

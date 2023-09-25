@@ -16,6 +16,32 @@ def parse_stdout(stdout: str) -> Iterator[tuple[str, ...]]:
         yield tuple(elem.strip() for elem in line.split(","))
 
 
+def __strip_and_filter_first_signal(
+    actual: Iterable[Union[tuple[str, ...], str]],
+    length_check: int,
+) -> Iterator[Union[tuple[str, ...], str]]:
+    """
+    Filters based on row[0]
+
+    Removes tailing messages, e.g. `$finish`.
+
+    :return: row[1:]
+    """
+    for row in actual:
+        if len(row) > length_check:
+            if row[0] == "1":
+                outputs = row[1:]
+                if len(outputs) == 1:
+                    yield outputs[0]
+                else:
+                    yield tuple(elem for elem in outputs)
+        else:
+            if "$finish" in " ".join(row):
+                pass
+            else:
+                raise ValueError(f"Unexpected row {row}")
+
+
 def strip_ready(
     actual: Iterable[Union[tuple[str, ...], str]]
 ) -> Iterator[Union[tuple[str, ...], str]]:
@@ -27,19 +53,7 @@ def strip_ready(
 
     :return: [valid, output0, output1, ...]
     """
-    for row in actual:
-        if len(row) >= 2:  # [ready, valid ...]
-            if row[0] == "1":  # ready signal
-                outputs = row[1:]
-                if len(outputs) == 1:
-                    yield outputs[0]
-                else:
-                    yield tuple(elem for elem in outputs)
-        else:
-            if "$finish" in " ".join(row):
-                pass
-            else:
-                raise ValueError(f"Unexpected row {row}")
+    yield from __strip_and_filter_first_signal(actual, 2)
 
 
 def strip_valid(
@@ -55,22 +69,16 @@ def strip_valid(
 
     :return: [output0, output1, ...]
     """
-    for row in actual:
-        if len(row) >= 2:  # [valid ...]
-            if row[0] == "1":  # valid signal
-                try:
-                    outputs = row[1:]
-                    if len(outputs) == 1:
-                        yield int(outputs[0])
-                    else:
-                        yield tuple(int(elem) for elem in outputs)
-                except ValueError as e:
-                    raise UnknownValue(f"Unknown logic value in outputs {row}") from e
-        else:
-            if "$finish" in " ".join(row):
-                pass
+    for row in __strip_and_filter_first_signal(actual, 1):
+        try:
+            if isinstance(row, tuple) and len(row) > 1:
+                yield tuple(int(e) for e in row)
+            elif isinstance(row, str):
+                yield int(row)  # otherwise take first char of string
             else:
-                raise ValueError(f"Unexpected row {row}")
+                yield int(row[0])
+        except ValueError as e:
+            raise UnknownValue(f"Unknown logic value in outputs {row}") from e
 
 
 class UnknownValue(Exception):
