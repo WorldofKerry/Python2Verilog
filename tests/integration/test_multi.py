@@ -19,15 +19,17 @@ from parameterized import parameterized, parameterized_class
 
 from python2verilog import (
     Modes,
-    get_actual,
+    get_actual_raw,
     get_context,
     get_expected,
     namespace_to_file,
     namespace_to_verilog,
     verilogify,
 )
+from python2verilog.api.verilogify import get_actual
 from python2verilog.backend.verilog.config import CodegenConfig
 from python2verilog.simulation import iverilog
+from python2verilog.simulation.display import strip_ready, strip_valid
 
 from .functions import *
 from .utils import make_tuple, name_func
@@ -80,11 +82,17 @@ class TestComplete(TestCase):
                 logging.info(cmd)
 
             expected = list(get_expected(verilogified))
-            actual = list(
-                get_actual(
-                    verilogified, module, testbench, timeout=1 + len(expected) // 64
+            actual_with_invalid = list(
+                strip_ready(
+                    get_actual_raw(
+                        verilogified,
+                        module,
+                        testbench,
+                        timeout=1 + len(expected) // 64,
+                    )
                 )
             )
+            actual = list(strip_valid(actual_with_invalid))
             logging.info(
                 f"Actual len {len(actual)}: {str(actual[:min(len(actual), 5)])[:-1]}, ...]"
             )
@@ -94,17 +102,7 @@ class TestComplete(TestCase):
             statistics = {
                 "Test Name": test_name.split("/")[-1],
                 "Py Yields": len(expected),
-                "Ver Clks": len(
-                    list(
-                        get_actual(
-                            verilogified,
-                            module,
-                            testbench,
-                            timeout=1 + len(expected) // 64,
-                            include_invalid=True,
-                        )
-                    )
-                ),
+                "Ver Clks": len(actual_with_invalid),
             }
             if self.args.synthesis and self.args.write:
                 logging.info("Running yosys for synthesis")
@@ -220,7 +218,10 @@ class TestComplete(TestCase):
             expected = list(get_expected(verilogified))
             actual = list(
                 get_actual(
-                    verilogified, module, testbench, timeout=1 + len(expected) // 64
+                    verilogified,
+                    module,
+                    testbench,
+                    timeout=1 + len(expected) // 64,
                 )
             )
             logging.info(

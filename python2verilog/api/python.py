@@ -5,7 +5,7 @@ Functions that take text as input
 import ast
 import logging
 from types import FunctionType
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
 from python2verilog import ir
 from python2verilog.api.context import context_to_codegen
@@ -21,7 +21,7 @@ def py_to_codegen(
     code: str,
     function_name: str,
     write: bool,
-    extra_test_cases: Optional[list[tuple[int]]] = None,
+    extra_test_cases: Optional[list[Union[tuple[int], tuple[int, ...]]]] = None,
     file_path: str = "",
     optimization_level: int = 1,
 ):
@@ -48,7 +48,7 @@ def py_to_codegen(
 def py_to_verilog(
     code: str,
     function_name: str,
-    extra_test_cases: Optional[list[tuple[int]]] = None,
+    extra_test_cases: Optional[list[Union[tuple[int], tuple[int, ...]]]] = None,
     file_path: str = "",
     write: bool = True,
     optimization_level: int = 1,
@@ -81,7 +81,7 @@ def py_to_context(
     file_path: str,
     write: bool,
     optimization_level: int,
-    extra_test_cases: Optional[list[tuple[int]]] = None,
+    extra_test_cases: Optional[list[Union[tuple[int], tuple[int, ...]]]] = None,
 ):
     """
     Parses python code into the function and testbench

@@ -335,13 +335,13 @@ class CodeGen:
 
         def make_display_stmt():
             """
-            Creates a display statement for valid + outputs
+            Creates a display statement for protocol signals and outputs
 
-            $display("%0d, ...", _valid, ...);
+            $display("%0d, ...", ...);
             """
             string = '$display("%0d, %0d, '
             string += "%0d, " * (len(self.context.output_vars) - 1)
-            string += '%0d", _valid, _ready'
+            string += '%0d", _ready, _valid'
             for var in self.context.output_vars:
                 string += f", {var.ver_name}"
             string += ");"

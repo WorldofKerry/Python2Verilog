@@ -289,8 +289,9 @@ class Initial(Statement):
 
     def to_lines(self):
         lines = Lines("initial begin")
-        for stmt in self.body:
-            lines.concat(stmt.to_lines(), 1)
+        if self.body:
+            for stmt in self.body:
+                lines.concat(stmt.to_lines(), 1)
         lines += "end"
         return lines
 
@@ -550,7 +551,8 @@ class While(Statement):
 
     def to_lines(self):
         lines = Lines(f"while ({self.condition.to_string()}) begin")
-        for stmt in self.body:
-            lines.concat(stmt.to_lines(), 1)
+        if self.body:
+            for stmt in self.body:
+                lines.concat(stmt.to_lines(), 1)
         lines += "end"
         return lines

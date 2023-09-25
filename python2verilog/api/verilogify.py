@@ -19,7 +19,7 @@ from python2verilog import ir
 from python2verilog.api.modes import Modes
 from python2verilog.api.namespace import get_namespace
 from python2verilog.simulation import iverilog
-from python2verilog.simulation.display import parse_stdout, strip_signals
+from python2verilog.simulation.display import parse_stdout, strip_ready, strip_valid
 from python2verilog.utils.assertions import assert_typed, assert_typed_dict, get_typed
 from python2verilog.utils.decorator import decorator_with_args
 from python2verilog.utils.fifo import temp_fifo
@@ -140,15 +140,16 @@ def get_expected(verilogified: FunctionType) -> Generator[tuple[int, ...], None,
         yield from generator_func(*test)
 
 
-def get_actual(
+def get_actual_raw(
     verilogified: FunctionType,
     module: str,
     testbench: str,
     timeout: Optional[int] = None,
-    include_invalid: bool = False,
-) -> Generator[Union[tuple[int, ...], int], None, None]:
+) -> Generator[Union[tuple[str, ...], str], None, None]:
     """
-    Get expected output of testbench
+    Get actual output of the testbench
+
+    Includes protocol signals, e.g. ready, valid
     """
     context = get_context(verilogified)
     with temp_fifo() as module_fifo, temp_fifo() as tb_fifo:
@@ -158,4 +159,22 @@ def get_actual(
             timeout=timeout,
         )
         assert not err, f"{stdout} {err}"
-        yield from strip_signals(parse_stdout(stdout), include_invalid=include_invalid)
+        yield from parse_stdout(stdout)
+
+
+def get_actual(
+    verilogified: FunctionType,
+    module: str,
+    testbench: str,
+    timeout: Optional[int] = None,
+) -> Generator[Union[tuple[int, ...], int], None, None]:
+    """
+    Get actual output of the testbench with rows
+
+    filtered by ready and valid signals,
+
+    and the signals themselves removed.
+    """
+    yield from strip_valid(
+        strip_ready(get_actual_raw(verilogified, module, testbench, timeout))
+    )

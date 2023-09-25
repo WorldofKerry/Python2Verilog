@@ -16,34 +16,61 @@ def parse_stdout(stdout: str) -> Generator[tuple[str, ...], None, None]:
         yield tuple(elem.strip() for elem in line.split(","))
 
 
-def strip_signals(
-    actual_raw: Iterable[tuple[str, ...]], include_invalid: bool
+def strip_ready(
+    actual: Iterable[Union[tuple[str, ...], str]]
+) -> Generator[Union[tuple[str, ...], str], None, None]:
+    """
+    Assumes assumes first two signals to be ready and valid,
+    such that a row is [ready, valid, output0, output1, ...]
+
+    Removes tailing messages, e.g. `$finish`.
+
+    :return: [valid, output0, output1, ...]
+    """
+    for row in actual:
+        if len(row) >= 2:  # [ready, valid ...]
+            if row[0] == "1":  # ready signal
+                outputs = row[1:]
+                if len(outputs) == 1:
+                    yield outputs[0]
+                else:
+                    yield tuple(elem for elem in outputs)
+        else:
+            if "$finish" in " ".join(row):
+                pass
+            else:
+                raise ValueError(f"Unexpected row {row}")
+
+
+def strip_valid(
+    actual: Iterable[Union[tuple[str, ...], str]]
 ) -> Generator[Union[tuple[int, ...], int], None, None]:
     """
-    Implementation-specific (based on testbench output)
-    Assumes assumes first two signals to be valid and wait
-    [valid, ready, output0, output1, ...]
-    Only yields a row if both valid and ready
-    Throws if both valid and ready, but an output is 'x'
+    Assumes assumes first signal to be valid,
+    such that a row is [valid, output0, output1, ...]
+
+    Throws if ready, but an output is 'x'.
+
+    Removes tailing messages, e.g. `$finish`.
+
     :return: [output0, output1, ...]
     """
-    for row in actual_raw:
-        if len(row) >= 2:  # [valid, ready, ...]
-            if (include_invalid or row[0] == "1") and row[1] == "1":
-                cast = str if include_invalid else int
+    for row in actual:
+        if len(row) >= 2:  # [valid ...]
+            if row[0] == "1":  # valid signal
                 try:
-                    outputs = row[2:]
+                    outputs = row[1:]
                     if len(outputs) == 1:
-                        yield cast(outputs[0])
+                        yield int(outputs[0])
                     else:
-                        yield tuple(cast(elem) for elem in outputs)
+                        yield tuple(int(elem) for elem in outputs)
                 except ValueError as e:
                     raise UnknownValue(f"Unknown logic value in outputs {row}") from e
         else:
             if "$finish" in " ".join(row):
                 pass
             else:
-                raise ValueError(f"Skipped parsing {row}")
+                raise ValueError(f"Unexpected row {row}")
 
 
 class UnknownValue(Exception):

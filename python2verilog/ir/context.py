@@ -12,7 +12,7 @@ import logging
 import warnings
 from dataclasses import dataclass, field
 from types import FunctionType
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
 from python2verilog.api.modes import Modes
 from python2verilog.ir.expressions import ExclusiveVar, State, Var
@@ -37,7 +37,7 @@ class Context(GenericReprAndStr):
     name: str = ""
     testbench_suffix: str = "_tb"
 
-    test_cases: list[tuple[int]] = field(default_factory=list)
+    test_cases: list[Union[tuple[int], tuple[int, ...]]] = field(default_factory=list)
 
     py_func: Optional[FunctionType] = None
     py_string: Optional[str] = None
@@ -103,12 +103,12 @@ class Context(GenericReprAndStr):
         assert isinstance(self.py_ast, ast.FunctionDef), self
         assert isinstance(self.py_func, FunctionType), self
 
-        def check_list(list_: list):
+        def check_list(list_: list[Any]):
             return isinstance(list_, list) and len(list_) > 0
 
         if not check_list(self.input_types):
 
-            def input_mapper(arg: ast.arg) -> type[any]:
+            def input_mapper(arg: ast.arg) -> type[Any]:
                 """
                 Maps a string annotation id to type
                 """
@@ -126,7 +126,7 @@ class Context(GenericReprAndStr):
 
         if not check_list(self.output_types):
 
-            def output_mapper(arg: ast.Name) -> type[any]:
+            def output_mapper(arg: ast.Name) -> type[Any]:
                 """
                 Maps a string annotation id to type
                 """
@@ -135,11 +135,12 @@ class Context(GenericReprAndStr):
                 raise TypeError(f"{ast.dump(arg)}")
 
             logging.info("Using type hints for return types")
+            output_args: list[ast.arg]
             if isinstance(self.py_ast.returns, ast.Subscript):
                 assert isinstance(self.py_ast.returns.slice, ast.Tuple)
-                output_args: list[ast.arg] = self.py_ast.returns.slice.elts
+                output_args = self.py_ast.returns.slice.elts
             else:
-                output_args: list[ast.arg] = [self.py_ast.returns]
+                output_args = [self.py_ast.returns]
             self.output_types = list(map(output_mapper, output_args))
             self.default_output_vars()
 

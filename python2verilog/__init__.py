@@ -5,7 +5,7 @@ Python 2 Verilog
 from .api import (
     Modes,
     context_to_verilog,
-    get_actual,
+    get_actual_raw,
     get_context,
     get_expected,
     get_namespace,
