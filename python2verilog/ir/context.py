@@ -8,6 +8,8 @@ from __future__ import annotations
 import ast
 import copy
 import io
+import logging
+import warnings
 from dataclasses import dataclass, field
 from types import FunctionType
 from typing import Any, Optional
@@ -104,8 +106,40 @@ class Context(GenericReprAndStr):
         def check_list(list_: list):
             return isinstance(list_, list) and len(list_) > 0
 
-        assert check_list(self.input_types), f"Input types not inferred for {self.name}"
+        if not check_list(self.input_types):
+
+            def input_mapper(arg: ast.arg) -> type[any]:
+                """
+                Maps a string annotation id to type
+                """
+                assert arg.annotation
+                assert isinstance(arg.annotation, ast.Name)
+                if arg.annotation.id == "int":
+                    return type(0)
+                raise TypeError(f"{ast.dump(arg)}")
+
+            logging.info("Using type hints for input types")
+            input_args: list[ast.arg] = self.py_ast.args.args
+            self.input_types = list(map(input_mapper, input_args))
+        assert check_list(self.input_types), self
         assert check_list(self.input_vars), self
+
+        if not check_list(self.output_types):
+
+            def output_mapper(arg: ast.Name) -> type[any]:
+                """
+                Maps a string annotation id to type
+                """
+                if arg.id == "int":
+                    return type(0)
+                raise TypeError(f"{ast.dump(arg)}")
+
+            logging.info("Using type hints for return types")
+            assert isinstance(self.py_ast.returns, ast.Subscript)
+            assert isinstance(self.py_ast.returns.slice, ast.Tuple)
+            output_args: list[ast.arg] = self.py_ast.returns.slice.elts
+            self.output_types = list(map(output_mapper, output_args))
+            self.default_output_vars()
 
         assert check_list(self.output_types), self
         assert check_list(self.output_vars), self
@@ -307,6 +341,8 @@ class Context(GenericReprAndStr):
         """
         Create generator instance
         """
+        self.validate()
+
         inst_input_vars: list[Var] = list(
             map(
                 lambda var: ExclusiveVar(f"{name}_{self.name}_{var.py_name}"),

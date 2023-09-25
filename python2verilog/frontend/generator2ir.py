@@ -277,7 +277,7 @@ class Generator2Graph:
             outputs = [ir.Var(stmt.target.id)]
         else:
             outputs = list(map(name_to_var, stmt.target.elts))
-        assert len(outputs) == len(inst.outputs)
+        assert len(outputs) == len(inst.outputs), f"{outputs} {inst.outputs}"
         capture_head = ir.AssignNode(
             unique_id=next(unique_node),
             lvalue=inst.signals.ready,

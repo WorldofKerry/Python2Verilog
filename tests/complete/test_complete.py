@@ -99,48 +99,48 @@ class TestComplete(TestCase):
             self.assertListEqual(actual, expected)
 
     # colored_circle types not inferred
-    # @parameterized.expand(
-    #     [
-    #         ([olympic_logo, colored_circle], [(10, 10, 4), (13, 13, 7)]),
-    #     ],
-    #     name_func=name_func,
-    # )
-    # def test_performance_multi(
-    #     self, funcs: list[FunctionType], test_cases: list[Union[tuple[int, ...], int]]
-    # ):
-    #     for opti_level in self.args.optimization_levels:
-    #         ns = {}
+    @parameterized.expand(
+        [
+            ([olympic_logo, colored_circle], [(10, 10, 4), (13, 13, 7)]),
+        ],
+        name_func=name_func,
+    )
+    def test_performance_multi(
+        self, funcs: list[FunctionType], test_cases: list[Union[tuple[int, ...], int]]
+    ):
+        for opti_level in self.args.optimization_levels:
+            ns = {}
 
-    #         for func in reversed(funcs):  # First function is tested upon
-    #             verilogified = verilogify(
-    #                 namespace=ns, optimization_level=opti_level, mode=Modes.OVERWRITE
-    #             )(func)
+            for func in reversed(funcs):  # First function is tested upon
+                verilogified = verilogify(
+                    namespace=ns, optimization_level=opti_level, mode=Modes.OVERWRITE
+                )(func)
 
-    #         for case in test_cases:
-    #             case = self.make_tuple(case)
-    #             verilogified(*case)
+            for case in test_cases:
+                case = self.make_tuple(case)
+                verilogified(*case)
 
-    #         module, testbench = namespace_to_verilog(ns)
-    #         if self.args.write:
-    #             file_stem = str(
-    #                 Path(__file__).parent
-    #                 / (self.__dict__["_testMethodName"] + f"::O{opti_level}").replace(
-    #                     "::", "_"
-    #                 )
-    #             )
-    #             namespace_to_file(file_stem, ns)
-    #             context = get_context(verilogified)
-    #             cmd = iverilog.make_cmd(
-    #                 context.testbench_name,
-    #                 [file_stem + ".sv", file_stem + "_tb.sv"],
-    #             )
-    #             logging.info(cmd)
+            module, testbench = namespace_to_verilog(ns)
+            if self.args.write:
+                file_stem = str(
+                    Path(__file__).parent
+                    / (self.__dict__["_testMethodName"] + f"::O{opti_level}").replace(
+                        "::", "_"
+                    )
+                )
+                namespace_to_file(file_stem, ns)
+                context = get_context(verilogified)
+                cmd = iverilog.make_cmd(
+                    context.testbench_name,
+                    [file_stem + ".sv", file_stem + "_tb.sv"],
+                )
+                logging.info(cmd)
 
-    #         expected = list(get_expected(verilogified))
-    #         actual = list(
-    #             get_actual(
-    #                 verilogified, module, testbench, timeout=1 + len(expected) // 64
-    #             )
-    #         )
-    #         self.assertTrue(len(actual) > 0)
-    #         self.assertListEqual(actual, expected)
+            expected = list(get_expected(verilogified))
+            actual = list(
+                get_actual(
+                    verilogified, module, testbench, timeout=1 + len(expected) // 64
+                )
+            )
+            self.assertTrue(len(actual) > 0)
+            self.assertListEqual(actual, expected)
