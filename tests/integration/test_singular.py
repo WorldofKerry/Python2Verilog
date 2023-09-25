@@ -24,21 +24,25 @@ from python2verilog.simulation import iverilog
 from .functions import *
 from .utils import make_tuple, name_func
 
+PARAMETERS = (
+    [
+        (fib, [(10)]),
+        (floor_div, [(13)]),
+        (operators, [(13, 17)]),
+        (multiplier, [(13, 17)]),
+        (division, [(6, 7, 10), (2, 3, 10)]),
+        (circle_lines, [(10, 10, 4), (13, 13, 7)]),
+        (happy_face, [(10, 10, 4), (13, 13, 7)]),
+        (rectangle_filled, [(10, 10, 4, 5), (13, 13, 7, 11)]),
+        (rectangle_lines, [(10, 10, 4, 5), (13, 13, 7, 11)]),
+    ],
+)
+
 
 @pytest.mark.usefixtures("argparse")
 class TestComplete(TestCase):
     @parameterized.expand(
-        [
-            (fib, [(10)]),
-            (floor_div, [(13)]),
-            (operators, [(13, 17)]),
-            (multiplier, [(13, 17)]),
-            (division, [(6, 7, 10), (2, 3, 10)]),
-            (circle_lines, [(10, 10, 4), (13, 13, 7)]),
-            (happy_face, [(10, 10, 4), (13, 13, 7)]),
-            (rectangle_filled, [(10, 10, 4, 5), (13, 13, 7, 11)]),
-            (rectangle_lines, [(10, 10, 4, 5), (13, 13, 7, 11)]),
-        ],
+        input=PARAMETERS,
         name_func=name_func,
     )
     def test_single_performance(
@@ -84,17 +88,7 @@ class TestComplete(TestCase):
             self.assertListEqual(actual, expected)
 
     @parameterized.expand(
-        [
-            (fib, [(10)]),
-            (floor_div, [(13)]),
-            (operators, [(13, 17)]),
-            (multiplier, [(13, 17)]),
-            (division, [(6, 7, 10), (2, 3, 10)]),
-            (circle_lines, [(10, 10, 4), (13, 13, 7)]),
-            (happy_face, [(10, 10, 4), (13, 13, 7)]),
-            (rectangle_filled, [(10, 10, 4, 5), (13, 13, 7, 11)]),
-            (rectangle_lines, [(10, 10, 4, 5), (13, 13, 7, 11)]),
-        ],
+        input=PARAMETERS,
         name_func=name_func,
     )
     def test_single_correctness(

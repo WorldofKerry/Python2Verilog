@@ -28,13 +28,17 @@ from python2verilog.simulation import iverilog
 from .functions import *
 from .utils import make_tuple, name_func
 
+PARAMETERS = (
+    [
+        ([olympic_logo, colored_circle], [(10, 10, 4), (13, 13, 7)]),
+    ],
+)
+
 
 @pytest.mark.usefixtures("argparse")
 class TestComplete(TestCase):
     @parameterized.expand(
-        [
-            ([olympic_logo, colored_circle], [(10, 10, 4), (13, 13, 7)]),
-        ],
+        input=PARAMETERS,
         name_func=name_func,
     )
     def test_multi_performance(
@@ -82,9 +86,7 @@ class TestComplete(TestCase):
             self.assertListEqual(actual, expected)
 
     @parameterized.expand(
-        [
-            ([olympic_logo, colored_circle], [(10, 10, 4), (13, 13, 7)]),
-        ],
+        input=PARAMETERS,
         name_func=name_func,
     )
     def test_multi_correctness(
