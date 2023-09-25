@@ -314,13 +314,13 @@ class CodeGen:
         """
         return self.get_module_lines().to_string()
 
-    def get_testbench(self, random_wait: bool = False):
+    def get_testbench(self, random_ready: bool):
         """
         Creates testbench with multiple test cases
 
         Each element of self.context.test_cases represents a single test case
 
-        :param random_wait: whether or not to have random _wait signal in the while loop
+        :param random_ready: whether or not to have random ready signal in the while loop
         """
         if len(self.context.input_vars) == 0:
             raise RuntimeError(
@@ -414,7 +414,7 @@ class CodeGen:
             # While loop waitng for ready signal
             while_body: list[ver.Statement] = []
             # while_body.append(make_display_stmt())
-            if random_wait:
+            if random_ready:
                 while_body.append(ver.Statement("_ready = $urandom_range(0, 4) === 0;"))
             while_body.append(
                 ver.Statement(
@@ -464,17 +464,17 @@ class CodeGen:
             return module
         raise RuntimeError("Needs the context")
 
-    def get_testbench_lines(self, random_wait: bool = False):
+    def get_testbench_lines(self, random_ready: bool):
         """
         New Testbench as lines
         """
-        return self.get_testbench(random_wait=random_wait).to_lines()
+        return self.get_testbench(random_ready=random_ready).to_lines()
 
-    def get_testbench_str(self, random_ready: bool = False):
+    def get_testbench_str(self, random_ready: bool):
         """
         New testbench as str
         """
-        return self.get_testbench_lines(random_wait=random_ready).to_string()
+        return self.get_testbench_lines(random_ready=random_ready).to_string()
 
 
 class CaseBuilder:

@@ -50,14 +50,18 @@ def new_namespace(path: Path | str) -> dict[str, ir.Context]:
     return get_namespace(namespace)
 
 
-def namespace_to_file(path: Path, namespace: dict[str, ir.Context]) -> tuple[str, str]:
+def namespace_to_file(
+    path: Path, namespace: dict[str, ir.Context], config: Optional[CodegenConfig] = None
+) -> tuple[str, str]:
     """
     Writes modules and testbenches files
 
     :return: (modules, testbenches) for convenience
     """
+    if not config:
+        config = CodegenConfig()
 
-    module, testbench = namespace_to_verilog(namespace)
+    module, testbench = namespace_to_verilog(namespace, config)
 
     if all(map(lambda ns: ns.mode == Modes.OVERWRITE, namespace.values())):
         mode = "w"
