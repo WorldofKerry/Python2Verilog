@@ -20,7 +20,7 @@ def strip_ready(
     actual: Iterable[Union[tuple[str, ...], str]]
 ) -> Iterator[Union[tuple[str, ...], str]]:
     """
-    Assumes assumes first two signals to be ready and valid,
+    Assumes first two signals to be ready and valid,
     such that a row is [ready, valid, output0, output1, ...]
 
     Removes tailing messages, e.g. `$finish`.
@@ -46,7 +46,7 @@ def strip_valid(
     actual: Iterable[Union[tuple[str, ...], str]]
 ) -> Iterator[Union[tuple[int, ...], int]]:
     """
-    Assumes assumes first signal to be valid,
+    Assumes first signal to be valid,
     such that a row is [valid, output0, output1, ...]
 
     Throws if ready, but an output is 'x'.
