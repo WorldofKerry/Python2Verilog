@@ -157,25 +157,33 @@ class TestComplete(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.statistics.sort(key=lambda e: e["Test Name"])
-        df = pd.DataFrame(cls.statistics, columns=cls.statistics[0].keys())
-        title = f" Statistics for {cls.__class__.__name__} "
-        table = df.to_markdown()
-        table_width = len(table.partition("\n")[0])
-        pad = table_width - len(title)
-        result = (
-            "\n" + "=" * (pad // 2) + title + "=" * (pad // 2 + pad % 2) + "\n" + table
-        )
-        logging.warning(result)
-        if cls.write:
-            stats_file_name = (
-                os.path.commonprefix(
-                    list(map(lambda e: e["Test Name"], cls.statistics))
-                ).replace("::", "")
-                + ".csv"
+        if cls.statistics:
+            cls.statistics.sort(key=lambda e: e["Test Name"])
+            df = pd.DataFrame(cls.statistics, columns=cls.statistics[0].keys())
+            title = f" Statistics for {cls.__class__.__name__} "
+            table = df.to_markdown()
+            table_width = len(table.partition("\n")[0])
+            pad = table_width - len(title)
+            result = (
+                "\n"
+                + "=" * (pad // 2)
+                + title
+                + "=" * (pad // 2 + pad % 2)
+                + "\n"
+                + table
             )
-            with open(Path(__file__).parent / stats_file_name, mode="w") as f:
-                f.write(df.to_csv(index=False))
+            logging.warning(result)
+            if cls.write:
+                stats_file_name = (
+                    os.path.commonprefix(
+                        list(map(lambda e: e["Test Name"], cls.statistics))
+                    ).replace("::", "")
+                    + ".csv"
+                )
+                with open(Path(__file__).parent / stats_file_name, mode="w") as f:
+                    f.write(df.to_csv(index=False))
+        else:
+            logging.error("Statistics are empty")
 
     @parameterized.expand(
         input=PARAMETERS,
@@ -205,13 +213,18 @@ class TestComplete(TestCase):
                         "::", "_"
                     )
                 )
-                config = CodegenConfig(random_ready=False)
                 namespace_to_file(file_stem, ns, config)
                 context = get_context(verilogified)
                 cmd = iverilog.make_cmd(
                     context.testbench_name,
                     [file_stem + ".sv", file_stem + "_tb.sv"],
                 )
+                with open(file_stem + ".sv", mode="r") as f:
+                    assert f.read() == module
+                with open(file_stem + "_tb.sv", mode="r") as f:
+                    with open(file_stem + "_dump.sv", mode="w") as dump:
+                        dump.write(testbench)
+                    assert f.read() == testbench
                 logging.info(cmd)
 
             assert "urandom_range" in testbench

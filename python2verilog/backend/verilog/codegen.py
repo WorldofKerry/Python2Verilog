@@ -323,6 +323,7 @@ class CodeGen:
 
         :param random_ready: whether or not to have random ready signal in the while loop
         """
+        logging.debug(f"{config}")
         if len(self.context.input_vars) == 0:
             raise RuntimeError(
                 f"Input var names not deduced for {self.context.name}, "

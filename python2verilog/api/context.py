@@ -21,7 +21,7 @@ def context_to_codegen(context: ir.Context):
 
     :return: (codegen, ir)
     """
-    context = copy.copy(context)
+    context = copy.deepcopy(context)  # context should be changed to frozened
     ir_root, context = Generator2Graph(context).results
     logging.debug(
         f"context to codegen {ir_root.unique_id} {context.name} -O{context.optimization_level}"
