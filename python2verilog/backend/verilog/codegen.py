@@ -470,11 +470,11 @@ class CodeGen:
         """
         return self.get_testbench(random_wait=random_wait).to_lines()
 
-    def get_testbench_str(self, random_wait: bool = False):
+    def get_testbench_str(self, random_ready: bool = False):
         """
         New testbench as str
         """
-        return self.get_testbench_lines(random_wait=random_wait).to_string()
+        return self.get_testbench_lines(random_wait=random_ready).to_string()
 
 
 class CaseBuilder:

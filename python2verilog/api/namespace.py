@@ -6,11 +6,13 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
+from typing import Optional
 
 from python2verilog import ir
 from python2verilog.api.context import context_to_verilog
 from python2verilog.api.file_namespaces import _file_namespaces
 from python2verilog.api.modes import Modes
+from python2verilog.backend.verilog.config import CodegenConfig
 
 
 def get_namespace(path: Path | str) -> dict[str, ir.Context]:
@@ -72,16 +74,20 @@ def namespace_to_file(path: Path, namespace: dict[str, ir.Context]) -> tuple[str
     return module, testbench
 
 
-def namespace_to_verilog(namespace: dict[str, ir.Context]) -> tuple[str, str]:
+def namespace_to_verilog(
+    namespace: dict[str, ir.Context], config: Optional[CodegenConfig] = None
+) -> tuple[str, str]:
     """
     Namespace to modules and testbenches str
 
     :return: (modules, testbenches)
     """
+    if not config:
+        config = CodegenConfig()
     module = []
     testbench = []
     for context in namespace.values():
-        mod, tb = context_to_verilog(context=context)
+        mod, tb = context_to_verilog(context=context, config=config)
         module.append(mod)
         testbench.append(tb)
     return "\n".join(module), "\n".join(testbench)

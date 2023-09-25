@@ -1,7 +1,3 @@
-"""
-Test suite for functions that call other functions
-"""
-
 import inspect
 import logging
 import warnings
@@ -11,7 +7,7 @@ from typing import Union
 from unittest import TestCase
 
 import pytest
-from parameterized import parameterized, parameterized_class
+from parameterized import parameterized
 
 from python2verilog import (
     Modes,
@@ -30,23 +26,28 @@ from .utils import make_tuple, name_func
 
 @pytest.mark.usefixtures("argparse")
 class TestComplete(TestCase):
-    # colored_circle types not inferred
     @parameterized.expand(
         [
-            ([olympic_logo, colored_circle], [(10, 10, 4), (13, 13, 7)]),
+            (fib, [(10)]),
+            (floor_div, [(13)]),
+            (operators, [(13, 17)]),
+            (multiplier, [(13, 17)]),
+            (division, [(6, 7, 10), (2, 3, 10)]),
+            (circle_lines, [(10, 10, 4), (13, 13, 7)]),
+            (happy_face, [(10, 10, 4), (13, 13, 7)]),
+            (rectangle_filled, [(10, 10, 4, 5), (13, 13, 7, 11)]),
+            (rectangle_lines, [(10, 10, 4, 5), (13, 13, 7, 11)]),
         ],
         name_func=name_func,
     )
-    def test_performance_multi(
-        self, funcs: list[FunctionType], test_cases: list[Union[tuple[int, ...], int]]
+    def test_performance(
+        self, func: FunctionType, test_cases: list[Union[tuple[int, ...], int]]
     ):
         for opti_level in self.args.optimization_levels:
             ns = {}
-
-            for func in reversed(funcs):  # First function is tested upon
-                verilogified = verilogify(
-                    namespace=ns, optimization_level=opti_level, mode=Modes.OVERWRITE
-                )(func)
+            verilogified = verilogify(
+                namespace=ns, optimization_level=opti_level, mode=Modes.OVERWRITE
+            )(func)
 
             for case in test_cases:
                 case = make_tuple(case)
