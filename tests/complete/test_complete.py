@@ -142,5 +142,8 @@ class TestComplete(TestCase):
                     verilogified, module, testbench, timeout=1 + len(expected) // 64
                 )
             )
+            logging.info(
+                f"Actual len {len(actual)}: {str(actual[:min(len(actual), 5)])[:-1]}, ...]"
+            )
             self.assertTrue(len(actual) > 0)
             self.assertListEqual(actual, expected)
