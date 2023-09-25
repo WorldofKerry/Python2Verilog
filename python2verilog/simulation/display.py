@@ -17,7 +17,7 @@ def parse_stdout(stdout: str) -> Generator[tuple[str, ...], None, None]:
 
 
 def strip_signals(
-    actual_raw: Iterable[tuple[str, ...]],
+    actual_raw: Iterable[tuple[str, ...]], include_invalid: bool
 ) -> Generator[Union[tuple[int, ...], int], None, None]:
     """
     Implementation-specific (based on testbench output)
@@ -29,15 +29,25 @@ def strip_signals(
     """
     for row in actual_raw:
         if len(row) >= 2:  # [valid, ready, ...]
-            if row[0] == "1" and row[1] == "1":
-                try:
+            if include_invalid:
+                if row[1] == "1":  # ready == 1
                     outputs = row[2:]
                     if len(outputs) == 1:
-                        yield int(outputs[0])
+                        yield outputs[0]
                     else:
-                        yield tuple(int(elem) for elem in outputs)
-                except ValueError as e:
-                    raise UnknownValue(f"Unknown logic value in outputs {row}") from e
+                        yield tuple(elem for elem in outputs)
+            else:
+                if row[0] == "1" and row[1] == "1":
+                    try:
+                        outputs = row[2:]
+                        if len(outputs) == 1:
+                            yield int(outputs[0])
+                        else:
+                            yield tuple(int(elem) for elem in outputs)
+                    except ValueError as e:
+                        raise UnknownValue(
+                            f"Unknown logic value in outputs {row}"
+                        ) from e
         else:
             if "$finish" in " ".join(row):
                 pass

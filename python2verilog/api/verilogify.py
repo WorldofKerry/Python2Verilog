@@ -145,6 +145,7 @@ def get_actual(
     module: str,
     testbench: str,
     timeout: Optional[int] = None,
+    include_invalid: bool = False,
 ) -> Generator[Union[tuple[int, ...], int], None, None]:
     """
     Get expected output of testbench
@@ -157,4 +158,4 @@ def get_actual(
             timeout=timeout,
         )
         assert not err, f"{stdout} {err}"
-        yield from strip_signals(parse_stdout(stdout))
+        yield from strip_signals(parse_stdout(stdout), include_invalid=include_invalid)

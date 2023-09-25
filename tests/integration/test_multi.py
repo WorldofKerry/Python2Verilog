@@ -28,11 +28,9 @@ from python2verilog.simulation import iverilog
 from .functions import *
 from .utils import make_tuple, name_func
 
-PARAMETERS = (
-    [
-        ([olympic_logo, colored_circle], [(10, 10, 4), (13, 13, 7)]),
-    ],
-)
+PARAMETERS = [
+    ([olympic_logo, colored_circle], [(10, 10, 4), (13, 13, 7)]),
+]
 
 
 @pytest.mark.usefixtures("argparse")

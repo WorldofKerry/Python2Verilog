@@ -1,3 +1,5 @@
+import warnings
+from dataclasses import dataclass
 from types import FunctionType
 from typing import Union
 
