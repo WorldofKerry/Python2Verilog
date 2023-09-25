@@ -5,7 +5,7 @@ Verilog Codegen
 import itertools
 import logging
 import warnings
-from typing import Generator, cast
+from typing import Generator, Iterator, cast
 
 from python2verilog.backend.verilog.config import TestbenchConfig
 from python2verilog.optimizer.optimizer import backwards_replace
@@ -84,7 +84,7 @@ class CodeGen:
             str_ += ");"
             return str_
 
-        def create_instance_zeroed_signals() -> Generator[ver.Statement, None, None]:
+        def create_instance_zeroed_signals() -> Iterator[ver.Statement]:
             """
             Instance signals that should always be set to zero be default
             """

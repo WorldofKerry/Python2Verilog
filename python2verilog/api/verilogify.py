@@ -11,7 +11,7 @@ import textwrap
 import warnings
 from functools import wraps
 from types import FunctionType
-from typing import Generator, Optional, Protocol, Union, cast
+from typing import Generator, Iterator, Optional, Protocol, Union, cast
 
 import __main__ as main
 
@@ -131,7 +131,7 @@ def get_original_func(verilogified: FunctionType) -> FunctionType:
     return verilogified._python2verilog_original_func  # type: ignore # pylint: disable=protected-access
 
 
-def get_expected(verilogified: FunctionType) -> Generator[tuple[int, ...], None, None]:
+def get_expected(verilogified: FunctionType) -> Iterator[tuple[int, ...]]:
     """
     Get expected output of testbench
     """
@@ -145,7 +145,7 @@ def get_actual_raw(
     module: str,
     testbench: str,
     timeout: Optional[int] = None,
-) -> Generator[Union[tuple[str, ...], str], None, None]:
+) -> Iterator[Union[tuple[str, ...], str]]:
     """
     Get actual output of the testbench
 
@@ -167,7 +167,7 @@ def get_actual(
     module: str,
     testbench: str,
     timeout: Optional[int] = None,
-) -> Generator[Union[tuple[int, ...], int], None, None]:
+) -> Iterator[Union[tuple[int, ...], int]]:
     """
     Get actual output of the testbench with rows
 

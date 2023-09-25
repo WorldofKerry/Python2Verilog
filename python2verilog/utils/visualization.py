@@ -3,7 +3,7 @@ Visualization Tools
 """
 
 import logging
-from typing import Generator, Optional, Union, cast
+from typing import Generator, Iterator, Optional, Union, cast
 
 import matplotlib
 import matplotlib.pyplot as plt  # type: ignore
@@ -17,8 +17,8 @@ def make_visual(generator_inst, directory: Optional[str] = None):
     """
 
     def make_triple(
-        inst: Generator[Union[tuple[int, ...], int], None, None]
-    ) -> Generator[tuple[int, int, int], None, None]:
+        inst: Iterator[Union[tuple[int, ...], int]]
+    ) -> Iterator[tuple[int, int, int]]:
         """
         Makes a generator yield 3 values by
         truncating or padding values

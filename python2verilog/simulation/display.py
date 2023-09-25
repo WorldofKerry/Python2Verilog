@@ -3,10 +3,10 @@ Parses Verilog display statements
 """
 
 import logging
-from typing import Generator, Iterable, Union
+from typing import Generator, Iterable, Iterator, Union
 
 
-def parse_stdout(stdout: str) -> Generator[tuple[str, ...], None, None]:
+def parse_stdout(stdout: str) -> Iterator[tuple[str, ...]]:
     """
     Implementation-specific (based on testbench output)
     Yields the signals and outputs for a display statement
@@ -18,7 +18,7 @@ def parse_stdout(stdout: str) -> Generator[tuple[str, ...], None, None]:
 
 def strip_ready(
     actual: Iterable[Union[tuple[str, ...], str]]
-) -> Generator[Union[tuple[str, ...], str], None, None]:
+) -> Iterator[Union[tuple[str, ...], str]]:
     """
     Assumes assumes first two signals to be ready and valid,
     such that a row is [ready, valid, output0, output1, ...]
@@ -44,7 +44,7 @@ def strip_ready(
 
 def strip_valid(
     actual: Iterable[Union[tuple[str, ...], str]]
-) -> Generator[Union[tuple[int, ...], int], None, None]:
+) -> Iterator[Union[tuple[int, ...], int]]:
     """
     Assumes assumes first signal to be valid,
     such that a row is [valid, output0, output1, ...]
