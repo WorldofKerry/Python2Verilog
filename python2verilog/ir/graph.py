@@ -9,7 +9,7 @@ Element := Vertex | Edge
 
 from __future__ import annotations
 
-from typing import Generator, Optional
+from typing import Generator, Iterator, Optional
 
 from ..utils.assertions import get_typed, get_typed_list, get_typed_optional
 from . import expressions as expr
@@ -263,7 +263,7 @@ class IfElseNode(Node, Element):
         assert self._optimal_true_edge and self._optimal_false_edge
         return [self._optimal_true_edge, self._optimal_false_edge]
 
-    def traverse_condition_vars(self) -> Generator[expr.Var, None, None]:
+    def traverse_condition_vars(self) -> Iterator[expr.Var]:
         """
         Yields variables of the if conditional, doing a DPS
         """

@@ -3,6 +3,7 @@ import unittest
 from io import StringIO
 
 from python2verilog.api import Modes, context_to_verilog, get_context, verilogify
+from python2verilog.backend.verilog.config import CodegenConfig
 
 
 class TestVerilogify(unittest.TestCase):
@@ -21,6 +22,8 @@ class TestVerilogify(unittest.TestCase):
         logging.debug(str(namespace[count.__name__]))
         self.assertEqual(count.__name__, get_context(count).name)
 
-        module, testbench = context_to_verilog(get_context(count))
+        module, testbench = context_to_verilog(
+            get_context(count), config=CodegenConfig()
+        )
         self.assertIn(count.__name__, testbench)
         self.assertIn(count.__name__, module)

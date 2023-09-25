@@ -201,7 +201,7 @@ class Generator2Graph:
             )
         elif isinstance(stmt, pyast.Constant):
             assert "\n" in stmt.value, f"Error: parsing {pyast.dump(stmt)}"
-            logging.info(f"Parsing triple-quote comment {stmt.value}")
+            logging.debug(f"Parsing triple-quote comment {stmt.value}")
             # Fix for triple-quote comments in code
             edge = ir.ClockedEdge(unique_id=f"{prefix}_e", child=nextt)
             cur_node = ir.AssignNode(
@@ -277,7 +277,7 @@ class Generator2Graph:
             outputs = [ir.Var(stmt.target.id)]
         else:
             outputs = list(map(name_to_var, stmt.target.elts))
-        assert len(outputs) == len(inst.outputs)
+        assert len(outputs) == len(inst.outputs), f"{outputs} {inst.outputs}"
         capture_head = ir.AssignNode(
             unique_id=next(unique_node),
             lvalue=inst.signals.ready,

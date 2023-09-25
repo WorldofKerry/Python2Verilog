@@ -6,7 +6,7 @@ import pytest
 from python2verilog.api import verilogify
 from python2verilog.api.modes import Modes
 from python2verilog.api.namespace import namespace_to_verilog, new_namespace
-from python2verilog.api.verilogify import get_actual, get_expected
+from python2verilog.api.verilogify import get_actual, get_actual_raw, get_expected
 from python2verilog.simulation import iverilog
 
 

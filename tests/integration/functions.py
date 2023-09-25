@@ -233,7 +233,9 @@ def division(dividend, divisor, precision):
         iter += 1
 
 
-def colored_circle(centre_x, centre_y, radius, color):
+def colored_circle(
+    centre_x: int, centre_y: int, radius: int, color: int
+) -> tuple[int, int, int]:
     offset_y = 0
     offset_x = radius
     crit = 1 - radius
@@ -271,3 +273,22 @@ def olympic_logo(mid_x, mid_y, radius):
     gen = colored_circle(mid_x - spread, mid_y - spread, radius, 300)
     for x, y, color in gen:
         yield x, y, color
+
+
+def hrange(base: int, step: int, limit: int) -> int:
+    """
+    Simplified version of Python's built-in range function
+    """
+    while base < limit:
+        yield base
+        base += step
+
+
+def dupe(base: int, step: int, limit: int) -> int:
+    """
+    Dupe hrange
+    """
+    inst = hrange(base, step, limit)
+    for out in inst:
+        yield out
+        yield out

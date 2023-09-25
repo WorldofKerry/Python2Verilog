@@ -4,7 +4,7 @@ Protocol signals used by the converter
 
 import warnings
 from dataclasses import dataclass, fields
-from typing import Generator
+from typing import Generator, Iterator
 
 from python2verilog.ir.expressions import Var
 
@@ -38,21 +38,21 @@ class ProtocolSignals(InstanceSignals):
         for key in self.__dict__:
             yield key
 
-    def values(self) -> Generator[Var, None, None]:
+    def values(self) -> Iterator[Var]:
         """
         Values
         """
         for value in self.__dict__.values():
             yield value
 
-    def items(self) -> Generator[tuple[str, Var], None, None]:
+    def items(self) -> Iterator[tuple[str, Var]]:
         """
         Key, Value pairs
         """
         for key, value in self.__dict__.items():
             yield key, value
 
-    def instance_specific_items(self) -> Generator[tuple[str, Var], None, None]:
+    def instance_specific_items(self) -> Iterator[tuple[str, Var]]:
         """
         Get the instance-specific signals
         """
@@ -61,7 +61,7 @@ class ProtocolSignals(InstanceSignals):
             if key in instance_signals:
                 yield key, value
 
-    def instance_specific_values(self) -> Generator[Var, None, None]:
+    def instance_specific_values(self) -> Iterator[Var]:
         """
         Get the instance-specific signals
         """

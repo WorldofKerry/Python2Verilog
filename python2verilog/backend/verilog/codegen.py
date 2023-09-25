@@ -5,8 +5,9 @@ Verilog Codegen
 import itertools
 import logging
 import warnings
-from typing import Generator, cast
+from typing import Generator, Iterator, cast
 
+from python2verilog.backend.verilog.config import TestbenchConfig
 from python2verilog.optimizer.optimizer import backwards_replace
 from python2verilog.utils.lines import Lines
 
@@ -83,7 +84,7 @@ class CodeGen:
             str_ += ");"
             return str_
 
-        def create_instance_zeroed_signals() -> Generator[ver.Statement, None, None]:
+        def create_instance_zeroed_signals() -> Iterator[ver.Statement]:
             """
             Instance signals that should always be set to zero be default
             """
@@ -314,14 +315,15 @@ class CodeGen:
         """
         return self.get_module_lines().to_string()
 
-    def get_testbench(self, random_wait: bool = False):
+    def get_testbench(self, config: TestbenchConfig):
         """
         Creates testbench with multiple test cases
 
         Each element of self.context.test_cases represents a single test case
 
-        :param random_wait: whether or not to have random _wait signal in the while loop
+        :param random_ready: whether or not to have random ready signal in the while loop
         """
+        logging.debug(f"{config}")
         if len(self.context.input_vars) == 0:
             raise RuntimeError(
                 f"Input var names not deduced for {self.context.name}, "
@@ -335,13 +337,13 @@ class CodeGen:
 
         def make_display_stmt():
             """
-            Creates a display statement for valid + outputs
+            Creates a display statement for protocol signals and outputs
 
-            $display("%0d, ...", _valid, ...);
+            $display("%0d, ...", ...);
             """
             string = '$display("%0d, %0d, '
             string += "%0d, " * (len(self.context.output_vars) - 1)
-            string += '%0d", _valid, _ready'
+            string += '%0d", _ready, _valid'
             for var in self.context.output_vars:
                 string += f", {var.ver_name}"
             string += ");"
@@ -414,7 +416,7 @@ class CodeGen:
             # While loop waitng for ready signal
             while_body: list[ver.Statement] = []
             # while_body.append(make_display_stmt())
-            if random_wait:
+            if config.random_ready:
                 while_body.append(ver.Statement("_ready = $urandom_range(0, 4) === 0;"))
             while_body.append(
                 ver.Statement(
@@ -464,17 +466,17 @@ class CodeGen:
             return module
         raise RuntimeError("Needs the context")
 
-    def get_testbench_lines(self, random_wait: bool = False):
+    def get_testbench_lines(self, config: TestbenchConfig):
         """
         New Testbench as lines
         """
-        return self.get_testbench(random_wait=random_wait).to_lines()
+        return self.get_testbench(config=config).to_lines()
 
-    def get_testbench_str(self, random_wait: bool = False):
+    def get_testbench_str(self, config: TestbenchConfig):
         """
         New testbench as str
         """
-        return self.get_testbench_lines(random_wait=random_wait).to_string()
+        return self.get_testbench_lines(config=config).to_string()
 
 
 class CaseBuilder:

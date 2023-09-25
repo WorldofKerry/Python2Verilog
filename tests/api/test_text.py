@@ -30,8 +30,8 @@ class TestConvert(unittest.TestCase):
     #         raise subprocess.CalledProcessError(CMD, "non-zero return code")
 
     def test_testbench(self):
-        CMD = 'python3 -m python2verilog tests/integration/data/happy_face/python.py -n happy_face \
-                -o tests/api/module.sv -t tests/api/testbench.sv -c "[(4, 8, 3), (12, 17, 7)]"'
+        CMD = 'python3 -m python2verilog tests/api/sample.py -n hrange \
+                -o tests/api/module.sv -t tests/api/testbench.sv -c "[(0, 1, 10), (3, 7, 25)]"'
         result = subprocess.run(
             CMD,
             shell=True,
@@ -43,7 +43,7 @@ class TestConvert(unittest.TestCase):
             raise subprocess.CalledProcessError(CMD, "non-zero return code")
 
     def test_err(self):
-        CMD = "python3 -m python2verilog tests/integration/data/happy_face/python.py -n happy_face \
+        CMD = "python3 -m python2verilog tests/api/sample.py -n hrange \
                 -o tests/api/module.sv -t tests/api/testbench.sv"
 
         def tb_path_no_case():
