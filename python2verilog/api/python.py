@@ -73,7 +73,7 @@ def py_to_verilog(
         optimization_level=optimization_level,
         write=write,
     )
-    return code_gen.get_module_str(), code_gen.get_testbench_str(CodegenConfig())
+    return code_gen.get_module_str(), code_gen.get_testbench_str(TestbenchConfig())
 
 
 def py_to_context(
