@@ -29,25 +29,16 @@ def strip_signals(
     """
     for row in actual_raw:
         if len(row) >= 2:  # [valid, ready, ...]
-            if include_invalid:
-                if row[1] == "1":  # ready == 1
+            if (include_invalid or row[0] == "1") and row[1] == "1":
+                cast = str if include_invalid else int
+                try:
                     outputs = row[2:]
                     if len(outputs) == 1:
-                        yield outputs[0]
+                        yield cast(outputs[0])
                     else:
-                        yield tuple(elem for elem in outputs)
-            else:
-                if row[0] == "1" and row[1] == "1":
-                    try:
-                        outputs = row[2:]
-                        if len(outputs) == 1:
-                            yield int(outputs[0])
-                        else:
-                            yield tuple(int(elem) for elem in outputs)
-                    except ValueError as e:
-                        raise UnknownValue(
-                            f"Unknown logic value in outputs {row}"
-                        ) from e
+                        yield tuple(cast(elem) for elem in outputs)
+                except ValueError as e:
+                    raise UnknownValue(f"Unknown logic value in outputs {row}") from e
         else:
             if "$finish" in " ".join(row):
                 pass
