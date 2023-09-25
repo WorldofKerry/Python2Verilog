@@ -56,6 +56,6 @@ def context_to_verilog_and_dump(context: ir.Context) -> tuple[str, str, str]:
     ver_code_gen, ir_root = context_to_codegen(context)
 
     module_str = ver_code_gen.get_module_str()
-    tb_str = ver_code_gen.get_testbench_str(TestbenchConfig())
+    tb_str = ver_code_gen.get_testbench_str(CodegenConfig())
 
     return module_str, tb_str, ir.create_cytoscape_elements(ir_root)
