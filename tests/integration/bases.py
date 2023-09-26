@@ -36,46 +36,15 @@ from .utils import make_tuple
 
 
 class BaseTest:
-    # statistics: list[dict] = []
-    # write: bool = False
     def __init_subclass__(cls) -> None:
         cls.statistics = []
         cls.write = []
 
-    @staticmethod
-    def make_statistics(cls):
-        if cls.statistics:
-            cls.statistics.sort(key=lambda e: e["Test Name"])
-            df = pd.DataFrame(cls.statistics, columns=cls.statistics[0].keys())
-            title = f" Statistics for {cls.__name__} "
-            table = df.to_markdown()
-            table_width = len(table.partition("\n")[0])
-            pad = table_width - len(title)
-            result = (
-                "\n"
-                + "=" * (pad // 2)
-                + title
-                + "=" * (pad // 2 + pad % 2)
-                + "\n"
-                + table
-            )
-            logging.warning(result)
-            if cls.write:
-                stats_file_name = (
-                    os.path.commonprefix(
-                        list(map(lambda e: e["Test Name"], cls.statistics))
-                    ).replace("::", "")
-                    + ".csv"
-                )
-                with open(Path(__file__).parent / stats_file_name, mode="w") as f:
-                    f.write(df.to_csv(index=False))
-        else:
-            logging.error("Statistics are empty")
-
-    def multi_perf(
+    def __test(
         self,
         funcs: Union[list[FunctionType], FunctionType],
         test_cases: list[Union[tuple[int, ...], int]],
+        config: CodegenConfig,
     ):
         if not isinstance(funcs, list):
             funcs = [funcs]
@@ -94,8 +63,11 @@ class BaseTest:
                 case = make_tuple(case)
                 verilogified(*case)
 
-            config = CodegenConfig(random_ready=False)
             module, testbench = namespace_to_verilog(ns, config)
+
+            if config.random_ready:
+                assert "urandom_range" in testbench
+
             test_name = str(
                 Path(__file__).parent
                 / (self.__dict__["_testMethodName"] + f"::O{opti_level}")
@@ -187,61 +159,46 @@ class BaseTest:
 
             self.__class__.statistics.append(statistics)
 
+    def multi_perf(
+        self,
+        funcs: Union[list[FunctionType], FunctionType],
+        test_cases: list[Union[tuple[int, ...], int]],
+    ):
+        self.__test(funcs, test_cases, CodegenConfig(random_ready=False))
+
     def multi_correct(
         self,
         funcs: Union[list[FunctionType], FunctionType],
         test_cases: list[Union[tuple[int, ...], int]],
     ):
-        if not isinstance(funcs, list):
-            funcs = [funcs]
+        self.__test(funcs, test_cases, CodegenConfig(random_ready=True))
 
-        for opti_level in self.args.optimization_levels:
-            ns = {}
-
-            for func in reversed(funcs):  # First function is tested upon
-                verilogified = verilogify(
-                    namespace=ns, optimization_level=opti_level, mode=Modes.OVERWRITE
-                )(func)
-
-            for case in test_cases:
-                case = make_tuple(case)
-                verilogified(*case)
-
-            config = CodegenConfig(random_ready=True)
-            module, testbench = namespace_to_verilog(ns, config)
-            if self.args.write:
-                file_stem = str(
-                    Path(__file__).parent
-                    / (self.__dict__["_testMethodName"] + f"::O{opti_level}").replace(
-                        "::", "_"
-                    )
-                )
-                namespace_to_file(file_stem, ns, config)
-                context = get_context(verilogified)
-                cmd = iverilog.make_cmd(
-                    context.testbench_name,
-                    [file_stem + ".sv", file_stem + "_tb.sv"],
-                )
-                with open(file_stem + ".sv", mode="r") as f:
-                    assert f.read() == module
-                with open(file_stem + "_tb.sv", mode="r") as f:
-                    with open(file_stem + "_dump.sv", mode="w") as dump:
-                        dump.write(testbench)
-                    assert f.read() == testbench
-                logging.info(cmd)
-
-            assert "urandom_range" in testbench
-            expected = list(get_expected(verilogified))
-            actual = list(
-                get_actual(
-                    verilogified,
-                    module,
-                    testbench,
-                    timeout=1 + len(expected) // 64,
-                )
+    @staticmethod
+    def make_statistics(cls):
+        if cls.statistics:
+            cls.statistics.sort(key=lambda e: e["Test Name"])
+            df = pd.DataFrame(cls.statistics, columns=cls.statistics[0].keys())
+            title = f" Statistics for {cls.__name__} "
+            table = df.to_markdown()
+            table_width = len(table.partition("\n")[0])
+            pad = table_width - len(title)
+            result = (
+                "\n"
+                + "=" * (pad // 2)
+                + title
+                + "=" * (pad // 2 + pad % 2)
+                + "\n"
+                + table
             )
-            logging.info(
-                f"Actual len {len(actual)}: {str(actual[:min(len(actual), 5)])[:-1]}, ...]"
-            )
-            self.assertTrue(len(actual) > 0, f"{actual} {expected}")
-            self.assertListEqual(actual, expected)
+            logging.warning(result)
+            if cls.write:
+                stats_file_name = (
+                    os.path.commonprefix(
+                        list(map(lambda e: e["Test Name"], cls.statistics))
+                    ).replace("::", "")
+                    + ".csv"
+                )
+                with open(Path(__file__).parent / stats_file_name, mode="w") as f:
+                    f.write(df.to_csv(index=False))
+        else:
+            logging.error("Statistics are empty")
