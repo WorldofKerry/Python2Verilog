@@ -1,35 +1,17 @@
-import inspect
-import logging
-import os
-import re
-import subprocess
-import warnings
-from pathlib import Path
+"""
+Test suite for basic functions
+"""
+
 from types import FunctionType
 from typing import Union
 from unittest import TestCase
 
-import pandas as pd
 import pytest
 from parameterized import parameterized
 
-from python2verilog import (
-    Modes,
-    get_actual_raw,
-    get_context,
-    get_expected,
-    namespace_to_file,
-    namespace_to_verilog,
-    verilogify,
-)
-from python2verilog.api.verilogify import get_actual
-from python2verilog.backend.verilog.config import CodegenConfig
-from python2verilog.simulation import iverilog
-from python2verilog.simulation.display import strip_ready, strip_valid
-
 from .bases import BaseTest
 from .functions import *
-from .utils import make_tuple, name_func
+from .utils import name_func
 
 PARAMETERS = [
     (fib, [(10)]),

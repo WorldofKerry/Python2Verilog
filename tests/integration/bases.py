@@ -7,16 +7,11 @@ import logging
 import os
 import re
 import subprocess
-import unittest
-import warnings
 from pathlib import Path
 from types import FunctionType
 from typing import Union
-from unittest import TestCase
 
 import pandas as pd
-import pytest
-from parameterized import parameterized
 
 from python2verilog import (
     Modes,
@@ -27,7 +22,6 @@ from python2verilog import (
     namespace_to_verilog,
     verilogify,
 )
-from python2verilog.api.verilogify import get_actual
 from python2verilog.backend.verilog.config import CodegenConfig
 from python2verilog.simulation import iverilog
 from python2verilog.simulation.display import strip_ready, strip_valid
