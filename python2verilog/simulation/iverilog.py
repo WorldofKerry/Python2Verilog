@@ -131,7 +131,7 @@ def run_with_fifos(
         top_level_module=top_level_module,
         files=input_fifos.keys(),
     )
-    logging.info(f"{iverilog_cmd}")
+    logging.info(f"Simulation with command:\n{iverilog_cmd}")
     return _run_cmd_with_fifos(
         command=iverilog_cmd, input_fifos=input_fifos, timeout=timeout
     )
