@@ -15,7 +15,7 @@ from unittest import TestCase
 
 import pandas as pd
 import pytest
-from parameterized import parameterized, parameterized_class
+from parameterized import parameterized
 
 from python2verilog import (
     Modes,
@@ -35,6 +35,7 @@ from .functions import *
 from .utils import make_tuple, name_func
 
 PARAMETERS = [
+    ([double_for, hrange], [3, 20]),
     ([olympic_logo, colored_circle], [(10, 10, 4), (13, 13, 7)]),
     ([dupe, hrange], [(0, 1, 10), (3, 7, 25)]),
 ]
@@ -49,7 +50,7 @@ class TestComplete(TestCase):
         input=PARAMETERS,
         name_func=name_func,
     )
-    def test_multi_performance(
+    def test_multi_perf(
         self, funcs: list[FunctionType], test_cases: list[Union[tuple[int, ...], int]]
     ):
         for opti_level in self.args.optimization_levels:
@@ -94,7 +95,7 @@ class TestComplete(TestCase):
             )
             actual = list(strip_valid(actual_with_invalid))
             logging.info(
-                f"Actual len {len(actual)}: {str(actual[:min(len(actual), 5)])[:-1]}, ...]"
+                f"Actual len {len(actual)}: {str(actual[:min(len(actual), 8)])[:-1]}, ...]"
             )
             self.assertTrue(len(actual) > 0, f"{actual} {expected}")
             self.assertListEqual(actual, expected)
@@ -189,7 +190,7 @@ class TestComplete(TestCase):
         input=PARAMETERS,
         name_func=name_func,
     )
-    def test_multi_correctness(
+    def test_multi_correct(
         self, funcs: list[FunctionType], test_cases: list[Union[tuple[int, ...], int]]
     ):
         for opti_level in self.args.optimization_levels:

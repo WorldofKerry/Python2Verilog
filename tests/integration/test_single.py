@@ -51,7 +51,7 @@ class TestComplete(TestCase):
         input=PARAMETERS,
         name_func=name_func,
     )
-    def test_single_performance(
+    def test_single_perf(
         self, func: FunctionType, test_cases: list[Union[tuple[int, ...], int]]
     ):
         for opti_level in self.args.optimization_levels:
@@ -182,7 +182,7 @@ class TestComplete(TestCase):
         input=PARAMETERS,
         name_func=name_func,
     )
-    def test_single_correctness(
+    def test_single_correct(
         self, func: FunctionType, test_cases: list[Union[tuple[int, ...], int]]
     ):
         for opti_level in self.args.optimization_levels:

@@ -118,7 +118,7 @@ class Context(GenericReprAndStr):
                     return type(0)
                 raise TypeError(f"{ast.dump(arg)}")
 
-            logging.info("Using type hints for input types")
+            logging.info(f"Using type hints of {self.name} for input types")
             input_args: list[ast.arg] = self.py_ast.args.args
             self.input_types = list(map(input_mapper, input_args))
         assert check_list(self.input_types), self
@@ -134,7 +134,7 @@ class Context(GenericReprAndStr):
                     return type(0)
                 raise TypeError(f"{ast.dump(arg)}")
 
-            logging.info("Using type hints for return types")
+            logging.info(f"Using type hints of {self.name} for return types")
             output_args: list[ast.arg]
             if isinstance(self.py_ast.returns, ast.Subscript):
                 assert isinstance(self.py_ast.returns.slice, ast.Tuple)
