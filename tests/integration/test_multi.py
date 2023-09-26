@@ -53,10 +53,6 @@ class TestMulti(TestCase, BaseTest):
     ):
         BaseTest.multi_perf(self, funcs, test_cases)
 
-    @classmethod
-    def tearDownClass(cls):
-        BaseTest.make_statistics(cls)
-
     @parameterized.expand(
         input=PARAMETERS,
         name_func=name_func,
@@ -65,3 +61,7 @@ class TestMulti(TestCase, BaseTest):
         self, funcs: list[FunctionType], test_cases: list[Union[tuple[int, ...], int]]
     ):
         BaseTest.multi_correct(self, funcs, test_cases)
+
+    @classmethod
+    def tearDownClass(cls):
+        BaseTest.make_statistics(cls)
