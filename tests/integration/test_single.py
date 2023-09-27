@@ -14,15 +14,15 @@ from .functions import *
 from .utils import name_func
 
 PARAMETERS = [
-    (fib, [(10)]),
-    (floor_div, [(13)]),
+    (fib, [10, 20]),
+    (floor_div, [13, 23]),
     (operators, [(13, 17)]),
-    (multiplier, [(13, 17)]),
-    (division, [(6, 7, 10), (2, 3, 10)]),
-    (circle_lines, [(10, 10, 4), (13, 13, 7)]),
-    (happy_face, [(10, 10, 4), (13, 13, 7)]),
-    (rectangle_filled, [(10, 10, 4, 5), (13, 13, 7, 11)]),
-    (rectangle_lines, [(10, 10, 4, 5), (13, 13, 7, 11)]),
+    (multiplier, [(13, 17), (78, 67)]),
+    (division, [(6, 7, 10), (2, 3, 30), (13, 17, 5)]),
+    (circle_lines, [(21, 37, 7), (79, 45, 43)]),
+    (happy_face, [(50, 51, 7), (76, 97, 43)]),
+    (rectangle_filled, [(32, 84, 5, 7), (64, 78, 23, 27)]),
+    (rectangle_lines, [(32, 84, 5, 7), (84, 96, 46, 89)]),
 ]
 
 
