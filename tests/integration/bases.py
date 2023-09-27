@@ -53,9 +53,10 @@ class BaseTest:
                     mode=Modes.OVERWRITE,
                 )(func)
 
-            map(make_tuple, test_cases)
+            logging.error(f"test_cases {list(test_cases)}")
+            test_cases = map(make_tuple, test_cases)
             if self.args.first_test:
-                test_cases = [test_cases[0]]
+                test_cases = [next(test_cases)]
             for case in test_cases:
                 verilogified(*case)
 
