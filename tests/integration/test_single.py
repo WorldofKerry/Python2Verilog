@@ -14,7 +14,7 @@ from .functions import *
 from .utils import name_func
 
 PARAMETERS = [
-    (fib, [10, 20]),
+    (fib, range(10, 31, 10)),
     (floor_div, [13, 23]),
     (operators, [(13, 17)]),
     (multiplier, [(13, 17), (78, 67)]),

@@ -3,7 +3,7 @@ Test suite for functions that call other functions
 """
 
 from types import FunctionType
-from typing import Union
+from typing import Iterable, Union
 from unittest import TestCase
 
 import pytest
@@ -27,7 +27,9 @@ class TestMulti(TestCase, BaseTest):
         name_func=name_func,
     )
     def test_perf(
-        self, funcs: list[FunctionType], test_cases: list[Union[tuple[int, ...], int]]
+        self,
+        funcs: Iterable[FunctionType],
+        test_cases: Iterable[Union[tuple[int, ...], int]],
     ):
         BaseTest.test_perf(self, funcs, test_cases)
 
@@ -36,7 +38,9 @@ class TestMulti(TestCase, BaseTest):
         name_func=name_func,
     )
     def test_correct(
-        self, funcs: list[FunctionType], test_cases: list[Union[tuple[int, ...], int]]
+        self,
+        funcs: Iterable[FunctionType],
+        test_cases: Iterable[Union[tuple[int, ...], int]],
     ):
         BaseTest.test_correct(self, funcs, test_cases)
 

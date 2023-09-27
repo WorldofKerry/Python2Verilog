@@ -9,7 +9,7 @@ import re
 import subprocess
 from pathlib import Path
 from types import FunctionType
-from typing import Union
+from typing import Iterable, Union
 
 import pandas as pd
 
@@ -36,12 +36,16 @@ class BaseTest:
 
     def __test(
         self,
-        funcs: Union[list[FunctionType], FunctionType],
-        test_cases: list[Union[tuple[int, ...], int]],
+        funcs: Union[Iterable[FunctionType], FunctionType],
+        test_cases: Iterable[Union[tuple[int, ...], int]],
         config: CodegenConfig,
     ):
         if not isinstance(funcs, list):
             funcs = [funcs]
+
+        if self.args.first_test:
+            test_cases = [next(iter(test_cases))]
+        test_cases = list(map(make_tuple, test_cases))
 
         for opti_level in self.args.optimization_levels:
             ns = {}
@@ -53,10 +57,6 @@ class BaseTest:
                     mode=Modes.OVERWRITE,
                 )(func)
 
-            logging.error(f"test_cases {list(test_cases)}")
-            test_cases = map(make_tuple, test_cases)
-            if self.args.first_test:
-                test_cases = [next(test_cases)]
             for case in test_cases:
                 verilogified(*case)
 
@@ -158,8 +158,8 @@ class BaseTest:
 
     def test_perf(
         self,
-        funcs: Union[list[FunctionType], FunctionType],
-        test_cases: list[Union[tuple[int, ...], int]],
+        funcs: Union[Iterable[FunctionType], FunctionType],
+        test_cases: Iterable[Union[tuple[int, ...], int]],
     ):
         """
         Performance test
@@ -168,8 +168,8 @@ class BaseTest:
 
     def test_correct(
         self,
-        funcs: Union[list[FunctionType], FunctionType],
-        test_cases: list[Union[tuple[int, ...], int]],
+        funcs: Union[Iterable[FunctionType], FunctionType],
+        test_cases: Iterable[Union[tuple[int, ...], int]],
     ):
         """
         Correctness test
