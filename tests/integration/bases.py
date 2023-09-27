@@ -53,8 +53,10 @@ class BaseTest:
                     mode=Modes.OVERWRITE,
                 )(func)
 
+            test_cases = map(make_tuple, test_cases)
+            if self.args.first_test:
+                test_cases = [next(test_cases)]
             for case in test_cases:
-                case = make_tuple(case)
                 verilogified(*case)
 
             module, testbench = namespace_to_verilog(ns, config)
