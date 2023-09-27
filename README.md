@@ -78,6 +78,6 @@ The online simulator [EDA Playground](https://edaplayground.com/) can be used as
 
 To run tests, use `python3 -m pytest`.
 
-Additional CLI flags can be found in [tests/conftest.py](tests/conftest.py).
+CLI arguments for test configuration can be found in [tests/conftest.py](tests/conftest.py).
 
 Use `git clean -dxf` to remove gitignored and generated files.
