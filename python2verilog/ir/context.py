@@ -112,7 +112,7 @@ class Context(GenericReprAndStr):
                 """
                 Maps a string annotation id to type
                 """
-                assert arg.annotation
+                assert arg.annotation, f"{ast.dump(arg)}"
                 assert isinstance(arg.annotation, ast.Name)
                 if arg.annotation.id == "int":
                     return type(0)
@@ -120,6 +120,7 @@ class Context(GenericReprAndStr):
 
             logging.info(f"Using type hints of {self.name} for input types")
             input_args: list[ast.arg] = self.py_ast.args.args
+            assert isinstance(input_args, list), f"{ast.dump(self.py_ast)}"
             self.input_types = list(map(input_mapper, input_args))
         assert check_list(self.input_types), self
         assert check_list(self.input_vars), self
@@ -141,6 +142,7 @@ class Context(GenericReprAndStr):
                 output_args = self.py_ast.returns.slice.elts
             else:
                 output_args = [self.py_ast.returns]
+            assert isinstance(output_args, list), f"{ast.dump(self.py_ast)}"
             self.output_types = list(map(output_mapper, output_args))
             self.default_output_vars()
 

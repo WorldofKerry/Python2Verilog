@@ -53,9 +53,9 @@ class BaseTest:
                     mode=Modes.OVERWRITE,
                 )(func)
 
-            test_cases = map(make_tuple, test_cases)
+            map(make_tuple, test_cases)
             if self.args.first_test:
-                test_cases = [next(test_cases)]
+                test_cases = [test_cases[0]]
             for case in test_cases:
                 verilogified(*case)
 
@@ -155,18 +155,24 @@ class BaseTest:
 
             self.__class__.statistics.append(statistics)
 
-    def multi_perf(
+    def test_perf(
         self,
         funcs: Union[list[FunctionType], FunctionType],
         test_cases: list[Union[tuple[int, ...], int]],
     ):
+        """
+        Performance test
+        """
         self.__test(funcs, test_cases, CodegenConfig(random_ready=False))
 
-    def multi_correct(
+    def test_correct(
         self,
         funcs: Union[list[FunctionType], FunctionType],
         test_cases: list[Union[tuple[int, ...], int]],
     ):
+        """
+        Correctness test
+        """
         self.__test(funcs, test_cases, CodegenConfig(random_ready=True))
 
     @staticmethod

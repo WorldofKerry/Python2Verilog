@@ -32,19 +32,19 @@ class TestSingle(TestCase, BaseTest):
         input=PARAMETERS,
         name_func=name_func,
     )
-    def test_multi_perf(
+    def test_perf(
         self, funcs: list[FunctionType], test_cases: list[Union[tuple[int, ...], int]]
     ):
-        BaseTest.multi_perf(self, funcs, test_cases)
+        BaseTest.test_perf(self, funcs, test_cases)
 
     @parameterized.expand(
         input=PARAMETERS,
         name_func=name_func,
     )
-    def test_multi_correct(
+    def test_correct(
         self, funcs: list[FunctionType], test_cases: list[Union[tuple[int, ...], int]]
     ):
-        BaseTest.multi_correct(self, funcs, test_cases)
+        BaseTest.test_correct(self, funcs, test_cases)
 
     @classmethod
     def tearDownClass(cls):
