@@ -15,8 +15,12 @@ from .utils import name_func
 
 PARAMETERS = [
     ([double_for, hrange], [3, 20]),
-    ([olympic_logo, colored_circle], [(10, 10, 4), (13, 13, 7)]),
     ([dupe, hrange], [(0, 1, 10), (3, 7, 73)]),
+    ([olympic_logo_naive, circle_lines], [(10, 10, 4), (13, 13, 7)]),
+    (
+        [olympic_logo, olympic_logo_mids, circle_lines],
+        [(10, 10, 4), (13, 13, 7)],
+    ),
 ]
 
 
