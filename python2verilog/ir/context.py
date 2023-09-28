@@ -252,7 +252,9 @@ class Context(GenericReprAndStr):
         Sets own output vars to default based on number of output variables
         """
         assert self.output_types and len(self.output_types) > 0
-        self._output_vars = [Var(f"out{i}") for i in range(len(self.output_types))]
+        self._output_vars = [
+            ExclusiveVar(f"out{i}") for i in range(len(self.output_types))
+        ]
 
     @property
     def global_vars(self):

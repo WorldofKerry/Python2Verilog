@@ -5,7 +5,7 @@ Optimizer for the Graph IR
 import copy
 import logging
 from functools import reduce
-from typing import Any, Callable, Iterator, Optional
+from typing import Any, Callable, Iterator, Optional, Union
 
 from python2verilog.utils.assertions import get_typed
 
@@ -30,13 +30,16 @@ def backwards_replace(expr: ir.Expression, mapping: dict[ir.Expression, ir.Expre
     If the expression matches a key in the mapping, it is replaced with
     the corresponding value in the mapping.
 
+    Note: ignores exclusive vars in replacement process
+
     :return: a copy of the updated expression.
     """
     expr = copy.deepcopy(expr)
     if isinstance(expr, ir.Var):
-        for key in mapping:
-            if key.to_string() == expr.to_string():
-                return mapping[key]
+        if not isinstance(expr, ir.ExclusiveVar):
+            for key in mapping:
+                if key.to_string() == expr.to_string():
+                    return mapping[key]
     elif isinstance(expr, (ir.UInt, ir.Int)):
         return expr
     elif isinstance(expr, (ir.BinOp, ir.UBinOp)):
@@ -63,15 +66,7 @@ def graph_apply_mapping(
 
     :return: a node with the mapping applied
     """
-    try:
-        node = copy.copy(node)
-    except RecursionError as e:
-        raise RecursionError(f"{node}") from e
-    if isinstance(node, ir.AssignNode):
-        node.rvalue = backwards_replace(node.rvalue, mapping)
-    else:
-        raise ValueError(f"Cannot do backwards replace on {node}")
-    return node
+    return copy.copy(node.lvalue), backwards_replace(node.rvalue, mapping)
 
 
 def graph_update_mapping(
@@ -109,7 +104,7 @@ class OptimizeGraph:
 
     def __init__(self, root: ir.Node, threshold: int = 0):
         self.unique_counter = 0  # warning due to recursion can't be static var of func
-        self.__graph_optimize(root, threshold=threshold)
+        self.optimize(root, threshold=threshold)
 
     def make_unique(self):
         """
@@ -146,18 +141,18 @@ class OptimizeGraph:
         """
 
     @staticmethod
-    def filter_for_exclusive(variables) -> Iterator[ir.ExclusiveVar]:
+    def exclusive_vars(variables) -> Iterator[ir.ExclusiveVar]:
         """
         Filters for exclusive variables
         """
-        yield from filter(lambda var: isinstance(var, ir.ExclusiveVar), variables)
+        return filter(lambda var: isinstance(var, ir.ExclusiveVar), variables)
 
     @staticmethod
     def map_to_ver_name(variables) -> Iterator[str]:
         """
         Maps a variable to its ver_name
         """
-        yield from map(lambda var: var.ver_name, variables)
+        return map(lambda var: var.ver_name, variables)
 
     @staticmethod
     def chain_generators(
@@ -170,32 +165,109 @@ class OptimizeGraph:
             iterable = func(iterable)
         yield from iterable
 
+    # Eventually yield nodes should be removed and be replaced with exclusive vars
+    YIELD_VISITOR_ID = "__YIELD_VISITOR_ID"
+
     def helper(
         self,
         edge: ir.Edge,
         mapping: dict[ir.Expression, ir.Expression],
-        visited: dict[str, int],
+        visited: dict[Union[str, ir.Var], int],
         threshold: int,
     ) -> ir.Edge:
         """
         Recursive helper
+
+        :param visited: variables
         """
-        if isinstance(edge, ir.NonClockedEdge):
+        node = edge.child
+        assert node
+
+        logging.debug(f"{self.helper.__name__} {edge.child} {mapping}")
+
+        # Check for cyclic paths
+        if node.unique_id in visited and visited[node.unique_id] > threshold:
+            if isinstance(edge, ir.ClockedEdge):
+                return edge
+            else:
+                raise RuntimeError()
+
+        # Exclusive vars can only be visited once
+        exclusive_vars = set(self.exclusive_vars(node.variables()))
+        if exclusive_vars & visited.keys():
             return edge
 
-        if edge.child:
-            # logging.error(
-            #     f"{list(self.filter_for_exclusive(edge.child.visit_variables()))}"
-            # )
-            logging.error(
-                f"{list(self.chain_generators(edge.child.visit_variables(), self.filter_for_exclusive, self.map_to_ver_name))}"
-            )
-        return ir.ClockedEdge(
-            unique_id=f"{edge.unique_id}_{self.make_unique()}_optimal",
-            child=edge.child,
-        )
+        # Update visited
+        visited.update({var: 1 for var in exclusive_vars})
+        visited[node.unique_id] = visited.get(node.unique_id, 0) + 1
 
-    def __graph_optimize(
+        new_edge: ir.Edge = ir.NonClockedEdge(
+            unique_id=f"{edge.unique_id}_{self.make_unique()}_optimal"
+        )
+        if isinstance(node, ir.IfElseNode):
+            new_edge.child = ir.IfElseNode(
+                unique_id=f"{node.unique_id}_{self.make_unique()}_optimal",
+                condition=backwards_replace(node.condition, mapping),
+                true_edge=self.helper(
+                    edge=node.true_edge,
+                    mapping=copy.deepcopy(mapping),
+                    visited=copy.deepcopy(visited),
+                    threshold=threshold,
+                ),
+                false_edge=self.helper(
+                    edge=node.false_edge,
+                    mapping=copy.deepcopy(mapping),
+                    visited=copy.deepcopy(visited),
+                    threshold=threshold,
+                ),
+            )
+        elif isinstance(node, ir.AssignNode):
+            new_rvalue = backwards_replace(node.rvalue, mapping)
+            mapping[node.lvalue] = new_rvalue
+            new_edge.child = ir.AssignNode(
+                unique_id=f"{node.unique_id}_{self.make_unique()}_optimal",
+                lvalue=node.lvalue,
+                rvalue=new_rvalue,
+                child=self.helper(
+                    edge=node.child,
+                    mapping=mapping,
+                    visited=visited,
+                    threshold=threshold,
+                ),
+            )
+        elif isinstance(node, ir.YieldNode):
+            if self.YIELD_VISITOR_ID in visited:
+                new_edge.child = self.helper(
+                    edge=node.child,
+                    mapping=mapping,
+                    visited=visited,
+                    threshold=threshold,
+                )
+                visited[self.YIELD_VISITOR_ID] = 1
+            else:
+                new_edge = ir.ClockedEdge(
+                    unique_id=f"{edge.unique_id}_{self.make_unique()}_optimal",
+                    child=node,
+                )
+        elif isinstance(node, ir.DoneNode):
+            new_edge.child = node
+        else:
+            raise RuntimeError(f"{type(node)}")
+        return new_edge
+
+        res = list(
+            self.chain_generators(
+                edge.child.variables(),
+                self.exclusive_vars,
+                self.map_to_ver_name,
+            )
+        )
+        if res:
+            logging.error(f"{res}")
+
+        return edge
+
+    def optimize(
         self,
         root: ir.Node,
         visited: Optional[set[str]] = None,
@@ -206,7 +278,7 @@ class OptimizeGraph:
         mutating it,
         then recurses on its children
         """
-        logging.debug(f"optimizing {root.unique_id} {root}")
+        # logging.debug(f"optimizing {root.unique_id} {root}")
 
         if visited is None:
             visited = set()
@@ -216,7 +288,7 @@ class OptimizeGraph:
 
         if isinstance(root, ir.BasicElement) and isinstance(root, ir.Node):
             root.optimal_child = self.helper(root.child, {}, {}, threshold=threshold)
-            self.__graph_optimize(root.child.child, visited, threshold=threshold)
+            self.optimize(root.child.child, visited, threshold=threshold)
         elif isinstance(root, ir.IfElseNode):
             root.optimal_true_edge = self.helper(
                 root.true_edge, {}, {}, threshold=threshold
@@ -224,8 +296,8 @@ class OptimizeGraph:
             root.optimal_false_edge = self.helper(
                 root.false_edge, {}, {}, threshold=threshold
             )
-            self.__graph_optimize(root.true_edge.child, visited, threshold=threshold)
-            self.__graph_optimize(root.false_edge.child, visited, threshold=threshold)
+            self.optimize(root.true_edge.child, visited, threshold=threshold)
+            self.optimize(root.false_edge.child, visited, threshold=threshold)
         elif isinstance(root, ir.DoneNode):
             pass
         else:

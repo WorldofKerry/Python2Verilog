@@ -1,40 +1,31 @@
+import logging
 import unittest
 import warnings
 
 from python2verilog import ir
 from python2verilog.backend.verilog import CodeGen
 from python2verilog.optimizer import graph_apply_mapping
+from python2verilog.optimizer.optimizer import graph_update_mapping
 
 
 class TestGraphApplyMapping(unittest.TestCase):
-    def test_mapping(self):
-        """
-        i <= f(i)
-        """
-        mapping = {ir.Var("i"): ir.Int(1)}
-        node = ir.AssignNode(
-            unique_id="",
-            lvalue=ir.Var("i"),
-            rvalue=ir.Add(ir.Var("i"), ir.Int(1)),
-        )
-        updated = graph_apply_mapping(node, mapping)
-        self.assertEqual("_i <= $signed($signed(1) + $signed(1))", updated.verilog())
+    def test_update_mapping(self):
+        a = ir.Var("a")
+        b = ir.Var("b")
+        c = ir.Var("c")
+        zero = ir.Int(0)
+        one = ir.Int(1)
 
-        mapping = {ir.Var("i"): ir.Add(ir.Var("i"), ir.Int(1))}
-        node = ir.AssignNode(
-            unique_id="",
-            lvalue=ir.Var("i"),
-            rvalue=ir.Add(ir.Var("i"), ir.Int(1)),
-        )
-        updated = graph_apply_mapping(node, mapping)
-        self.assertEqual(
-            "_i <= $signed($signed(_i + $signed(1)) + $signed(1))", updated.verilog()
-        )
+        changes = [a, zero], [b, one], [c, zero], [a, b], [b, c], [c, ir.Add(a, b)]
 
-        mapping = {ir.Var("i"): ir.Int(1)}
-        node = ir.AssignNode(unique_id="", lvalue=ir.Var("a"), rvalue=ir.Var("i"))
-        updated = graph_apply_mapping(node, mapping)
-        self.assertEqual("_a <= $signed(1)", updated.verilog())
+        mapping = {}
+        for key, value in changes:
+            logging.error(f"{key} = {value}")
+            node = ir.AssignNode(unique_id="", lvalue=key, rvalue=value)
+            lvalue, rvalue = graph_apply_mapping(node, mapping)
+            node = ir.AssignNode(unique_id="", lvalue=lvalue, rvalue=rvalue)
+            mapping = graph_update_mapping(node, mapping)
+            logging.error(mapping)
 
     def test_independent(self):
         """

@@ -29,7 +29,7 @@ def circle_lines(s_x, s_y, height):
 
 def fib(n: int):
     """
-    Triple quote comment
+    Fibonacci sequence
     """
     a = 0
     b = 1

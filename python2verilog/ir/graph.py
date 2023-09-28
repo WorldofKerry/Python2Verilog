@@ -9,6 +9,7 @@ Element := Vertex | Edge
 
 from __future__ import annotations
 
+import logging
 from abc import abstractmethod
 from typing import Generator, Iterator, Optional
 
@@ -18,7 +19,7 @@ from ..utils.assertions import get_typed, get_typed_list, get_typed_optional
 from . import expressions as expr
 
 
-def get_variables(exp: expr.Expression):
+def get_variables(exp: expr.Expression) -> Iterator[expr.Var]:
     """
     Gets variables from expression
     """
@@ -98,7 +99,7 @@ class Element:
         """
         return self._name
 
-    def visit_variables(self) -> Iterator[expr.Var]:
+    def variables(self) -> Iterator[expr.Var]:
         """
         Yields all variables and their nonclcoked children
         """
@@ -280,10 +281,10 @@ class IfElseNode(Node, Element):
         assert self._optimal_true_edge and self._optimal_false_edge
         return [self._optimal_true_edge, self._optimal_false_edge]
 
-    def visit_variables(self):
+    def variables(self):
         yield from get_variables(self.condition)
-        yield from self.optimal_true_edge.visit_variables()
-        yield from self.optimal_false_edge.visit_variables()
+        yield from self.optimal_true_edge.variables()
+        yield from self.optimal_false_edge.variables()
 
     def __repr__(self):
         return f"If({self.condition}) {self.unique_id}"
@@ -342,10 +343,11 @@ class AssignNode(Node, BasicElement):
     def __repr__(self):
         return f"{self.lvalue} = {self.rvalue}; {self.unique_id}"
 
-    def visit_variables(self):
+    def variables(self):
+        # logging.debug(f"{self.variables.__name__} {self}")
         yield from get_variables(self.lvalue)
         yield from get_variables(self.rvalue)
-        yield from self.child.visit_variables()
+        yield from self.child.variables()
 
 
 class YieldNode(Node, BasicElement):
@@ -380,7 +382,7 @@ class YieldNode(Node, BasicElement):
         string = string[:-2] + "]"
         return string
 
-    def visit_variables(self) -> Iterator[expr.Var]:
+    def variables(self) -> Iterator[expr.Var]:
         for exp in self.stmts:
             yield from get_variables(exp)
 
@@ -430,8 +432,8 @@ class NonClockedEdge(Edge):
     i.e. no clock cycle has to pass for the next node to be executed
     """
 
-    def visit_variables(self):
-        yield from self.child.visit_variables()
+    def variables(self):
+        yield from self.child.variables()
 
 
 class ClockedEdge(Edge):
@@ -440,7 +442,7 @@ class ClockedEdge(Edge):
     i.e. a clock cycle has to pass for the next node to be executed
     """
 
-    def visit_variables(self):
+    def variables(self):
         yield from ()
 
 
