@@ -292,3 +292,14 @@ def dupe(base: int, step: int, limit: int) -> int:
     for out in inst:
         yield out
         yield out
+
+
+def double_for(limit: int) -> tuple[int, int]:
+    """
+    Double for loop
+    """
+    x_gen = hrange(0, 1, limit)
+    for x in x_gen:
+        y_gen = hrange(0, 1, limit)
+        for y in y_gen:
+            yield x, y

@@ -22,5 +22,5 @@ def name_func(testcase_func: FunctionType, param_num: int, param: dict) -> str:
     if isinstance(param.args[0], FunctionType):
         return f"{testcase_func.__name__}::{param.args[0].__name__}::{param_num}"
     else:
-        # If list of functions take first
+        # If given list of funcs, use first for naming
         return f"{testcase_func.__name__}::{param.args[0][0].__name__}::{param_num}"

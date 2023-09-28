@@ -74,14 +74,10 @@ For automatic Verilog simulation and testing, install [Icarus Verilog](https://g
 
 The online simulator [EDA Playground](https://edaplayground.com/) can be used as a subsitute if you manually copy-paste the module and testbench files to it.
 
-### Creating A New Integration Test
-
-To create a new test case and set up configs, run `python3 tests/integration/new_test_case.py <test-name>`.
-
 ### Running Tests
 
-To run tests, use `python3 -m pytest --write`.
+To run tests, use `python3 -m pytest`.
 
-Additional CLI flags can be found in [tests/conftest.py](tests/conftest.py).
+CLI arguments for test configuration can be found in [tests/conftest.py](tests/conftest.py).
 
 Use `git clean -dxf` to remove gitignored and generated files.
