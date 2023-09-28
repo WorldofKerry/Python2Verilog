@@ -162,15 +162,28 @@ class OptimizeGraph:
             if isinstance(edge, ir.ClockedEdge):
                 return edge
             else:
-                raise RuntimeError()
+                pass
+                # raise RuntimeError(f"{node}")
 
         # Exclusive vars can only be visited once
         exclusive_vars = set(self.exclusive_vars(node.variables()))
         if exclusive_vars & visited.keys():
-            return edge
+            if isinstance(edge, ir.ClockedEdge):
+                return edge
+            # logging.error(f"{node}")
+            return ir.ClockedEdge(
+                unique_id=f"{edge.unique_id}_{self.make_unique()}_optimal", child=node
+            )
+
+        # if "_gen_colored_circle__ready" in repr(node):
+        #     # logging.error(
+        #     #     f"{node}, visited {visited.keys()}, exclusive vars {exclusive_vars}, intersect {visited.keys() & exclusive_vars}"
+        #     # )
+        #     logging.error(f"{node}, visited {visited.keys()}")
 
         # Update visited
-        visited.update({var: 1 for var in exclusive_vars})
+        if isinstance(node, ir.AssignNode) and isinstance(node.lvalue, ir.ExclusiveVar):
+            visited[node.lvalue] = 1
         visited[node.unique_id] = visited.get(node.unique_id, 0) + 1
 
         new_edge: ir.Edge = ir.NonClockedEdge(
@@ -250,7 +263,7 @@ class OptimizeGraph:
         mutating it,
         then recurses on its children
         """
-        logging.debug(f"optimizing {root.unique_id} {root}")
+        # logging.critical(f"optimizing {root.unique_id} {root}")
 
         if visited is None:
             visited = set()
