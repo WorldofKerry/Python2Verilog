@@ -23,8 +23,6 @@ from python2verilog.utils.assertions import assert_typed_dict, get_typed, get_ty
 from python2verilog.utils.env import is_debug_mode
 from python2verilog.utils.generics import GenericReprAndStr
 
-DEFAULT_STATE_NAME = "___PYTHON_2_VERILOG_STATE___"
-
 
 @dataclass
 class Context(GenericReprAndStr):
