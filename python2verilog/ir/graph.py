@@ -9,12 +9,30 @@ Element := Vertex | Edge
 
 from __future__ import annotations
 
+from abc import abstractmethod
 from typing import Generator, Iterator, Optional
 
 from python2verilog.utils.generics import GenericRepr, GenericReprAndStr
 
 from ..utils.assertions import get_typed, get_typed_list, get_typed_optional
 from . import expressions as expr
+
+
+def get_variables(exp: expr.Expression):
+    """
+    Gets variables from expression
+    """
+    if isinstance(exp, expr.UBinOp):
+        yield from get_variables(exp.left)
+        yield from get_variables(exp.right)
+    elif isinstance(exp, expr.UnaryOp):
+        yield from get_variables(exp.expr)
+    elif isinstance(exp, expr.Var):
+        yield exp
+    elif isinstance(exp, (expr.UInt, expr.Int)):
+        pass
+    else:
+        raise RuntimeError(f"{type(exp)}")
 
 
 class Element:
@@ -79,6 +97,12 @@ class Element:
         Gets name
         """
         return self._name
+
+    def visit_variables(self):
+        """
+        Visits all variables
+        """
+        return
 
 
 class BasicElement(Element):
@@ -240,16 +264,14 @@ class IfElseNode(Node, Element):
         # )
         # return [self.then_edge, self.else_edge]
 
-        children = []
         if self._true_edge:
-            children.append(self._true_edge)
+            yield self._true_edge
         if self._false_edge:
-            children.append(self._false_edge)
+            yield self._false_edge
         if self._optimal_true_edge:
-            children.append(self._optimal_true_edge)
+            yield self._optimal_true_edge
         if self._optimal_false_edge:
-            children.append(self._optimal_false_edge)
-        return children
+            yield self._optimal_false_edge
 
     def get_optimal_children(self):
         """
@@ -258,25 +280,12 @@ class IfElseNode(Node, Element):
         assert self._optimal_true_edge and self._optimal_false_edge
         return [self._optimal_true_edge, self._optimal_false_edge]
 
-    def traverse_condition_vars(self) -> Iterator[expr.Var]:
-        """
-        Yields variables of the if conditional, doing a DPS
-        """
-
-        def rec(exp: expr.Expression):
-            if isinstance(exp, expr.UBinOp):
-                yield from rec(exp.left)
-                yield from rec(exp.right)
-            elif isinstance(exp, expr.UnaryOp):
-                yield from rec(exp.expr)
-            elif isinstance(exp, expr.Var):
-                yield exp
-            elif isinstance(exp, (expr.UInt, expr.Int)):
-                pass
-            else:
-                raise RuntimeError(f"{type(exp)}")
-
-        yield from rec(self.condition)
+    def visit_variables(self):
+        yield from get_variables(self.condition)
+        if isinstance(self.optimal_true_edge, NonClockedEdge):
+            yield from self.optimal_true_edge.visit_variables()
+        if isinstance(self.optimal_false_edge, NonClockedEdge):
+            yield from self.optimal_false_edge.visit_variables()
 
     def __repr__(self):
         return f"If({self.condition}) {self.unique_id}"
@@ -335,6 +344,10 @@ class AssignNode(Node, BasicElement):
     def __repr__(self):
         return f"{self.lvalue} = {self.rvalue}; {self.unique_id}"
 
+    def visit_variables(self):
+        yield from get_variables(self.lvalue)
+        yield from get_variables(self.rvalue)
+
 
 class YieldNode(Node, BasicElement):
     """
@@ -367,6 +380,10 @@ class YieldNode(Node, BasicElement):
             string += stmt.to_string() + ", "
         string = string[:-2] + "]"
         return string
+
+    def visit_variables(self) -> Iterator[expr.Var]:
+        for exp in self.stmts:
+            yield from get_variables(exp)
 
 
 class DoneNode(Node, Element):

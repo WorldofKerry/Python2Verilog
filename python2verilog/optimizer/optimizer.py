@@ -151,6 +151,7 @@ class OptimizeGraph:
         """
         if isinstance(edge, ir.NonClockedEdge):
             return edge
+
         return ir.ClockedEdge(
             unique_id=f"{edge.unique_id}_{self.make_unique()}_optimal",
             child=edge.child,
