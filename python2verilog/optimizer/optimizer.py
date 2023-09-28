@@ -141,7 +141,7 @@ class OptimizeGraph:
 
     def helper(
         self,
-        element: ir.Edge,
+        edge: ir.Edge,
         mapping: dict[ir.Expression, ir.Expression],
         visited: dict[str, int],
         threshold: int,
@@ -149,11 +149,12 @@ class OptimizeGraph:
         """
         Recursive helper
         """
-        # return ir.ClockedEdge(
-        #     unique_id=f"{element.unique_id}_lol",
-        #     child=element.child,
-        # )
-        return element
+        if isinstance(edge, ir.NonClockedEdge):
+            return edge
+        return ir.ClockedEdge(
+            unique_id=f"{edge.unique_id}_{self.make_unique()}_optimal",
+            child=edge.child,
+        )
 
     def __graph_optimize(
         self,
