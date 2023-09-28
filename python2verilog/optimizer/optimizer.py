@@ -107,9 +107,9 @@ class OptimizeGraph:
 
     """
 
-    def __init__(self, root: ir.Element, threshold: int = 0):
-        self.__graph_optimize(root, threshold=threshold)
+    def __init__(self, root: ir.Node, threshold: int = 0):
         self.unique_counter = 0  # warning due to recursion can't be static var of func
+        self.__graph_optimize(root, threshold=threshold)
 
     def make_unique(self):
         """
@@ -139,47 +139,51 @@ class OptimizeGraph:
             be_clocked = True
         return be_clocked
 
-    @staticmethod
     def helper(
-        element: ir.Node,
+        self,
+        element: ir.Edge,
         mapping: dict[ir.Expression, ir.Expression],
         visited: dict[str, int],
         threshold: int,
-    ):
+    ) -> ir.Edge:
         """
         Recursive helper
         """
+        # return ir.ClockedEdge(
+        #     unique_id=f"{element.unique_id}_lol",
+        #     child=element.child,
+        # )
         return element
 
     def __graph_optimize(
         self,
-        root: ir.Element,
+        root: ir.Node,
         visited: typing.Optional[set[str]] = None,
         threshold: int = 0,
-    ):
+    ) -> None:
         """
-        Optimizes a single node, creating branches
-        Returns the improved root node
+        Optimizes a single node,
+        mutating it,
+        then recurses on its children
         """
+        logging.debug(f"optimizing {root.unique_id} {root}")
+
         if visited is None:
             visited = set()
-
         if root.unique_id in visited:
             return
-        logging.debug(f"optimizing {root.unique_id} {root}")
         visited.add(root.unique_id)
+
         if isinstance(root, ir.BasicElement) and isinstance(root, ir.Node):
-            root.optimal_child = self.helper(
-                root, {}, {}, threshold=threshold
-            ).optimal_child
+            root.optimal_child = self.helper(root.child, {}, {}, threshold=threshold)
             self.__graph_optimize(root.child.child, visited, threshold=threshold)
         elif isinstance(root, ir.IfElseNode):
             root.optimal_true_edge = self.helper(
-                root, {}, {}, threshold=threshold
-            ).optimal_true_edge
+                root.true_edge, {}, {}, threshold=threshold
+            )
             root.optimal_false_edge = self.helper(
-                root, {}, {}, threshold=threshold
-            ).optimal_false_edge
+                root.false_edge, {}, {}, threshold=threshold
+            )
             self.__graph_optimize(root.true_edge.child, visited, threshold=threshold)
             self.__graph_optimize(root.false_edge.child, visited, threshold=threshold)
         elif isinstance(root, ir.DoneNode):
