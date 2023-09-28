@@ -4,8 +4,8 @@ Optimizer for the Graph IR
 
 import copy
 import logging
-import typing
 from functools import reduce
+from typing import Any, Callable, Iterator, Optional
 
 from python2verilog.utils.assertions import get_typed
 
@@ -139,6 +139,37 @@ class OptimizeGraph:
             be_clocked = True
         return be_clocked
 
+    @staticmethod
+    def update_visited(node: ir.Node, visited: dict[str, int]):
+        """
+        Updates visited
+        """
+
+    @staticmethod
+    def filter_for_exclusive(variables) -> Iterator[ir.ExclusiveVar]:
+        """
+        Filters for exclusive variables
+        """
+        yield from filter(lambda var: isinstance(var, ir.ExclusiveVar), variables)
+
+    @staticmethod
+    def map_to_ver_name(variables) -> Iterator[str]:
+        """
+        Maps a variable to its ver_name
+        """
+        yield from map(lambda var: var.ver_name, variables)
+
+    @staticmethod
+    def chain_generators(
+        iterable: Iterator[Any], *functions: Callable[[Iterator[Any]], Iterator[Any]]
+    ) -> Iterator[Any]:
+        """
+        Applies transformations to iterators
+        """
+        for func in functions:
+            iterable = func(iterable)
+        yield from iterable
+
     def helper(
         self,
         edge: ir.Edge,
@@ -152,6 +183,13 @@ class OptimizeGraph:
         if isinstance(edge, ir.NonClockedEdge):
             return edge
 
+        if edge.child:
+            # logging.error(
+            #     f"{list(self.filter_for_exclusive(edge.child.visit_variables()))}"
+            # )
+            logging.error(
+                f"{list(self.chain_generators(edge.child.visit_variables(), self.filter_for_exclusive, self.map_to_ver_name))}"
+            )
         return ir.ClockedEdge(
             unique_id=f"{edge.unique_id}_{self.make_unique()}_optimal",
             child=edge.child,
@@ -160,7 +198,7 @@ class OptimizeGraph:
     def __graph_optimize(
         self,
         root: ir.Node,
-        visited: typing.Optional[set[str]] = None,
+        visited: Optional[set[str]] = None,
         threshold: int = 0,
     ) -> None:
         """

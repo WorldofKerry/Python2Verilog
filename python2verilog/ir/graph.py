@@ -98,11 +98,11 @@ class Element:
         """
         return self._name
 
-    def visit_variables(self):
+    def visit_variables(self) -> Iterator[expr.Var]:
         """
-        Visits all variables
+        Yields all variables and their nonclcoked children
         """
-        return
+        yield from ()
 
 
 class BasicElement(Element):
@@ -282,10 +282,8 @@ class IfElseNode(Node, Element):
 
     def visit_variables(self):
         yield from get_variables(self.condition)
-        if isinstance(self.optimal_true_edge, NonClockedEdge):
-            yield from self.optimal_true_edge.visit_variables()
-        if isinstance(self.optimal_false_edge, NonClockedEdge):
-            yield from self.optimal_false_edge.visit_variables()
+        yield from self.optimal_true_edge.visit_variables()
+        yield from self.optimal_false_edge.visit_variables()
 
     def __repr__(self):
         return f"If({self.condition}) {self.unique_id}"
@@ -347,6 +345,7 @@ class AssignNode(Node, BasicElement):
     def visit_variables(self):
         yield from get_variables(self.lvalue)
         yield from get_variables(self.rvalue)
+        yield from self.child.visit_variables()
 
 
 class YieldNode(Node, BasicElement):
@@ -431,12 +430,18 @@ class NonClockedEdge(Edge):
     i.e. no clock cycle has to pass for the next node to be executed
     """
 
+    def visit_variables(self):
+        yield from self.child.visit_variables()
+
 
 class ClockedEdge(Edge):
     """
     Represents a clocked edge,
     i.e. a clock cycle has to pass for the next node to be executed
     """
+
+    def visit_variables(self):
+        yield from ()
 
 
 def create_networkx_adjacency_list(node: Element):
