@@ -353,14 +353,14 @@ class Subsitution(Statement):
 
     def __init__(
         self,
-        lvalue: ir.Expression,
+        lvalue: ir.Var,
         rvalue: ir.Expression,
         oper: str,
         *args,
         **kwargs,
     ):
         assert isinstance(rvalue, (ir.Expression)), f"got {type(rvalue)} instead"
-        assert isinstance(lvalue, (ir.Expression))
+        assert isinstance(lvalue, (ir.Expression)), f"{lvalue}"
         self.lvalue = lvalue
         self.rvalue = rvalue
         self.oper = oper
@@ -381,7 +381,7 @@ class NonBlockingSubsitution(Subsitution):
     <lvalue> <= <rvalue>
     """
 
-    def __init__(self, lvalue: ir.Expression, rvalue: ir.Expression, *args, **kwargs):
+    def __init__(self, lvalue: ir.Var, rvalue: ir.Expression, *args, **kwargs):
         super().__init__(lvalue, rvalue, "<=", *args, **kwargs)
 
 
@@ -390,7 +390,7 @@ class BlockingSub(Subsitution):
     <lvalue> = <rvalue>
     """
 
-    def __init__(self, lvalue: ir.Expression, rvalue: ir.Expression, *args, **kwargs):
+    def __init__(self, lvalue: ir.Var, rvalue: ir.Expression, *args, **kwargs):
         super().__init__(lvalue, rvalue, "=", *args, **kwargs)
 
 

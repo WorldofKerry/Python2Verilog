@@ -25,7 +25,7 @@ def is_dependent(expr: ir.Expression, var: str):
     raise TypeError(f"unexpected {type(expr)}")
 
 
-def backwards_replace(expr: ir.Expression, mapping: dict[ir.Expression, ir.Expression]):
+def backwards_replace(expr: ir.Expression, mapping: dict[ir.Var, ir.Expression]):
     """
     If the expression matches a key in the mapping, it is replaced with
     the corresponding value in the mapping.
@@ -54,34 +54,6 @@ def backwards_replace(expr: ir.Expression, mapping: dict[ir.Expression, ir.Expre
     else:
         logging.debug(f"TODO: use the State class {expr.to_string()}")
     return expr
-
-
-def graph_apply_mapping(
-    node: ir.AssignNode, mapping: dict[ir.Expression, ir.Expression]
-):
-    """
-    If the right-hand-side of an assignment (e.g. the `b` in `a = b`)
-    matches a key in the mapping, it will be replaced with the
-    corresponding value in the mapping.
-
-    :return: a node with the mapping applied
-    """
-    return copy.copy(node.lvalue), backwards_replace(node.rvalue, mapping)
-
-
-def graph_update_mapping(
-    stmt: ir.Element, old_mapping: dict[ir.Expression, ir.Expression]
-):
-    """
-    Updates mapping with statements' contents
-    """
-    new_mapping = copy.deepcopy(old_mapping)
-    assert not isinstance(
-        stmt, ir.IfElseNode
-    ), "Should have been handled, call this method twice on the two branches"
-    if isinstance(stmt, ir.AssignNode):
-        new_mapping[stmt.lvalue] = stmt.rvalue
-    return new_mapping
 
 
 class OptimizeGraph:
@@ -171,7 +143,7 @@ class OptimizeGraph:
     def helper(
         self,
         edge: ir.Edge,
-        mapping: dict[ir.Expression, ir.Expression],
+        mapping: dict[ir.Var, ir.Expression],
         visited: dict[Union[str, ir.Var], int],
         threshold: int,
     ) -> ir.Edge:
@@ -278,7 +250,7 @@ class OptimizeGraph:
         mutating it,
         then recurses on its children
         """
-        # logging.debug(f"optimizing {root.unique_id} {root}")
+        logging.debug(f"optimizing {root.unique_id} {root}")
 
         if visited is None:
             visited = set()
@@ -287,7 +259,16 @@ class OptimizeGraph:
         visited.add(root.unique_id)
 
         if isinstance(root, ir.BasicElement) and isinstance(root, ir.Node):
-            root.optimal_child = self.helper(root.child, {}, {}, threshold=threshold)
+            # This ifelse should be looked at
+            mapper: dict[ir.Var, ir.Expression]
+            if isinstance(root, ir.AssignNode):
+                mapper = {root.lvalue: root.rvalue}
+            else:
+                mapper = {}
+
+            root.optimal_child = self.helper(
+                root.child, mapper, {}, threshold=threshold
+            )
             self.optimize(root.child.child, visited, threshold=threshold)
         elif isinstance(root, ir.IfElseNode):
             root.optimal_true_edge = self.helper(
