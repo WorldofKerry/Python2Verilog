@@ -203,19 +203,12 @@ class CodeGen:
             key: ir.UInt(index) for index, key in enumerate(sorted(context.states))
         }
 
-        python_test_code = Lines()
-        for case in context.test_cases:
-            python_test_code += f"print(list({context.name}(*{case})))"
         return ver.Module(
             name=context.name,
             inputs=inputs,
             outputs=outputs,
             body=body,
             localparams=state_vars,
-            header=Lines(
-                f"/*\n\n# Python Function\n{context.py_string}\n\n"
-                f"# Test Cases\n{python_test_code}\n*/\n\n"
-            ),
         )
 
     @staticmethod
@@ -460,6 +453,9 @@ class CodeGen:
 
         initial_loop = ver.Initial(body=initial_body)
 
+        python_test_code = Lines()
+        for case in self.context.test_cases:
+            python_test_code += f"print(list({self.context.name}(*{case})))"
         if self.context:
             module = ver.Module(
                 self.context.testbench_name,
@@ -467,6 +463,10 @@ class CodeGen:
                 [],
                 body=setups + [initial_loop],
                 is_not_testbench=False,
+                header=Lines(
+                    f"/*\n\n# Python Function\n{self.context.py_string}\n\n"
+                    f"# Test Cases\n{python_test_code}\n*/\n\n"
+                ),
             )
             return module
         raise RuntimeError("Needs the context")

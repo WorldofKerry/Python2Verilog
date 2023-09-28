@@ -8,6 +8,7 @@ from typing import Iterable, Optional
 
 from python2verilog.utils import env
 from python2verilog.utils.generics import GenericRepr
+from python2verilog.utils.mit_license import get_mit_license
 
 from ... import ir
 from ...utils.assertions import assert_typed_dict, get_typed, get_typed_list
@@ -264,7 +265,7 @@ class Module(ImplementsToLines):
         lines.concat(self.input, indent=1)
         lines.concat(self.output, indent=1)
 
-        if len(lines) > 2:  # This means there are ports
+        if self.input or self.output:  # This means there are ports
             lines[-1] = lines[-1][0:-1]  # removes last comma
 
         lines += ");"
@@ -272,6 +273,10 @@ class Module(ImplementsToLines):
         for stmt in self.body:
             lines.concat(stmt.to_lines(), 1)
         lines += "endmodule"
+        lines.blank()
+        lines += "/*"
+        lines.concat(get_mit_license())
+        lines += "*/"
         return lines
 
 
