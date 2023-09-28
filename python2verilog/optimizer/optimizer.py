@@ -158,28 +158,21 @@ class OptimizeGraph:
         logging.debug(f"{self.helper.__name__} {edge.child} {mapping}")
 
         # Check for cyclic paths
-        if node.unique_id in visited and visited[node.unique_id] > threshold:
-            if isinstance(edge, ir.ClockedEdge):
-                return edge
-            else:
-                pass
-                # raise RuntimeError(f"{node}")
+        if (
+            isinstance(edge, ir.ClockedEdge)
+            and node.unique_id in visited
+            and visited[node.unique_id] > threshold
+        ):
+            return edge
 
         # Exclusive vars can only be visited once
         exclusive_vars = set(self.exclusive_vars(node.variables()))
         if exclusive_vars & visited.keys():
             if isinstance(edge, ir.ClockedEdge):
                 return edge
-            # logging.error(f"{node}")
             return ir.ClockedEdge(
                 unique_id=f"{edge.unique_id}_{self.make_unique()}_optimal", child=node
             )
-
-        # if "_gen_colored_circle__ready" in repr(node):
-        #     # logging.error(
-        #     #     f"{node}, visited {visited.keys()}, exclusive vars {exclusive_vars}, intersect {visited.keys() & exclusive_vars}"
-        #     # )
-        #     logging.error(f"{node}, visited {visited.keys()}")
 
         # Update visited
         if isinstance(node, ir.AssignNode) and isinstance(node.lvalue, ir.ExclusiveVar):
@@ -239,18 +232,6 @@ class OptimizeGraph:
         else:
             raise RuntimeError(f"{type(node)}")
         return new_edge
-
-        res = list(
-            self.chain_generators(
-                edge.child.variables(),
-                self.exclusive_vars,
-                self.map_to_ver_name,
-            )
-        )
-        if res:
-            logging.error(f"{res}")
-
-        return edge
 
     def optimize(
         self,

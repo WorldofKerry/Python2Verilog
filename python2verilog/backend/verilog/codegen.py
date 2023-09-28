@@ -234,14 +234,17 @@ class CodeGen:
             # The first case can be included here
             # Known as Quick Start
             mapping = {
-                ir.Expression(var.ver_name): ir.Expression(var.py_name)
+                ir.Var(py_name=var.ver_name, ver_name=var.ver_name): ir.Expression(
+                    var.py_name
+                )
                 for var in context.input_vars
             }
 
             for var in context.input_vars:
                 then_body.append(
                     ver.NonBlockingSubsitution(
-                        ir.Expression(var.ver_name), ir.Expression(var.py_name)
+                        ir.Var(py_name=var.ver_name, ver_name=var.ver_name),
+                        ir.Expression(var.py_name),
                     )
                 )
 
@@ -267,7 +270,8 @@ class CodeGen:
             for var in context.input_vars:
                 then_body.append(
                     ver.NonBlockingSubsitution(
-                        ir.Expression(var.ver_name), ir.Expression(var.py_name)
+                        ir.Var(py_name=var.ver_name, ver_name=var.ver_name),
+                        ir.Expression(var.py_name),
                     )
                 )
             then_body.append(
@@ -394,7 +398,8 @@ class CodeGen:
             for i, var in enumerate(self.context.input_vars):
                 initial_body.append(
                     ver.BlockingSub(
-                        ir.Expression(var.py_name), ir.Int(int(test_case[i]))
+                        ir.Var(py_name=var.py_name, ver_name=var.py_name),
+                        ir.Int(int(test_case[i])),
                     )
                 )
             initial_body.append(ver.BlockingSub(self.context.signals.start, ir.UInt(1)))
@@ -405,7 +410,7 @@ class CodeGen:
             for i, var in enumerate(self.context.input_vars):
                 initial_body.append(
                     ver.BlockingSub(
-                        ir.Expression(var.py_name),
+                        ir.Var(py_name=var.py_name, ver_name=var.py_name),
                         ir.Unknown(),
                         comment="only need inputs when start is set",
                     )
