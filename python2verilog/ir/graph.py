@@ -11,6 +11,8 @@ from __future__ import annotations
 
 from typing import Generator, Iterator, Optional
 
+from python2verilog.utils.generics import GenericRepr, GenericReprAndStr
+
 from ..utils.assertions import get_typed, get_typed_list, get_typed_optional
 from . import expressions as expr
 
@@ -29,13 +31,6 @@ class Element:
         To string
         """
         return self._name
-
-    def __str__(self):
-        return self.to_string()
-
-    def __repr__(self):
-        items = [f"{key}=({value})" for key, value in self.__dict__.items()]
-        return f"{self.__class__.__name__}({','.join(items)})"
 
     def __hash__(self) -> int:
         return hash(self._id)
@@ -283,6 +278,9 @@ class IfElseNode(Node, Element):
 
         yield from rec(self.condition)
 
+    def __repr__(self):
+        return f"If({self.condition}) {self.unique_id}"
+
 
 class AssignNode(Node, BasicElement):
     """
@@ -334,6 +332,9 @@ class AssignNode(Node, BasicElement):
         """
         return f"{self._lvalue.verilog()} <= {self._rvalue.verilog()}"
 
+    def __repr__(self):
+        return f"{self.lvalue} = {self.rvalue}; {self.unique_id}"
+
 
 class YieldNode(Node, BasicElement):
     """
@@ -373,6 +374,9 @@ class DoneNode(Node, Element):
     Signals done
     """
 
+    def __repr__(self) -> str:
+        return "Done"
+
 
 class Edge(BasicElement):
     """
@@ -399,6 +403,9 @@ class Edge(BasicElement):
         Gets edge name
         """
         return self._name
+
+    def __repr__(self):
+        return f"=> {self.optimal_child} {self.unique_id}"
 
 
 class NonClockedEdge(Edge):

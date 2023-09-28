@@ -7,6 +7,7 @@ from __future__ import annotations
 from typing import Iterable, Optional
 
 from python2verilog.utils import env
+from python2verilog.utils.generics import GenericRepr
 
 from ... import ir
 from ...utils.assertions import assert_typed_dict, get_typed, get_typed_list
@@ -35,7 +36,7 @@ class AtNegedge(ir.Expression):
         super().__init__(f"@(negedge {condition.to_string()})")
 
 
-class Statement(ImplementsToLines):
+class Statement(ImplementsToLines, GenericRepr):
     """
     Represents a statement in verilog (i.e. a line or a block)
     If used directly, it is treated as a string literal

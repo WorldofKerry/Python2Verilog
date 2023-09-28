@@ -306,7 +306,7 @@ class OptimizeGraph:
             raise RuntimeError(f"unexpected {type(element)} {element}")
 
         if root.unique_id in visited:
-            return root
+            return
         logging.debug(f"optimizing {root.unique_id} {root}")
         visited.add(root.unique_id)
         if isinstance(root, ir.BasicElement) and isinstance(root, ir.Node):
