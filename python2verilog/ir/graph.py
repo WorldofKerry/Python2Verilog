@@ -254,17 +254,10 @@ class IfElseNode(Node, Element):
     def optimal_false_edge(self, other: Element):
         self._optimal_false_edge = get_typed(other, Element)
 
-    def get_all_children(self):
+    def get_all_children(self) -> Iterator[Edge]:
         """
         Gets edges
         """
-        # if self._optimal_false_edge and self._optimal_true_edge:
-        #     return [self.optimal_true_edge, self.optimal_false_edge]
-        # print(
-        #     f"returning unoptimized {self._optimal_true_edge} {self._optimal_false_edge}"
-        # )
-        # return [self.then_edge, self.else_edge]
-
         if self._true_edge:
             yield self._true_edge
         if self._false_edge:
