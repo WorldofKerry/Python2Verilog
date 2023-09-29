@@ -203,19 +203,12 @@ class CodeGen:
             key: ir.UInt(index) for index, key in enumerate(sorted(context.states))
         }
 
-        python_test_code = Lines()
-        for case in context.test_cases:
-            python_test_code += f"print(list({context.name}(*{case})))"
         return ver.Module(
             name=context.name,
             inputs=inputs,
             outputs=outputs,
             body=body,
             localparams=state_vars,
-            header=Lines(
-                f"/*\n\n# Python Function\n{context.py_string}\n\n"
-                f"# Test Cases\n{python_test_code}\n*/\n\n"
-            ),
         )
 
     @staticmethod
@@ -234,14 +227,17 @@ class CodeGen:
             # The first case can be included here
             # Known as Quick Start
             mapping = {
-                ir.Expression(var.ver_name): ir.Expression(var.py_name)
+                ir.Var(py_name=var.ver_name, ver_name=var.ver_name): ir.Expression(
+                    var.py_name
+                )
                 for var in context.input_vars
             }
 
             for var in context.input_vars:
                 then_body.append(
                     ver.NonBlockingSubsitution(
-                        ir.Expression(var.ver_name), ir.Expression(var.py_name)
+                        ir.Var(py_name=var.ver_name, ver_name=var.ver_name),
+                        ir.Expression(var.py_name),
                     )
                 )
 
@@ -267,7 +263,8 @@ class CodeGen:
             for var in context.input_vars:
                 then_body.append(
                     ver.NonBlockingSubsitution(
-                        ir.Expression(var.ver_name), ir.Expression(var.py_name)
+                        ir.Var(py_name=var.ver_name, ver_name=var.ver_name),
+                        ir.Expression(var.py_name),
                     )
                 )
             then_body.append(
@@ -394,7 +391,8 @@ class CodeGen:
             for i, var in enumerate(self.context.input_vars):
                 initial_body.append(
                     ver.BlockingSub(
-                        ir.Expression(var.py_name), ir.Int(int(test_case[i]))
+                        ir.Var(py_name=var.py_name, ver_name=var.py_name),
+                        ir.Int(int(test_case[i])),
                     )
                 )
             initial_body.append(ver.BlockingSub(self.context.signals.start, ir.UInt(1)))
@@ -405,7 +403,7 @@ class CodeGen:
             for i, var in enumerate(self.context.input_vars):
                 initial_body.append(
                     ver.BlockingSub(
-                        ir.Expression(var.py_name),
+                        ir.Var(py_name=var.py_name, ver_name=var.py_name),
                         ir.Unknown(),
                         comment="only need inputs when start is set",
                     )
@@ -455,6 +453,9 @@ class CodeGen:
 
         initial_loop = ver.Initial(body=initial_body)
 
+        python_test_code = Lines()
+        for case in self.context.test_cases:
+            python_test_code += f"print(list({self.context.name}(*{case})))"
         if self.context:
             module = ver.Module(
                 self.context.testbench_name,
@@ -462,6 +463,10 @@ class CodeGen:
                 [],
                 body=setups + [initial_loop],
                 is_not_testbench=False,
+                header=Lines(
+                    f"/*\n\n# Python Function\n{self.context.py_string}\n\n"
+                    f"# Test Cases\n{python_test_code}\n*/\n\n"
+                ),
             )
             return module
         raise RuntimeError("Needs the context")
@@ -547,6 +552,7 @@ class CaseBuilder:
         """
         Processes a node
         """
+        logging.debug(f"{self.do_vertex.__name__} {vertex} {len(self.visited)}")
 
         assert isinstance(vertex, ir.Node), str(vertex)
         self.visited.add(vertex.unique_id)

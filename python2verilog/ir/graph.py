@@ -9,10 +9,31 @@ Element := Vertex | Edge
 
 from __future__ import annotations
 
+import logging
+from abc import abstractmethod
 from typing import Generator, Iterator, Optional
+
+from python2verilog.utils.generics import GenericRepr, GenericReprAndStr
 
 from ..utils.assertions import get_typed, get_typed_list, get_typed_optional
 from . import expressions as expr
+
+
+def get_variables(exp: expr.Expression) -> Iterator[expr.Var]:
+    """
+    Gets variables from expression
+    """
+    if isinstance(exp, expr.UBinOp):
+        yield from get_variables(exp.left)
+        yield from get_variables(exp.right)
+    elif isinstance(exp, expr.UnaryOp):
+        yield from get_variables(exp.expr)
+    elif isinstance(exp, expr.Var):
+        yield exp
+    elif isinstance(exp, (expr.UInt, expr.Int)):
+        pass
+    else:
+        raise RuntimeError(f"{type(exp)}")
 
 
 class Element:
@@ -29,13 +50,6 @@ class Element:
         To string
         """
         return self._name
-
-    def __str__(self):
-        return self.to_string()
-
-    def __repr__(self):
-        items = [f"{key}=({value})" for key, value in self.__dict__.items()]
-        return f"{self.__class__.__name__}({','.join(items)})"
 
     def __hash__(self) -> int:
         return hash(self._id)
@@ -84,6 +98,12 @@ class Element:
         Gets name
         """
         return self._name
+
+    def variables(self) -> Iterator[expr.Var]:
+        """
+        Yields all variables and their nonclcoked children
+        """
+        yield from ()
 
 
 class BasicElement(Element):
@@ -234,27 +254,18 @@ class IfElseNode(Node, Element):
     def optimal_false_edge(self, other: Element):
         self._optimal_false_edge = get_typed(other, Element)
 
-    def get_all_children(self):
+    def get_all_children(self) -> Iterator[Edge]:
         """
         Gets edges
         """
-        # if self._optimal_false_edge and self._optimal_true_edge:
-        #     return [self.optimal_true_edge, self.optimal_false_edge]
-        # print(
-        #     f"returning unoptimized {self._optimal_true_edge} {self._optimal_false_edge}"
-        # )
-        # return [self.then_edge, self.else_edge]
-
-        children = []
         if self._true_edge:
-            children.append(self._true_edge)
+            yield self._true_edge
         if self._false_edge:
-            children.append(self._false_edge)
+            yield self._false_edge
         if self._optimal_true_edge:
-            children.append(self._optimal_true_edge)
+            yield self._optimal_true_edge
         if self._optimal_false_edge:
-            children.append(self._optimal_false_edge)
-        return children
+            yield self._optimal_false_edge
 
     def get_optimal_children(self):
         """
@@ -263,25 +274,13 @@ class IfElseNode(Node, Element):
         assert self._optimal_true_edge and self._optimal_false_edge
         return [self._optimal_true_edge, self._optimal_false_edge]
 
-    def traverse_condition_vars(self) -> Iterator[expr.Var]:
-        """
-        Yields variables of the if conditional, doing a DPS
-        """
+    def variables(self):
+        yield from get_variables(self.condition)
+        yield from self.optimal_true_edge.variables()
+        yield from self.optimal_false_edge.variables()
 
-        def rec(exp: expr.Expression):
-            if isinstance(exp, expr.UBinOp):
-                yield from rec(exp.left)
-                yield from rec(exp.right)
-            elif isinstance(exp, expr.UnaryOp):
-                yield from rec(exp.expr)
-            elif isinstance(exp, expr.Var):
-                yield exp
-            elif isinstance(exp, (expr.UInt, expr.Int)):
-                pass
-            else:
-                raise RuntimeError(f"{type(exp)}")
-
-        yield from rec(self.condition)
+    def __repr__(self):
+        return f"If({self.condition}) {self.unique_id}"
 
 
 class AssignNode(Node, BasicElement):
@@ -334,6 +333,15 @@ class AssignNode(Node, BasicElement):
         """
         return f"{self._lvalue.verilog()} <= {self._rvalue.verilog()}"
 
+    def __repr__(self):
+        return f"{self.lvalue} = {self.rvalue}; {self.unique_id}"
+
+    def variables(self):
+        # logging.debug(f"{self.variables.__name__} {self}")
+        yield from get_variables(self.lvalue)
+        yield from get_variables(self.rvalue)
+        yield from self.child.variables()
+
 
 class YieldNode(Node, BasicElement):
     """
@@ -367,11 +375,18 @@ class YieldNode(Node, BasicElement):
         string = string[:-2] + "]"
         return string
 
+    def variables(self) -> Iterator[expr.Var]:
+        for exp in self.stmts:
+            yield from get_variables(exp)
+
 
 class DoneNode(Node, Element):
     """
     Signals done
     """
+
+    def __repr__(self) -> str:
+        return "Done"
 
 
 class Edge(BasicElement):
@@ -400,6 +415,9 @@ class Edge(BasicElement):
         """
         return self._name
 
+    def __repr__(self):
+        return f"=> {self.optimal_child} {self.unique_id}"
+
 
 class NonClockedEdge(Edge):
     """
@@ -407,12 +425,18 @@ class NonClockedEdge(Edge):
     i.e. no clock cycle has to pass for the next node to be executed
     """
 
+    def variables(self):
+        yield from self.child.variables()
+
 
 class ClockedEdge(Edge):
     """
     Represents a clocked edge,
     i.e. a clock cycle has to pass for the next node to be executed
     """
+
+    def variables(self):
+        yield from ()
 
 
 def create_networkx_adjacency_list(node: Element):

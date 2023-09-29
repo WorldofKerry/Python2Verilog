@@ -23,8 +23,6 @@ from python2verilog.utils.assertions import assert_typed_dict, get_typed, get_ty
 from python2verilog.utils.env import is_debug_mode
 from python2verilog.utils.generics import GenericReprAndStr
 
-DEFAULT_STATE_NAME = "___PYTHON_2_VERILOG_STATE___"
-
 
 @dataclass
 class Context(GenericReprAndStr):
@@ -252,7 +250,9 @@ class Context(GenericReprAndStr):
         Sets own output vars to default based on number of output variables
         """
         assert self.output_types and len(self.output_types) > 0
-        self._output_vars = [Var(f"out{i}") for i in range(len(self.output_types))]
+        self._output_vars = [
+            ExclusiveVar(f"out{i}") for i in range(len(self.output_types))
+        ]
 
     @property
     def global_vars(self):

@@ -7,6 +7,8 @@ from __future__ import annotations
 from typing import Iterable, Optional
 
 from python2verilog.utils import env
+from python2verilog.utils.generics import GenericRepr
+from python2verilog.utils.mit_license import get_mit_license
 
 from ... import ir
 from ...utils.assertions import assert_typed_dict, get_typed, get_typed_list
@@ -35,7 +37,7 @@ class AtNegedge(ir.Expression):
         super().__init__(f"@(negedge {condition.to_string()})")
 
 
-class Statement(ImplementsToLines):
+class Statement(ImplementsToLines, GenericRepr):
     """
     Represents a statement in verilog (i.e. a line or a block)
     If used directly, it is treated as a string literal
@@ -263,7 +265,7 @@ class Module(ImplementsToLines):
         lines.concat(self.input, indent=1)
         lines.concat(self.output, indent=1)
 
-        if len(lines) > 2:  # This means there are ports
+        if self.input or self.output:  # This means there are ports
             lines[-1] = lines[-1][0:-1]  # removes last comma
 
         lines += ");"
@@ -271,6 +273,10 @@ class Module(ImplementsToLines):
         for stmt in self.body:
             lines.concat(stmt.to_lines(), 1)
         lines += "endmodule"
+        lines.blank()
+        lines += "/*"
+        lines.concat(get_mit_license())
+        lines += "*/"
         return lines
 
 
@@ -352,14 +358,14 @@ class Subsitution(Statement):
 
     def __init__(
         self,
-        lvalue: ir.Expression,
+        lvalue: ir.Var,
         rvalue: ir.Expression,
         oper: str,
         *args,
         **kwargs,
     ):
         assert isinstance(rvalue, (ir.Expression)), f"got {type(rvalue)} instead"
-        assert isinstance(lvalue, (ir.Expression))
+        assert isinstance(lvalue, (ir.Expression)), f"{lvalue}"
         self.lvalue = lvalue
         self.rvalue = rvalue
         self.oper = oper
@@ -380,7 +386,7 @@ class NonBlockingSubsitution(Subsitution):
     <lvalue> <= <rvalue>
     """
 
-    def __init__(self, lvalue: ir.Expression, rvalue: ir.Expression, *args, **kwargs):
+    def __init__(self, lvalue: ir.Var, rvalue: ir.Expression, *args, **kwargs):
         super().__init__(lvalue, rvalue, "<=", *args, **kwargs)
 
 
@@ -389,7 +395,7 @@ class BlockingSub(Subsitution):
     <lvalue> = <rvalue>
     """
 
-    def __init__(self, lvalue: ir.Expression, rvalue: ir.Expression, *args, **kwargs):
+    def __init__(self, lvalue: ir.Var, rvalue: ir.Expression, *args, **kwargs):
         super().__init__(lvalue, rvalue, "=", *args, **kwargs)
 
 

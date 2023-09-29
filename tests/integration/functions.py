@@ -1,35 +1,27 @@
-def circle_lines(s_x, s_y, height):
-    x = 0
-    y = height
-    d = 3 - 2 * y
-    yield (s_x + x, s_y + y)
-    yield (s_x + x, s_y - y)
-    yield (s_x - x, s_y + y)
-    yield (s_x - x, s_y - y)
-    yield (s_x + y, s_y + x)
-    yield (s_x + y, s_y - x)
-    yield (s_x - y, s_y + x)
-    yield (s_x - y, s_y - x)
-    while y >= x:
-        x = x + 1
-        if d > 0:
-            y = y - 1
-            d = d + 4 * (x - y) + 10
+def circle_lines(centre_x: int, centre_y: int, radius: int) -> tuple[int, int]:
+    offset_y = 0
+    offset_x = radius
+    crit = 1 - radius
+    while offset_y <= offset_x:
+        yield (centre_x + offset_x, centre_y + offset_y)  # -- octant 1
+        yield (centre_x + offset_y, centre_y + offset_x)  # -- octant 2
+        yield (centre_x - offset_x, centre_y + offset_y)  # -- octant 4
+        yield (centre_x - offset_y, centre_y + offset_x)  # -- octant 3
+        yield (centre_x - offset_x, centre_y - offset_y)  # -- octant 5
+        yield (centre_x - offset_y, centre_y - offset_x)  # -- octant 6
+        yield (centre_x + offset_x, centre_y - offset_y)  # -- octant 8
+        yield (centre_x + offset_y, centre_y - offset_x)  # -- octant 7
+        offset_y = offset_y + 1
+        if crit <= 0:
+            crit = crit + 2 * offset_y + 1
         else:
-            d = d + 4 * x + 6
-        yield (s_x + x, s_y + y)
-        yield (s_x + x, s_y - y)
-        yield (s_x - x, s_y + y)
-        yield (s_x - x, s_y - y)
-        yield (s_x + y, s_y + x)
-        yield (s_x + y, s_y - x)
-        yield (s_x - y, s_y + x)
-        yield (s_x - y, s_y - x)
+            offset_x = offset_x - 1
+            crit = crit + 2 * (offset_y - offset_x) + 1
 
 
 def fib(n: int):
     """
-    Triple quote comment
+    Fibonacci sequence
     """
     a = 0
     b = 1
@@ -233,46 +225,23 @@ def division(dividend, divisor, precision):
         iter += 1
 
 
-def colored_circle(
-    centre_x: int, centre_y: int, radius: int, color: int
-) -> tuple[int, int, int]:
-    offset_y = 0
-    offset_x = radius
-    crit = 1 - radius
-    while offset_y <= offset_x:
-        yield (centre_x + offset_x, centre_y + offset_y, color)  # -- octant 1
-        yield (centre_x + offset_y, centre_y + offset_x, color)  # -- octant 2
-        yield (centre_x - offset_x, centre_y + offset_y, color)  # -- octant 4
-        yield (centre_x - offset_y, centre_y + offset_x, color)  # -- octant 3
-        yield (centre_x - offset_x, centre_y - offset_y, color)  # -- octant 5
-        yield (centre_x - offset_y, centre_y - offset_x, color)  # -- octant 6
-        yield (centre_x + offset_x, centre_y - offset_y, color)  # -- octant 8
-        yield (centre_x + offset_y, centre_y - offset_x, color)  # -- octant 7
-        offset_y = offset_y + 1
-        if crit <= 0:
-            crit = crit + 2 * offset_y + 1
-        else:
-            offset_x = offset_x - 1
-            crit = crit + 2 * (offset_y - offset_x) + 1
-
-
-def olympic_logo(mid_x, mid_y, radius):
+def olympic_logo_naive(mid_x, mid_y, radius):
     spread = radius - 2
-    gen = colored_circle(mid_x, mid_y + spread, radius, 50)
-    for x, y, color in gen:
-        yield x, y, color
-    gen = colored_circle(mid_x + spread * 2, mid_y + spread, radius, 180)
-    for x, y, color in gen:
-        yield x, y, color
-    gen = colored_circle(mid_x - spread * 2, mid_y + spread, radius, 500)
-    for x, y, color in gen:
-        yield x, y, color
-    gen = colored_circle(mid_x + spread, mid_y - spread, radius, 400)
-    for x, y, color in gen:
-        yield x, y, color
-    gen = colored_circle(mid_x - spread, mid_y - spread, radius, 300)
-    for x, y, color in gen:
-        yield x, y, color
+    gen = circle_lines(mid_x, mid_y + spread, radius)
+    for x, y in gen:
+        yield x, y, 50
+    gen = circle_lines(mid_x + spread * 2, mid_y + spread, radius)
+    for x, y in gen:
+        yield x, y, 180
+    gen = circle_lines(mid_x - spread * 2, mid_y + spread, radius)
+    for x, y in gen:
+        yield x, y, 500
+    gen = circle_lines(mid_x + spread, mid_y - spread, radius)
+    for x, y in gen:
+        yield x, y, 400
+    gen = circle_lines(mid_x - spread, mid_y - spread, radius)
+    for x, y in gen:
+        yield x, y, 300
 
 
 def hrange(base: int, step: int, limit: int) -> int:
@@ -303,3 +272,27 @@ def double_for(limit: int) -> tuple[int, int]:
         y_gen = hrange(0, 1, limit)
         for y in y_gen:
             yield x, y
+
+
+def olympic_logo_mids(mid_x: int, mid_y: int, spread: int) -> tuple[int, int, int]:
+    """
+    Yields the middle coordinates and the color
+    for the 5 circles in the olympics logo
+    """
+    yield mid_x, mid_y + spread, 50
+    yield mid_x + spread * 2, mid_y + spread, 180
+    yield mid_x - spread * 2, mid_y + spread, 500
+    yield mid_x + spread, mid_y - spread, 400
+    yield mid_x - spread, mid_y - spread, 300
+
+
+def olympic_logo(mid_x, mid_y, radius):
+    """
+    Draws the olympic logo
+    """
+    spread = radius - 2
+    middles_and_colors = olympic_logo_mids(mid_x, mid_y, spread)
+    for x, y, color in middles_and_colors:
+        coords = circle_lines(x, y, radius)
+        for x, y in coords:
+            yield x, y, color

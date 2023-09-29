@@ -69,6 +69,9 @@ class Int(Expression):
         """
         return str(self.value)
 
+    def __repr__(self):
+        return f"{self.value}"
+
 
 class UInt(Expression):
     """
@@ -113,6 +116,9 @@ class Var(Expression):
         self.initial_value = initial_value
 
         super().__init__(ver_name)
+
+    def __repr__(self):
+        return f"{self.ver_name}"
 
 
 class State(Var):
@@ -214,6 +220,9 @@ class BinOp(UBinOp):
 
     def verilog(self):
         return "$signed" + super().verilog()
+
+    def __repr__(self):
+        return f"{self._left} {self._oper} {self._right}"
 
 
 class Add(BinOp):
