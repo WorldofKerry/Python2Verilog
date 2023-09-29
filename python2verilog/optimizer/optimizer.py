@@ -52,7 +52,7 @@ def backwards_replace(expr: ir.Expression, mapping: dict[ir.Var, ir.Expression])
     elif isinstance(expr, ir.UnaryOp):
         expr.expr = backwards_replace(expr.expr, mapping)
     else:
-        logging.debug(f"TODO: use the State class {expr.to_string()}")
+        raise TypeError(f"{type(expr)} {expr}")
     return expr
 
 
