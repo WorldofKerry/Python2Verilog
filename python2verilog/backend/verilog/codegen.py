@@ -502,18 +502,21 @@ class CaseBuilder:
         # Work
         logging.debug(f"{self.__class__.__name__} {root.unique_id} {root}")
         self.case.case_items.append(self.new_caseitem(root))
-        has_done = False
+
+        # Reverse states for readability (states are built backwards)
+        self.case.case_items = list(reversed(self.case.case_items))
+
+        # Add done state if it doesn't exist
         for case in self.case.case_items:
             if case.condition == context.done_state:
-                has_done = True
-        if not has_done:
+                break
+        else:  # no break
             self.case.case_items.append(
                 ver.CaseItem(
                     condition=context.done_state,
                     statements=[self.create_quick_done(context)],
                 )
             )
-        self.case.case_items = list(reversed(self.case.case_items))
 
     @staticmethod
     def create_quick_done(context: ir.Context) -> ver.IfElse:
