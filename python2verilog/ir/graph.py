@@ -11,7 +11,12 @@ from __future__ import annotations
 
 import logging
 from abc import abstractmethod
-from typing import Generator, Iterator, Optional, TypeAlias, Union
+from typing import Generator, Iterator, Optional, Union
+
+try:
+    from typing import TypeAlias
+except ImportError:
+    from typing_extensions import TypeAlias
 
 from python2verilog.utils.generics import GenericRepr, GenericReprAndStr
 
