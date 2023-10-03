@@ -59,12 +59,6 @@ class Element:
         logging.debug(f"Non-over-written {type(self)}")
         yield from ()
 
-    def pretty_print(self) -> str:
-        """
-        Pretty print
-        """
-        return f"UNDEFINED {Element.pretty_print.__name__} {type(self)}"
-
     def to_string(self):
         """
         To string
@@ -149,12 +143,6 @@ class BasicElement(Element):
         else:
             yield self
             yield from self.optimal_child.nonclocked_children()
-
-    def pretty_print(self) -> str:
-        rv = ""
-        for element in self.nonclocked_children():
-            rv += f"\n-> {element.pretty_print()}"
-        return rv
 
     @property
     def child(self):
@@ -315,12 +303,6 @@ class IfElseNode(Node, Element):
         yield self
         yield from self.optimal_true_edge.nonclocked_children()
         yield from self.optimal_false_edge.nonclocked_children()
-
-    def pretty_print(self) -> str:
-        rv = ""
-        for element in self.nonclocked_children():
-            rv += f"\n-> {element.pretty_print()}"
-        return rv
 
 
 class AssignNode(Node, BasicElement):
