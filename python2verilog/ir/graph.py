@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import logging
 from abc import abstractmethod
-from typing import Generator, Iterator, Optional
+from typing import Generator, Iterator, Optional, TypeAlias, Union
 
 from python2verilog.utils.generics import GenericRepr, GenericReprAndStr
 
@@ -44,6 +44,21 @@ class Element:
     def __init__(self, unique_id: str, name: str = ""):
         self._name = get_typed(name, str)
         self._id = get_typed(unique_id, str)
+
+    def nonclocked_children(self) -> Iterator[Element]:
+        """
+        Yields self and optimal nonclocked children of element
+
+        :return: [children_branch_0, children_branch_1, ...]
+        """
+        logging.debug(f"Non-over-written {type(self)}")
+        yield from ()
+
+    def pretty_print(self) -> str:
+        """
+        Pretty print
+        """
+        return f"UNDEFINED {Element.pretty_print.__name__} {type(self)}"
 
     def to_string(self):
         """
@@ -122,6 +137,20 @@ class BasicElement(Element):
         self._child = get_typed(child, Element)
         self._optimal_child = None
 
+    def nonclocked_children(self) -> Iterator[Element]:
+        if isinstance(self, ClockedEdge):
+            yield self
+            yield self.optimal_child
+        else:
+            yield self
+            yield from self.optimal_child.nonclocked_children()
+
+    def pretty_print(self) -> str:
+        rv = ""
+        for element in self.nonclocked_children():
+            rv += f"\n-> {element.pretty_print()}"
+        return rv
+
     @property
     def child(self):
         """
@@ -137,11 +166,6 @@ class BasicElement(Element):
         """
         Gets edges
         """
-        # if self.optimal_child:
-        #     return [self.optimal_child]
-        # print(f"getting children basicnode {self._optimal_child}")
-        # return [self.child]
-
         children = []
         if self._child:
             children.append(self._child)
@@ -280,7 +304,18 @@ class IfElseNode(Node, Element):
         yield from self.optimal_false_edge.variables()
 
     def __repr__(self):
-        return f"If({self.condition}) {self.unique_id}"
+        return f"If({self.condition})"
+
+    def nonclocked_children(self) -> Iterator[Element]:
+        yield self
+        yield from self.optimal_true_edge.nonclocked_children()
+        yield from self.optimal_false_edge.nonclocked_children()
+
+    def pretty_print(self) -> str:
+        rv = ""
+        for element in self.nonclocked_children():
+            rv += f"\n-> {element.pretty_print()}"
+        return rv
 
 
 class AssignNode(Node, BasicElement):
@@ -334,7 +369,7 @@ class AssignNode(Node, BasicElement):
         return f"{self._lvalue.verilog()} <= {self._rvalue.verilog()}"
 
     def __repr__(self):
-        return f"{self.lvalue} = {self.rvalue}; {self.unique_id}"
+        return f"{self.lvalue} = {self.rvalue}"
 
     def variables(self):
         # logging.debug(f"{self.variables.__name__} {self}")
@@ -379,6 +414,9 @@ class YieldNode(Node, BasicElement):
         for exp in self.stmts:
             yield from get_variables(exp)
 
+    def __repr__(self) -> str:
+        return f"{self}"
+
 
 class DoneNode(Node, Element):
     """
@@ -415,9 +453,6 @@ class Edge(BasicElement):
         """
         return self._name
 
-    def __repr__(self):
-        return f"=> {self.optimal_child} {self.unique_id}"
-
 
 class NonClockedEdge(Edge):
     """
@@ -428,6 +463,9 @@ class NonClockedEdge(Edge):
     def variables(self):
         yield from self.child.variables()
 
+    def __repr__(self) -> str:
+        return "=>"
+
 
 class ClockedEdge(Edge):
     """
@@ -437,6 +475,9 @@ class ClockedEdge(Edge):
 
     def variables(self):
         yield from ()
+
+    def __repr__(self):
+        return "=/>"
 
 
 def create_networkx_adjacency_list(node: Element):

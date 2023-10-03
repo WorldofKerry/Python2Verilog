@@ -480,12 +480,26 @@ class Generator2Graph:
         unique_node = unique_node_gen()
         unique_edge = unique_edge_gen()
 
+        # Nessessary for exclusitivity
         head = ir.AssignNode(
+            unique_id=next(unique_node),
+            lvalue=inst.signals.ready,
+            rvalue=ir.UInt(0),
+        )
+
+        node: ir.BasicElement = head
+
+        node.child = ir.NonClockedEdge(
+            unique_id=next(unique_edge),
+        )
+        node = node.child
+
+        node.child = ir.AssignNode(
             unique_id=next(unique_node),
             lvalue=inst.signals.start,
             rvalue=ir.UInt(1),
         )
-        node: ir.BasicElement = head
+        node = node.child
 
         assert isinstance(assign.value, pyast.Call)
 

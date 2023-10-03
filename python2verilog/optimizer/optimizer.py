@@ -168,6 +168,11 @@ class OptimizeGraph:
         # Exclusive vars can only be visited once
         exclusive_vars = set(self.exclusive_vars(node.variables()))
         if exclusive_vars & visited.keys():
+            logging.debug(
+                f"Already visited {exclusive_vars & visited.keys()}"
+                ", ending current optimization"
+                f" {exclusive_vars} {visited.keys()}"
+            )
             if isinstance(edge, ir.ClockedEdge):
                 return edge
             return ir.ClockedEdge(
@@ -244,8 +249,9 @@ class OptimizeGraph:
         mutating it,
         then recurses on its children
         """
-        # logging.critical(f"optimizing {root.unique_id} {root}")
-
+        # logging.critical(f"optimizing {root}")
+        # logging.critical(f"optimizing {root.pretty_print()}")
+        #
         if visited is None:
             visited = set()
         if root.unique_id in visited:
@@ -277,3 +283,4 @@ class OptimizeGraph:
             pass
         else:
             raise RuntimeError(f"{type(root)}")
+        logging.critical(f"optimized {root} => {list(root.nonclocked_children())}")
