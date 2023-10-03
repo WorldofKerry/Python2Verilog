@@ -2,8 +2,7 @@
 Type assertion utilities
 """
 import sys
-import types
-from typing import Any, Optional, Type, TypeVar, cast
+from typing import Any, Optional, Type, TypeVar, Union, cast
 
 try:
     from typing import TypeAlias, TypeGuard
@@ -12,7 +11,7 @@ except ImportError:
 
 _ValueType = TypeVar("_ValueType")  # pylint: disable=invalid-name
 _KeyType = TypeVar("_KeyType")  # pylint: disable=invalid-name
-_ClassInfo: TypeAlias = type | types.UnionType | tuple["_ClassInfo", ...]
+_ClassInfo: TypeAlias = Union[type, tuple["_ClassInfo", ...]]
 
 
 def get_typed_list(list_: Optional[list[_ValueType]], type_: Type[_ValueType]):
