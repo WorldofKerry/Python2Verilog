@@ -484,7 +484,7 @@ class Generator2Graph:
         unique_node = unique_node_gen()
         unique_edge = unique_edge_gen()
 
-        # Nessessary for exclusitivity
+        # Nessessary for exclusivity
         head = ir.AssignNode(
             unique_id=next(unique_node),
             lvalue=inst.signals.ready,
