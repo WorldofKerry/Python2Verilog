@@ -140,7 +140,7 @@ class OptimizeGraph:
     # Eventually yield nodes should be removed and be replaced with exclusive vars
     YIELD_VISITOR_ID = "__YIELD_VISITOR_ID"
 
-    def reduce_cycles_helper(
+    def reduce_cycles_visit(
         self,
         edge: ir.Edge,
         mapping: dict[ir.Var, ir.Expression],
@@ -148,14 +148,24 @@ class OptimizeGraph:
         threshold: int,
     ) -> ir.Edge:
         """
-        Recursive helper
+        Recursively visits the children, conditionally adding them to an optimal path
 
-        :param visited: variables
+        The concept of mapping is as follows:
+
+        If
+        a = 1
+        b = a
+        then b == 1, if no clock cycle occurs in-between,
+        at the end of this block, mapping would be
+        {a: 1, b: 1}
+
+        :param mapping: values of variables, given the previous logic
+        :param visited: visited unique_ids and exclusive vars
         """
         node = edge.child
         assert node
 
-        logging.debug(f"{self.reduce_cycles_helper.__name__} {edge.child} {mapping}")
+        logging.debug(f"{self.reduce_cycles_visit.__name__} {edge.child} {mapping}")
 
         # Check for cyclic paths
         if (
@@ -191,13 +201,13 @@ class OptimizeGraph:
             new_edge.child = ir.IfElseNode(
                 unique_id=f"{node.unique_id}_{self.make_unique()}_optimal",
                 condition=backwards_replace(node.condition, mapping),
-                true_edge=self.reduce_cycles_helper(
+                true_edge=self.reduce_cycles_visit(
                     edge=node.true_edge,
                     mapping=copy.deepcopy(mapping),
                     visited=copy.deepcopy(visited),
                     threshold=threshold,
                 ),
-                false_edge=self.reduce_cycles_helper(
+                false_edge=self.reduce_cycles_visit(
                     edge=node.false_edge,
                     mapping=copy.deepcopy(mapping),
                     visited=copy.deepcopy(visited),
@@ -211,7 +221,7 @@ class OptimizeGraph:
                 unique_id=f"{node.unique_id}_{self.make_unique()}_optimal",
                 lvalue=node.lvalue,
                 rvalue=new_rvalue,
-                child=self.reduce_cycles_helper(
+                child=self.reduce_cycles_visit(
                     edge=node.child,
                     mapping=mapping,
                     visited=visited,
@@ -219,8 +229,9 @@ class OptimizeGraph:
                 ),
             )
         elif isinstance(node, ir.YieldNode):
+            # Yield node can only be visited once
             if self.YIELD_VISITOR_ID in visited:
-                new_edge.child = self.reduce_cycles_helper(
+                new_edge.child = self.reduce_cycles_visit(
                     edge=node.child,
                     mapping=mapping,
                     visited=visited,
@@ -262,15 +273,15 @@ class OptimizeGraph:
             else:
                 mapper = {}
 
-            root.optimal_child = self.reduce_cycles_helper(
+            root.optimal_child = self.reduce_cycles_visit(
                 root.child, mapper, {}, threshold=threshold
             )
             self.reduce_cycles(root.child.child, visited, threshold=threshold)
         elif isinstance(root, ir.IfElseNode):
-            root.optimal_true_edge = self.reduce_cycles_helper(
+            root.optimal_true_edge = self.reduce_cycles_visit(
                 root.true_edge, {}, {}, threshold=threshold
             )
-            root.optimal_false_edge = self.reduce_cycles_helper(
+            root.optimal_false_edge = self.reduce_cycles_visit(
                 root.false_edge, {}, {}, threshold=threshold
             )
             self.reduce_cycles(root.true_edge.child, visited, threshold=threshold)
