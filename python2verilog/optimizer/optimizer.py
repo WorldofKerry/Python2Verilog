@@ -283,4 +283,4 @@ class OptimizeGraph:
             pass
         else:
             raise RuntimeError(f"{type(root)}")
-        logging.critical(f"optimized {root} => {list(root.nonclocked_children())}")
+        logging.debug(f"optimized {root} => {list(root.nonclocked_children())}")
