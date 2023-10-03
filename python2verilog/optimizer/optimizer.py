@@ -165,7 +165,9 @@ class OptimizeGraph:
         node = edge.child
         assert node
 
-        logging.debug(f"{self.reduce_cycles_visit.__name__} {edge.child} {mapping}")
+        logging.debug(
+            "%s %s %s", self.reduce_cycles_visit.__name__, edge.child, mapping
+        )
 
         # Check for cyclic paths
         if (
@@ -290,4 +292,4 @@ class OptimizeGraph:
             pass
         else:
             raise RuntimeError(f"{type(root)}")
-        logging.debug(f"optimized {root} => {list(root.nonclocked_children())}")
+        logging.debug("%s => %s", root, list(root.nonclocked_children()))

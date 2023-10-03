@@ -556,7 +556,7 @@ class CaseBuilder:
         """
         Processes a node
         """
-        logging.debug(f"{self.do_vertex.__name__} {vertex} {len(self.visited)}")
+        logging.debug("%s %s %s", self.do_vertex.__name__, vertex, len(self.visited))
 
         assert isinstance(vertex, ir.Node), str(vertex)
         self.visited.add(vertex.unique_id)

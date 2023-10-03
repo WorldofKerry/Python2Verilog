@@ -169,7 +169,11 @@ class Generator2Graph:
             edge = ir.ClockedEdge(unique_id=f"{prefix}_e", child=nextt)
             end_node.child = edge
             logging.debug(
-                f"Assign {cur_node.unique_id} {cur_node} -> {end_node} -> {nextt.unique_id}"
+                "Assign %s %s => %s => %s",
+                cur_node.unique_id,
+                cur_node,
+                end_node,
+                nextt.unique_id,
             )
         elif isinstance(stmt, pyast.Yield):
             cur_node = self.__parse_yield(stmt, prefix=prefix)
