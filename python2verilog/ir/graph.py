@@ -415,7 +415,7 @@ class YieldNode(Node, BasicElement):
             yield from get_variables(exp)
 
     def __repr__(self) -> str:
-        return f"{self}"
+        return f"{self.to_string()}"
 
 
 class DoneNode(Node, Element):
