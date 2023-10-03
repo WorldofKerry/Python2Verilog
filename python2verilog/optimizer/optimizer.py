@@ -76,7 +76,7 @@ class OptimizeGraph:
 
     def __init__(self, root: ir.Node, threshold: int = 0):
         self.unique_counter = 0  # warning due to recursion can't be static var of func
-        self.optimize(root, threshold=threshold)
+        self.reduce_cycles(root, threshold=threshold)
 
     def make_unique(self):
         """
@@ -140,7 +140,7 @@ class OptimizeGraph:
     # Eventually yield nodes should be removed and be replaced with exclusive vars
     YIELD_VISITOR_ID = "__YIELD_VISITOR_ID"
 
-    def helper(
+    def reduce_cycles_helper(
         self,
         edge: ir.Edge,
         mapping: dict[ir.Var, ir.Expression],
@@ -155,7 +155,7 @@ class OptimizeGraph:
         node = edge.child
         assert node
 
-        logging.debug(f"{self.helper.__name__} {edge.child} {mapping}")
+        logging.debug(f"{self.reduce_cycles_helper.__name__} {edge.child} {mapping}")
 
         # Check for cyclic paths
         if (
@@ -191,13 +191,13 @@ class OptimizeGraph:
             new_edge.child = ir.IfElseNode(
                 unique_id=f"{node.unique_id}_{self.make_unique()}_optimal",
                 condition=backwards_replace(node.condition, mapping),
-                true_edge=self.helper(
+                true_edge=self.reduce_cycles_helper(
                     edge=node.true_edge,
                     mapping=copy.deepcopy(mapping),
                     visited=copy.deepcopy(visited),
                     threshold=threshold,
                 ),
-                false_edge=self.helper(
+                false_edge=self.reduce_cycles_helper(
                     edge=node.false_edge,
                     mapping=copy.deepcopy(mapping),
                     visited=copy.deepcopy(visited),
@@ -211,7 +211,7 @@ class OptimizeGraph:
                 unique_id=f"{node.unique_id}_{self.make_unique()}_optimal",
                 lvalue=node.lvalue,
                 rvalue=new_rvalue,
-                child=self.helper(
+                child=self.reduce_cycles_helper(
                     edge=node.child,
                     mapping=mapping,
                     visited=visited,
@@ -220,7 +220,7 @@ class OptimizeGraph:
             )
         elif isinstance(node, ir.YieldNode):
             if self.YIELD_VISITOR_ID in visited:
-                new_edge.child = self.helper(
+                new_edge.child = self.reduce_cycles_helper(
                     edge=node.child,
                     mapping=mapping,
                     visited=visited,
@@ -238,20 +238,16 @@ class OptimizeGraph:
             raise RuntimeError(f"{type(node)}")
         return new_edge
 
-    def optimize(
+    def reduce_cycles(
         self,
         root: ir.Node,
         visited: Optional[set[str]] = None,
         threshold: int = 0,
     ) -> None:
         """
-        Optimizes a single node,
-        mutating it,
-        then recurses on its children
+        Optimizes a node, by increasing amount of work done in a cycle
+        by adding nonclocked edges
         """
-        # logging.critical(f"optimizing {root}")
-        # logging.critical(f"optimizing {root.pretty_print()}")
-        #
         if visited is None:
             visited = set()
         if root.unique_id in visited:
@@ -266,19 +262,19 @@ class OptimizeGraph:
             else:
                 mapper = {}
 
-            root.optimal_child = self.helper(
+            root.optimal_child = self.reduce_cycles_helper(
                 root.child, mapper, {}, threshold=threshold
             )
-            self.optimize(root.child.child, visited, threshold=threshold)
+            self.reduce_cycles(root.child.child, visited, threshold=threshold)
         elif isinstance(root, ir.IfElseNode):
-            root.optimal_true_edge = self.helper(
+            root.optimal_true_edge = self.reduce_cycles_helper(
                 root.true_edge, {}, {}, threshold=threshold
             )
-            root.optimal_false_edge = self.helper(
+            root.optimal_false_edge = self.reduce_cycles_helper(
                 root.false_edge, {}, {}, threshold=threshold
             )
-            self.optimize(root.true_edge.child, visited, threshold=threshold)
-            self.optimize(root.false_edge.child, visited, threshold=threshold)
+            self.reduce_cycles(root.true_edge.child, visited, threshold=threshold)
+            self.reduce_cycles(root.false_edge.child, visited, threshold=threshold)
         elif isinstance(root, ir.DoneNode):
             pass
         else:

@@ -223,9 +223,18 @@ class CodeGen:
         end
         """
         then_body: list[ver.Statement] = []
+        for var in context.input_vars:
+            then_body.append(
+                ver.NonBlockingSubsitution(
+                    ir.Var(py_name=var.ver_name, ver_name=var.ver_name),
+                    ir.Expression(var.py_name),
+                )
+            )
+
         if context.optimization_level > 0:
-            # The first case can be included here
-            # Known as Quick Start
+            # Optimization to include the entry state in the start ifelse
+
+            # Map cached inputs to input signals (cached inputs not updated yet)
             mapping = {
                 ir.Var(py_name=var.ver_name, ver_name=var.ver_name): ir.Expression(
                     var.py_name
@@ -233,15 +242,8 @@ class CodeGen:
                 for var in context.input_vars
             }
 
-            for var in context.input_vars:
-                then_body.append(
-                    ver.NonBlockingSubsitution(
-                        ir.Var(py_name=var.ver_name, ver_name=var.ver_name),
-                        ir.Expression(var.py_name),
-                    )
-                )
-
-            stmt_stack: list[ver.Statement] = []  # backwards replace using dfs
+            # Get statements in entry state
+            stmt_stack: list[ver.Statement] = []
             for item in root.case_items:
                 if item.condition == context.entry_state:
                     stmt_stack += item.statements
@@ -249,6 +251,7 @@ class CodeGen:
                     root.case_items.remove(item)
                     break
 
+            # Replace usage of cached inputs with input signals
             while stmt_stack:
                 stmt = stmt_stack.pop()
                 if isinstance(stmt, ver.NonBlockingSubsitution):
@@ -260,13 +263,6 @@ class CodeGen:
                 else:
                     raise TypeError(f"Unexpected {type(stmt)} {stmt}")
         else:
-            for var in context.input_vars:
-                then_body.append(
-                    ver.NonBlockingSubsitution(
-                        ir.Var(py_name=var.ver_name, ver_name=var.ver_name),
-                        ir.Expression(var.py_name),
-                    )
-                )
             then_body.append(
                 ver.NonBlockingSubsitution(context.state_var, context.entry_state)
             )
