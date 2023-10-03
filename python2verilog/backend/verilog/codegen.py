@@ -487,6 +487,8 @@ class CodeGen:
 class CaseBuilder:
     """
     Creates a case statement for the IR Graph
+
+    Does all work in constructor
     """
 
     def __init__(self, root: ir.Node, context: ir.Context):
@@ -499,8 +501,7 @@ class CaseBuilder:
         instance = itertools.count()
         self.next_unique = lambda: next(instance)
 
-        # Work
-        logging.debug(f"{self.__class__.__name__} {root.unique_id} {root}")
+        # Start recursion and create FSM
         self.case.case_items.append(self.new_caseitem(root))
 
         # Reverse states for readability (states are built backwards)
