@@ -28,7 +28,7 @@ class CodeGen:
         get_typed(root, ir.Node)
         get_typed(context, ir.Context)
         self.context = context
-        root_case = CaseBuilder(root, context).case
+        root_case = CaseBuilder(root, context).get_case()
         logging.debug(
             f"{self.__class__.__name__} "
             f"{[case.condition.ver_name for case in root_case.case_items]}"  # type: ignore
@@ -487,8 +487,6 @@ class CodeGen:
 class CaseBuilder:
     """
     Creates a case statement for the IR Graph
-
-    Does all work in constructor
     """
 
     def __init__(self, root: ir.Node, context: ir.Context):
@@ -496,28 +494,34 @@ class CaseBuilder:
         self.visited: set[str] = set()
         self.context = context
         self.case = ver.Case(expression=context.state_var, case_items=[])
+        self.root = root
 
         # Member Funcs
         instance = itertools.count()
         self.next_unique = lambda: next(instance)
 
+    def get_case(self) -> ver.Case:
+        """
+        Gets case statement/block
+        """
         # Start recursion and create FSM
-        self.case.case_items.append(self.new_caseitem(root))
+        self.case.case_items.append(self.new_caseitem(self.root))
 
         # Reverse states for readability (states are built backwards)
         self.case.case_items = list(reversed(self.case.case_items))
 
         # Add done state if it doesn't exist
         for case in self.case.case_items:
-            if case.condition == context.done_state:
+            if case.condition == self.context.done_state:
                 break
         else:  # no break
             self.case.case_items.append(
                 ver.CaseItem(
-                    condition=context.done_state,
-                    statements=[self.create_quick_done(context)],
+                    condition=self.context.done_state,
+                    statements=[self.create_quick_done(self.context)],
                 )
             )
+        return self.case
 
     @staticmethod
     def create_quick_done(context: ir.Context) -> ver.IfElse:
