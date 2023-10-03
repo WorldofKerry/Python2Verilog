@@ -19,7 +19,12 @@ from python2verilog.ir.expressions import ExclusiveVar, State, Var
 from python2verilog.ir.graph import DoneNode
 from python2verilog.ir.instance import Instance
 from python2verilog.ir.signals import ProtocolSignals
-from python2verilog.utils.assertions import assert_typed_dict, get_typed, get_typed_list
+from python2verilog.utils.assertions import (
+    assert_typed_dict,
+    get_typed,
+    get_typed_list,
+    get_typed_strict,
+)
 from python2verilog.utils.env import is_debug_mode
 from python2verilog.utils.generics import GenericReprAndStr
 
@@ -276,7 +281,7 @@ class Context(GenericReprAndStr):
             or var in self.output_vars
         ):
             return
-        self._global_vars.append(get_typed(var, Var))
+        self._global_vars.append(get_typed_strict(var, Var))
 
     @property
     def states(self):

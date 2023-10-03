@@ -6,7 +6,7 @@ import ast as pyast
 import logging
 
 from .. import ir
-from ..utils.assertions import get_typed, get_typed_list
+from ..utils.assertions import get_typed, get_typed_list, get_typed_strict
 from ..utils.lines import Indent, Lines
 
 
@@ -31,7 +31,7 @@ class Generator2Graph:
         Initializes the parser, does quick setup work
         """
         context.validate()
-        self._context = get_typed(context, ir.Context)
+        self._context = get_typed_strict(context, ir.Context)
 
         # Populate function calls
         # pylint: disable=too-many-nested-blocks

@@ -14,7 +14,9 @@ _KeyType = TypeVar("_KeyType")  # pylint: disable=invalid-name
 _ClassInfo: TypeAlias = Union[type, tuple["_ClassInfo", ...]]
 
 
-def get_typed_list(list_: Optional[list[_ValueType]], type_: Type[_ValueType]):
+def get_typed_list(
+    list_: Optional[list[_ValueType]], type_: Type[_ValueType]
+) -> list[_ValueType]:
     """
     Asserts that all elems in list_ are of type_, then returns list_ or [] if list_ is None
     """
@@ -27,20 +29,22 @@ def get_typed_list(list_: Optional[list[_ValueType]], type_: Type[_ValueType]):
 
 
 def assert_typed_dict(
-    dict_: dict[_KeyType, _ValueType], key_type: _KeyType, value_type: _ValueType
+    dict_: dict[Any, Any],
+    key_type: Type[_KeyType],
+    value_type: Type[_ValueType],
 ) -> TypeGuard[dict[_KeyType, _ValueType]]:
     """
     Asserts that all key, values in dict_ are correctly typed,
     returns dict_ or {} if dict_ is None
     """
-    assert_typed(dict_, dict)
-    for key, value in dict_.items():
-        assert_typed(key, cast(_ClassInfo, key_type))
-        assert_typed(value, cast(_ClassInfo, value_type))
-    return True
+    return (
+        isinstance(dict_, dict)
+        and all(isinstance(x, key_type) for x in dict_.keys())
+        and all(isinstance(x, value_type) for x in dict_.values())
+    )
 
 
-def assert_typed(obj: Any, type_: _ClassInfo) -> TypeGuard[_ClassInfo]:
+def assert_typed(obj: Any, type_: Type[_ValueType]) -> TypeGuard[_ValueType]:
     """
     Type guard for type
     """
@@ -48,27 +52,19 @@ def assert_typed(obj: Any, type_: _ClassInfo) -> TypeGuard[_ClassInfo]:
     return True
 
 
-def get_typed(obj: _ValueType, type_: _ValueType):
+def get_typed(obj: Any, type_: Type[_ValueType]) -> Union[_ValueType, None]:
     """
     Asserts that obj is of type type_, then returns obj or None if obj is None
     """
-    return get_typed_optional(obj, type_)
+    if obj is None:
+        return None
+    assert assert_typed(obj, type_)
+    return obj
 
 
-def get_typed_optional(obj: _ValueType, type_: _ValueType):
-    """
-    Asserts that obj is of type type_, then returns obj or None if obj is None
-    """
-    if obj is not None:
-        get_typed_strict(obj, type_)
-        return obj
-    assert obj is None
-    return None
-
-
-def get_typed_strict(obj: _ValueType, type_: _ValueType):
+def get_typed_strict(obj: Any, type_: Type[_ValueType]) -> _ValueType:
     """
     Asserts that obj is of type type_
     """
-    assert_typed(obj, cast(_ClassInfo, type_))
+    assert assert_typed(obj, type_)
     return obj
