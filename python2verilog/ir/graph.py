@@ -140,7 +140,7 @@ class BasicElement(Element):
         if isinstance(self, ClockedEdge):
             yield self
             yield self.optimal_child
-        else:
+        elif self.optimal_child:
             yield self
             yield from self.optimal_child.nonclocked_children()
 

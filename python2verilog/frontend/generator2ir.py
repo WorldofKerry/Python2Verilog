@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import ast as pyast
+import itertools
 import logging
+from typing import Iterator, Optional
 
 from .. import ir
 from ..utils.lines import Indent, Lines
@@ -171,9 +173,16 @@ class Generator2Graph:
                 nextt.unique_id,
             )
         elif isinstance(stmt, pyast.Yield):
-            cur_node = self.__parse_yield(stmt, prefix=prefix)
+            cur_node, end_node = self.__parse_yield(stmt, prefix=prefix)
             edge = ir.ClockedEdge(unique_id=f"{prefix}_e", child=nextt)
-            cur_node.child = edge
+            end_node.child = edge
+            temp = cur_node
+            while temp:
+                logging.critical(f"{type(temp)} {temp}")
+                try:
+                    temp = temp._child
+                except:
+                    break
         elif isinstance(stmt, pyast.While):
             cur_node = self.__parse_while(stmt, nextt=nextt, prefix=prefix)
         elif isinstance(stmt, pyast.For):
@@ -373,21 +382,70 @@ class Generator2Graph:
         """
         yield <value>;
         """
+
         match node.value:
             case pyast.Tuple(elts=elts):
-                return ir.YieldNode(
-                    unique_id=prefix,
-                    name="Yield",
-                    stmts=[self.__parse_expression(c) for c in elts],
-                )
+                stmts = [self.__parse_expression(c) for c in elts]
             case pyast.expr():
-                return ir.YieldNode(
-                    unique_id=prefix,
-                    name="Yield",
-                    stmts=[self.__parse_expression(node.value)],
-                )
+                stmts = [self.__parse_expression(node.value)]
             case _:
                 raise TypeError(f"Expected tuple {type(node.value)} {pyast.dump(node)}")
+
+        def create_assign_nodes(
+            vars: Iterator[ir.ExclusiveVar], exprs: Iterator[ir.Expression], prefix: str
+        ):
+            """
+            Create assign nodes from variables and expressions
+            """
+            assert len(exprs) == len(vars)
+            counters = itertools.count()
+            for var, expr, counter in zip(vars, exprs, counters):
+                yield ir.AssignNode(
+                    unique_id=f"{prefix}_{counter}", lvalue=var, rvalue=expr
+                )
+
+        def weave_nonclocked_edges(nodes: Iterator[ir.BasicElement], prefix: str):
+            """
+            Weaves nodes with nonclocked edges
+            """
+            counters = itertools.count()
+            head: Optional[ir.BasicElement] = None
+            prev: Optional[ir.BasicElement] = None
+            for node, counter in zip(nodes, counters):
+                if not head:
+                    head = node
+                if prev:
+                    prev.child = node
+                node.child = ir.NonClockedEdge(
+                    unique_id=f"{prefix}_{counter}",
+                )
+                prev = node.child
+            return head, prev
+
+        head, tail = weave_nonclocked_edges(
+            create_assign_nodes(self._context.output_vars, stmts, prefix), f"{prefix}_e"
+        )
+        # logging.critical(type(tail))
+        # logging.critical(f"{list(head.nonclocked_children())}")
+        tail.child = ir.AssignNode(
+            unique_id=f"{prefix}_valid",
+            lvalue=self._context.signals.valid,
+            rvalue=ir.UInt(1),
+        )
+        # logging.critical(f"{list(head.nonclocked_children())}")
+        temp = head
+        # while temp:
+        #     logging.critical(f"{type(temp)} {temp}")
+        #     temp = temp._child
+        return head, tail.child
+        # logging.critical(list(stmts))
+
+        yield_node = ir.YieldNode(
+            unique_id=prefix,
+            name="Yield",
+            stmts=list(stmts),
+        )
+        return yield_node, yield_node
 
     def __parse_binop(self, expr: pyast.BinOp) -> ir.Expression:
         """
