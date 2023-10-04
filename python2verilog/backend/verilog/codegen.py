@@ -12,7 +12,7 @@ from python2verilog.optimizer.optimizer import backwards_replace
 from python2verilog.utils.lines import Lines
 
 from ... import ir
-from ...utils.assertions import assert_typed_dict, get_typed, get_typed_list
+from ...utils.typed import guard_dict, typed, typed_list
 from . import ast as ver
 
 
@@ -25,8 +25,8 @@ class CodeGen:
         """ "
         Builds tree from Graph IR
         """
-        get_typed(root, ir.Node)
-        get_typed(context, ir.Context)
+        typed(root, ir.Node)
+        typed(context, ir.Context)
         self.context = context
         root_case = CaseBuilder(root, context).get_case()
         logging.debug(
@@ -360,6 +360,7 @@ class CodeGen:
         ]
 
         ports = {decl.name: decl.name for decl in decl}
+        assert guard_dict(ports, str, str)
 
         setups: list[ver.Statement] = list(decl)
         setups.append(ver.Instantiation(self.context.name, "DUT", ports))

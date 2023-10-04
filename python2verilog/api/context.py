@@ -12,7 +12,7 @@ from python2verilog.backend import verilog
 from python2verilog.backend.verilog.config import CodegenConfig, TestbenchConfig
 from python2verilog.frontend.generator2ir import Generator2Graph
 from python2verilog.optimizer.optimizer import OptimizeGraph
-from python2verilog.utils.assertions import get_typed
+from python2verilog.utils.typed import typed
 
 
 def context_to_codegen(context: ir.Context):
@@ -37,7 +37,7 @@ def context_to_verilog(context: ir.Context, config: CodegenConfig) -> tuple[str,
 
     :return: (module, testbench)
     """
-    get_typed(context, ir.Context)
+    typed(context, ir.Context)
     ver_code_gen, _ = context_to_codegen(context)
 
     module_str = ver_code_gen.get_module_str()
@@ -52,7 +52,7 @@ def context_to_verilog_and_dump(context: ir.Context) -> tuple[str, str, str]:
 
     :return: (module, testbench, cytoscape_dump) pair
     """
-    get_typed(context, ir.Context)
+    typed(context, ir.Context)
     ver_code_gen, ir_root = context_to_codegen(context)
 
     module_str = ver_code_gen.get_module_str()

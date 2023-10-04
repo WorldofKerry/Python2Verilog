@@ -6,8 +6,8 @@ import ast as pyast
 import logging
 
 from .. import ir
-from ..utils.assertions import get_typed, get_typed_list, get_typed_strict
 from ..utils.lines import Indent, Lines
+from ..utils.typed import typed, typed_list, typed_strict
 
 
 def name_to_var(name: pyast.expr) -> ir.Var:
@@ -31,7 +31,7 @@ class Generator2Graph:
         Initializes the parser, does quick setup work
         """
         context.validate()
-        self._context = get_typed_strict(context, ir.Context)
+        self._context = typed_strict(context, ir.Context)
 
         # Populate function calls
         # pylint: disable=too-many-nested-blocks
@@ -162,8 +162,8 @@ class Generator2Graph:
         <statement> (e.g. assign, for loop, etc., cannot be equated to)
 
         """
-        get_typed(stmt, pyast.AST)
-        get_typed(nextt, ir.Element)
+        typed(stmt, pyast.AST)
+        typed(nextt, ir.Element)
         if isinstance(stmt, pyast.Assign):
             cur_node, end_node = self.__parse_assign(stmt, prefix=prefix)
             edge = ir.ClockedEdge(unique_id=f"{prefix}_e", child=nextt)

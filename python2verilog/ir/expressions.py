@@ -9,13 +9,8 @@ from __future__ import annotations
 
 import copy
 
-from python2verilog.utils.assertions import (
-    assert_typed,
-    get_typed,
-    get_typed_list,
-    get_typed_strict,
-)
 from python2verilog.utils.generics import GenericRepr
+from python2verilog.utils.typed import guard, typed, typed_list, typed_strict
 
 
 class Expression(GenericRepr):
@@ -59,7 +54,7 @@ class Int(Expression):
     """
 
     def __init__(self, value: int):
-        self.value = get_typed_strict(value, int)
+        self.value = typed_strict(value, int)
         super().__init__(str(self.__class__))
 
     def verilog(self) -> str:
@@ -114,10 +109,10 @@ class Var(Expression):
         if ver_name == "":
             ver_name = "_" + py_name
 
-        self.ver_name = get_typed_strict(ver_name, str)
-        self.py_name = get_typed_strict(py_name, str)
-        self.width = get_typed_strict(width, int)
-        self.is_signed = get_typed_strict(is_signed, bool)
+        self.ver_name = typed_strict(ver_name, str)
+        self.py_name = typed_strict(py_name, str)
+        self.width = typed_strict(width, int)
+        self.is_signed = typed_strict(is_signed, bool)
         self.initial_value = initial_value
 
         super().__init__(ver_name)
@@ -177,9 +172,9 @@ class UBinOp(Expression):
     """
 
     def __init__(self, left: Expression, oper: str, right: Expression):
-        self.left = get_typed_strict(left, Expression)
-        self.right = get_typed_strict(right, Expression)
-        self.oper = get_typed_strict(oper, str)
+        self.left = typed_strict(left, Expression)
+        self.right = typed_strict(right, Expression)
+        self.oper = typed_strict(oper, str)
         super().__init__(self.__class__.__name__)
 
     def to_string(self):
@@ -277,8 +272,8 @@ class UnaryOp(Expression):
     """
 
     def __init__(self, oper: str, expr: Expression):
-        self.oper = get_typed_strict(oper, str)
-        self.expr = get_typed_strict(expr, Expression)
+        self.oper = typed_strict(oper, str)
+        self.expr = typed_strict(expr, Expression)
         super().__init__(self.__class__.__name__)
 
     def to_string(self):
@@ -300,8 +295,8 @@ class Mod(BinOp):
     """
 
     def __init__(self, left: Expression, right: Expression):
-        self.left = get_typed_strict(left, Expression)
-        self.right = get_typed_strict(right, Expression)
+        self.left = typed_strict(left, Expression)
+        self.right = typed_strict(right, Expression)
         super().__init__(left, "%", right)
 
     def verilog(self):
@@ -337,8 +332,8 @@ class FloorDiv(BinOp):
     """
 
     def __init__(self, left: Expression, right: Expression):
-        self.left = get_typed_strict(left, Expression)
-        self.right = get_typed_strict(right, Expression)
+        self.left = typed_strict(left, Expression)
+        self.right = typed_strict(right, Expression)
         super().__init__(left, "//", right)
 
     def verilog(self):

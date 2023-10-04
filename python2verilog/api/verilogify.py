@@ -20,9 +20,9 @@ from python2verilog.api.modes import Modes
 from python2verilog.api.namespace import get_namespace
 from python2verilog.simulation import iverilog
 from python2verilog.simulation.display import parse_stdout, strip_ready, strip_valid
-from python2verilog.utils.assertions import assert_typed, assert_typed_dict, get_typed
 from python2verilog.utils.decorator import decorator_with_args
 from python2verilog.utils.fifo import temp_fifo
+from python2verilog.utils.typed import guard, guard_dict, typed
 
 
 # pylint: disable=too-many-locals
@@ -37,8 +37,8 @@ def verilogify(
     :param namespace: the namespace to put this function, for linking purposes
     :param mode: if WRITE or OVERWRITE, files will be written to the specified paths
     """
-    get_typed(func, FunctionType)
-    assert_typed(mode, Modes)
+    typed(func, FunctionType)
+    guard(mode, Modes)
 
     if not hasattr(main, "__file__") and namespace is None:
         # No way to query caller filename in IPython / Jupyter notebook
@@ -54,7 +54,7 @@ def verilogify(
 
     if namespace is None:
         namespace = get_namespace(filename)
-    assert_typed_dict(namespace, str, ir.Context)  # type: ignore[misc]
+    guard_dict(namespace, str, ir.Context)  # type: ignore[misc]
 
     tree = ast.parse(textwrap.dedent(inspect.getsource(func)))
     assert len(tree.body) == 1

@@ -20,7 +20,7 @@ except ImportError:
 
 from python2verilog.utils.generics import GenericRepr, GenericReprAndStr
 
-from ..utils.assertions import assert_typed, get_typed, get_typed_list, get_typed_strict
+from ..utils.typed import guard, typed, typed_list, typed_strict
 from . import expressions as expr
 
 
@@ -47,8 +47,8 @@ class Element:
     """
 
     def __init__(self, unique_id: str, name: str = ""):
-        self._name = get_typed_strict(name, str)
-        self._id = get_typed_strict(unique_id, str)
+        self._name = typed_strict(name, str)
+        self._id = typed_strict(unique_id, str)
 
     def nonclocked_children(self) -> Iterator[Element]:
         """
@@ -85,7 +85,7 @@ class Element:
         """
         Sets node id
         """
-        self._id = get_typed_strict(value, str)
+        self._id = typed_strict(value, str)
 
     def get_all_children(self):
         """
@@ -133,8 +133,8 @@ class BasicElement(Element):
         **kwargs,
     ):
         super().__init__(unique_id, *args, **kwargs)
-        self._child = get_typed(child, Element)
-        self._optimal_child = None
+        self._child = typed(child, Element)
+        self._optimal_child: Optional[Element] = None
 
     def nonclocked_children(self) -> Iterator[Element]:
         if isinstance(self, ClockedEdge):
@@ -149,11 +149,11 @@ class BasicElement(Element):
         """
         child or optimal_child if no child
         """
-        return get_typed_strict(self._child, Element)
+        return typed_strict(self._child, Element)
 
     @child.setter
     def child(self, other: Element):
-        self._child = get_typed_strict(other, Element)
+        self._child = typed_strict(other, Element)
 
     def get_all_children(self):
         """
@@ -182,7 +182,7 @@ class BasicElement(Element):
 
     @optimal_child.setter
     def optimal_child(self, other: Element):
-        self._optimal_child = get_typed_strict(other, Element)
+        self._optimal_child = typed_strict(other, Element)
 
 
 class Node(Element):
@@ -206,11 +206,11 @@ class IfElseNode(Node, Element):
         **kwargs,
     ):
         super().__init__(unique_id, *args, **kwargs)
-        self._true_edge = get_typed_strict(true_edge, Edge)
-        self._false_edge = get_typed_strict(false_edge, Edge)
-        self._condition = get_typed_strict(condition, expr.Expression)
-        self._optimal_true_edge = None
-        self._optimal_false_edge = None
+        self._true_edge = typed_strict(true_edge, Edge)
+        self._false_edge = typed_strict(false_edge, Edge)
+        self._condition = typed_strict(condition, expr.Expression)
+        self._optimal_true_edge: Optional[Edge] = None
+        self._optimal_false_edge: Optional[Edge] = None
 
     def to_string(self):
         """
@@ -233,8 +233,8 @@ class IfElseNode(Node, Element):
         return self._true_edge
 
     @true_edge.setter
-    def true_edge(self, other: Element):
-        self._true_edge = get_typed_strict(other, Element)
+    def true_edge(self, other: Edge):
+        self._true_edge = typed_strict(other, Edge)
 
     @property
     def false_edge(self):
@@ -244,8 +244,8 @@ class IfElseNode(Node, Element):
         return self._false_edge
 
     @false_edge.setter
-    def false_edge(self, other: Element):
-        self._false_edge = get_typed_strict(other, Element)
+    def false_edge(self, other: Edge):
+        self._false_edge = typed_strict(other, Edge)
 
     @property
     def optimal_true_edge(self):
@@ -255,8 +255,8 @@ class IfElseNode(Node, Element):
         return self._optimal_true_edge if self._optimal_true_edge else self._true_edge
 
     @optimal_true_edge.setter
-    def optimal_true_edge(self, other: Element):
-        self._optimal_true_edge = get_typed_strict(other, Element)
+    def optimal_true_edge(self, other: Edge):
+        self._optimal_true_edge = typed_strict(other, Edge)
 
     @property
     def optimal_false_edge(self):
@@ -268,8 +268,8 @@ class IfElseNode(Node, Element):
         )
 
     @optimal_false_edge.setter
-    def optimal_false_edge(self, other: Element):
-        self._optimal_false_edge = get_typed_strict(other, Element)
+    def optimal_false_edge(self, other: Edge):
+        self._optimal_false_edge = typed_strict(other, Edge)
 
     def get_all_children(self) -> Iterator[Edge]:
         """
@@ -321,10 +321,10 @@ class AssignNode(Node, BasicElement):
         child: Optional[Edge] = None,
         **kwargs,
     ):
-        self.child: Union[Edge, None]
         super().__init__(unique_id, *args, child=child, **kwargs)
-        self._lvalue = get_typed_strict(lvalue, expr.Expression)
-        self._rvalue = get_typed_strict(rvalue, expr.Expression)
+        self._child = child
+        self._lvalue = typed_strict(lvalue, expr.Expression)
+        self._rvalue = typed_strict(rvalue, expr.Expression)
 
     @property
     def lvalue(self):
@@ -342,7 +342,7 @@ class AssignNode(Node, BasicElement):
 
     @rvalue.setter
     def rvalue(self, rvalue: expr.Expression):
-        self._rvalue = get_typed_strict(rvalue, expr.Expression)
+        self._rvalue = typed_strict(rvalue, expr.Expression)
 
     def to_string(self):
         """
@@ -360,7 +360,6 @@ class AssignNode(Node, BasicElement):
         return f"{self.lvalue} = {self.rvalue}"
 
     def variables(self):
-        # logging.debug(f"{self.variables.__name__} {self}")
         yield from get_variables(self.lvalue)
         yield from get_variables(self.rvalue)
         yield from self.child.variables()
@@ -379,7 +378,7 @@ class YieldNode(Node, BasicElement):
         edge: Optional[Edge] = None,
     ):
         super().__init__(unique_id, name=name, child=edge)
-        self._stmts = get_typed_list(stmts, expr.Expression)
+        self._stmts = typed_list(stmts, expr.Expression)
 
     @property
     def stmts(self):
@@ -421,9 +420,8 @@ class Edge(BasicElement):
     """
 
     def __init__(self, unique_id: str, *args, child: Element | None = None, **kwargs):
-        assert child is None or assert_typed(child, Node)
-        self.child: Union[Node, None]
         super().__init__(unique_id, *args, child=child, **kwargs)
+        self._child = child
 
     def to_string(self):
         """

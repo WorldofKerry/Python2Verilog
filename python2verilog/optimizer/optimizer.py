@@ -7,7 +7,7 @@ import logging
 from functools import reduce
 from typing import Any, Callable, Iterator, Optional, Union
 
-from python2verilog.utils.assertions import get_typed
+from python2verilog.utils.typed import guard, typed
 
 from .. import ir
 
@@ -219,6 +219,7 @@ class OptimizeGraph:
         elif isinstance(node, ir.AssignNode):
             new_rvalue = backwards_replace(node.rvalue, mapping)
             mapping[node.lvalue] = new_rvalue
+            assert guard(node.child, ir.Edge)
             new_edge.child = ir.AssignNode(
                 unique_id=f"{node.unique_id}_{self.make_unique()}_optimal",
                 lvalue=node.lvalue,
@@ -232,6 +233,7 @@ class OptimizeGraph:
             )
         elif isinstance(node, ir.YieldNode):
             # Yield node can only be visited once
+            assert guard(node.child, ir.Edge)
             if self.YIELD_VISITOR_ID in visited:
                 new_edge.child = self.reduce_cycles_visit(
                     edge=node.child,
@@ -275,6 +277,8 @@ class OptimizeGraph:
             else:
                 mapper = {}
 
+            assert guard(root.child, ir.Edge)
+            assert guard(root.child.child, ir.Node)
             root.optimal_child = self.reduce_cycles_visit(
                 root.child, mapper, {}, threshold=threshold
             )

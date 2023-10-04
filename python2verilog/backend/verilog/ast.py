@@ -6,13 +6,12 @@ from __future__ import annotations
 
 from typing import Iterable, Optional
 
+from python2verilog import ir
 from python2verilog.utils import env
 from python2verilog.utils.generics import GenericRepr
+from python2verilog.utils.lines import ImplementsToLines, Indent, Lines
 from python2verilog.utils.mit_license import get_mit_license
-
-from ... import ir
-from ...utils.assertions import assert_typed_dict, get_typed, get_typed_list
-from ...utils.lines import ImplementsToLines, Indent, Lines
+from python2verilog.utils.typed import guard, typed, typed_list, typed_strict
 
 
 class AtPosedge(ir.Expression):
@@ -44,8 +43,8 @@ class Statement(ImplementsToLines, GenericRepr):
     """
 
     def __init__(self, literal: str = "", comment: str = ""):
-        self.literal = get_typed(literal, str)
-        self.comment = get_typed(comment, str)
+        self.literal = typed(literal, str)
+        self.comment = typed(comment, str)
 
     def to_lines(self):
         """
@@ -70,6 +69,7 @@ class Statement(ImplementsToLines, GenericRepr):
         // <comment>
         Separated by newlines
         """
+        assert guard(self.comment, str)
         actual_lines = self.comment.split("\n")
         lines = Lines()
         for line in actual_lines:
@@ -96,8 +96,8 @@ class TypeDef(Statement):
     """
 
     def __init__(self, name: str, values: list[str]):
-        self.name = get_typed(name, str)
-        self.values = get_typed_list(values, str)
+        self.name = typed(name, str)
+        self.values = typed_list(values, str)
         super().__init__()
 
     def to_lines(self):
@@ -289,7 +289,7 @@ class Initial(Statement):
 
     def __init__(self, *args, body: Optional[list[Statement]] = None, **kwargs):
         if body:
-            get_typed_list(body, Statement)
+            typed_list(body, Statement)
         self.body = body
         super().__init__(*args, **kwargs)
 
@@ -413,10 +413,10 @@ class Declaration(Statement):
         signed: bool = False,
         **kwargs,
     ):
-        self.size = get_typed(size, int)
-        self.reg = get_typed(reg, bool)
-        self.signed = get_typed(signed, bool)
-        self.name = get_typed(name, str)
+        self.size = typed_strict(size, int)
+        self.reg = typed_strict(reg, bool)
+        self.signed = typed_strict(signed, bool)
+        self.name = typed_strict(name, str)
         super().__init__(*args, **kwargs)
 
     def to_lines(self):
@@ -516,9 +516,9 @@ class IfElse(Statement):
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        self.condition = get_typed(condition, ir.Expression)
-        self.then_body = get_typed_list(then_body, Statement)
-        self.else_body = get_typed_list(else_body, Statement)
+        self.condition = typed_strict(condition, ir.Expression)
+        self.then_body = typed_list(then_body, Statement)
+        self.else_body = typed_list(else_body, Statement)
 
     def to_lines(self):
         lines = Lines()
@@ -551,7 +551,7 @@ class While(Statement):
         assert isinstance(condition, ir.Expression)
         self.condition = condition
         if body:
-            get_typed_list(body, Statement)
+            typed_list(body, Statement)
         self.body = body
         super().__init__(*args, **kwargs)
 

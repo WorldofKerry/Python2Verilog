@@ -15,7 +15,7 @@ from python2verilog.backend import verilog
 from python2verilog.backend.verilog.config import CodegenConfig, TestbenchConfig
 from python2verilog.frontend.generator2ir import Generator2Graph
 from python2verilog.optimizer.optimizer import OptimizeGraph
-from python2verilog.utils.assertions import get_typed, get_typed_list
+from python2verilog.utils.typed import typed, typed_list
 
 
 def py_to_codegen(
@@ -59,11 +59,11 @@ def py_to_verilog(
 
     :return: (module, testbench)
     """
-    get_typed(code, str)
-    get_typed(function_name, str)
+    typed(code, str)
+    typed(function_name, str)
     assert function_name in code
-    get_typed_list(extra_test_cases, tuple)  # type: ignore[misc]
-    get_typed(file_path, str)
+    typed_list(extra_test_cases, tuple)  # type: ignore[misc]
+    typed(file_path, str)
 
     code_gen, _ = py_to_codegen(
         code=code,
@@ -90,8 +90,8 @@ def py_to_context(
     :return: context
     """
     # pylint: disable=too-many-locals
-    get_typed(code, str)
-    get_typed(function_name, str)
+    typed(code, str)
+    typed(function_name, str)
 
     def get_file_and_line_num(node: ast.AST):
         """
