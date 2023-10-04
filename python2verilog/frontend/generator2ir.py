@@ -37,9 +37,19 @@ class Generator2Graph:
         # pylint: disable=too-many-nested-blocks
         for node in context.py_ast.body:
             for assign in pyast.walk(node):
+                match assign:
+                    case pyast.Assign(
+                        targets=[pyast.Name(id=target_id)],
+                        value=pyast.Call(func=pyast.Name(id=func_id)),
+                    ):
+                        cxt = self._context.namespace[func_id]
+                        instance = cxt.create_instance(target_id)
+                        self._context.instances[target_id] = instance
+                continue
                 if isinstance(assign, pyast.Assign):
                     for child in pyast.walk(assign):
                         if isinstance(child, pyast.Call):
+                            logging.critical(f"{pyast.dump(assign)}")
                             assert len(assign.targets) == 1
                             target = assign.targets[0]
                             assert isinstance(target, pyast.Name)
@@ -109,12 +119,6 @@ class Generator2Graph:
         # Check if contains function call
         for child in pyast.walk(node):
             if isinstance(child, pyast.Call):
-                # temp = ir.AssignNode(
-                #     unique_id=prefix,
-                #     lvalue=ir.Expression("func"),
-                #     rvalue=ir.Expression("call"),
-                # )
-                # return temp, temp
                 return self.__parse_assign_to_call(node, prefix)
         assign = ir.AssignNode(
             unique_id=prefix,
@@ -378,22 +382,21 @@ class Generator2Graph:
         """
         yield <value>;
         """
-        if isinstance(node.value, pyast.Tuple):
-            return ir.YieldNode(
-                unique_id=prefix,
-                name="Yield",
-                stmts=[self.__parse_expression(c) for c in node.value.elts],
-            )
-        if isinstance(
-            node.value,
-            (pyast.Name, pyast.BinOp, pyast.Compare, pyast.UnaryOp, pyast.Constant),
-        ):
-            return ir.YieldNode(
-                unique_id=prefix,
-                name="Yield",
-                stmts=[self.__parse_expression(c) for c in [node.value]],
-            )
-        raise TypeError(f"Expected tuple {type(node.value)} {pyast.dump(node)}")
+        match node.value:
+            case pyast.Tuple(elts=elts):
+                return ir.YieldNode(
+                    unique_id=prefix,
+                    name="Yield",
+                    stmts=[self.__parse_expression(c) for c in elts],
+                )
+            case pyast.expr():
+                return ir.YieldNode(
+                    unique_id=prefix,
+                    name="Yield",
+                    stmts=[self.__parse_expression(node.value)],
+                )
+            case _:
+                raise TypeError(f"Expected tuple {type(node.value)} {pyast.dump(node)}")
 
     def __parse_binop(self, expr: pyast.BinOp) -> ir.Expression:
         """
