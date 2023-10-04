@@ -507,17 +507,17 @@ class CaseBuilder:
         # Reverse states for readability (states are built backwards)
         self.case.case_items = list(reversed(self.case.case_items))
 
-        # Add done state if it doesn't exist
-        for case in self.case.case_items:
-            if case.condition == self.context.done_state:
-                break
-        else:  # no break
+        # Add done state if it doesn't exist in cases
+        if not any(
+            case.condition == self.context.done_state for case in self.case.case_items
+        ):
             self.case.case_items.append(
                 ver.CaseItem(
                     condition=self.context.done_state,
                     statements=[self.create_quick_done(self.context)],
                 )
             )
+
         return self.case
 
     @staticmethod
