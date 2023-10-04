@@ -176,13 +176,6 @@ class Generator2Graph:
             cur_node, end_node = self.__parse_yield(stmt, prefix=prefix)
             edge = ir.ClockedEdge(unique_id=f"{prefix}_e", child=nextt)
             end_node.child = edge
-            temp = cur_node
-            while temp:
-                logging.critical(f"{type(temp)} {temp}")
-                try:
-                    temp = temp._child
-                except:
-                    break
         elif isinstance(stmt, pyast.While):
             cur_node = self.__parse_while(stmt, nextt=nextt, prefix=prefix)
         elif isinstance(stmt, pyast.For):
@@ -364,8 +357,10 @@ class Generator2Graph:
         """
         assert isinstance(stmt, pyast.While)
 
-        loop_edge = ir.ClockedEdge(unique_id=f"{prefix}_edge", name="True")
-        done_edge = ir.ClockedEdge(unique_id=f"{prefix}_f", name="False", child=nextt)
+        loop_edge = ir.NonClockedEdge(unique_id=f"{prefix}_edge", name="True")
+        done_edge = ir.NonClockedEdge(
+            unique_id=f"{prefix}_f", name="False", child=nextt
+        )
 
         ifelse = ir.IfElseNode(
             unique_id=f"{prefix}_while",

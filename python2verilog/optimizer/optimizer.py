@@ -175,6 +175,7 @@ class OptimizeGraph:
             and node.unique_id in visited
             and visited[node.unique_id] > threshold
         ):
+            logging.critical(f"early return first {node}")
             return edge
 
         # Exclusive vars can only be visited once
@@ -185,6 +186,7 @@ class OptimizeGraph:
                 ", ending current optimization"
                 f" {exclusive_vars} {visited.keys()}"
             )
+            logging.critical(f"early return second {node}")
             if isinstance(edge, ir.ClockedEdge):
                 return edge
             return ir.ClockedEdge(
