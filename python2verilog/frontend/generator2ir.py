@@ -33,32 +33,23 @@ class Generator2Graph:
         context.validate()
         self._context = typed_strict(context, ir.Context)
 
-        # Populate function calls
-        # pylint: disable=too-many-nested-blocks
+        # Populate variables that hold generator instances
         for node in context.py_ast.body:
             for child in pyast.walk(node):
                 match child:
+                    # target_id = func_id(...)
                     case pyast.Assign(
                         targets=[pyast.Name(id=target_id)],
                         value=pyast.Call(func=pyast.Name(id=func_id)),
                     ):
+                        # Get context of generator function being called
                         cxt = self._context.namespace[func_id]
+
+                        # Create an instance of that generator
                         instance = cxt.create_instance(target_id)
+
+                        # Add instance to own context
                         self._context.instances[target_id] = instance
-                continue
-                if isinstance(child, pyast.Assign):
-                    for child in pyast.walk(child):
-                        if isinstance(child, pyast.Call):
-                            logging.critical(f"{pyast.dump(child)}")
-                            assert len(child.targets) == 1
-                            target = child.targets[0]
-                            assert isinstance(target, pyast.Name)
-                            if child.targets[0] not in self._context.instances:
-                                assert isinstance(child.value, pyast.Call)
-                                assert isinstance(child.value.func, pyast.Name)
-                                cxt = self._context.namespace[child.value.func.id]
-                                instance = cxt.create_instance(target.id)
-                                self._context.instances[target.id] = instance
 
         logging.debug(f"\n\n========> Parsing {context.name} <========")
         self._root = self.__parse_statements(
