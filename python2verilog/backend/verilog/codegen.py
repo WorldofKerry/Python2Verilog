@@ -12,7 +12,7 @@ from python2verilog.optimizer.optimizer import backwards_replace
 from python2verilog.utils.lines import Lines
 
 from ... import ir
-from ...utils.assertions import assert_typed_dict, get_typed, get_typed_list
+from ...utils.typed import guard_dict, typed, typed_list
 from . import ast as ver
 
 
@@ -25,10 +25,10 @@ class CodeGen:
         """ "
         Builds tree from Graph IR
         """
-        get_typed(root, ir.Node)
-        get_typed(context, ir.Context)
+        typed(root, ir.Node)
+        typed(context, ir.Context)
         self.context = context
-        root_case = CaseBuilder(root, context).case
+        root_case = CaseBuilder(root, context).get_case()
         logging.debug(
             f"{self.__class__.__name__} "
             f"{[case.condition.ver_name for case in root_case.case_items]}"  # type: ignore
@@ -223,9 +223,18 @@ class CodeGen:
         end
         """
         then_body: list[ver.Statement] = []
+        for var in context.input_vars:
+            then_body.append(
+                ver.NonBlockingSubsitution(
+                    ir.Var(py_name=var.ver_name, ver_name=var.ver_name),
+                    ir.Expression(var.py_name),
+                )
+            )
+
         if context.optimization_level > 0:
-            # The first case can be included here
-            # Known as Quick Start
+            # Optimization to include the entry state in the start ifelse
+
+            # Map cached inputs to input signals (cached inputs not updated yet)
             mapping = {
                 ir.Var(py_name=var.ver_name, ver_name=var.ver_name): ir.Expression(
                     var.py_name
@@ -233,15 +242,8 @@ class CodeGen:
                 for var in context.input_vars
             }
 
-            for var in context.input_vars:
-                then_body.append(
-                    ver.NonBlockingSubsitution(
-                        ir.Var(py_name=var.ver_name, ver_name=var.ver_name),
-                        ir.Expression(var.py_name),
-                    )
-                )
-
-            stmt_stack: list[ver.Statement] = []  # backwards replace using dfs
+            # Get statements in entry state
+            stmt_stack: list[ver.Statement] = []
             for item in root.case_items:
                 if item.condition == context.entry_state:
                     stmt_stack += item.statements
@@ -249,6 +251,7 @@ class CodeGen:
                     root.case_items.remove(item)
                     break
 
+            # Replace usage of cached inputs with input signals
             while stmt_stack:
                 stmt = stmt_stack.pop()
                 if isinstance(stmt, ver.NonBlockingSubsitution):
@@ -260,13 +263,6 @@ class CodeGen:
                 else:
                     raise TypeError(f"Unexpected {type(stmt)} {stmt}")
         else:
-            for var in context.input_vars:
-                then_body.append(
-                    ver.NonBlockingSubsitution(
-                        ir.Var(py_name=var.ver_name, ver_name=var.ver_name),
-                        ir.Expression(var.py_name),
-                    )
-                )
             then_body.append(
                 ver.NonBlockingSubsitution(context.state_var, context.entry_state)
             )
@@ -364,6 +360,7 @@ class CodeGen:
         ]
 
         ports = {decl.name: decl.name for decl in decl}
+        assert guard_dict(ports, str, str)
 
         setups: list[ver.Statement] = list(decl)
         setups.append(ver.Instantiation(self.context.name, "DUT", ports))
@@ -494,26 +491,34 @@ class CaseBuilder:
         self.visited: set[str] = set()
         self.context = context
         self.case = ver.Case(expression=context.state_var, case_items=[])
+        self.root = root
 
         # Member Funcs
         instance = itertools.count()
         self.next_unique = lambda: next(instance)
 
-        # Work
-        logging.debug(f"{self.__class__.__name__} {root.unique_id} {root}")
-        self.case.case_items.append(self.new_caseitem(root))
-        has_done = False
-        for case in self.case.case_items:
-            if case.condition == context.done_state:
-                has_done = True
-        if not has_done:
+    def get_case(self) -> ver.Case:
+        """
+        Gets case statement/block
+        """
+        # Start recursion and create FSM
+        self.case.case_items.append(self.new_caseitem(self.root))
+
+        # Reverse states for readability (states are built backwards)
+        self.case.case_items = list(reversed(self.case.case_items))
+
+        # Add done state if it doesn't exist in cases
+        if all(
+            case.condition != self.context.done_state for case in self.case.case_items
+        ):
             self.case.case_items.append(
                 ver.CaseItem(
-                    condition=context.done_state,
-                    statements=[self.create_quick_done(context)],
+                    condition=self.context.done_state,
+                    statements=[self.create_quick_done(self.context)],
                 )
             )
-        self.case.case_items = list(reversed(self.case.case_items))
+
+        return self.case
 
     @staticmethod
     def create_quick_done(context: ir.Context) -> ver.IfElse:
@@ -552,7 +557,7 @@ class CaseBuilder:
         """
         Processes a node
         """
-        logging.debug(f"{self.do_vertex.__name__} {vertex} {len(self.visited)}")
+        logging.debug("%s %s %s", self.do_vertex.__name__, vertex, len(self.visited))
 
         assert isinstance(vertex, ir.Node), str(vertex)
         self.visited.add(vertex.unique_id)

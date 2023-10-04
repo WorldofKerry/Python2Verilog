@@ -19,9 +19,9 @@ from python2verilog.ir.expressions import ExclusiveVar, State, Var
 from python2verilog.ir.graph import DoneNode
 from python2verilog.ir.instance import Instance
 from python2verilog.ir.signals import ProtocolSignals
-from python2verilog.utils.assertions import assert_typed_dict, get_typed, get_typed_list
 from python2verilog.utils.env import is_debug_mode
 from python2verilog.utils.generics import GenericReprAndStr
+from python2verilog.utils.typed import guard_dict, typed, typed_list, typed_strict
 
 
 @dataclass
@@ -154,7 +154,7 @@ class Context(GenericReprAndStr):
             assert str(self.entry_state) in self.states, self
 
         for value in self.signals.values():
-            assert get_typed(value, Var)
+            assert typed(value, Var)
 
         return self
 
@@ -232,7 +232,7 @@ class Context(GenericReprAndStr):
 
     @input_vars.setter
     def input_vars(self, other: list[Var]):
-        self._input_vars = get_typed_list(other, Var)
+        self._input_vars = typed_list(other, Var)
 
     @property
     def output_vars(self):
@@ -243,7 +243,7 @@ class Context(GenericReprAndStr):
 
     @output_vars.setter
     def output_vars(self, other: list[Var]):
-        self._output_vars = get_typed_list(other, Var)
+        self._output_vars = typed_list(other, Var)
 
     def default_output_vars(self):
         """
@@ -263,20 +263,20 @@ class Context(GenericReprAndStr):
 
     @global_vars.setter
     def global_vars(self, other: list[Var]):
-        self._global_vars = get_typed_list(other, Var)
+        self._global_vars = typed_list(other, Var)
 
     def add_global_var(self, var: Var):
         """
         Appends global var
         """
-        var = get_typed(var, Var)
+        var = typed_strict(var, Var)
         if (
             var in self._global_vars
             or var in self._input_vars
             or var in self.output_vars
         ):
             return
-        self._global_vars.append(get_typed(var, Var))
+        self._global_vars.append(typed_strict(var, Var))
 
     @property
     def states(self):

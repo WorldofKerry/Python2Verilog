@@ -7,7 +7,7 @@ import logging
 from functools import reduce
 from typing import Any, Callable, Iterator, Optional, Union
 
-from python2verilog.utils.assertions import get_typed
+from python2verilog.utils.typed import guard, typed
 
 from .. import ir
 
@@ -76,7 +76,7 @@ class OptimizeGraph:
 
     def __init__(self, root: ir.Node, threshold: int = 0):
         self.unique_counter = 0  # warning due to recursion can't be static var of func
-        self.optimize(root, threshold=threshold)
+        self.reduce_cycles(root, threshold=threshold)
 
     def make_unique(self):
         """
@@ -140,7 +140,7 @@ class OptimizeGraph:
     # Eventually yield nodes should be removed and be replaced with exclusive vars
     YIELD_VISITOR_ID = "__YIELD_VISITOR_ID"
 
-    def helper(
+    def reduce_cycles_visit(
         self,
         edge: ir.Edge,
         mapping: dict[ir.Var, ir.Expression],
@@ -148,14 +148,26 @@ class OptimizeGraph:
         threshold: int,
     ) -> ir.Edge:
         """
-        Recursive helper
+        Recursively visits the children, conditionally adding them to an optimal path
 
-        :param visited: variables
+        The concept of mapping is as follows:
+
+        If
+        a = 1
+        b = a
+        then b == 1, if no clock cycle occurs in-between,
+        at the end of this block, mapping would be
+        {a: 1, b: 1}
+
+        :param mapping: values of variables, given the previous logic
+        :param visited: visited unique_ids and exclusive vars
         """
         node = edge.child
         assert node
 
-        logging.debug(f"{self.helper.__name__} {edge.child} {mapping}")
+        logging.debug(
+            "%s %s %s", self.reduce_cycles_visit.__name__, edge.child, mapping
+        )
 
         # Check for cyclic paths
         if (
@@ -168,6 +180,11 @@ class OptimizeGraph:
         # Exclusive vars can only be visited once
         exclusive_vars = set(self.exclusive_vars(node.variables()))
         if exclusive_vars & visited.keys():
+            logging.debug(
+                f"Already visited {exclusive_vars & visited.keys()}"
+                ", ending current optimization"
+                f" {exclusive_vars} {visited.keys()}"
+            )
             if isinstance(edge, ir.ClockedEdge):
                 return edge
             return ir.ClockedEdge(
@@ -186,13 +203,13 @@ class OptimizeGraph:
             new_edge.child = ir.IfElseNode(
                 unique_id=f"{node.unique_id}_{self.make_unique()}_optimal",
                 condition=backwards_replace(node.condition, mapping),
-                true_edge=self.helper(
+                true_edge=self.reduce_cycles_visit(
                     edge=node.true_edge,
                     mapping=copy.deepcopy(mapping),
                     visited=copy.deepcopy(visited),
                     threshold=threshold,
                 ),
-                false_edge=self.helper(
+                false_edge=self.reduce_cycles_visit(
                     edge=node.false_edge,
                     mapping=copy.deepcopy(mapping),
                     visited=copy.deepcopy(visited),
@@ -202,11 +219,12 @@ class OptimizeGraph:
         elif isinstance(node, ir.AssignNode):
             new_rvalue = backwards_replace(node.rvalue, mapping)
             mapping[node.lvalue] = new_rvalue
+            assert guard(node.child, ir.Edge)
             new_edge.child = ir.AssignNode(
                 unique_id=f"{node.unique_id}_{self.make_unique()}_optimal",
                 lvalue=node.lvalue,
                 rvalue=new_rvalue,
-                child=self.helper(
+                child=self.reduce_cycles_visit(
                     edge=node.child,
                     mapping=mapping,
                     visited=visited,
@@ -214,8 +232,10 @@ class OptimizeGraph:
                 ),
             )
         elif isinstance(node, ir.YieldNode):
+            # Yield node can only be visited once
+            assert guard(node.child, ir.Edge)
             if self.YIELD_VISITOR_ID in visited:
-                new_edge.child = self.helper(
+                new_edge.child = self.reduce_cycles_visit(
                     edge=node.child,
                     mapping=mapping,
                     visited=visited,
@@ -233,19 +253,16 @@ class OptimizeGraph:
             raise RuntimeError(f"{type(node)}")
         return new_edge
 
-    def optimize(
+    def reduce_cycles(
         self,
         root: ir.Node,
         visited: Optional[set[str]] = None,
         threshold: int = 0,
     ) -> None:
         """
-        Optimizes a single node,
-        mutating it,
-        then recurses on its children
+        Optimizes a node, by increasing amount of work done in a cycle
+        by adding nonclocked edges
         """
-        # logging.critical(f"optimizing {root.unique_id} {root}")
-
         if visited is None:
             visited = set()
         if root.unique_id in visited:
@@ -260,20 +277,23 @@ class OptimizeGraph:
             else:
                 mapper = {}
 
-            root.optimal_child = self.helper(
+            assert guard(root.child, ir.Edge)
+            assert guard(root.child.child, ir.Node)
+            root.optimal_child = self.reduce_cycles_visit(
                 root.child, mapper, {}, threshold=threshold
             )
-            self.optimize(root.child.child, visited, threshold=threshold)
+            self.reduce_cycles(root.child.child, visited, threshold=threshold)
         elif isinstance(root, ir.IfElseNode):
-            root.optimal_true_edge = self.helper(
+            root.optimal_true_edge = self.reduce_cycles_visit(
                 root.true_edge, {}, {}, threshold=threshold
             )
-            root.optimal_false_edge = self.helper(
+            root.optimal_false_edge = self.reduce_cycles_visit(
                 root.false_edge, {}, {}, threshold=threshold
             )
-            self.optimize(root.true_edge.child, visited, threshold=threshold)
-            self.optimize(root.false_edge.child, visited, threshold=threshold)
+            self.reduce_cycles(root.true_edge.child, visited, threshold=threshold)
+            self.reduce_cycles(root.false_edge.child, visited, threshold=threshold)
         elif isinstance(root, ir.DoneNode):
             pass
         else:
             raise RuntimeError(f"{type(root)}")
+        logging.debug("%s => %s", root, list(root.nonclocked_children()))

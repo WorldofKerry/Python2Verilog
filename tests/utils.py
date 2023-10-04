@@ -1,7 +1,7 @@
 import networkx as nx
 import pytest
 
-from python2verilog.utils.assertions import get_typed
+from python2verilog.utils.typed import typed
 
 
 class Argument:

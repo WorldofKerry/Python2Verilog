@@ -6,8 +6,8 @@ import ast as pyast
 import logging
 
 from .. import ir
-from ..utils.assertions import get_typed, get_typed_list
 from ..utils.lines import Indent, Lines
+from ..utils.typed import typed, typed_list, typed_strict
 
 
 def name_to_var(name: pyast.expr) -> ir.Var:
@@ -31,7 +31,7 @@ class Generator2Graph:
         Initializes the parser, does quick setup work
         """
         context.validate()
-        self._context = get_typed(context, ir.Context)
+        self._context = typed_strict(context, ir.Context)
 
         # Populate function calls
         # pylint: disable=too-many-nested-blocks
@@ -162,14 +162,18 @@ class Generator2Graph:
         <statement> (e.g. assign, for loop, etc., cannot be equated to)
 
         """
-        get_typed(stmt, pyast.AST)
-        get_typed(nextt, ir.Element)
+        typed(stmt, pyast.AST)
+        typed(nextt, ir.Element)
         if isinstance(stmt, pyast.Assign):
             cur_node, end_node = self.__parse_assign(stmt, prefix=prefix)
             edge = ir.ClockedEdge(unique_id=f"{prefix}_e", child=nextt)
             end_node.child = edge
             logging.debug(
-                f"Assign {cur_node.unique_id} {cur_node} -> {end_node} -> {nextt.unique_id}"
+                "Assign %s %s => %s => %s",
+                cur_node.unique_id,
+                cur_node,
+                end_node,
+                nextt.unique_id,
             )
         elif isinstance(stmt, pyast.Yield):
             cur_node = self.__parse_yield(stmt, prefix=prefix)
@@ -480,12 +484,26 @@ class Generator2Graph:
         unique_node = unique_node_gen()
         unique_edge = unique_edge_gen()
 
+        # Nessessary for exclusivity
         head = ir.AssignNode(
+            unique_id=next(unique_node),
+            lvalue=inst.signals.ready,
+            rvalue=ir.UInt(0),
+        )
+
+        node: ir.BasicElement = head
+
+        node.child = ir.NonClockedEdge(
+            unique_id=next(unique_edge),
+        )
+        node = node.child
+
+        node.child = ir.AssignNode(
             unique_id=next(unique_node),
             lvalue=inst.signals.start,
             rvalue=ir.UInt(1),
         )
-        node: ir.BasicElement = head
+        node = node.child
 
         assert isinstance(assign.value, pyast.Call)
 
