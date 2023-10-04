@@ -36,8 +36,8 @@ class Generator2Graph:
         # Populate function calls
         # pylint: disable=too-many-nested-blocks
         for node in context.py_ast.body:
-            for assign in pyast.walk(node):
-                match assign:
+            for child in pyast.walk(node):
+                match child:
                     case pyast.Assign(
                         targets=[pyast.Name(id=target_id)],
                         value=pyast.Call(func=pyast.Name(id=func_id)),
@@ -46,17 +46,17 @@ class Generator2Graph:
                         instance = cxt.create_instance(target_id)
                         self._context.instances[target_id] = instance
                 continue
-                if isinstance(assign, pyast.Assign):
-                    for child in pyast.walk(assign):
+                if isinstance(child, pyast.Assign):
+                    for child in pyast.walk(child):
                         if isinstance(child, pyast.Call):
-                            logging.critical(f"{pyast.dump(assign)}")
-                            assert len(assign.targets) == 1
-                            target = assign.targets[0]
+                            logging.critical(f"{pyast.dump(child)}")
+                            assert len(child.targets) == 1
+                            target = child.targets[0]
                             assert isinstance(target, pyast.Name)
-                            if assign.targets[0] not in self._context.instances:
-                                assert isinstance(assign.value, pyast.Call)
-                                assert isinstance(assign.value.func, pyast.Name)
-                                cxt = self._context.namespace[assign.value.func.id]
+                            if child.targets[0] not in self._context.instances:
+                                assert isinstance(child.value, pyast.Call)
+                                assert isinstance(child.value.func, pyast.Name)
+                                cxt = self._context.namespace[child.value.func.id]
                                 instance = cxt.create_instance(target.id)
                                 self._context.instances[target.id] = instance
 
