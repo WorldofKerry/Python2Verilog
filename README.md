@@ -49,7 +49,7 @@ Try it in [Google Collab](https://colab.research.google.com/github/WorldofKerry/
 
 ## Tested Generations
 
-You may find the output of the [integration testing](tests/integration/data/) as a [Github Artifact](https://nightly.link/WorldofKerry/Python2Verilog/workflows/pytest-complete/main/tests-data.zip) available for download.
+You may find the output of the [integration testing](tests/integration/functions.py) as a [Github Artifact](https://nightly.link/WorldofKerry/Python2Verilog/workflows/pytest/main/tests-data.zip) available for download.
 
 ## For Developers
 
