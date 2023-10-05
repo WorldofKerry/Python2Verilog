@@ -87,7 +87,10 @@ class IncreaseWorkPerClockCycle:
         """
         assert guard(edge, ir.Edge)
         assert guard_dict(mapping, ir.Var, ir.Expression)
-        guard_dict(visited_path, Union[str, ir.Var], int)  # type: ignore
+        assert guard(visited_path, dict)
+        for key, value in visited_path.items():
+            assert isinstance(key, (str, ir.Var))
+            assert guard(value, int)
 
         node = edge.child
         assert node
