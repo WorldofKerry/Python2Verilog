@@ -1,24 +1,21 @@
-"""Parses Python Generator Functions to Intermediate Representation"""
+"""
+Parses Python Generator Functions to Intermediate Representation
+"""
 
 from __future__ import annotations
 
 import ast as pyast
+import itertools
 import logging
+import sys
+from typing import Collection, Iterable, Iterator, Optional
 
-from .. import ir
-from ..utils.lines import Indent, Lines
-from ..utils.typed import typed, typed_list, typed_strict
-
-
-def name_to_var(name: pyast.expr) -> ir.Var:
-    """
-    Converts a pyast.Name to a ir.Var using its id
-    """
-    assert isinstance(name, pyast.Name)
-    return ir.Var(name.id)
+from python2verilog import ir
+from python2verilog.utils.lines import Indent, Lines
+from python2verilog.utils.typed import guard, typed, typed_list, typed_strict
 
 
-class Generator2Graph:
+class FromGenerator:
     """
     Parses python generator functions to Verilog AST
     """
@@ -33,24 +30,9 @@ class Generator2Graph:
         context.validate()
         self._context = typed_strict(context, ir.Context)
 
-        # Populate function calls
-        # pylint: disable=too-many-nested-blocks
-        for node in context.py_ast.body:
-            for assign in pyast.walk(node):
-                if isinstance(assign, pyast.Assign):
-                    for child in pyast.walk(assign):
-                        if isinstance(child, pyast.Call):
-                            assert len(assign.targets) == 1
-                            target = assign.targets[0]
-                            assert isinstance(target, pyast.Name)
-                            if assign.targets[0] not in self._context.instances:
-                                assert isinstance(assign.value, pyast.Call)
-                                assert isinstance(assign.value.func, pyast.Name)
-                                cxt = self._context.namespace[assign.value.func.id]
-                                instance = cxt.create_instance(target.id)
-                                self._context.instances[target.id] = instance
+        self._create_instances(context)
 
-        logging.debug(f"\n\n========> Parsing {context.name} <========")
+        logging.debug("\n\n========> Parsing %s <========", context.name)
         self._root = self.__parse_statements(
             stmts=context.py_ast.body,
             prefix="_state",
@@ -58,7 +40,62 @@ class Generator2Graph:
         )
 
         self._context.entry_state = ir.State(self._root.unique_id)
-        logging.debug(f"Entry state is {self._context.entry_state}")
+        logging.debug("Entry state is %s", self._context.entry_state)
+
+    @staticmethod
+    def _create_instances(caller_cxt: ir.Context):
+        """
+        Add generator instances of all functions called by caller
+
+        e.g. target_name = func_name(...)
+        """
+        for node in caller_cxt.py_ast.body:
+            for child in pyast.walk(node):
+                if isinstance(child, pyast.Assign) and isinstance(
+                    child.value, pyast.Call
+                ):
+                    # Figure out target name
+                    assert len(child.targets) == 1
+                    target = child.targets[0]
+                    assert guard(target, pyast.Name)
+                    target_name = target.id
+
+                    # Figure out func being called
+                    func = child.value.func
+                    assert guard(func, pyast.Name)
+                    func_name = func.id
+
+                    # Get context of generator function being called
+                    callee_cxt = caller_cxt.namespace[func_name]
+
+                    # Create an instance of that generator
+                    instance = callee_cxt.create_instance(target_name)
+
+                    # Add instance to own context
+                    caller_cxt.instances[target_name] = instance
+
+                # Python 3.10+
+                # match child:
+                #     case pyast.Assign(
+                #         targets=[pyast.Name(id=target_name)],
+                #         value=pyast.Call(func=pyast.Name(id=func_name)),
+                #     ):
+                #         # Get context of generator function being called
+                #         callee_cxt = caller_cxt.namespace[func_name]
+
+                #         # Create an instance of that generator
+                #         instance = callee_cxt.create_instance(target_name)
+
+                #         # Add instance to own context
+                #         caller_cxt.instances[target_name] = instance
+
+    @staticmethod
+    def _name_to_var(name: pyast.expr) -> ir.Var:
+        """
+        Converts a pyast.Name to a ir.Var using its id
+        """
+        assert isinstance(name, pyast.Name)
+        return ir.Var(name.id)
 
     @property
     def root(self):
@@ -109,12 +146,6 @@ class Generator2Graph:
         # Check if contains function call
         for child in pyast.walk(node):
             if isinstance(child, pyast.Call):
-                # temp = ir.AssignNode(
-                #     unique_id=prefix,
-                #     lvalue=ir.Expression("func"),
-                #     rvalue=ir.Expression("call"),
-                # )
-                # return temp, temp
                 return self.__parse_assign_to_call(node, prefix)
         assign = ir.AssignNode(
             unique_id=prefix,
@@ -176,14 +207,16 @@ class Generator2Graph:
                 nextt.unique_id,
             )
         elif isinstance(stmt, pyast.Yield):
-            cur_node = self.__parse_yield(stmt, prefix=prefix)
+            cur_node, end_node = self.__parse_yield(stmt, prefix=prefix)
             edge = ir.ClockedEdge(unique_id=f"{prefix}_e", child=nextt)
-            cur_node.child = edge
+            end_node.child = edge
         elif isinstance(stmt, pyast.While):
             cur_node = self.__parse_while(stmt, nextt=nextt, prefix=prefix)
         elif isinstance(stmt, pyast.For):
             cur_node = self.__parse_for(stmt, nextt=nextt, prefix=prefix)
-            logging.debug(f"For {cur_node.unique_id} {cur_node} -> {nextt.unique_id}")
+            logging.debug(
+                "For %s %s => %s", cur_node.unique_id, cur_node, nextt.unique_id
+            )
         elif isinstance(stmt, pyast.If):
             cur_node = self.__parse_ifelse(stmt=stmt, nextt=nextt, prefix=prefix)
         elif isinstance(stmt, pyast.Expr):
@@ -205,7 +238,7 @@ class Generator2Graph:
             )
         elif isinstance(stmt, pyast.Constant):
             assert "\n" in stmt.value, f"Error: parsing {pyast.dump(stmt)}"
-            logging.debug(f"Parsing triple-quote comment {stmt.value}")
+            logging.debug("Parsing triple-quote comment %s", stmt.value)
             # Fix for triple-quote comments in code
             edge = ir.ClockedEdge(unique_id=f"{prefix}_e", child=nextt)
             cur_node = ir.AssignNode(
@@ -280,7 +313,7 @@ class Generator2Graph:
             assert isinstance(stmt.target, pyast.Name)
             outputs = [ir.Var(stmt.target.id)]
         else:
-            outputs = list(map(name_to_var, stmt.target.elts))
+            outputs = list(map(self._name_to_var, stmt.target.elts))
         assert len(outputs) == len(inst.outputs), f"{outputs} {inst.outputs}"
         capture_head = ir.AssignNode(
             unique_id=next(unique_node),
@@ -379,21 +412,54 @@ class Generator2Graph:
         yield <value>;
         """
         if isinstance(node.value, pyast.Tuple):
-            return ir.YieldNode(
-                unique_id=prefix,
-                name="Yield",
-                stmts=[self.__parse_expression(c) for c in node.value.elts],
-            )
-        if isinstance(
-            node.value,
-            (pyast.Name, pyast.BinOp, pyast.Compare, pyast.UnaryOp, pyast.Constant),
+            stmts = [self.__parse_expression(c) for c in node.value.elts]
+        elif isinstance(node.value, pyast.expr):
+            stmts = [self.__parse_expression(node.value)]
+        else:
+            raise TypeError(f"Expected tuple {type(node.value)} {pyast.dump(node)}")
+
+        def create_assign_nodes(
+            variables: Collection[ir.ExclusiveVar],
+            exprs: Collection[ir.Expression],
+            prefix: str,
         ):
-            return ir.YieldNode(
-                unique_id=prefix,
-                name="Yield",
-                stmts=[self.__parse_expression(c) for c in [node.value]],
-            )
-        raise TypeError(f"Expected tuple {type(node.value)} {pyast.dump(node)}")
+            """
+            Create assign nodes from variables and expressions
+            """
+            assert len(variables) == len(exprs)
+            counters = itertools.count()
+            for var, expr, counter in zip(variables, exprs, counters):
+                yield ir.AssignNode(
+                    unique_id=f"{prefix}_{counter}", lvalue=var, rvalue=expr
+                )
+
+        def weave_nonclocked_edges(nodes: Iterable[ir.BasicElement], prefix: str):
+            """
+            Weaves nodes with nonclocked edges
+            """
+            counters = itertools.count()
+            head: Optional[ir.BasicElement] = None
+            prev: Optional[ir.BasicElement] = None
+            for node, counter in zip(nodes, counters):
+                if not head:
+                    head = node
+                if prev:
+                    prev.child = node
+                node.child = ir.NonClockedEdge(
+                    unique_id=f"{prefix}_{counter}",
+                )
+                prev = node.child
+            return head, prev
+
+        head, tail = weave_nonclocked_edges(
+            create_assign_nodes(self._context.output_vars, stmts, prefix), f"{prefix}_e"
+        )
+        tail.child = ir.AssignNode(
+            unique_id=f"{prefix}_valid",
+            lvalue=self._context.signals.valid,
+            rvalue=ir.UInt(1),
+        )
+        return head, tail.child
 
     def __parse_binop(self, expr: pyast.BinOp) -> ir.Expression:
         """

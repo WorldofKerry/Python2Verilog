@@ -12,7 +12,7 @@ import logging
 import warnings
 from dataclasses import dataclass, field
 from types import FunctionType
-from typing import Any, Optional, Union
+from typing import Any, Optional, Sequence, Union
 
 from python2verilog.api.modes import Modes
 from python2verilog.ir.expressions import ExclusiveVar, State, Var
@@ -50,7 +50,7 @@ class Context(GenericReprAndStr):
 
     _global_vars: list[Var] = field(default_factory=list)
     _input_vars: list[Var] = field(default_factory=list)
-    _output_vars: list[Var] = field(default_factory=list)
+    _output_vars: list[ExclusiveVar] = field(default_factory=list)
     _states: set[str] = field(default_factory=set)
 
     signals: ProtocolSignals = ProtocolSignals(
@@ -242,8 +242,8 @@ class Context(GenericReprAndStr):
         return copy.deepcopy(self._output_vars)
 
     @output_vars.setter
-    def output_vars(self, other: list[Var]):
-        self._output_vars = typed_list(other, Var)
+    def output_vars(self, other: list[ExclusiveVar]):
+        self._output_vars = typed_list(other, ExclusiveVar)
 
     def default_output_vars(self):
         """
@@ -290,7 +290,7 @@ class Context(GenericReprAndStr):
         Checks if a Python variable has been already declared or not
         """
 
-        def get_strs(variables: list[Var]):
+        def get_strs(variables: Sequence[Var]):
             """
             Maps vars to str
             """

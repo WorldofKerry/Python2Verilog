@@ -56,7 +56,6 @@ class Element:
 
         :return: [children_branch_0, children_branch_1, ...]
         """
-        logging.debug(f"Non-over-written {type(self)}")
         yield from ()
 
     def to_string(self):
@@ -140,7 +139,7 @@ class BasicElement(Element):
         if isinstance(self, ClockedEdge):
             yield self
             yield self.optimal_child
-        else:
+        elif self.optimal_child:
             yield self
             yield from self.optimal_child.nonclocked_children()
 
@@ -363,46 +362,6 @@ class AssignNode(Node, BasicElement):
         yield from get_variables(self.lvalue)
         yield from get_variables(self.rvalue)
         yield from self.child.variables()
-
-
-class YieldNode(Node, BasicElement):
-    """
-    Yield statement, represents output
-    """
-
-    def __init__(
-        self,
-        unique_id: str,
-        name: str = "",
-        stmts: Optional[list[expr.Expression]] = None,
-        edge: Optional[Edge] = None,
-    ):
-        super().__init__(unique_id, name=name, child=edge)
-        self._stmts = typed_list(stmts, expr.Expression)
-
-    @property
-    def stmts(self):
-        """
-        Yield statements
-        """
-        return self._stmts
-
-    def to_string(self):
-        """
-        To string
-        """
-        string = "yield ["
-        for stmt in self._stmts:
-            string += stmt.to_string() + ", "
-        string = string[:-2] + "]"
-        return string
-
-    def variables(self) -> Iterator[expr.Var]:
-        for exp in self.stmts:
-            yield from get_variables(exp)
-
-    def __repr__(self) -> str:
-        return f"{self.to_string()}"
 
 
 class DoneNode(Node, Element):

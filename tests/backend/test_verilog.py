@@ -4,7 +4,7 @@ import unittest
 from python2verilog import ir
 from python2verilog.backend.verilog import CodeGen
 from python2verilog.backend.verilog.ast import Instantiation, Module, PosedgeSyncAlways
-from python2verilog.frontend import Generator2Graph
+from python2verilog.frontend import FromGenerator
 
 
 def assert_lines(test_case: unittest.TestCase, first: str, second: str):

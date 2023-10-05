@@ -243,7 +243,7 @@ class TestSimulation(unittest.TestCase):
             list(get_expected(olympic_logo)),
         )
 
-    def test_bell(self):
+    def test_hrange(self):
         ns = {}
 
         @verilogify(namespace=ns)
@@ -253,33 +253,25 @@ class TestSimulation(unittest.TestCase):
                 yield i
                 i += 1
 
-        @verilogify(namespace=ns)
-        def bell(a, b):
-            res = 0
-            gen = hrange(a, b)
-            for i in gen:
-                res += i
-            yield res
-
-        bell(7, 13)
+        hrange(0, 10)
 
         # with open("./cyto.log", mode="w") as f:
         #     _, _, cy = context_to_verilog_and_dump(get_context(triple_circle))
         #     f.write(str(cy))
         module, testbench = namespace_to_verilog(ns)
         if self.args.write:
-            mod_path = Path(__file__).parent / "bell.sv"
-            tb_path = Path(__file__).parent / "bell_tb.sv"
+            mod_path = Path(__file__).parent / "hrange.sv"
+            tb_path = Path(__file__).parent / "hrange_tb.sv"
             with open(mod_path, mode="w") as f:
                 f.write(str(module))
             with open(tb_path, mode="w") as f:
                 f.write(str(testbench))
             cmd = iverilog.make_cmd(
-                "bell_tb",
+                "hrange_tb",
                 [mod_path, tb_path],
             )
             # warnings.warn(cmd)
         self.assertListEqual(
-            list(get_actual(bell, module, testbench, timeout=1)),
-            list(get_expected(bell)),
+            list(get_actual(hrange, module, testbench, timeout=1)),
+            list(get_expected(hrange)),
         )

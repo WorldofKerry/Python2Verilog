@@ -95,7 +95,15 @@ class BaseTest:
             logging.info(
                 f"Test cases {test_cases}, actual output length of {len(actual)}"
             )
-            logging.info(f"{str(actual[:min(len(actual), 25)])[:-1]}, ...]")
+            logging.info(
+                f"{str(actual[:min(len(actual), 30)]).replace(' ', '')[:-1]},...]"
+            )
+            logging.info(
+                str(actual_with_invalid[: min(len(actual_with_invalid), 15)])
+                .replace(" ", "")
+                .replace("'", "")[:-1]
+                + ",...]"
+            )
 
             self.assertTrue(len(actual) > 0, f"{actual} {expected}")
             self.assertListEqual(actual, expected)

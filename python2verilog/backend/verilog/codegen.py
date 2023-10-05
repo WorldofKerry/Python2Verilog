@@ -8,7 +8,7 @@ import warnings
 from typing import Generator, Iterator, cast
 
 from python2verilog.backend.verilog.config import TestbenchConfig
-from python2verilog.optimizer.optimizer import backwards_replace
+from python2verilog.optimizer import backwards_replace
 from python2verilog.utils.lines import Lines
 
 from ... import ir
@@ -29,10 +29,6 @@ class CodeGen:
         typed(context, ir.Context)
         self.context = context
         root_case = CaseBuilder(root, context).get_case()
-        logging.debug(
-            f"{self.__class__.__name__} "
-            f"{[case.condition.ver_name for case in root_case.case_items]}"  # type: ignore
-        )
 
         for item in root_case.case_items:
             self.context.add_state_weak(
@@ -316,7 +312,7 @@ class CodeGen:
 
         :param random_ready: whether or not to have random ready signal in the while loop
         """
-        logging.debug(f"{config}")
+        logging.debug("%s", config)
         if len(self.context.input_vars) == 0:
             raise RuntimeError(
                 f"Input var names not deduced for {self.context.name}, "
@@ -548,7 +544,7 @@ class CaseBuilder:
         Creates a new case item with the root's unique id as identifier
         """
         stmts = self.do_vertex(root)
-        logging.debug(f"new caseitem {root.unique_id}")
+        logging.debug("new caseitem %s", root.unique_id)
         item = ver.CaseItem(condition=ir.State(root.unique_id), statements=stmts)
 
         return item
@@ -581,33 +577,6 @@ class CaseBuilder:
                     else_body=else_body,
                 )
             )
-
-        elif isinstance(vertex, ir.YieldNode):
-            outputs: list[ver.Statement] = []
-            outputs += [
-                ver.NonBlockingSubsitution(var, expr)
-                for var, expr in zip(self.context.output_vars, vertex.stmts)
-            ]
-            outputs += [
-                ver.NonBlockingSubsitution(self.context.signals.valid, ir.UInt(1))
-            ]
-            state_change: list[ver.Statement] = []
-
-            if isinstance(vertex.optimal_child.optimal_child, ir.DoneNode):
-                outputs.append(self.create_quick_done(self.context))
-
-            state_change.append(
-                ver.NonBlockingSubsitution(
-                    self.context.state_var,
-                    ir.State(vertex.optimal_child.optimal_child.unique_id),
-                )
-            )
-            if vertex.optimal_child.optimal_child.unique_id not in self.visited:
-                self.case.case_items.append(
-                    self.new_caseitem(vertex.optimal_child.optimal_child)
-                )
-
-            stmts += outputs + state_change
 
         else:
             raise TypeError(type(vertex))
