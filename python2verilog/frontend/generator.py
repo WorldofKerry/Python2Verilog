@@ -47,49 +47,47 @@ class FromGenerator:
         """
         Add generator instances of all functions called by caller
 
-        e.g. target_name = func_id(...)
+        e.g. target_name = func_name(...)
         """
         for node in caller_cxt.py_ast.body:
             for child in pyast.walk(node):
-                if sys.version_info < (3, 10):
-                    if isinstance(child, pyast.Assign) and isinstance(
-                        child.value, pyast.Call
-                    ):
-                        # Figure out target name
-                        assert len(child.targets) == 1
-                        target = child.targets[0]
-                        assert guard(target, pyast.Name)
-                        target_name = target.id
+                if isinstance(child, pyast.Assign) and isinstance(
+                    child.value, pyast.Call
+                ):
+                    # Figure out target name
+                    assert len(child.targets) == 1
+                    target = child.targets[0]
+                    assert guard(target, pyast.Name)
+                    target_name = target.id
 
-                        # Figure out func being called
-                        func = child.value.func
-                        assert guard(func, pyast.Name)
-                        func_name = func.id
+                    # Figure out func being called
+                    func = child.value.func
+                    assert guard(func, pyast.Name)
+                    func_name = func.id
 
-                        # Get context of generator function being called
-                        callee_cxt = caller_cxt.namespace[func_name]
+                    # Get context of generator function being called
+                    callee_cxt = caller_cxt.namespace[func_name]
 
-                        # Create an instance of that generator
-                        instance = callee_cxt.create_instance(target_name)
+                    # Create an instance of that generator
+                    instance = callee_cxt.create_instance(target_name)
 
-                        # Add instance to own context
-                        caller_cxt.instances[target_name] = instance
+                    # Add instance to own context
+                    caller_cxt.instances[target_name] = instance
 
-                else:
-                    match child:
-                        # target_id = func_id(...)
-                        case pyast.Assign(
-                            targets=[pyast.Name(id=target_id)],
-                            value=pyast.Call(func=pyast.Name(id=func_id)),
-                        ):
-                            # Get context of generator function being called
-                            callee_cxt = caller_cxt.namespace[func_id]
+                # Python 3.10+
+                # match child:
+                #     case pyast.Assign(
+                #         targets=[pyast.Name(id=target_name)],
+                #         value=pyast.Call(func=pyast.Name(id=func_name)),
+                #     ):
+                #         # Get context of generator function being called
+                #         callee_cxt = caller_cxt.namespace[func_name]
 
-                            # Create an instance of that generator
-                            instance = callee_cxt.create_instance(target_id)
+                #         # Create an instance of that generator
+                #         instance = callee_cxt.create_instance(target_name)
 
-                            # Add instance to own context
-                            caller_cxt.instances[target_id] = instance
+                #         # Add instance to own context
+                #         caller_cxt.instances[target_name] = instance
 
     @staticmethod
     def _name_to_var(name: pyast.expr) -> ir.Var:
