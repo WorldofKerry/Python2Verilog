@@ -4,7 +4,7 @@ import unittest
 import networkx as nx
 from matplotlib import pyplot as plt
 
-from python2verilog.frontend import Generator2Graph
+from python2verilog.frontend import FromGenerator
 from python2verilog.ir import Context, create_networkx_adjacency_list
 
 
@@ -19,7 +19,7 @@ def circle_lines(s_x, s_y, height) -> tuple[int, int]:
     yield (i, height)
 """
         func = ast.parse(python).body[0]
-        inst = Generator2Graph(Context(), func)
+        inst = FromGenerator(Context(), func)
 
         adjacency_list = create_networkx_adjacency_list(inst._root)
         g = nx.DiGraph(adjacency_list)

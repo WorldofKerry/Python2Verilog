@@ -10,7 +10,7 @@ from typing import Optional
 from python2verilog import ir
 from python2verilog.backend import verilog
 from python2verilog.backend.verilog.config import CodegenConfig, TestbenchConfig
-from python2verilog.frontend.generator2ir import Generator2Graph
+from python2verilog.frontend.generator import FromGenerator
 from python2verilog.optimizer import IncreaseWorkPerClockCycle
 from python2verilog.utils.typed import typed
 
@@ -22,8 +22,8 @@ def context_to_codegen(context: ir.Context):
     :return: (codegen, ir)
     """
     context = copy.deepcopy(context)  # context should be changed to frozened
-    logging.info("Running %s", Generator2Graph.__name__)
-    ir_root, context = Generator2Graph(context).results
+    logging.info("Running %s", FromGenerator.__name__)
+    ir_root, context = FromGenerator(context).results
     logging.debug(
         "context to codegen %s %s -O%s",
         ir_root.unique_id,

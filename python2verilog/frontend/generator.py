@@ -1,4 +1,6 @@
-"""Parses Python Generator Functions to Intermediate Representation"""
+"""
+Parses Python Generator Functions to Intermediate Representation
+"""
 
 from __future__ import annotations
 
@@ -12,15 +14,7 @@ from ..utils.lines import Indent, Lines
 from ..utils.typed import typed, typed_list, typed_strict
 
 
-def name_to_var(name: pyast.expr) -> ir.Var:
-    """
-    Converts a pyast.Name to a ir.Var using its id
-    """
-    assert isinstance(name, pyast.Name)
-    return ir.Var(name.id)
-
-
-class Generator2Graph:
+class FromGenerator:
     """
     Parses python generator functions to Verilog AST
     """
@@ -62,6 +56,14 @@ class Generator2Graph:
 
         self._context.entry_state = ir.State(self._root.unique_id)
         logging.debug("Entry state is %s", self._context.entry_state)
+
+    @staticmethod
+    def _name_to_var(name: pyast.expr) -> ir.Var:
+        """
+        Converts a pyast.Name to a ir.Var using its id
+        """
+        assert isinstance(name, pyast.Name)
+        return ir.Var(name.id)
 
     @property
     def root(self):
@@ -279,7 +281,7 @@ class Generator2Graph:
             assert isinstance(stmt.target, pyast.Name)
             outputs = [ir.Var(stmt.target.id)]
         else:
-            outputs = list(map(name_to_var, stmt.target.elts))
+            outputs = list(map(self._name_to_var, stmt.target.elts))
         assert len(outputs) == len(inst.outputs), f"{outputs} {inst.outputs}"
         capture_head = ir.AssignNode(
             unique_id=next(unique_node),
