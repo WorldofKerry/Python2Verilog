@@ -9,7 +9,7 @@ from unittest import TestCase
 import pytest
 from parameterized import parameterized
 
-from .bases import BaseTest
+from .base_tests import BaseTest
 from .functions import *
 from .utils import name_func
 
