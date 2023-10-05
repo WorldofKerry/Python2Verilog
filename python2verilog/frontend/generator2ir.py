@@ -357,10 +357,8 @@ class Generator2Graph:
         """
         assert isinstance(stmt, pyast.While)
 
-        loop_edge = ir.NonClockedEdge(unique_id=f"{prefix}_edge", name="True")
-        done_edge = ir.NonClockedEdge(
-            unique_id=f"{prefix}_f", name="False", child=nextt
-        )
+        loop_edge = ir.ClockedEdge(unique_id=f"{prefix}_edge", name="True")
+        done_edge = ir.ClockedEdge(unique_id=f"{prefix}_f", name="False", child=nextt)
 
         ifelse = ir.IfElseNode(
             unique_id=f"{prefix}_while",
