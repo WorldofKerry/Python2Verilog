@@ -96,10 +96,8 @@ class IncreaseWorkPerClockCycle:
 
         # Check for cyclic paths
         if node.unique_id in visited and visited[node.unique_id] > threshold:
-            if isinstance(edge, ir.NonClockedEdge):
-                # A bit suspicious
-                logging.debug("pretty sus %s", node)
-            # self.apply(node, threshold=threshold)
+            assert guard(node, ir.Node)
+            self.apply(node, threshold=threshold)
             return edge
 
         # Exclusive vars can only be visited once
@@ -113,13 +111,9 @@ class IncreaseWorkPerClockCycle:
                 node,
             )
             if isinstance(edge, ir.ClockedEdge):
-                return edge
-            else:
+                assert guard(node, ir.Node)
                 self.apply(node, threshold=threshold)
-                return ir.ClockedEdge(
-                    unique_id=f"{edge.unique_id}_{self.make_unique()}_optimal",
-                    child=node,
-                )
+            return edge
 
         # Update visited
         if isinstance(node, ir.AssignNode) and isinstance(node.lvalue, ir.ExclusiveVar):
@@ -205,9 +199,6 @@ class IncreaseWorkPerClockCycle:
             root.optimal_child = self.apply_recursive(
                 root.child, mapper, visitedd, threshold=threshold
             )
-            # if isinstance(root.child, ir.ClockedEdge):
-            #     self.reduce_cycles(root.child.child, threshold=threshold)
-            self.apply(root.child.child, threshold=threshold)
         elif isinstance(root, ir.IfElseNode):
             root.optimal_true_edge = self.apply_recursive(
                 root.true_edge, {}, {}, threshold=threshold
@@ -215,12 +206,6 @@ class IncreaseWorkPerClockCycle:
             root.optimal_false_edge = self.apply_recursive(
                 root.false_edge, {}, {}, threshold=threshold
             )
-            # if isinstance(root.true_edge, ir.ClockedEdge):
-            #     self.reduce_cycles(root.true_edge.child, threshold=threshold)
-            # if isinstance(root.false_edge, ir.ClockedEdge):
-            #     self.reduce_cycles(root.false_edge.child, threshold=threshold)
-            self.apply(root.true_edge.child, threshold=threshold)
-            self.apply(root.false_edge.child, threshold=threshold)
         elif isinstance(root, ir.DoneNode):
             pass
         else:
