@@ -234,13 +234,13 @@ class AssignNode(BasicNode):
         self,
         unique_id: str,
         *args,
-        lvalue: expr.Expression,
+        lvalue: expr.Var,
         rvalue: expr.Expression,
         child: Optional[Edge] = None,
         **kwargs,
     ):
         super().__init__(unique_id, *args, child=child, **kwargs)
-        self.lvalue = typed_strict(lvalue, expr.Expression)
+        self.lvalue = typed_strict(lvalue, expr.Var)
         self.rvalue = typed_strict(rvalue, expr.Expression)
         self._child = child
 
