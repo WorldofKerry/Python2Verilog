@@ -362,7 +362,7 @@ def create_cytoscape_elements(node: Element):
                 }
             )
             for child in curr_node.children():
-                assert guard(child, BasicNode)
+                assert guard(child, BasicElement)
                 edges.append(
                     {
                         "data": {
