@@ -168,6 +168,7 @@ class IncreaseWorkPerClockCycle:
         Optimizes a node, by increasing amount of work done in a cycle.
         Creates an optimal path that maximizes nonclocked edges.
         """
+        assert guard(root, ir.Node)
         logging.info("%s on %s", self.apply.__name__, root)
 
         if root.unique_id in self.visited:
