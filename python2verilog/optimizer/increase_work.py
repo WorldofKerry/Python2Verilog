@@ -145,7 +145,6 @@ class IncreaseWorkPerClockCycle:
             )
         elif isinstance(node, ir.AssignNode):
             new_rvalue = backwards_replace(node.rvalue, mapping)
-            assert guard(node.lvalue, ir.Var)
             mapping[node.lvalue] = new_rvalue
             assert guard(node.child, ir.Edge)
             new_edge.child = ir.AssignNode(

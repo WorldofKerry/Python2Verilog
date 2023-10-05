@@ -362,6 +362,7 @@ def create_cytoscape_elements(node: Element):
                 }
             )
             for child in curr_node.children():
+                assert guard(child, BasicNode)
                 edges.append(
                     {
                         "data": {
@@ -374,6 +375,7 @@ def create_cytoscape_elements(node: Element):
                 )
 
             for child in children:
+                assert guard(child, BasicElement)
                 traverse_graph(child.child, visited)
 
     traverse_graph(node, set())
