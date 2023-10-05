@@ -174,12 +174,10 @@ class OptimizeGraph:
         )
 
         # Check for cyclic paths
-        if (
-            isinstance(edge, ir.ClockedEdge)
-            and node.unique_id in visited
-            and visited[node.unique_id] > threshold
-        ):
-            logging.critical(f"early return first {node}")
+        if node.unique_id in visited and visited[node.unique_id] > threshold:
+            if isinstance(edge, ir.NonClockedEdge):
+                # A bit suspicious
+                logging.debug("pretty sus %s", node)
             return edge
 
         # Exclusive vars can only be visited once
@@ -190,7 +188,6 @@ class OptimizeGraph:
                 ", ending current optimization"
                 f" {exclusive_vars} {visited.keys()}"
             )
-            logging.critical(f"early return second {node}")
             if isinstance(edge, ir.ClockedEdge):
                 return edge
             return ir.ClockedEdge(

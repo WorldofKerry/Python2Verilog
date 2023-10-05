@@ -61,8 +61,9 @@ class TestGraphApplyMapping(unittest.TestCase):
         node.child = ir.DoneNode(ui())
 
         node = OptimizeGraph(head.child).reduce_cycles_visit(head, {}, {}, 1)
-        cases = CaseBuilder(head.child, ir.Context()).get_case()
-        logging.error(cases.to_string())
+        case = CaseBuilder(head.child, ir.Context()).get_case()
+        self.assertEqual(len(case.case_items), 2)
+        # logging.error(cases.to_string())
 
     def test_combine_exclusive(self):
         a = ir.ExclusiveVar("a")
@@ -85,5 +86,6 @@ class TestGraphApplyMapping(unittest.TestCase):
         node.child = ir.DoneNode(ui())
 
         OptimizeGraph(head.child)
-        cases = CaseBuilder(head.child, ir.Context()).get_case()
-        logging.error(cases.to_string())
+        case = CaseBuilder(head.child, ir.Context()).get_case()
+        self.assertEqual(len(case.case_items), 3)
+        # logging.error(cases.to_string())
