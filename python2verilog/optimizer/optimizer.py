@@ -236,6 +236,7 @@ class OptimizeGraph:
             )
         elif isinstance(node, ir.YieldNode):
             # Yield node can only be visited once
+            # TODO: remove
             assert guard(node.child, ir.Edge)
             if self.YIELD_VISITOR_ID in visited:
                 new_edge.child = self.reduce_cycles_visit(
@@ -291,11 +292,6 @@ class OptimizeGraph:
                 case _:
                     mapper = {}
                     visitedd = {}
-
-            # if isinstance(root, ir.AssignNode):
-            #     mapper = {root.lvalue: root.rvalue}
-            # else:
-            #     mapper = {}
 
             assert guard(root.child, ir.Edge)
             assert guard(root.child.child, ir.Node)

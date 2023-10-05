@@ -423,27 +423,12 @@ class Generator2Graph:
         head, tail = weave_nonclocked_edges(
             create_assign_nodes(self._context.output_vars, stmts, prefix), f"{prefix}_e"
         )
-        # logging.critical(type(tail))
-        # logging.critical(f"{list(head.nonclocked_children())}")
         tail.child = ir.AssignNode(
             unique_id=f"{prefix}_valid",
             lvalue=self._context.signals.valid,
             rvalue=ir.UInt(1),
         )
-        # logging.critical(f"{list(head.nonclocked_children())}")
-        # temp = head
-        # while temp:
-        #     logging.critical(f"{type(temp)} {temp}")
-        #     temp = temp._child
         return head, tail.child
-        # # logging.critical(list(stmts))
-
-        # yield_node = ir.YieldNode(
-        #     unique_id=prefix,
-        #     name="Yield",
-        #     stmts=list(stmts),
-        # )
-        # return yield_node, yield_node
 
     def __parse_binop(self, expr: pyast.BinOp) -> ir.Expression:
         """
