@@ -11,7 +11,7 @@ from python2verilog import ir
 from python2verilog.backend import verilog
 from python2verilog.backend.verilog.config import CodegenConfig, TestbenchConfig
 from python2verilog.frontend.generator2ir import Generator2Graph
-from python2verilog.optimizer.optimizer import OptimizeGraph
+from python2verilog.optimizer.optimizer import IncreaseWorkPerClockCycle
 from python2verilog.utils.typed import typed
 
 
@@ -31,8 +31,8 @@ def context_to_codegen(context: ir.Context):
         context.optimization_level,
     )
     if context.optimization_level > 0:
-        logging.info("Running %s", OptimizeGraph.__name__)
-        OptimizeGraph(ir_root, threshold=context.optimization_level - 1)
+        logging.info("Running %s", IncreaseWorkPerClockCycle.__name__)
+        IncreaseWorkPerClockCycle(ir_root, threshold=context.optimization_level - 1)
     logging.info("Running %s", verilog.CodeGen.__name__)
     return verilog.CodeGen(ir_root, context), ir_root
 

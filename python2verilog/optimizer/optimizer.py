@@ -56,7 +56,7 @@ def backwards_replace(expr: ir.Expression, mapping: dict[ir.Var, ir.Expression])
     return expr
 
 
-class OptimizeGraph:
+class IncreaseWorkPerClockCycle:
     """
     A closure for the graph optimizer
 
@@ -76,7 +76,8 @@ class OptimizeGraph:
 
     def __init__(self, root: ir.Node, threshold: int = 0):
         self.unique_counter = 0  # warning due to recursion can't be static var of func
-        self.reduce_cycles(root, threshold=threshold)
+        self.perma_visited: set[str] = set()
+        self.apply(root, threshold=threshold)
 
     def make_unique(self):
         """
@@ -84,33 +85,6 @@ class OptimizeGraph:
         """
         self.unique_counter += 1
         return self.unique_counter
-
-    @staticmethod
-    def should_i_be_clocked(
-        node: ir.Element,
-        visited: dict[str, int],
-        threshold: int,
-    ):
-        """
-        Returns true if edge should be clocked,
-        that is visited this node more than threshold times
-        """
-        be_clocked = False
-        if node.unique_id in visited and visited[node.unique_id] > threshold:
-            be_clocked = True
-        if (
-            isinstance(node, ir.AssignNode)
-            and isinstance(node.lvalue, ir.ExclusiveVar)
-            and node.lvalue.ver_name in visited
-        ):
-            be_clocked = True
-        return be_clocked
-
-    @staticmethod
-    def update_visited(node: ir.Node, visited: dict[str, int]):
-        """
-        Updates visited
-        """
 
     @staticmethod
     def exclusive_vars(variables) -> Iterator[ir.ExclusiveVar]:
@@ -140,7 +114,7 @@ class OptimizeGraph:
     # Eventually yield nodes should be removed and be replaced with exclusive vars
     YIELD_VISITOR_ID = "__YIELD_VISITOR_ID"
 
-    def reduce_cycles_visit(
+    def apply_recursive(
         self,
         edge: ir.Edge,
         mapping: dict[ir.Var, ir.Expression],
@@ -165,7 +139,7 @@ class OptimizeGraph:
 
         node = edge.child
         assert node
-        logging.debug("%s on %s", self.reduce_cycles_visit.__name__, node)
+        logging.debug("%s on %s", self.apply_recursive.__name__, node)
 
         # Check for cyclic paths
         if node.unique_id in visited and visited[node.unique_id] > threshold:
@@ -202,13 +176,13 @@ class OptimizeGraph:
             new_edge.child = ir.IfElseNode(
                 unique_id=f"{node.unique_id}_{self.make_unique()}_optimal",
                 condition=backwards_replace(node.condition, mapping),
-                true_edge=self.reduce_cycles_visit(
+                true_edge=self.apply_recursive(
                     edge=node.true_edge,
                     mapping=copy.deepcopy(mapping),
                     visited=copy.deepcopy(visited),
                     threshold=threshold,
                 ),
-                false_edge=self.reduce_cycles_visit(
+                false_edge=self.apply_recursive(
                     edge=node.false_edge,
                     mapping=copy.deepcopy(mapping),
                     visited=copy.deepcopy(visited),
@@ -223,7 +197,7 @@ class OptimizeGraph:
                 unique_id=f"{node.unique_id}_{self.make_unique()}_optimal",
                 lvalue=node.lvalue,
                 rvalue=new_rvalue,
-                child=self.reduce_cycles_visit(
+                child=self.apply_recursive(
                     edge=node.child,
                     mapping=mapping,
                     visited=visited,
@@ -236,23 +210,20 @@ class OptimizeGraph:
             raise RuntimeError(f"{type(node)}")
         return new_edge
 
-    def reduce_cycles(
+    def apply(
         self,
         root: ir.Node,
-        visited: Optional[set[str]] = None,
         threshold: int = 0,
     ) -> None:
         """
         Optimizes a node, by increasing amount of work done in a cycle
         by adding nonclocked edges
         """
-        logging.info("%s on %s", self.reduce_cycles.__name__, root)
+        logging.info("%s on %s", self.apply.__name__, root)
 
-        if visited is None:
-            visited = set()
-        if root.unique_id in visited:
+        if root.unique_id in self.perma_visited:
             return
-        visited.add(root.unique_id)
+        self.perma_visited.add(root.unique_id)
 
         if isinstance(root, ir.BasicElement) and isinstance(root, ir.Node):
             # Could be cleaned up
@@ -274,19 +245,25 @@ class OptimizeGraph:
 
             assert guard(root.child, ir.Edge)
             assert guard(root.child.child, ir.Node)
-            root.optimal_child = self.reduce_cycles_visit(
+            root.optimal_child = self.apply_recursive(
                 root.child, mapper, visitedd, threshold=threshold
             )
-            self.reduce_cycles(root.child.child, visited, threshold=threshold)
+            # if isinstance(root.child, ir.ClockedEdge):
+            #     self.reduce_cycles(root.child.child, threshold=threshold)
+            self.apply(root.child.child, threshold=threshold)
         elif isinstance(root, ir.IfElseNode):
-            root.optimal_true_edge = self.reduce_cycles_visit(
+            root.optimal_true_edge = self.apply_recursive(
                 root.true_edge, {}, {}, threshold=threshold
             )
-            root.optimal_false_edge = self.reduce_cycles_visit(
+            root.optimal_false_edge = self.apply_recursive(
                 root.false_edge, {}, {}, threshold=threshold
             )
-            self.reduce_cycles(root.true_edge.child, visited, threshold=threshold)
-            self.reduce_cycles(root.false_edge.child, visited, threshold=threshold)
+            # if isinstance(root.true_edge, ir.ClockedEdge):
+            #     self.reduce_cycles(root.true_edge.child, threshold=threshold)
+            # if isinstance(root.false_edge, ir.ClockedEdge):
+            #     self.reduce_cycles(root.false_edge.child, threshold=threshold)
+            self.apply(root.true_edge.child, threshold=threshold)
+            self.apply(root.false_edge.child, threshold=threshold)
         elif isinstance(root, ir.DoneNode):
             pass
         else:

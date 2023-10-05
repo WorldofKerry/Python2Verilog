@@ -7,7 +7,10 @@ from typing import Any
 from python2verilog import ir
 from python2verilog.backend.verilog import CodeGen
 from python2verilog.backend.verilog.codegen import CaseBuilder
-from python2verilog.optimizer.optimizer import OptimizeGraph, backwards_replace
+from python2verilog.optimizer.optimizer import (
+    IncreaseWorkPerClockCycle,
+    backwards_replace,
+)
 
 
 class TestGraphApplyMapping(unittest.TestCase):
@@ -60,7 +63,7 @@ class TestGraphApplyMapping(unittest.TestCase):
         node = node.child
         node.child = ir.DoneNode(ui())
 
-        node = OptimizeGraph(head.child).reduce_cycles_visit(head, {}, {}, 1)
+        node = IncreaseWorkPerClockCycle(head.child).apply_recursive(head, {}, {}, 1)
         case = CaseBuilder(head.child, ir.Context()).get_case()
         self.assertEqual(len(case.case_items), 2)
         # logging.error(cases.to_string())
@@ -85,7 +88,7 @@ class TestGraphApplyMapping(unittest.TestCase):
         node = node.child
         node.child = ir.DoneNode(ui())
 
-        OptimizeGraph(head.child)
+        IncreaseWorkPerClockCycle(head.child)
         case = CaseBuilder(head.child, ir.Context()).get_case()
         self.assertEqual(len(case.case_items), 3)
         # logging.error(cases.to_string())
