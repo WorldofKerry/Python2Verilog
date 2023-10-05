@@ -2,8 +2,7 @@
 Parses Verilog display statements
 """
 
-import logging
-from typing import Generator, Iterable, Iterator, Union
+from typing import Iterable, Iterator, Union
 
 
 def parse_stdout(stdout: str) -> Iterator[tuple[str, ...]]:

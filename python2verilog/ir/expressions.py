@@ -7,8 +7,6 @@ that are synthesizable
 """
 from __future__ import annotations
 
-import copy
-
 from python2verilog.utils.generics import GenericRepr
 from python2verilog.utils.typed import guard, typed, typed_list, typed_strict
 

@@ -5,7 +5,6 @@ Functions that take text as input
 
 import copy
 import logging
-from typing import Optional
 
 from python2verilog import ir
 from python2verilog.backend import verilog

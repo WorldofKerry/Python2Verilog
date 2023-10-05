@@ -4,7 +4,7 @@ Verilog Abstract Syntax Tree Components
 
 from __future__ import annotations
 
-from typing import Iterable, Optional
+from typing import Optional
 
 from python2verilog import ir
 from python2verilog.utils import env
