@@ -377,14 +377,12 @@ class Generator2Graph:
         """
         yield <value>;
         """
-
-        match node.value:
-            case pyast.Tuple(elts=elts):
-                stmts = [self.__parse_expression(c) for c in elts]
-            case pyast.expr():
-                stmts = [self.__parse_expression(node.value)]
-            case _:
-                raise TypeError(f"Expected tuple {type(node.value)} {pyast.dump(node)}")
+        if isinstance(node.value, pyast.Tuple):
+            stmts = [self.__parse_expression(c) for c in node.value.elts]
+        elif isinstance(node.value, pyast.expr):
+            stmts = [self.__parse_expression(node.value)]
+        else:
+            raise TypeError(f"Expected tuple {type(node.value)} {pyast.dump(node)}")
 
         def create_assign_nodes(
             variables: Iterable[ir.ExclusiveVar],
