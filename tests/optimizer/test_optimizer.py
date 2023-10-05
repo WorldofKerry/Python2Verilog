@@ -60,7 +60,7 @@ class TestGraphApplyMapping(unittest.TestCase):
         node = node.child
         node.child = ir.DoneNode(ui())
 
-        node = IncreaseWorkPerClockCycle(head.child).apply_recursive(head, {}, {}, 1)
+        IncreaseWorkPerClockCycle(head.child)
         case = CaseBuilder(head.child, ir.Context()).get_case()
         self.assertEqual(len(case.case_items), 2)
         # logging.error(cases.to_string())

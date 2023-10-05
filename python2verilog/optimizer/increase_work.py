@@ -3,21 +3,22 @@ IncreaseWorkPerClockCycle
 """
 
 import copy
+import itertools
 import logging
 from functools import reduce
 from typing import Any, Callable, Iterator, Optional, Union
 
 from python2verilog import ir
 from python2verilog.optimizer.helpers import backwards_replace
-from python2verilog.utils.typed import guard, typed
+from python2verilog.utils.typed import guard, guard_dict, typed
 
 
 class IncreaseWorkPerClockCycle:
     """
-    A closure for the graph optimizer
+    A closure for the increase work per clock cycle optimizer
 
     `threshold` (an integer >= 0) tunes
-    how much an algorithm can be unrolled and duplicated
+    how much the code can be unrolled (and duplicated)
 
     A larger `threshold` will result in a reduction in clock cycles,
     but an increase in hardware usage
@@ -27,20 +28,16 @@ class IncreaseWorkPerClockCycle:
         1) hardware optimized with `threshold=0` completes in O(n) cycles
 
         2) hardware optimized with `threshold=x` for `x > 0` completes in O(n/(x+1)) cycles
-
     """
 
     def __init__(self, root: ir.Node, threshold: int = 0):
-        self.unique_counter = 0  # warning due to recursion can't be static var of func
-        self.perma_visited: set[str] = set()
-        self.apply(root, threshold=threshold)
+        self.visited: set[str] = set()
+        self.threshold = threshold
 
-    def make_unique(self):
-        """
-        Makes a unique value
-        """
-        self.unique_counter += 1
-        return self.unique_counter
+        counter = itertools.count()
+        self.make_unique = lambda: next(counter)
+
+        self.apply(root)
 
     @staticmethod
     def exclusive_vars(variables) -> Iterator[ir.ExclusiveVar]:
@@ -71,8 +68,7 @@ class IncreaseWorkPerClockCycle:
         self,
         edge: ir.Edge,
         mapping: dict[ir.Var, ir.Expression],
-        visited: dict[Union[str, ir.Var], int],
-        threshold: int,
+        visited_path: dict[Union[str, ir.Var], int],
     ) -> ir.Edge:
         """
         Recursively visits the children, conditionally adding them to an optimal path
@@ -87,38 +83,44 @@ class IncreaseWorkPerClockCycle:
         {a: 1, b: 1}
 
         :param mapping: values of variables, given the previous logic
-        :param visited: visited unique_ids and exclusive vars
+        :param visited: visited unique_ids and exclusive vars for this nonclocked sequence
         """
+        assert guard(edge, ir.Edge)
+        assert guard_dict(mapping, ir.Var, ir.Expression)
+        guard_dict(visited_path, Union[str, ir.Var], int)  # type: ignore
 
         node = edge.child
         assert node
         logging.debug("%s on %s", self.apply_recursive.__name__, node)
 
         # Check for cyclic paths
-        if node.unique_id in visited and visited[node.unique_id] > threshold:
+        if (
+            node.unique_id in visited_path
+            and visited_path[node.unique_id] > self.threshold
+        ):
             assert guard(node, ir.Node)
-            self.apply(node, threshold=threshold)
+            self.apply(node)
             return edge
 
         # Exclusive vars can only be visited once
         exclusive_vars = set(self.exclusive_vars(node.variables()))
-        if exclusive_vars & visited.keys():
+        if exclusive_vars & visited_path.keys():
             logging.debug(
                 "Intersection %s = {%s & %s} ending on %s",
-                exclusive_vars & visited.keys(),
+                exclusive_vars & visited_path.keys(),
                 exclusive_vars,
-                visited.keys(),
+                visited_path.keys(),
                 node,
             )
             if isinstance(edge, ir.ClockedEdge):
                 assert guard(node, ir.Node)
-                self.apply(node, threshold=threshold)
+                self.apply(node)
             return edge
 
         # Update visited
         if isinstance(node, ir.AssignNode) and isinstance(node.lvalue, ir.ExclusiveVar):
-            visited[node.lvalue] = 1
-        visited[node.unique_id] = visited.get(node.unique_id, 0) + 1
+            visited_path[node.lvalue] = 1
+        visited_path[node.unique_id] = visited_path.get(node.unique_id, 0) + 1
 
         new_edge: ir.Edge = ir.NonClockedEdge(
             unique_id=f"{edge.unique_id}_{self.make_unique()}_optimal"
@@ -130,14 +132,12 @@ class IncreaseWorkPerClockCycle:
                 true_edge=self.apply_recursive(
                     edge=node.true_edge,
                     mapping=copy.deepcopy(mapping),
-                    visited=copy.deepcopy(visited),
-                    threshold=threshold,
+                    visited_path=copy.deepcopy(visited_path),
                 ),
                 false_edge=self.apply_recursive(
                     edge=node.false_edge,
                     mapping=copy.deepcopy(mapping),
-                    visited=copy.deepcopy(visited),
-                    threshold=threshold,
+                    visited_path=copy.deepcopy(visited_path),
                 ),
             )
         elif isinstance(node, ir.AssignNode):
@@ -151,8 +151,7 @@ class IncreaseWorkPerClockCycle:
                 child=self.apply_recursive(
                     edge=node.child,
                     mapping=mapping,
-                    visited=visited,
-                    threshold=threshold,
+                    visited_path=visited_path,
                 ),
             )
         elif isinstance(node, ir.DoneNode):
@@ -164,50 +163,31 @@ class IncreaseWorkPerClockCycle:
     def apply(
         self,
         root: ir.Node,
-        threshold: int = 0,
     ) -> None:
         """
-        Optimizes a node, by increasing amount of work done in a cycle
-        by adding nonclocked edges
+        Optimizes a node, by increasing amount of work done in a cycle.
+        Creates an optimal path that maximizes nonclocked edges.
         """
         logging.info("%s on %s", self.apply.__name__, root)
 
-        if root.unique_id in self.perma_visited:
+        if root.unique_id in self.visited:
             return
-        self.perma_visited.add(root.unique_id)
+        self.visited.add(root.unique_id)
 
         if isinstance(root, ir.BasicElement) and isinstance(root, ir.Node):
-            # Could be cleaned up
-            mapper: dict[ir.Var, ir.Expression]
-            visitedd: dict[Union[ir.Var, str], int]
-            lvalue: ir.Var
-            match root:
-                case ir.AssignNode(lvalue=lvalue, rvalue=rvalue) if isinstance(
-                    lvalue, ir.ExclusiveVar
-                ):
-                    mapper = {lvalue: rvalue}
-                    visitedd = {lvalue: 1}
-                case ir.AssignNode(lvalue=lvalue, rvalue=rvalue):
-                    mapper = {lvalue: rvalue}
-                    visitedd = {}
-                case _:
-                    mapper = {}
-                    visitedd = {}
-
+            mapper: dict[ir.Var, ir.Expression] = {}
+            visited_path: dict[Union[ir.Var, str], int] = {}
+            if isinstance(root, ir.AssignNode):
+                mapper[root.lvalue] = root.rvalue
+                if isinstance(root.lvalue, ir.ExclusiveVar):
+                    visited_path[root.lvalue] = 1
             assert guard(root.child, ir.Edge)
             assert guard(root.child.child, ir.Node)
-            root.optimal_child = self.apply_recursive(
-                root.child, mapper, visitedd, threshold=threshold
-            )
+            root.optimal_child = self.apply_recursive(root.child, mapper, visited_path)
         elif isinstance(root, ir.IfElseNode):
-            root.optimal_true_edge = self.apply_recursive(
-                root.true_edge, {}, {}, threshold=threshold
-            )
-            root.optimal_false_edge = self.apply_recursive(
-                root.false_edge, {}, {}, threshold=threshold
-            )
+            root.optimal_true_edge = self.apply_recursive(root.true_edge, {}, {})
+            root.optimal_false_edge = self.apply_recursive(root.false_edge, {}, {})
         elif isinstance(root, ir.DoneNode):
             pass
         else:
             raise RuntimeError(f"{type(root)}")
-        logging.debug("Optimized to %s => %s", root, list(root.nonclocked_children()))
