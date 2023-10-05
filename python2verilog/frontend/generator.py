@@ -173,16 +173,14 @@ class FromGenerator:
 
         # builds backwards
         stmts.reverse()
-        previous = self.__parse_statement(
-            stmt=stmts[0], nextt=nextt, prefix=f"{prefix}_0"
-        )
+        previous = self.__parse(stmt=stmts[0], nextt=nextt, prefix=f"{prefix}_0")
         for i in range(1, len(stmts)):
-            previous = self.__parse_statement(
+            previous = self.__parse(
                 stmt=stmts[i], nextt=previous, prefix=f"{prefix}_{i}"
             )
         return previous
 
-    def __parse_statement(self, stmt: pyast.AST, nextt: ir.Element, prefix: str):
+    def __parse(self, stmt: pyast.AST, nextt: ir.Element, prefix: str):
         """
         nextt represents the next operation in the control flow diagram.
 
@@ -220,9 +218,7 @@ class FromGenerator:
         elif isinstance(stmt, pyast.If):
             cur_node = self.__parse_ifelse(stmt=stmt, nextt=nextt, prefix=prefix)
         elif isinstance(stmt, pyast.Expr):
-            cur_node = self.__parse_statement(
-                stmt=stmt.value, nextt=nextt, prefix=prefix
-            )
+            cur_node = self.__parse(stmt=stmt.value, nextt=nextt, prefix=prefix)
         elif isinstance(stmt, pyast.AugAssign):
             assert isinstance(
                 stmt.target, pyast.Name
