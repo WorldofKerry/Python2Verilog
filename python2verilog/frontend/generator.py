@@ -8,7 +8,7 @@ import ast as pyast
 import itertools
 import logging
 import sys
-from typing import Iterable, Iterator, Optional
+from typing import Collection, Iterable, Iterator, Optional
 
 from python2verilog import ir
 from python2verilog.utils.lines import Indent, Lines
@@ -419,17 +419,16 @@ class FromGenerator:
             raise TypeError(f"Expected tuple {type(node.value)} {pyast.dump(node)}")
 
         def create_assign_nodes(
-            variables: Iterable[ir.ExclusiveVar],
-            exprs: Iterable[ir.Expression],
+            variables: Collection[ir.ExclusiveVar],
+            exprs: Collection[ir.Expression],
             prefix: str,
         ):
             """
             Create assign nodes from variables and expressions
             """
+            assert len(variables) == len(exprs)
             counters = itertools.count()
-            for (var, expr), counter in zip(
-                zip(variables, exprs, strict=True), counters
-            ):
+            for var, expr, counter in zip(variables, exprs, counters):
                 yield ir.AssignNode(
                     unique_id=f"{prefix}_{counter}", lvalue=var, rvalue=expr
                 )
