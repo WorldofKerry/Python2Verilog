@@ -183,7 +183,6 @@ class IncreaseWorkPerClockCycle:
             mapper: dict[ir.Var, ir.Expression] = {}
             visited_path: dict[Union[ir.Var, str], int] = {}
             if isinstance(root, ir.AssignNode):
-                assert guard(root.lvalue, ir.Var)
                 mapper[root.lvalue] = root.rvalue
                 if isinstance(root.lvalue, ir.ExclusiveVar):
                     visited_path[root.lvalue] = 1

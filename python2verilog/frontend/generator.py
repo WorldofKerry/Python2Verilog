@@ -224,9 +224,11 @@ class FromGenerator:
                 stmt.target, pyast.Name
             ), "Error: only supports single target"
             edge = ir.ClockedEdge(unique_id=f"{prefix}_e", child=nextt)
+            lvalue = self.__parse_expression(stmt.target)
+            assert guard(lvalue, ir.Var)
             cur_node = ir.AssignNode(
                 unique_id=prefix,
-                lvalue=self.__parse_expression(stmt.target),
+                lvalue=lvalue,
                 rvalue=self.__parse_expression(
                     pyast.BinOp(stmt.target, stmt.op, stmt.value)
                 ),

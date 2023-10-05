@@ -564,7 +564,6 @@ class CaseBuilder:
             stmts.append(self.create_quick_done(self.context))
 
         elif isinstance(vertex, ir.AssignNode):
-            assert guard(vertex.lvalue, ir.Var)
             stmts.append(ver.NonBlockingSubsitution(vertex.lvalue, vertex.rvalue))
             stmts += self.do_edge(vertex.optimal_child)
 
