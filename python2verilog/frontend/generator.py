@@ -7,6 +7,7 @@ from __future__ import annotations
 import ast as pyast
 import itertools
 import logging
+import sys
 from typing import Iterable, Iterator, Optional
 
 from python2verilog import ir
@@ -31,23 +32,6 @@ class FromGenerator:
 
         self._create_instances(context)
 
-        # for node in context.py_ast.body:
-        #     for child in pyast.walk(node):
-        #         match child:
-        #             # target_id = func_id(...)
-        #             case pyast.Assign(
-        #                 targets=[pyast.Name(id=target_id)],
-        #                 value=pyast.Call(func=pyast.Name(id=func_id)),
-        #             ):
-        #                 # Get context of generator function being called
-        #                 cxt = self._context.namespace[func_id]
-
-        #                 # Create an instance of that generator
-        #                 instance = cxt.create_instance(target_id)
-
-        #                 # Add instance to own context
-        #                 self._context.instances[target_id] = instance
-
         logging.debug("\n\n========> Parsing %s <========", context.name)
         self._root = self.__parse_statements(
             stmts=context.py_ast.body,
@@ -67,43 +51,45 @@ class FromGenerator:
         """
         for node in caller_cxt.py_ast.body:
             for child in pyast.walk(node):
-                if isinstance(child, pyast.Assign) and isinstance(
-                    child.value, pyast.Call
-                ):
-                    # Figure out target name
-                    assert len(child.targets) == 1
-                    target = child.targets[0]
-                    assert guard(target, pyast.Name)
-                    target_name = target.id
+                if sys.version_info < (3, 10):
+                    if isinstance(child, pyast.Assign) and isinstance(
+                        child.value, pyast.Call
+                    ):
+                        # Figure out target name
+                        assert len(child.targets) == 1
+                        target = child.targets[0]
+                        assert guard(target, pyast.Name)
+                        target_name = target.id
 
-                    # Figure out func being called
-                    func = child.value.func
-                    assert guard(func, pyast.Name)
-                    func_name = func.id
+                        # Figure out func being called
+                        func = child.value.func
+                        assert guard(func, pyast.Name)
+                        func_name = func.id
 
-                    # Get context of generator function being called
-                    callee_cxt = caller_cxt.namespace[func_name]
+                        # Get context of generator function being called
+                        callee_cxt = caller_cxt.namespace[func_name]
 
-                    # Create an instance of that generator
-                    instance = callee_cxt.create_instance(target_name)
+                        # Create an instance of that generator
+                        instance = callee_cxt.create_instance(target_name)
 
-                    # Add instance to own context
-                    caller_cxt.instances[target_name] = instance
+                        # Add instance to own context
+                        caller_cxt.instances[target_name] = instance
 
-                # match child:
-                #     # target_id = func_id(...)
-                #     case pyast.Assign(
-                #         targets=[pyast.Name(id=target_id)],
-                #         value=pyast.Call(func=pyast.Name(id=func_id)),
-                #     ):
-                #         # Get context of generator function being called
-                #         callee_cxt = caller_cxt.namespace[func_id]
+                else:
+                    match child:
+                        # target_id = func_id(...)
+                        case pyast.Assign(
+                            targets=[pyast.Name(id=target_id)],
+                            value=pyast.Call(func=pyast.Name(id=func_id)),
+                        ):
+                            # Get context of generator function being called
+                            callee_cxt = caller_cxt.namespace[func_id]
 
-                #         # Create an instance of that generator
-                #         instance = callee_cxt.create_instance(target_id)
+                            # Create an instance of that generator
+                            instance = callee_cxt.create_instance(target_id)
 
-                #         # Add instance to own context
-                #         caller_cxt.instances[target_id] = instance
+                            # Add instance to own context
+                            caller_cxt.instances[target_id] = instance
 
     @staticmethod
     def _name_to_var(name: pyast.expr) -> ir.Var:
