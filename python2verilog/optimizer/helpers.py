@@ -7,7 +7,9 @@ import copy
 from python2verilog import ir
 
 
-def backwards_replace(expr: ir.Expression, mapping: dict[ir.Var, ir.Expression]):
+def backwards_replace(
+    expr: ir.Expression, mapping: dict[ir.Var, ir.Expression]
+) -> ir.Expression:
     """
     If the expression matches a key in the mapping, it is replaced with
     the corresponding value in the mapping.

@@ -30,6 +30,7 @@ from .expressions import (
 from .graph import (
     AssignNode,
     BasicElement,
+    BasicNode,
     ClockedEdge,
     DoneNode,
     Edge,

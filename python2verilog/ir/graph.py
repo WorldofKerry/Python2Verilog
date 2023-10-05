@@ -12,7 +12,7 @@ from __future__ import annotations
 from typing import Iterator, Optional
 
 from python2verilog.ir import expressions as expr
-from python2verilog.utils.typed import typed, typed_strict
+from python2verilog.utils.typed import guard, typed, typed_strict
 
 
 def get_variables(exp: expr.Expression) -> Iterator[expr.Var]:
@@ -138,53 +138,24 @@ class IfElseNode(Node, Element):
         self,
         unique_id: str,
         *args,
-        true_edge: Optional[Edge] = None,
-        false_edge: Optional[Edge] = None,
-        condition: Optional[expr.Expression],
+        true_edge: Edge,
+        false_edge: Edge,
+        condition: expr.Expression,
         **kwargs,
     ):
         super().__init__(unique_id, *args, **kwargs)
-        self._true_edge = typed_strict(true_edge, Edge)
-        self._false_edge = typed_strict(false_edge, Edge)
-        self._condition = typed_strict(condition, expr.Expression)
+        self.true_edge = typed_strict(true_edge, Edge)
+        self.false_edge = typed_strict(false_edge, Edge)
+        self.condition = typed_strict(condition, expr.Expression)
         self._optimal_true_edge: Optional[Edge] = None
         self._optimal_false_edge: Optional[Edge] = None
-
-    @property
-    def condition(self):
-        """
-        conditional
-        """
-        return self._condition
-
-    @property
-    def true_edge(self):
-        """
-        true edge or optimal if no edge
-        """
-        return self._true_edge
-
-    @true_edge.setter
-    def true_edge(self, other: Edge):
-        self._true_edge = typed_strict(other, Edge)
-
-    @property
-    def false_edge(self):
-        """
-        false edge or optimal false edge if no false edge
-        """
-        return self._false_edge
-
-    @false_edge.setter
-    def false_edge(self, other: Edge):
-        self._false_edge = typed_strict(other, Edge)
 
     @property
     def optimal_true_edge(self):
         """
         optimal true edge or edge otherwise
         """
-        return self._optimal_true_edge if self._optimal_true_edge else self._true_edge
+        return self._optimal_true_edge if self._optimal_true_edge else self.true_edge
 
     @optimal_true_edge.setter
     def optimal_true_edge(self, other: Edge):
@@ -195,9 +166,7 @@ class IfElseNode(Node, Element):
         """
         optimal false edge
         """
-        return (
-            self._optimal_false_edge if self._optimal_false_edge else self._false_edge
-        )
+        return self._optimal_false_edge if self._optimal_false_edge else self.false_edge
 
     @optimal_false_edge.setter
     def optimal_false_edge(self, other: Edge):
@@ -207,10 +176,10 @@ class IfElseNode(Node, Element):
         """
         Gets edges
         """
-        if self._true_edge:
-            yield self._true_edge
-        if self._false_edge:
-            yield self._false_edge
+        if self.true_edge:
+            yield self.true_edge
+        if self.false_edge:
+            yield self.false_edge
         if self._optimal_true_edge:
             yield self._optimal_true_edge
         if self._optimal_false_edge:
@@ -230,7 +199,31 @@ class IfElseNode(Node, Element):
         yield from self.optimal_false_edge.visit_nonclocked()
 
 
-class AssignNode(Node, BasicElement):
+class BasicNode(Node, BasicElement):
+    """
+    Basic node.
+    Has one child.
+    """
+
+    def __init__(self, unique_id: str, *args, child: Edge | None = None, **kwargs):
+        super().__init__(unique_id, *args, **kwargs)
+        self._child = child
+
+    @property
+    def edge(self) -> Edge:
+        """
+        Gets edge
+        """
+        assert guard(self._child, Edge)
+        return self._child
+
+    @edge.setter
+    def edge(self, other: Edge):
+        assert guard(other, Edge)
+        self._child = other
+
+
+class AssignNode(BasicNode):
     """
     Represents a non-blocking assignment,
     i.e. assignments that do not block the execution of
@@ -247,33 +240,9 @@ class AssignNode(Node, BasicElement):
         **kwargs,
     ):
         super().__init__(unique_id, *args, child=child, **kwargs)
+        self.lvalue = typed_strict(lvalue, expr.Expression)
+        self.rvalue = typed_strict(rvalue, expr.Expression)
         self._child = child
-        self._lvalue = typed_strict(lvalue, expr.Expression)
-        self._rvalue = typed_strict(rvalue, expr.Expression)
-
-    @property
-    def lvalue(self):
-        """
-        lvalue
-        """
-        return self._lvalue
-
-    @property
-    def rvalue(self):
-        """
-        rvalue
-        """
-        return self._rvalue
-
-    @rvalue.setter
-    def rvalue(self, rvalue: expr.Expression):
-        self._rvalue = typed_strict(rvalue, expr.Expression)
-
-    def verilog(self):
-        """
-        To string
-        """
-        return f"{self._lvalue.verilog()} <= {self._rvalue.verilog()}"
 
     def __repr__(self):
         return f"{self.lvalue} = {self.rvalue}"

@@ -145,6 +145,7 @@ class IncreaseWorkPerClockCycle:
             )
         elif isinstance(node, ir.AssignNode):
             new_rvalue = backwards_replace(node.rvalue, mapping)
+            assert guard(node.lvalue, ir.Var)
             mapping[node.lvalue] = new_rvalue
             assert guard(node.child, ir.Edge)
             new_edge.child = ir.AssignNode(
@@ -178,10 +179,11 @@ class IncreaseWorkPerClockCycle:
             return
         self.visited.add(root.unique_id)
 
-        if isinstance(root, ir.BasicElement) and isinstance(root, ir.Node):
+        if isinstance(root, ir.BasicNode):
             mapper: dict[ir.Var, ir.Expression] = {}
             visited_path: dict[Union[ir.Var, str], int] = {}
             if isinstance(root, ir.AssignNode):
+                assert guard(root.lvalue, ir.Var)
                 mapper[root.lvalue] = root.rvalue
                 if isinstance(root.lvalue, ir.ExclusiveVar):
                     visited_path[root.lvalue] = 1
