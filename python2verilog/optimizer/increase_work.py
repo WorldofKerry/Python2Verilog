@@ -67,9 +67,6 @@ class IncreaseWorkPerClockCycle:
             iterable = func(iterable)
         yield from iterable
 
-    # Eventually yield nodes should be removed and be replaced with exclusive vars
-    YIELD_VISITOR_ID = "__YIELD_VISITOR_ID"
-
     def apply_recursive(
         self,
         edge: ir.Edge,
@@ -102,6 +99,7 @@ class IncreaseWorkPerClockCycle:
             if isinstance(edge, ir.NonClockedEdge):
                 # A bit suspicious
                 logging.debug("pretty sus %s", node)
+            # self.apply(node, threshold=threshold)
             return edge
 
         # Exclusive vars can only be visited once
@@ -116,9 +114,12 @@ class IncreaseWorkPerClockCycle:
             )
             if isinstance(edge, ir.ClockedEdge):
                 return edge
-            return ir.ClockedEdge(
-                unique_id=f"{edge.unique_id}_{self.make_unique()}_optimal", child=node
-            )
+            else:
+                self.apply(node, threshold=threshold)
+                return ir.ClockedEdge(
+                    unique_id=f"{edge.unique_id}_{self.make_unique()}_optimal",
+                    child=node,
+                )
 
         # Update visited
         if isinstance(node, ir.AssignNode) and isinstance(node.lvalue, ir.ExclusiveVar):

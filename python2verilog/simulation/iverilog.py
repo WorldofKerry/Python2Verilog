@@ -76,7 +76,7 @@ def _run_cmd_with_fifos(
             assert process.stderr
             stdout = process.stdout.read()
             stderr = process.stderr.read()
-            logging.error(f"{e}, {stdout}, {stderr}")
+            logging.debug(f"{e}, {stdout}, {stderr}")
             return stdout, stderr
 
 
@@ -113,7 +113,7 @@ def _run_cmd_with_files(
             assert process.stderr
             stdout = process.stdout.read()
             stderr = process.stderr.read()
-            logging.error(f"{e}, {stdout}, {stderr}")
+            logging.debug(f"{e}, {stdout}, {stderr}")
             return stdout, stderr
 
 
@@ -131,7 +131,7 @@ def run_with_fifos(
         top_level_module=top_level_module,
         files=input_fifos.keys(),
     )
-    logging.info(f"Simulation with command:\n{iverilog_cmd}")
+    logging.debug("Simulation with command:\n%s", iverilog_cmd)
     return _run_cmd_with_fifos(
         command=iverilog_cmd, input_fifos=input_fifos, timeout=timeout
     )

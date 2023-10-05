@@ -3,12 +3,8 @@ Optimizer helper functions
 """
 
 import copy
-import logging
-from functools import reduce
-from typing import Any, Callable, Iterator, Optional, Union
 
 from python2verilog import ir
-from python2verilog.utils.typed import guard, typed
 
 
 def backwards_replace(expr: ir.Expression, mapping: dict[ir.Var, ir.Expression]):
