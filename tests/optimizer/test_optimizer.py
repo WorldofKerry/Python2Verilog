@@ -7,7 +7,7 @@ from typing import Any
 from python2verilog import ir
 from python2verilog.backend.verilog import CodeGen
 from python2verilog.backend.verilog.codegen import CaseBuilder
-from python2verilog.optimizer.optimizer import (
+from python2verilog.optimizer.increase_work import (
     IncreaseWorkPerClockCycle,
     backwards_replace,
 )

@@ -11,7 +11,7 @@ from python2verilog import ir
 from python2verilog.backend import verilog
 from python2verilog.backend.verilog.config import CodegenConfig, TestbenchConfig
 from python2verilog.frontend.generator2ir import Generator2Graph
-from python2verilog.optimizer.optimizer import IncreaseWorkPerClockCycle
+from python2verilog.optimizer import IncreaseWorkPerClockCycle
 from python2verilog.utils.typed import typed
 
 

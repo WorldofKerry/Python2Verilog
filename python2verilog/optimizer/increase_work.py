@@ -12,19 +12,6 @@ from python2verilog.utils.typed import guard, typed
 from .. import ir
 
 
-def is_dependent(expr: ir.Expression, var: str):
-    """
-    Returns whether or not expr is dependent on var
-    """
-    if isinstance(expr, ir.Var):
-        return var == expr.to_string()
-    if isinstance(expr, ir.BinOp):
-        return is_dependent(expr.left, var) or is_dependent(expr.right, var)
-    if isinstance(expr, ir.Int):
-        return False
-    raise TypeError(f"unexpected {type(expr)}")
-
-
 def backwards_replace(expr: ir.Expression, mapping: dict[ir.Var, ir.Expression]):
     """
     If the expression matches a key in the mapping, it is replaced with

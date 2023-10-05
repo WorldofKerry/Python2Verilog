@@ -2,4 +2,4 @@
 Optimizer Functions
 """
 
-from .optimizer import IncreaseWorkPerClockCycle
+from .increase_work import IncreaseWorkPerClockCycle
