@@ -8,7 +8,7 @@ import warnings
 from typing import Generator, Iterator, cast
 
 from python2verilog.backend.verilog.config import TestbenchConfig
-from python2verilog.optimizer.increase_work import backwards_replace
+from python2verilog.optimizer import backwards_replace
 from python2verilog.utils.lines import Lines
 
 from ... import ir
