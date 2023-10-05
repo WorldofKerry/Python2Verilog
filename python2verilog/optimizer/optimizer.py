@@ -166,7 +166,11 @@ class OptimizeGraph:
         assert node
 
         logging.debug(
-            "%s %s %s", self.reduce_cycles_visit.__name__, edge.child, mapping
+            "%s %s %s %s",
+            self.reduce_cycles_visit.__name__,
+            edge.child,
+            mapping,
+            visited,
         )
 
         # Check for cyclic paths
@@ -265,6 +269,8 @@ class OptimizeGraph:
         Optimizes a node, by increasing amount of work done in a cycle
         by adding nonclocked edges
         """
+        logging.debug(f"{self.reduce_cycles.__name__} {root}")
+
         if visited is None:
             visited = set()
         if root.unique_id in visited:
@@ -272,17 +278,30 @@ class OptimizeGraph:
         visited.add(root.unique_id)
 
         if isinstance(root, ir.BasicElement) and isinstance(root, ir.Node):
-            # This ifelse should be looked at
+            # TODO: this ifelse should be looked at
             mapper: dict[ir.Var, ir.Expression]
-            if isinstance(root, ir.AssignNode):
-                mapper = {root.lvalue: root.rvalue}
-            else:
-                mapper = {}
+            match root:
+                case ir.AssignNode(lvalue=lvalue, rvalue=rvalue) if isinstance(
+                    lvalue, ir.ExclusiveVar
+                ):
+                    mapper = {lvalue: rvalue}
+                    visitedd = {lvalue: 1}
+                case ir.AssignNode(lvalue=lvalue, rvalue=rvalue):
+                    mapper = {lvalue: rvalue}
+                    visitedd = {}
+                case _:
+                    mapper = {}
+                    visitedd = {}
+
+            # if isinstance(root, ir.AssignNode):
+            #     mapper = {root.lvalue: root.rvalue}
+            # else:
+            #     mapper = {}
 
             assert guard(root.child, ir.Edge)
             assert guard(root.child.child, ir.Node)
             root.optimal_child = self.reduce_cycles_visit(
-                root.child, mapper, {}, threshold=threshold
+                root.child, mapper, visitedd, threshold=threshold
             )
             self.reduce_cycles(root.child.child, visited, threshold=threshold)
         elif isinstance(root, ir.IfElseNode):
@@ -298,4 +317,4 @@ class OptimizeGraph:
             pass
         else:
             raise RuntimeError(f"{type(root)}")
-        logging.debug("%s => %s", root, list(root.nonclocked_children()))
+        logging.debug("Optimized to %s => %s", root, list(root.nonclocked_children()))

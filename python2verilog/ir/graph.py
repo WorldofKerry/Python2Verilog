@@ -56,7 +56,6 @@ class Element:
 
         :return: [children_branch_0, children_branch_1, ...]
         """
-        logging.debug(f"Non-over-written {type(self)}")
         yield from ()
 
     def to_string(self):
