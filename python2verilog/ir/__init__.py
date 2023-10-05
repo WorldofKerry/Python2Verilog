@@ -37,7 +37,6 @@ from .graph import (
     IfElseNode,
     Node,
     NonClockedEdge,
-    YieldNode,
     create_cytoscape_elements,
     create_networkx_adjacency_list,
 )

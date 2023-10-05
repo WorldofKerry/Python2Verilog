@@ -53,7 +53,7 @@ class Generator2Graph:
                         # Add instance to own context
                         self._context.instances[target_id] = instance
 
-        logging.debug(f"\n\n========> Parsing {context.name} <========")
+        logging.debug("\n\n========> Parsing %s <========", context.name)
         self._root = self.__parse_statements(
             stmts=context.py_ast.body,
             prefix="_state",
@@ -61,7 +61,7 @@ class Generator2Graph:
         )
 
         self._context.entry_state = ir.State(self._root.unique_id)
-        logging.debug(f"Entry state is {self._context.entry_state}")
+        logging.debug("Entry state is %s", self._context.entry_state)
 
     @property
     def root(self):
@@ -180,7 +180,9 @@ class Generator2Graph:
             cur_node = self.__parse_while(stmt, nextt=nextt, prefix=prefix)
         elif isinstance(stmt, pyast.For):
             cur_node = self.__parse_for(stmt, nextt=nextt, prefix=prefix)
-            logging.debug(f"For {cur_node.unique_id} {cur_node} -> {nextt.unique_id}")
+            logging.debug(
+                "For %s %s => %s", cur_node.unique_id, cur_node, nextt.unique_id
+            )
         elif isinstance(stmt, pyast.If):
             cur_node = self.__parse_ifelse(stmt=stmt, nextt=nextt, prefix=prefix)
         elif isinstance(stmt, pyast.Expr):
@@ -202,7 +204,7 @@ class Generator2Graph:
             )
         elif isinstance(stmt, pyast.Constant):
             assert "\n" in stmt.value, f"Error: parsing {pyast.dump(stmt)}"
-            logging.debug(f"Parsing triple-quote comment {stmt.value}")
+            logging.debug("Parsing triple-quote comment %s", stmt.value)
             # Fix for triple-quote comments in code
             edge = ir.ClockedEdge(unique_id=f"{prefix}_e", child=nextt)
             cur_node = ir.AssignNode(

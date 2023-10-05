@@ -162,16 +162,10 @@ class OptimizeGraph:
         :param mapping: values of variables, given the previous logic
         :param visited: visited unique_ids and exclusive vars
         """
+
         node = edge.child
         assert node
-
-        logging.debug(
-            "%s %s %s %s",
-            self.reduce_cycles_visit.__name__,
-            edge.child,
-            mapping,
-            visited,
-        )
+        logging.debug("%s on %s", self.reduce_cycles_visit.__name__, node)
 
         # Check for cyclic paths
         if node.unique_id in visited and visited[node.unique_id] > threshold:
@@ -184,9 +178,11 @@ class OptimizeGraph:
         exclusive_vars = set(self.exclusive_vars(node.variables()))
         if exclusive_vars & visited.keys():
             logging.debug(
-                f"Already visited {exclusive_vars & visited.keys()}"
-                ", ending current optimization"
-                f" {exclusive_vars} {visited.keys()}"
+                "Intersection %s = {%s & %s} ending on %s",
+                exclusive_vars & visited.keys(),
+                exclusive_vars,
+                visited.keys(),
+                node,
             )
             if isinstance(edge, ir.ClockedEdge):
                 return edge
@@ -234,23 +230,6 @@ class OptimizeGraph:
                     threshold=threshold,
                 ),
             )
-        elif isinstance(node, ir.YieldNode):
-            # Yield node can only be visited once
-            # TODO: remove
-            assert guard(node.child, ir.Edge)
-            if self.YIELD_VISITOR_ID in visited:
-                new_edge.child = self.reduce_cycles_visit(
-                    edge=node.child,
-                    mapping=mapping,
-                    visited=visited,
-                    threshold=threshold,
-                )
-                visited[self.YIELD_VISITOR_ID] = 1
-            else:
-                new_edge = ir.ClockedEdge(
-                    unique_id=f"{edge.unique_id}_{self.make_unique()}_optimal",
-                    child=node,
-                )
         elif isinstance(node, ir.DoneNode):
             new_edge.child = node
         else:
@@ -267,7 +246,7 @@ class OptimizeGraph:
         Optimizes a node, by increasing amount of work done in a cycle
         by adding nonclocked edges
         """
-        logging.debug(f"{self.reduce_cycles.__name__} {root}")
+        logging.info("%s on %s", self.reduce_cycles.__name__, root)
 
         if visited is None:
             visited = set()

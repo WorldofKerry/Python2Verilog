@@ -19,7 +19,7 @@ class TestVerilogify(unittest.TestCase):
 
         list(count(10))
 
-        logging.debug(str(namespace[count.__name__]))
+        logging.debug("%s", namespace[count.__name__])
         self.assertEqual(count.__name__, get_context(count).name)
 
         module, testbench = context_to_verilog(

@@ -22,12 +22,18 @@ def context_to_codegen(context: ir.Context):
     :return: (codegen, ir)
     """
     context = copy.deepcopy(context)  # context should be changed to frozened
+    logging.info("Running %s", Generator2Graph.__name__)
     ir_root, context = Generator2Graph(context).results
     logging.debug(
-        f"context to codegen {ir_root.unique_id} {context.name} -O{context.optimization_level}"
+        "context to codegen %s %s -O%s",
+        ir_root.unique_id,
+        context.name,
+        context.optimization_level,
     )
     if context.optimization_level > 0:
+        logging.info("Running %s", OptimizeGraph.__name__)
         OptimizeGraph(ir_root, threshold=context.optimization_level - 1)
+    logging.info("Running %s", verilog.CodeGen.__name__)
     return verilog.CodeGen(ir_root, context), ir_root
 
 
