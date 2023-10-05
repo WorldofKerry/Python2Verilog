@@ -9,9 +9,9 @@ import itertools
 import logging
 from typing import Iterable, Iterator, Optional
 
-from .. import ir
-from ..utils.lines import Indent, Lines
-from ..utils.typed import typed, typed_list, typed_strict
+from python2verilog import ir
+from python2verilog.utils.lines import Indent, Lines
+from python2verilog.utils.typed import guard, typed, typed_list, typed_strict
 
 
 class FromGenerator:
@@ -29,23 +29,24 @@ class FromGenerator:
         context.validate()
         self._context = typed_strict(context, ir.Context)
 
-        # Populate variables that hold generator instances
-        for node in context.py_ast.body:
-            for child in pyast.walk(node):
-                match child:
-                    # target_id = func_id(...)
-                    case pyast.Assign(
-                        targets=[pyast.Name(id=target_id)],
-                        value=pyast.Call(func=pyast.Name(id=func_id)),
-                    ):
-                        # Get context of generator function being called
-                        cxt = self._context.namespace[func_id]
+        self._create_instances(context)
 
-                        # Create an instance of that generator
-                        instance = cxt.create_instance(target_id)
+        # for node in context.py_ast.body:
+        #     for child in pyast.walk(node):
+        #         match child:
+        #             # target_id = func_id(...)
+        #             case pyast.Assign(
+        #                 targets=[pyast.Name(id=target_id)],
+        #                 value=pyast.Call(func=pyast.Name(id=func_id)),
+        #             ):
+        #                 # Get context of generator function being called
+        #                 cxt = self._context.namespace[func_id]
 
-                        # Add instance to own context
-                        self._context.instances[target_id] = instance
+        #                 # Create an instance of that generator
+        #                 instance = cxt.create_instance(target_id)
+
+        #                 # Add instance to own context
+        #                 self._context.instances[target_id] = instance
 
         logging.debug("\n\n========> Parsing %s <========", context.name)
         self._root = self.__parse_statements(
@@ -56,6 +57,53 @@ class FromGenerator:
 
         self._context.entry_state = ir.State(self._root.unique_id)
         logging.debug("Entry state is %s", self._context.entry_state)
+
+    @staticmethod
+    def _create_instances(caller_cxt: ir.Context):
+        """
+        Add generator instances of all functions called by caller
+
+        e.g. target_name = func_id(...)
+        """
+        for node in caller_cxt.py_ast.body:
+            for child in pyast.walk(node):
+                if isinstance(child, pyast.Assign) and isinstance(
+                    child.value, pyast.Call
+                ):
+                    # Figure out target name
+                    assert len(child.targets) == 1
+                    target = child.targets[0]
+                    assert guard(target, pyast.Name)
+                    target_name = target.id
+
+                    # Figure out func being called
+                    func = child.value.func
+                    assert guard(func, pyast.Name)
+                    func_name = func.id
+
+                    # Get context of generator function being called
+                    callee_cxt = caller_cxt.namespace[func_name]
+
+                    # Create an instance of that generator
+                    instance = callee_cxt.create_instance(target_name)
+
+                    # Add instance to own context
+                    caller_cxt.instances[target_name] = instance
+
+                # match child:
+                #     # target_id = func_id(...)
+                #     case pyast.Assign(
+                #         targets=[pyast.Name(id=target_id)],
+                #         value=pyast.Call(func=pyast.Name(id=func_id)),
+                #     ):
+                #         # Get context of generator function being called
+                #         callee_cxt = caller_cxt.namespace[func_id]
+
+                #         # Create an instance of that generator
+                #         instance = callee_cxt.create_instance(target_id)
+
+                #         # Add instance to own context
+                #         caller_cxt.instances[target_id] = instance
 
     @staticmethod
     def _name_to_var(name: pyast.expr) -> ir.Var:

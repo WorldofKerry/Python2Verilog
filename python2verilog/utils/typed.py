@@ -45,8 +45,7 @@ def guard(obj: Any, type_: Type[_ValueType]) -> TypeGuard[_ValueType]:
     """
     Type guard for type
     """
-    assert isinstance(obj, type_), f"Expected {type_} got {type(obj)} instead {obj}"
-    return True
+    return isinstance(obj, type_)
 
 
 def typed(
