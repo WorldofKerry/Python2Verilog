@@ -2,9 +2,8 @@
 Protocol signals used by the converter
 """
 
-import warnings
 from dataclasses import dataclass, fields
-from typing import Generator, Iterator
+from typing import Iterator
 
 from python2verilog.ir.expressions import Var
 

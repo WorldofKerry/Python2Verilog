@@ -1,6 +1,5 @@
 import logging
 import unittest
-from io import StringIO
 
 from python2verilog.api import Modes, context_to_verilog, get_context, verilogify
 from python2verilog.backend.verilog.config import CodegenConfig

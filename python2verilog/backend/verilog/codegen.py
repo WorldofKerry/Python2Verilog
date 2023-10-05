@@ -4,8 +4,7 @@ Verilog Codegen
 
 import itertools
 import logging
-import warnings
-from typing import Generator, Iterator, cast
+from typing import Iterator, cast
 
 from python2verilog.backend.verilog.config import TestbenchConfig
 from python2verilog.optimizer import backwards_replace

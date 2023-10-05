@@ -7,8 +7,7 @@ from __future__ import annotations
 import ast as pyast
 import itertools
 import logging
-import sys
-from typing import Collection, Iterable, Iterator, Optional
+from typing import Collection, Iterable, Optional
 
 from python2verilog import ir
 from python2verilog.utils.lines import Indent, Lines

@@ -3,7 +3,7 @@ Visualization Tools
 """
 
 import logging
-from typing import Generator, Iterator, Optional, Union, cast
+from typing import Iterator, Optional, Union, cast
 
 import matplotlib
 import matplotlib.pyplot as plt  # type: ignore

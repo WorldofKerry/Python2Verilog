@@ -9,10 +9,9 @@ import ast
 import copy
 import io
 import logging
-import warnings
 from dataclasses import dataclass, field
 from types import FunctionType
-from typing import Any, Optional, Sequence, Union
+from typing import Any, Optional, Sequence
 
 from python2verilog.api.modes import Modes
 from python2verilog.ir.expressions import ExclusiveVar, State, Var

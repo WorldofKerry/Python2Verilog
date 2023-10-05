@@ -5,7 +5,7 @@ Functions that take text as input
 import ast
 import logging
 from types import FunctionType
-from typing import Any, Optional, Union
+from typing import Any, Optional
 
 from python2verilog import ir
 from python2verilog.api.context import context_to_codegen

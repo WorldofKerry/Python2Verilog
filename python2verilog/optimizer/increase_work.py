@@ -5,8 +5,7 @@ IncreaseWorkPerClockCycle
 import copy
 import itertools
 import logging
-from functools import reduce
-from typing import Any, Callable, Iterator, Optional, Union
+from typing import Any, Callable, Iterator, Union
 
 from python2verilog import ir
 from python2verilog.optimizer.helpers import backwards_replace

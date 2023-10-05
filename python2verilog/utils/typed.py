@@ -1,8 +1,7 @@
 """
 Type assertion utilities
 """
-import sys
-from typing import Any, Optional, Type, TypeVar, Union, cast
+from typing import Any, Optional, Type, TypeVar, Union
 
 try:
     from typing import TypeAlias, TypeGuard

@@ -1,8 +1,5 @@
 import itertools
-import logging
 import unittest
-import warnings
-from typing import Any
 
 from python2verilog import ir
 from python2verilog.backend.verilog import CodeGen

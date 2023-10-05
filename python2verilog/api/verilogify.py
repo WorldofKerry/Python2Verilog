@@ -8,10 +8,9 @@ import ast
 import inspect
 import logging
 import textwrap
-import warnings
 from functools import wraps
 from types import FunctionType
-from typing import Generator, Iterator, Optional, Protocol, Union, cast
+from typing import Iterator, Optional, Union
 
 import __main__ as main
 
