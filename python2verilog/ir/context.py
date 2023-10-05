@@ -12,7 +12,7 @@ import logging
 import warnings
 from dataclasses import dataclass, field
 from types import FunctionType
-from typing import Any, Optional, Union
+from typing import Any, Optional, Sequence, Union
 
 from python2verilog.api.modes import Modes
 from python2verilog.ir.expressions import ExclusiveVar, State, Var
@@ -290,7 +290,7 @@ class Context(GenericReprAndStr):
         Checks if a Python variable has been already declared or not
         """
 
-        def get_strs(variables: list[Var]):
+        def get_strs(variables: Sequence[Var]):
             """
             Maps vars to str
             """

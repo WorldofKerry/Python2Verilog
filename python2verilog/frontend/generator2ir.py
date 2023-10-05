@@ -5,7 +5,7 @@ from __future__ import annotations
 import ast as pyast
 import itertools
 import logging
-from typing import Iterator, Optional
+from typing import Iterable, Iterator, Optional
 
 from .. import ir
 from ..utils.lines import Indent, Lines
@@ -387,19 +387,22 @@ class Generator2Graph:
                 raise TypeError(f"Expected tuple {type(node.value)} {pyast.dump(node)}")
 
         def create_assign_nodes(
-            vars: Iterator[ir.ExclusiveVar], exprs: Iterator[ir.Expression], prefix: str
+            variables: Iterable[ir.ExclusiveVar],
+            exprs: Iterable[ir.Expression],
+            prefix: str,
         ):
             """
             Create assign nodes from variables and expressions
             """
-            assert len(exprs) == len(vars)
             counters = itertools.count()
-            for var, expr, counter in zip(vars, exprs, counters):
+            for (var, expr), counter in zip(
+                zip(variables, exprs, strict=True), counters
+            ):
                 yield ir.AssignNode(
                     unique_id=f"{prefix}_{counter}", lvalue=var, rvalue=expr
                 )
 
-        def weave_nonclocked_edges(nodes: Iterator[ir.BasicElement], prefix: str):
+        def weave_nonclocked_edges(nodes: Iterable[ir.BasicElement], prefix: str):
             """
             Weaves nodes with nonclocked edges
             """
@@ -428,19 +431,19 @@ class Generator2Graph:
             rvalue=ir.UInt(1),
         )
         # logging.critical(f"{list(head.nonclocked_children())}")
-        temp = head
+        # temp = head
         # while temp:
         #     logging.critical(f"{type(temp)} {temp}")
         #     temp = temp._child
         return head, tail.child
-        # logging.critical(list(stmts))
+        # # logging.critical(list(stmts))
 
-        yield_node = ir.YieldNode(
-            unique_id=prefix,
-            name="Yield",
-            stmts=list(stmts),
-        )
-        return yield_node, yield_node
+        # yield_node = ir.YieldNode(
+        #     unique_id=prefix,
+        #     name="Yield",
+        #     stmts=list(stmts),
+        # )
+        # return yield_node, yield_node
 
     def __parse_binop(self, expr: pyast.BinOp) -> ir.Expression:
         """

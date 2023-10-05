@@ -275,8 +275,10 @@ class OptimizeGraph:
         visited.add(root.unique_id)
 
         if isinstance(root, ir.BasicElement) and isinstance(root, ir.Node):
-            # TODO: this ifelse should be looked at
+            # Could be cleaned up
             mapper: dict[ir.Var, ir.Expression]
+            visitedd: dict[Union[ir.Var, str], int]
+            lvalue: ir.Var
             match root:
                 case ir.AssignNode(lvalue=lvalue, rvalue=rvalue) if isinstance(
                     lvalue, ir.ExclusiveVar
