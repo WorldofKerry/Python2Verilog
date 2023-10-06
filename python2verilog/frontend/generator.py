@@ -143,9 +143,9 @@ class FromGenerator:
         <target0, target1, ...> = <value>;
         """
         # Check if contains function call
-        # for child in pyast.walk(node):
-        #     if isinstance(child, pyast.Call):
-        #         return self.__parse_assign_to_call(node, prefix)
+        for child in pyast.walk(node):
+            if isinstance(child, pyast.Call):
+                return self.__parse_assign_to_call(node, prefix)
         # assign = ir.AssignNode(
         #     unique_id=prefix,
         #     lvalue=self.__parse_targets(node.targets),
@@ -162,12 +162,15 @@ class FromGenerator:
                 targets = []
                 for var in target.elts:
                     assert guard(var, pyast.Name)
-                    targets.append(var.id)
+                    if not self._context.is_declared(var.id):
+                        self._context.add_global_var(ir.Var(py_name=var.id))
+                    targets.append(ir.Var(var.id))
+                return targets
             elif isinstance(target, pyast.Name):
-                targets = [target.id]
-            else:
-                raise TypeError(f"{pyast.dump(node)}")
-            return targets
+                if not self._context.is_declared(target.id):
+                    self._context.add_global_var(ir.Var(py_name=target.id))
+                return [ir.Var(target.id)]
+            raise TypeError(f"{pyast.dump(node)}")
 
         def get_values():
             """
@@ -175,28 +178,34 @@ class FromGenerator:
             """
             value = node.value
             if isinstance(value, pyast.Tuple):
-                values = []
-                for expr in value.elts:
-                    values.append(self.__parse_expression(expr))
+                return [self.__parse_expression(expr) for expr in value.elts]
             elif isinstance(value, pyast.expr):
-                values = [self.__parse_expression(value)]
-            else:
-                raise TypeError(f"{pyast.dump(node)}")
+                return [self.__parse_expression(value)]
+            raise TypeError(f"{pyast.dump(node)}")
 
         targets = get_targets()
         values = get_values()
 
-        # logging.error("%s", pyast.dump(node))
+        logging.error("%s", pyast.dump(node))
         logging.error("%s %s", targets, values)
         # nodes = self._create_assign_nodes(
-        #     (self.__parse_expression(lvalue) for lvalue in node.targets),
-        #     (self.__parse_expression(rvalue) for rvalue in node.value),
+        #     targets,
+        #     values,
         #     prefix,
         # )
+        head, tail = self._weave_nonclocked_edges(
+            self._create_assign_nodes(targets, values, prefix),
+            f"{prefix}_e",
+            last_edge=False,
+        )
+        logging.error("%s", list(head.visit_nonclocked()))
+
         assign = ir.AssignNode(
             unique_id=prefix, lvalue=ir.Var("dead"), rvalue=ir.Var("beef")
         )
-        return assign, assign
+        assert guard(head, ir.AssignNode)
+        assert guard(tail, ir.AssignNode), f"{tail} {type(tail)}"
+        return head, tail
 
     def __parse_statements(
         self, stmts: list[pyast.stmt], prefix: str, nextt: ir.Element
@@ -466,7 +475,9 @@ class FromGenerator:
             )
 
     @staticmethod
-    def _weave_nonclocked_edges(nodes: Iterable[ir.BasicElement], prefix: str):
+    def _weave_nonclocked_edges(
+        nodes: Iterable[ir.BasicElement], prefix: str, last_edge: bool = True
+    ):
         """
         Weaves nodes with nonclocked edges
         """
@@ -482,7 +493,14 @@ class FromGenerator:
                 unique_id=f"{prefix}_{counter}",
             )
             prev = node.child
-        return head, prev
+        if last_edge:
+            assert guard(head, ir.AssignNode)
+            assert guard(prev, ir.NonClockedEdge)
+            return head, prev
+        node._child = None
+        assert guard(head, ir.AssignNode)
+        assert guard(node, ir.AssignNode)
+        return head, node
 
     def __parse_yield(self, node: pyast.Yield, prefix: str):
         """
