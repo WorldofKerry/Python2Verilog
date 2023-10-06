@@ -91,15 +91,15 @@ class FromGenerator:
         self._create_instances(self._context)
 
         logging.debug("\n\n========> Parsing %s <========", self._context.name)
-        self._root = self.__parse_statements(
+        root = self.__parse_statements(
             stmts=self._context.py_ast.body,
             prefix="_state",
             nextt=ir.DoneNode(unique_id=str(self._context.done_state), name="done"),
         )
 
-        self._context.entry_state = ir.State(self._root.unique_id)
+        self._context.entry_state = ir.State(root.unique_id)
         logging.debug("Entry state is %s", self._context.entry_state)
-        return (self._root, self._context)
+        return (root, self._context)
 
     def _target_value_visitor(self, target: pyast.expr, value: pyast.expr):
         """
@@ -427,6 +427,7 @@ class FromGenerator:
         counters = itertools.count()
         head: Optional[ir.BasicElement] = None
         prev: Optional[ir.BasicElement] = None
+        node: Optional[ir.BasicElement] = None
         for node, counter in zip(nodes, counters):
             if not head:
                 head = node
