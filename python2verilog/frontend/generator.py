@@ -143,13 +143,58 @@ class FromGenerator:
         <target0, target1, ...> = <value>;
         """
         # Check if contains function call
-        for child in pyast.walk(node):
-            if isinstance(child, pyast.Call):
-                return self.__parse_assign_to_call(node, prefix)
+        # for child in pyast.walk(node):
+        #     if isinstance(child, pyast.Call):
+        #         return self.__parse_assign_to_call(node, prefix)
+        # assign = ir.AssignNode(
+        #     unique_id=prefix,
+        #     lvalue=self.__parse_targets(node.targets),
+        #     rvalue=self.__parse_expression(node.value),
+        # )
+
+        def get_targets():
+            """
+            <target0>, <target1>, ... =
+            """
+            assert len(node.targets) == 1
+            target = node.targets[0]
+            if isinstance(target, pyast.Tuple):
+                targets = []
+                for var in target.elts:
+                    assert guard(var, pyast.Name)
+                    targets.append(var.id)
+            elif isinstance(target, pyast.Name):
+                targets = [target.id]
+            else:
+                raise TypeError(f"{pyast.dump(node)}")
+            return targets
+
+        def get_values():
+            """
+            = <value0>, <value1>, ...
+            """
+            value = node.value
+            if isinstance(value, pyast.Tuple):
+                values = []
+                for expr in value.elts:
+                    values.append(self.__parse_expression(expr))
+            elif isinstance(value, pyast.expr):
+                values = [self.__parse_expression(value)]
+            else:
+                raise TypeError(f"{pyast.dump(node)}")
+
+        targets = get_targets()
+        values = get_values()
+
+        # logging.error("%s", pyast.dump(node))
+        logging.error("%s %s", targets, values)
+        # nodes = self._create_assign_nodes(
+        #     (self.__parse_expression(lvalue) for lvalue in node.targets),
+        #     (self.__parse_expression(rvalue) for rvalue in node.value),
+        #     prefix,
+        # )
         assign = ir.AssignNode(
-            unique_id=prefix,
-            lvalue=self.__parse_targets(node.targets),
-            rvalue=self.__parse_expression(node.value),
+            unique_id=prefix, lvalue=ir.Var("dead"), rvalue=ir.Var("beef")
         )
         return assign, assign
 
