@@ -131,6 +131,7 @@ class CodeGen:
             ver.Statement(comment="Global variables"),
         ]
 
+        context.global_vars = sorted(context.global_vars, key=lambda x: x.ver_name)
         body += [
             ver.Declaration(v.ver_name, reg=True, signed=True)
             for v in context.global_vars

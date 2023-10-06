@@ -143,6 +143,8 @@ class IncreaseWorkPerClockCycle:
                 ),
             )
         elif isinstance(node, ir.AssignNode):
+            if isinstance(edge, ir.NonClockedEdge):
+                logging.error("Problem with %s", list(node.visit_nonclocked()))
             new_rvalue = backwards_replace(node.rvalue, mapping)
             mapping[node.lvalue] = new_rvalue
             assert guard(node.child, ir.Edge)

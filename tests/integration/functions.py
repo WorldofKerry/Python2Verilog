@@ -23,16 +23,12 @@ def fib(n: int):
     """
     Fibonacci sequence
     """
-    a = 0
-    b = 1
-    c = 0
+    a, b = 0, 1
     count = 1
     while count < n:
+        yield a
+        a, b = b, a + b
         count += 1
-        a = b
-        b = c
-        c = a + b
-        yield c
 
 
 def floor_div(n) -> tuple[int]:
@@ -84,8 +80,7 @@ def happy_face(s_x, s_y, height):
     y = s_y + 5
 
     # Rectangle
-    i = 0
-    j = 0
+    i, j = 0, 0
     while i < rectangle_width:
         while j < rectangle_height:
             yield (x + i, y + j)
@@ -98,8 +93,7 @@ def happy_face(s_x, s_y, height):
     y = s_y + 5
 
     # Rectangle
-    i = 0
-    j = 0
+    i, j = 0, 0
     while i < rectangle_width:
         while j < rectangle_height:
             yield (x + i, y + j)
