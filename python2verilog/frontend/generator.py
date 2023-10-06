@@ -404,6 +404,41 @@ class FromGenerator:
 
         return ifelse
 
+    @staticmethod
+    def _create_assign_nodes(
+        variables: Collection[ir.ExclusiveVar],
+        exprs: Collection[ir.Expression],
+        prefix: str,
+    ):
+        """
+        Create assign nodes from variables and expressions
+        """
+        assert len(variables) == len(exprs), f"{variables} {exprs}"
+        counters = itertools.count()
+        for var, expr, counter in zip(variables, exprs, counters):
+            yield ir.AssignNode(
+                unique_id=f"{prefix}_{counter}", lvalue=var, rvalue=expr
+            )
+
+    @staticmethod
+    def _weave_nonclocked_edges(nodes: Iterable[ir.BasicElement], prefix: str):
+        """
+        Weaves nodes with nonclocked edges
+        """
+        counters = itertools.count()
+        head: Optional[ir.BasicElement] = None
+        prev: Optional[ir.BasicElement] = None
+        for node, counter in zip(nodes, counters):
+            if not head:
+                head = node
+            if prev:
+                prev.child = node
+            node.child = ir.NonClockedEdge(
+                unique_id=f"{prefix}_{counter}",
+            )
+            prev = node.child
+        return head, prev
+
     def __parse_yield(self, node: pyast.Yield, prefix: str):
         """
         yield <value>;
@@ -415,41 +450,9 @@ class FromGenerator:
         else:
             raise TypeError(f"Expected tuple {type(node.value)} {pyast.dump(node)}")
 
-        def create_assign_nodes(
-            variables: Collection[ir.ExclusiveVar],
-            exprs: Collection[ir.Expression],
-            prefix: str,
-        ):
-            """
-            Create assign nodes from variables and expressions
-            """
-            assert len(variables) == len(exprs)
-            counters = itertools.count()
-            for var, expr, counter in zip(variables, exprs, counters):
-                yield ir.AssignNode(
-                    unique_id=f"{prefix}_{counter}", lvalue=var, rvalue=expr
-                )
-
-        def weave_nonclocked_edges(nodes: Iterable[ir.BasicElement], prefix: str):
-            """
-            Weaves nodes with nonclocked edges
-            """
-            counters = itertools.count()
-            head: Optional[ir.BasicElement] = None
-            prev: Optional[ir.BasicElement] = None
-            for node, counter in zip(nodes, counters):
-                if not head:
-                    head = node
-                if prev:
-                    prev.child = node
-                node.child = ir.NonClockedEdge(
-                    unique_id=f"{prefix}_{counter}",
-                )
-                prev = node.child
-            return head, prev
-
-        head, tail = weave_nonclocked_edges(
-            create_assign_nodes(self._context.output_vars, stmts, prefix), f"{prefix}_e"
+        head, tail = self._weave_nonclocked_edges(
+            self._create_assign_nodes(self._context.output_vars, stmts, prefix),
+            f"{prefix}_e",
         )
         tail.child = ir.AssignNode(
             unique_id=f"{prefix}_valid",
