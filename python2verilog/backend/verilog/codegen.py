@@ -4,15 +4,20 @@ Verilog Codegen
 
 import itertools
 import logging
-from typing import Iterator, cast
+from typing import Iterator, Optional, cast
 
-from python2verilog.backend.verilog.config import TestbenchConfig
+from python2verilog import ir
+from python2verilog.backend.verilog import ast as ver
+from python2verilog.backend.verilog.config import CodegenConfig, TestbenchConfig
 from python2verilog.optimizer import backwards_replace
 from python2verilog.utils.lines import Lines
-
-from ... import ir
-from ...utils.typed import guard, guard_dict, typed, typed_list
-from . import ast as ver
+from python2verilog.utils.typed import (
+    guard,
+    guard_dict,
+    typed,
+    typed_list,
+    typed_strict,
+)
 
 
 class CodeGen:
@@ -20,14 +25,17 @@ class CodeGen:
     Code Generator for Verilog
     """
 
-    def __init__(self, root: ir.Node, context: ir.Context):
+    def __init__(
+        self, root: ir.Node, context: ir.Context, config: Optional[CodegenConfig] = None
+    ):
         """ "
         Builds tree from Graph IR
         """
-        typed(root, ir.Node)
-        typed(context, ir.Context)
-        self.context = context
-        root_case = CaseBuilder(root, context).get_case()
+        if not config:
+            config = CodegenConfig()
+        self.context = typed_strict(context, ir.Context)
+        self.config = typed_strict(config, CodegenConfig)
+        root_case = CaseBuilder(root, context, config).get_case()
 
         for item in root_case.case_items:
             self.context.add_state_weak(
@@ -131,6 +139,7 @@ class CodeGen:
             ver.Statement(comment="Global variables"),
         ]
 
+        context.global_vars = sorted(context.global_vars, key=lambda x: x.ver_name)
         body += [
             ver.Declaration(v.ver_name, reg=True, signed=True)
             for v in context.global_vars
@@ -312,16 +321,6 @@ class CodeGen:
         :param random_ready: whether or not to have random ready signal in the while loop
         """
         logging.debug("%s", config)
-        if len(self.context.input_vars) == 0:
-            raise RuntimeError(
-                f"Input var names not deduced for {self.context.name}, "
-                f"use {self.context.name} in your Python code"
-            )
-        if len(self.context.output_vars) == 0:
-            raise RuntimeError(
-                f"Output var types not deduced for {self.context.name}, "
-                f"use {self.context.name} in your Python code"
-            )
 
         def make_display_stmt():
             """
@@ -458,7 +457,9 @@ class CodeGen:
                 header=Lines(
                     f"/*\n\n# Python Function\n{self.context.py_string}\n\n"
                     f"# Test Cases\n{python_test_code}\n*/\n\n"
-                ),
+                )
+                if self.config.add_debug_comments
+                else None,
             )
             return module
         raise RuntimeError("Needs the context")
@@ -481,12 +482,17 @@ class CaseBuilder:
     Creates a case statement for the IR Graph
     """
 
-    def __init__(self, root: ir.Node, context: ir.Context):
+    def __init__(
+        self, root: ir.Node, context: ir.Context, config: Optional[CodegenConfig] = None
+    ):
         # Member Vars
+        if not config:
+            config = CodegenConfig()
         self.visited: set[str] = set()
         self.context = context
         self.case = ver.Case(expression=context.state_var, case_items=[])
-        self.root = root
+        self.root = typed_strict(root, ir.Node)
+        self.config = typed_strict(config, CodegenConfig)
 
         # Member Funcs
         instance = itertools.count()
@@ -563,7 +569,13 @@ class CaseBuilder:
             stmts.append(self.create_quick_done(self.context))
 
         elif isinstance(vertex, ir.AssignNode):
-            stmts.append(ver.NonBlockingSubsitution(vertex.lvalue, vertex.rvalue))
+            stmts.append(
+                ver.NonBlockingSubsitution(
+                    vertex.lvalue,
+                    vertex.rvalue,
+                    comment=vertex.unique_id if self.config.add_debug_comments else "",
+                )
+            )
             stmts += self.do_edge(vertex.optimal_child)
 
         elif isinstance(vertex, ir.IfElseNode):
@@ -574,6 +586,7 @@ class CaseBuilder:
                     condition=vertex.condition,
                     then_body=then_body,
                     else_body=else_body,
+                    comment=vertex.unique_id if self.config.add_debug_comments else "",
                 )
             )
 

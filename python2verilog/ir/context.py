@@ -11,7 +11,7 @@ import io
 import logging
 from dataclasses import dataclass, field
 from types import FunctionType
-from typing import Any, Optional, Sequence
+from typing import Any, Optional, Sequence, Union
 
 from python2verilog.api.modes import Modes
 from python2verilog.ir.expressions import ExclusiveVar, State, Var
@@ -20,7 +20,13 @@ from python2verilog.ir.instance import Instance
 from python2verilog.ir.signals import ProtocolSignals
 from python2verilog.utils.env import is_debug_mode
 from python2verilog.utils.generics import GenericReprAndStr
-from python2verilog.utils.typed import guard_dict, typed, typed_list, typed_strict
+from python2verilog.utils.typed import (
+    guard,
+    guard_dict,
+    typed,
+    typed_list,
+    typed_strict,
+)
 
 
 @dataclass
@@ -40,16 +46,16 @@ class Context(GenericReprAndStr):
     py_string: Optional[str] = None
     _py_ast: Optional[ast.FunctionDef] = None
 
-    input_types: list[type[Any]] = field(default_factory=list)
-    output_types: list[type[Any]] = field(default_factory=list)
+    input_types: Optional[list[type[Any]]] = None
+    output_types: Optional[list[type[Any]]] = None
 
     optimization_level: int = -1
 
     mode: Modes = Modes.NO_WRITE
 
     _global_vars: list[Var] = field(default_factory=list)
-    _input_vars: list[Var] = field(default_factory=list)
-    _output_vars: list[ExclusiveVar] = field(default_factory=list)
+    _input_vars: Optional[list[Var]] = None
+    _output_vars: Optional[list[ExclusiveVar]] = None
     _states: set[str] = field(default_factory=set)
 
     signals: ProtocolSignals = ProtocolSignals(
@@ -68,6 +74,18 @@ class Context(GenericReprAndStr):
     # Function calls
     namespace: dict[str, Context] = field(default_factory=dict)  # callable functions
     instances: dict[str, Instance] = field(default_factory=dict)  # generator instances
+
+    @classmethod
+    def empty(cls):
+        """
+        Creates an empty but valid context for testing purposes
+        """
+        cxt = cls()
+        cxt.input_types = []
+        cxt.input_vars = []
+        cxt.output_types = []
+        cxt.output_vars = []
+        return cxt
 
     @property
     def testbench_name(self) -> str:
@@ -100,8 +118,8 @@ class Context(GenericReprAndStr):
         assert isinstance(self.py_ast, ast.FunctionDef), self
         assert isinstance(self.py_func, FunctionType), self
 
-        def check_list(list_: list[Any]):
-            return isinstance(list_, list) and len(list_) > 0
+        def check_list(list_: Union[list[Any], None]):
+            return isinstance(list_, list)
 
         if not check_list(self.input_types):
 
@@ -227,6 +245,7 @@ class Context(GenericReprAndStr):
         """
         Input variables
         """
+        assert guard(self._input_vars, list)
         return copy.deepcopy(self._input_vars)
 
     @input_vars.setter
@@ -238,6 +257,7 @@ class Context(GenericReprAndStr):
         """
         Output variables
         """
+        assert guard(self._output_vars, list)
         return copy.deepcopy(self._output_vars)
 
     @output_vars.setter
@@ -271,7 +291,7 @@ class Context(GenericReprAndStr):
         var = typed_strict(var, Var)
         if (
             var in self._global_vars
-            or var in self._input_vars
+            or var in self.input_vars
             or var in self.output_vars
         ):
             return
@@ -298,9 +318,9 @@ class Context(GenericReprAndStr):
 
         assert isinstance(name, str)
         variables = [
-            *list(get_strs(self._global_vars)),
-            *list(get_strs(self._input_vars)),
-            *list(get_strs(self._output_vars)),
+            *list(get_strs(self.global_vars)),
+            *list(get_strs(self.input_vars)),
+            *list(get_strs(self.output_vars)),
         ]
         return name in variables
 
@@ -333,12 +353,14 @@ class Context(GenericReprAndStr):
         """
         Checks if input to functions' types matches previous inputs
         """
+        assert guard(self.input_types, list)
         self.__check_types(self.input_types, input_)
 
     def check_output_types(self, output):
         """
         Checks if outputs to functions' types matches previous outputs
         """
+        assert guard(self.output_types, list)
         self.__check_types(self.output_types, output)
 
     def create_instance(self, name: str) -> Instance:

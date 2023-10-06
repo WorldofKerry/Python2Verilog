@@ -7,7 +7,7 @@ from __future__ import annotations
 import ast as pyast
 import itertools
 import logging
-from typing import Collection, Iterable, Optional
+from typing import Collection, Iterable, Literal, Optional, overload
 
 from python2verilog import ir
 from python2verilog.utils.lines import Indent, Lines
@@ -26,20 +26,7 @@ class FromGenerator:
         """
         Initializes the parser, does quick setup work
         """
-        context.validate()
         self._context = typed_strict(context, ir.Context)
-
-        self._create_instances(context)
-
-        logging.debug("\n\n========> Parsing %s <========", context.name)
-        self._root = self.__parse_statements(
-            stmts=context.py_ast.body,
-            prefix="_state",
-            nextt=ir.DoneNode(unique_id=str(context.done_state), name="done"),
-        )
-
-        self._context.entry_state = ir.State(self._root.unique_id)
-        logging.debug("Entry state is %s", self._context.entry_state)
 
     @staticmethod
     def _create_instances(caller_cxt: ir.Context):
@@ -96,45 +83,45 @@ class FromGenerator:
         assert isinstance(name, pyast.Name)
         return ir.Var(name.id)
 
-    @property
-    def root(self):
-        """
-        Returns the root of the IR Graph
-        """
-        return self._root
-
-    @property
-    def context(self):
-        """
-        Returns the context surrounding the Python generator function
-        """
-        return self._context
-
-    @property
-    def results(self):
+    def create_root(self):
         """
         Returns tuple containing the root and the context
         """
-        return (self.root, self.context)
+        self._context.validate()
+        self._create_instances(self._context)
 
-    def __parse_targets(self, nodes: list[pyast.expr]):
-        """
-        Warning: only single target on left-hand-side supported
+        logging.debug("\n\n========> Parsing %s <========", self._context.name)
+        root = self.__parse_statements(
+            stmts=self._context.py_ast.body,
+            prefix="_state",
+            nextt=ir.DoneNode(unique_id=str(self._context.done_state), name="done"),
+        )
 
-        <target0, target1, ...> =
+        self._context.entry_state = ir.State(root.unique_id)
+        logging.debug("Entry state is %s", self._context.entry_state)
+        return (root, self._context)
+
+    def _target_value_visitor(self, target: pyast.expr, value: pyast.expr):
         """
-        assert len(nodes) == 1
-        node = nodes[0]
-        if isinstance(node, pyast.Subscript):
-            assert isinstance(node.value, pyast.Name)
-            if not self._context.is_declared(node.value.id):
-                self._context.add_global_var(ir.Var(py_name=node.value.id))
-        elif isinstance(node, pyast.Name):
-            if not self._context.is_declared(node.id):
-                self._context.add_global_var(ir.Var(py_name=node.id))
+        Takes two trees, ensures they're idential,
+        then yields the target/value pairs
+        """
+        if isinstance(value, pyast.Tuple):
+            if guard(target, pyast.Name):
+                raise TypeError(
+                    f"Attempted to assign {target.id} = {pyast.unparse(value)}."
+                    " Currently variables can only containt ints."
+                )
+            assert guard(target, pyast.Tuple)
+            assert len(target.elts) == len(value.elts)
+            for t, v in zip(target.elts, value.elts):
+                yield from self._target_value_visitor(t, v)
+        elif isinstance(target, pyast.Name):
+            if not self._context.is_declared(target.id):
+                self._context.add_global_var(ir.Var(py_name=target.id))
+            yield (ir.Var(target.id), self.__parse_expression(value))
         else:
-            raise TypeError(f"Unsupported lvalue type {type(node)} {pyast.dump(node)}")
-        return self.__parse_expression(node)
+            raise TypeError(f"{pyast.dump(target)} {pyast.dump(value)}")
 
     def __parse_assign(
         self, node: pyast.Assign, prefix: str
@@ -142,16 +129,22 @@ class FromGenerator:
         """
         <target0, target1, ...> = <value>;
         """
-        # Check if contains function call
-        for child in pyast.walk(node):
-            if isinstance(child, pyast.Call):
-                return self.__parse_assign_to_call(node, prefix)
-        assign = ir.AssignNode(
-            unique_id=prefix,
-            lvalue=self.__parse_targets(node.targets),
-            rvalue=self.__parse_expression(node.value),
+        # Check if value is a function call
+        if isinstance(node.value, pyast.Call):
+            return self.__parse_assign_to_call(node, prefix)
+
+        assert len(node.targets) == 1
+        targets, values = zip(*self._target_value_visitor(node.targets[0], node.value))
+
+        # pylint: disable=unpacking-non-sequence
+        head, tail = self._weave_nonclocked_edges(
+            self._create_assign_nodes(targets, values, prefix),
+            f"{prefix}_e",
+            last_edge=False,
         )
-        return assign, assign
+        logging.debug("Assign Head %s", list(head.visit_nonclocked()))
+
+        return head, tail
 
     def __parse_statements(
         self, stmts: list[pyast.stmt], prefix: str, nextt: ir.Element
@@ -240,8 +233,8 @@ class FromGenerator:
             edge = ir.ClockedEdge(unique_id=f"{prefix}_e", child=nextt)
             cur_node = ir.AssignNode(
                 unique_id=prefix,
-                lvalue=self.context.state_var,
-                rvalue=self.context.state_var,
+                lvalue=self._context.state_var,
+                rvalue=self._context.state_var,
                 child=edge,
             )
         else:
@@ -404,6 +397,67 @@ class FromGenerator:
 
         return ifelse
 
+    @staticmethod
+    def _create_assign_nodes(
+        variables: Collection[ir.ExclusiveVar],
+        exprs: Collection[ir.Expression],
+        prefix: str,
+    ) -> Iterable[ir.AssignNode]:
+        """
+        Create assign nodes from variables and expressions
+        """
+        assert len(variables) == len(exprs), f"{variables} {exprs}"
+        counters = itertools.count()
+        for var, expr, counter in zip(variables, exprs, counters):
+            yield ir.AssignNode(
+                unique_id=f"{prefix}_{counter}", lvalue=var, rvalue=expr
+            )
+
+    @overload
+    @staticmethod
+    def _weave_nonclocked_edges(
+        nodes: Iterable[ir.BasicElement], prefix: str, last_edge: Literal[True]
+    ) -> tuple[ir.AssignNode, ir.NonClockedEdge]:
+        ...
+
+    @overload
+    @staticmethod
+    def _weave_nonclocked_edges(
+        nodes: Iterable[ir.BasicElement], prefix: str, last_edge: Literal[False]
+    ) -> tuple[ir.AssignNode, ir.AssignNode]:
+        ...
+
+    @staticmethod
+    def _weave_nonclocked_edges(nodes, prefix, last_edge):
+        """
+        Weaves nodes with nonclocked edges.
+
+        If last_edge, then last node is an edge,
+        else last node is last assign node.
+
+        :return: (first assign node, last node)
+        """
+        counters = itertools.count()
+        head: Optional[ir.BasicElement] = None
+        prev: Optional[ir.BasicElement] = None
+        node: ir.BasicElement = ir.BasicElement(unique_id="UNDEFINED")
+        for node, counter in zip(nodes, counters):
+            if not head:
+                head = node
+            if prev:
+                prev.child = node
+            node.child = ir.NonClockedEdge(
+                unique_id=f"{prefix}_{counter}",
+            )
+            prev = node.child
+        if last_edge:
+            assert guard(head, ir.AssignNode)
+            assert guard(prev, ir.NonClockedEdge)
+            return head, prev
+        assert guard(head, ir.AssignNode)
+        assert guard(node, ir.AssignNode)
+        return head, node
+
     def __parse_yield(self, node: pyast.Yield, prefix: str):
         """
         yield <value>;
@@ -415,41 +469,11 @@ class FromGenerator:
         else:
             raise TypeError(f"Expected tuple {type(node.value)} {pyast.dump(node)}")
 
-        def create_assign_nodes(
-            variables: Collection[ir.ExclusiveVar],
-            exprs: Collection[ir.Expression],
-            prefix: str,
-        ):
-            """
-            Create assign nodes from variables and expressions
-            """
-            assert len(variables) == len(exprs)
-            counters = itertools.count()
-            for var, expr, counter in zip(variables, exprs, counters):
-                yield ir.AssignNode(
-                    unique_id=f"{prefix}_{counter}", lvalue=var, rvalue=expr
-                )
-
-        def weave_nonclocked_edges(nodes: Iterable[ir.BasicElement], prefix: str):
-            """
-            Weaves nodes with nonclocked edges
-            """
-            counters = itertools.count()
-            head: Optional[ir.BasicElement] = None
-            prev: Optional[ir.BasicElement] = None
-            for node, counter in zip(nodes, counters):
-                if not head:
-                    head = node
-                if prev:
-                    prev.child = node
-                node.child = ir.NonClockedEdge(
-                    unique_id=f"{prefix}_{counter}",
-                )
-                prev = node.child
-            return head, prev
-
-        head, tail = weave_nonclocked_edges(
-            create_assign_nodes(self._context.output_vars, stmts, prefix), f"{prefix}_e"
+        # pylint: disable=unpacking-non-sequence
+        head, tail = self._weave_nonclocked_edges(
+            self._create_assign_nodes(self._context.output_vars, stmts, prefix),
+            f"{prefix}_e",
+            last_edge=True,
         )
         tail.child = ir.AssignNode(
             unique_id=f"{prefix}_valid",
