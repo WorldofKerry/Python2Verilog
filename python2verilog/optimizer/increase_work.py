@@ -33,8 +33,17 @@ class IncreaseWorkPerClockCycle:
         self.visited: set[str] = set()
         self.threshold = threshold
 
-        counter = itertools.count()
+        def gen_counter():
+            i = 0
+            while True:
+                sent = yield i
+                if not sent:
+                    i += 1
+
+        counter = gen_counter()
+        next(counter)  # Run until first yield
         self.make_unique = lambda: next(counter)
+        self.make_unique_peek = lambda: counter.send(True)
 
         self.apply(root)
 
@@ -103,9 +112,12 @@ class IncreaseWorkPerClockCycle:
             old_mapping,
         )
 
+        # if self.make_unique_peek() == 10:
+        #     breakpoint()
+
         # If clocked, then switch to new mapping
         if isinstance(edge, ir.ClockedEdge):
-            old_mapping = new_mapping
+            old_mapping = copy.deepcopy(new_mapping)
 
         # Check for cyclic paths
         if (
@@ -163,8 +175,9 @@ class IncreaseWorkPerClockCycle:
             new_rvalue = backwards_replace(node.rvalue, old_mapping)
             new_mapping[node.lvalue] = new_rvalue
             assert guard(node.child, ir.Edge)
+            unique_id = f"{node.unique_id}_{self.make_unique()}_optimal"
             new_edge.child = ir.AssignNode(
-                unique_id=f"{node.unique_id}_{self.make_unique()}_optimal",
+                unique_id=unique_id,
                 lvalue=node.lvalue,
                 rvalue=new_rvalue,
                 child=self.apply_recursive(

@@ -554,7 +554,11 @@ class CaseBuilder:
             stmts.append(self.create_quick_done(self.context))
 
         elif isinstance(vertex, ir.AssignNode):
-            stmts.append(ver.NonBlockingSubsitution(vertex.lvalue, vertex.rvalue))
+            stmts.append(
+                ver.NonBlockingSubsitution(
+                    vertex.lvalue, vertex.rvalue, comment=vertex.unique_id
+                )
+            )
             stmts += self.do_edge(vertex.optimal_child)
 
         elif isinstance(vertex, ir.IfElseNode):
@@ -565,6 +569,7 @@ class CaseBuilder:
                     condition=vertex.condition,
                     then_body=then_body,
                     else_body=else_body,
+                    comment=vertex.unique_id,
                 )
             )
 
