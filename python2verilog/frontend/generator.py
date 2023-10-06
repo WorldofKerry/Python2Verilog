@@ -7,7 +7,7 @@ from __future__ import annotations
 import ast as pyast
 import itertools
 import logging
-from typing import Collection, Iterable, Optional
+from typing import Collection, Iterable, Literal, Optional, overload
 
 from python2verilog import ir
 from python2verilog.utils.lines import Indent, Lines
@@ -136,6 +136,7 @@ class FromGenerator:
         assert len(node.targets) == 1
         targets, values = zip(*self._target_value_visitor(node.targets[0], node.value))
 
+        # pylint: disable=unpacking-non-sequence
         head, tail = self._weave_nonclocked_edges(
             self._create_assign_nodes(targets, values, prefix),
             f"{prefix}_e",
@@ -401,7 +402,7 @@ class FromGenerator:
         variables: Collection[ir.ExclusiveVar],
         exprs: Collection[ir.Expression],
         prefix: str,
-    ):
+    ) -> Iterable[ir.AssignNode]:
         """
         Create assign nodes from variables and expressions
         """
@@ -412,10 +413,22 @@ class FromGenerator:
                 unique_id=f"{prefix}_{counter}", lvalue=var, rvalue=expr
             )
 
+    @overload
     @staticmethod
     def _weave_nonclocked_edges(
-        nodes: Iterable[ir.BasicElement], prefix: str, last_edge: bool = True
-    ) -> tuple[ir.BasicNode, ir.BasicElement]:
+        nodes: Iterable[ir.BasicElement], prefix: str, last_edge: Literal[True]
+    ) -> tuple[ir.AssignNode, ir.NonClockedEdge]:
+        ...
+
+    @overload
+    @staticmethod
+    def _weave_nonclocked_edges(
+        nodes: Iterable[ir.BasicElement], prefix: str, last_edge: Literal[False]
+    ) -> tuple[ir.AssignNode, ir.AssignNode]:
+        ...
+
+    @staticmethod
+    def _weave_nonclocked_edges(nodes, prefix, last_edge):
         """
         Weaves nodes with nonclocked edges.
 
@@ -427,7 +440,7 @@ class FromGenerator:
         counters = itertools.count()
         head: Optional[ir.BasicElement] = None
         prev: Optional[ir.BasicElement] = None
-        node: Optional[ir.BasicElement] = None
+        node: ir.BasicElement = ir.BasicElement(unique_id="UNDEFINED")
         for node, counter in zip(nodes, counters):
             if not head:
                 head = node
@@ -456,9 +469,11 @@ class FromGenerator:
         else:
             raise TypeError(f"Expected tuple {type(node.value)} {pyast.dump(node)}")
 
+        # pylint: disable=unpacking-non-sequence
         head, tail = self._weave_nonclocked_edges(
             self._create_assign_nodes(self._context.output_vars, stmts, prefix),
             f"{prefix}_e",
+            last_edge=True,
         )
         tail.child = ir.AssignNode(
             unique_id=f"{prefix}_valid",
