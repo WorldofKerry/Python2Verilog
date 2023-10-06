@@ -106,19 +106,25 @@ class FromGenerator:
         Takes two trees, ensures they're idential,
         then yields the target/value pairs
         """
+        logging.error("called")
         logging.error(pyast.dump(target, indent=1))
         logging.error(pyast.dump(value, indent=1))
         if isinstance(value, pyast.Tuple):
-            assert guard(
-                target, pyast.Tuple
-            ), f"Attempted to assign {pyast.dump(target)} = {pyast.dump(value)}"
+            if guard(target, pyast.Name):
+                raise TypeError(
+                    f"Attempted to assign {target.id} = {pyast.unparse(value)}."
+                    " Currently variables can only containt ints."
+                )
+            assert guard(target, pyast.Tuple)
             assert len(target.elts) == len(value.elts)
             for t, v in zip(target.elts, value.elts):
-                yield from FromGenerator._target_value_visitor(t, v)
+                yield from self._target_value_visitor(t, v)
         elif isinstance(target, pyast.Name):
-            yield (target.id,)
-
-        return
+            if not self._context.is_declared(target.id):
+                self._context.add_global_var(ir.Var(py_name=target.id))
+            yield (ir.Var(target.id), self.__parse_expression(value))
+        else:
+            raise TypeError(f"{pyast.dump(target)} {pyast.dump(value)}")
 
     def __parse_assign(
         self, node: pyast.Assign, prefix: str
@@ -169,6 +175,9 @@ class FromGenerator:
 
         targets = get_targets()
         values = get_values()
+
+        assert len(node.targets) == 1
+        targets, values = zip(*self._target_value_visitor(node.targets[0], node.value))
 
         logging.error("%s", pyast.dump(node))
         logging.error("%s %s", targets, values)

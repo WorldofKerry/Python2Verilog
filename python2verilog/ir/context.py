@@ -75,6 +75,18 @@ class Context(GenericReprAndStr):
     namespace: dict[str, Context] = field(default_factory=dict)  # callable functions
     instances: dict[str, Instance] = field(default_factory=dict)  # generator instances
 
+    @classmethod
+    def empty(cls):
+        """
+        Creates an empty but valid context for testing purposes
+        """
+        cxt = cls()
+        cxt.input_types = []
+        cxt.input_vars = []
+        cxt.output_types = []
+        cxt.output_vars = []
+        return cxt
+
     @property
     def testbench_name(self) -> str:
         """
