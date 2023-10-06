@@ -9,6 +9,7 @@ from typing import Any, Callable, Iterator, Union
 
 from python2verilog import ir
 from python2verilog.optimizer.helpers import backwards_replace
+from python2verilog.utils.peek_counter import PeekCounter
 from python2verilog.utils.typed import guard, guard_dict, typed
 
 
@@ -33,17 +34,9 @@ class IncreaseWorkPerClockCycle:
         self.visited: set[str] = set()
         self.threshold = threshold
 
-        def gen_counter():
-            i = 0
-            while True:
-                sent = yield i
-                if not sent:
-                    i += 1
-
-        counter = gen_counter()
-        next(counter)  # Run until first yield
-        self.make_unique = lambda: next(counter)
-        self.make_unique_peek = lambda: counter.send(True)
+        counter = PeekCounter()
+        self.make_unique = counter.next
+        self.make_unique_peek = counter.peek
 
         self.apply(root)
 
