@@ -132,50 +132,11 @@ class FromGenerator:
         """
         <target0, target1, ...> = <value>;
         """
-        # Check if contains function call
-        for child in pyast.walk(node):
-            if isinstance(child, pyast.Call):
-                return self.__parse_assign_to_call(node, prefix)
-        # assign = ir.AssignNode(
-        #     unique_id=prefix,
-        #     lvalue=self.__parse_targets(node.targets),
-        #     rvalue=self.__parse_expression(node.value),
-        # )
+        # Check if value is a function call
+        if isinstance(node.value, pyast.Call):
+            return self.__parse_assign_to_call(node, prefix)
 
-        def get_targets():
-            """
-            <target0>, <target1>, ... =
-            """
-            assert len(node.targets) == 1
-            target = node.targets[0]
-            if isinstance(target, pyast.Tuple):
-                targets = []
-                for var in target.elts:
-                    assert guard(var, pyast.Name), f"{pyast.dump(node, indent=1)}"
-                    if not self._context.is_declared(var.id):
-                        self._context.add_global_var(ir.Var(py_name=var.id))
-                    targets.append(ir.Var(var.id))
-                return targets
-            elif isinstance(target, pyast.Name):
-                if not self._context.is_declared(target.id):
-                    self._context.add_global_var(ir.Var(py_name=target.id))
-                return [ir.Var(target.id)]
-            raise TypeError(f"{pyast.dump(node)}")
-
-        def get_values():
-            """
-            = <value0>, <value1>, ...
-            """
-            value = node.value
-            if isinstance(value, pyast.Tuple):
-                return [self.__parse_expression(expr) for expr in value.elts]
-            elif isinstance(value, pyast.expr):
-                return [self.__parse_expression(value)]
-            raise TypeError(f"{pyast.dump(node)}")
-
-        targets = get_targets()
-        values = get_values()
-
+        # Regular assign
         assert len(node.targets) == 1
         targets, values = zip(*self._target_value_visitor(node.targets[0], node.value))
 
