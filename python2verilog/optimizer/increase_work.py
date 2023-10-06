@@ -142,11 +142,11 @@ class IncreaseWorkPerClockCycle:
         visited_path[node.unique_id] = visited_path.get(node.unique_id, 0) + 1
 
         new_edge: ir.Edge = ir.NonClockedEdge(
-            unique_id=f"{edge.unique_id}_{self.make_unique()}_optimal"
+            unique_id=f"{edge.unique_id}_optimal_{self.make_unique()}"
         )
         if isinstance(node, ir.IfElseNode):
             new_edge.child = ir.IfElseNode(
-                unique_id=f"{node.unique_id}_{self.make_unique()}_optimal",
+                unique_id=f"{node.unique_id}_optimal_{self.make_unique()}",
                 condition=backwards_replace(node.condition, old_mapping),
                 true_edge=self.apply_recursive(
                     edge=node.true_edge,
@@ -162,13 +162,10 @@ class IncreaseWorkPerClockCycle:
                 ),
             )
         elif isinstance(node, ir.AssignNode):
-            logging.debug("took this path %s", old_mapping)
-            # if isinstance(edge, ir.NonClockedEdge):
-            #     logging.error("Problem with %s", list(node.visit_nonclocked()))
             new_rvalue = backwards_replace(node.rvalue, old_mapping)
             new_mapping[node.lvalue] = new_rvalue
             assert guard(node.child, ir.Edge)
-            unique_id = f"{node.unique_id}_{self.make_unique()}_optimal"
+            unique_id = f"{node.unique_id}_optimal_{self.make_unique()}"
             new_edge.child = ir.AssignNode(
                 unique_id=unique_id,
                 lvalue=node.lvalue,
