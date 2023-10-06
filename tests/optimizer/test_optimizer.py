@@ -1,5 +1,4 @@
 import itertools
-import logging
 import unittest
 
 from python2verilog import ir
@@ -102,11 +101,11 @@ class TestGraphApplyMapping(unittest.TestCase):
         count_inst = itertools.count()
         ui = lambda: str(next(count_inst))
 
-        head = ir.ClockedEdge(ui())
+        head = ir.Edge(ui())
         node = head
         node.child = ir.AssignNode(ui(), lvalue=a, rvalue=ir.Add(a, ir.UInt(1)))
         node = node.child
-        node.child = ir.ClockedEdge(ui())
+        node.child = ir.NonClockedEdge(ui())
         node = node.child
         node.child = ir.AssignNode(ui(), lvalue=b, rvalue=a)
         node = node.child
@@ -116,5 +115,5 @@ class TestGraphApplyMapping(unittest.TestCase):
 
         IncreaseWorkPerClockCycle(head.child)
         case = CaseBuilder(head.child, ir.Context()).get_case()
-        logging.error("%s", case)
-        self.assertTrue(False)
+        # logging.error("%s", case)
+        self.assertTrue("_b <= _a" in str(case))

@@ -66,7 +66,8 @@ class IncreaseWorkPerClockCycle:
     def apply_recursive(
         self,
         edge: ir.Edge,
-        mapping: dict[ir.Var, ir.Expression],
+        new_mapping: dict[ir.Var, ir.Expression],
+        old_mapping: dict[ir.Var, ir.Expression],
         visited_path: dict[Union[str, ir.Var], int],
     ) -> ir.Edge:
         """
@@ -85,7 +86,8 @@ class IncreaseWorkPerClockCycle:
         :param visited: visited unique_ids and exclusive vars for this nonclocked sequence
         """
         assert guard(edge, ir.Edge)
-        assert guard_dict(mapping, ir.Var, ir.Expression)
+        assert guard_dict(new_mapping, ir.Var, ir.Expression)
+        assert guard_dict(old_mapping, ir.Var, ir.Expression)
         assert guard(visited_path, dict)
         for key, value in visited_path.items():
             assert isinstance(key, (str, ir.Var))
@@ -93,7 +95,17 @@ class IncreaseWorkPerClockCycle:
 
         node = edge.child
         assert node
-        logging.debug("%s on %s", self.apply_recursive.__name__, node)
+        logging.debug(
+            "%s node %s, new %s, old %s",
+            self.apply_recursive.__name__,
+            node,
+            new_mapping,
+            old_mapping,
+        )
+
+        # If clocked, then switch to new mapping
+        if isinstance(edge, ir.ClockedEdge):
+            old_mapping = new_mapping
 
         # Check for cyclic paths
         if (
@@ -130,23 +142,26 @@ class IncreaseWorkPerClockCycle:
         if isinstance(node, ir.IfElseNode):
             new_edge.child = ir.IfElseNode(
                 unique_id=f"{node.unique_id}_{self.make_unique()}_optimal",
-                condition=backwards_replace(node.condition, mapping),
+                condition=backwards_replace(node.condition, old_mapping),
                 true_edge=self.apply_recursive(
                     edge=node.true_edge,
-                    mapping=copy.deepcopy(mapping),
+                    new_mapping=copy.deepcopy(new_mapping),
+                    old_mapping=copy.deepcopy(old_mapping),
                     visited_path=copy.deepcopy(visited_path),
                 ),
                 false_edge=self.apply_recursive(
                     edge=node.false_edge,
-                    mapping=copy.deepcopy(mapping),
+                    new_mapping=copy.deepcopy(new_mapping),
+                    old_mapping=copy.deepcopy(old_mapping),
                     visited_path=copy.deepcopy(visited_path),
                 ),
             )
         elif isinstance(node, ir.AssignNode):
-            if isinstance(edge, ir.NonClockedEdge):
-                logging.error("Problem with %s", list(node.visit_nonclocked()))
-            new_rvalue = backwards_replace(node.rvalue, mapping)
-            mapping[node.lvalue] = new_rvalue
+            logging.debug("took this path %s", old_mapping)
+            # if isinstance(edge, ir.NonClockedEdge):
+            #     logging.error("Problem with %s", list(node.visit_nonclocked()))
+            new_rvalue = backwards_replace(node.rvalue, old_mapping)
+            new_mapping[node.lvalue] = new_rvalue
             assert guard(node.child, ir.Edge)
             new_edge.child = ir.AssignNode(
                 unique_id=f"{node.unique_id}_{self.make_unique()}_optimal",
@@ -154,7 +169,8 @@ class IncreaseWorkPerClockCycle:
                 rvalue=new_rvalue,
                 child=self.apply_recursive(
                     edge=node.child,
-                    mapping=mapping,
+                    new_mapping=new_mapping,
+                    old_mapping=old_mapping,
                     visited_path=visited_path,
                 ),
             )
@@ -188,10 +204,12 @@ class IncreaseWorkPerClockCycle:
                     visited_path[root.lvalue] = 1
             assert guard(root.child, ir.Edge)
             assert guard(root.child.child, ir.Node)
-            root.optimal_child = self.apply_recursive(root.child, mapper, visited_path)
+            root.optimal_child = self.apply_recursive(
+                root.child, mapper, {}, visited_path
+            )
         elif isinstance(root, ir.IfElseNode):
-            root.optimal_true_edge = self.apply_recursive(root.true_edge, {}, {})
-            root.optimal_false_edge = self.apply_recursive(root.false_edge, {}, {})
+            root.optimal_true_edge = self.apply_recursive(root.true_edge, {}, {}, {})
+            root.optimal_false_edge = self.apply_recursive(root.false_edge, {}, {}, {})
         elif isinstance(root, ir.DoneNode):
             pass
         else:
