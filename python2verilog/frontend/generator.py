@@ -136,29 +136,16 @@ class FromGenerator:
         if isinstance(node.value, pyast.Call):
             return self.__parse_assign_to_call(node, prefix)
 
-        # Regular assign
         assert len(node.targets) == 1
         targets, values = zip(*self._target_value_visitor(node.targets[0], node.value))
 
-        logging.error("%s", pyast.dump(node))
-        logging.error("%s %s", targets, values)
-        # nodes = self._create_assign_nodes(
-        #     targets,
-        #     values,
-        #     prefix,
-        # )
         head, tail = self._weave_nonclocked_edges(
             self._create_assign_nodes(targets, values, prefix),
             f"{prefix}_e",
             last_edge=False,
         )
-        logging.error("%s", list(head.visit_nonclocked()))
+        logging.debug("Assign Head %s", list(head.visit_nonclocked()))
 
-        assign = ir.AssignNode(
-            unique_id=prefix, lvalue=ir.Var("dead"), rvalue=ir.Var("beef")
-        )
-        assert guard(head, ir.AssignNode)
-        assert guard(tail, ir.AssignNode), f"{tail} {type(tail)}"
         return head, tail
 
     def __parse_statements(
