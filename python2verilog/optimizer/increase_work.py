@@ -110,7 +110,7 @@ class IncreaseWorkPerClockCycle:
 
         # If clocked, then switch to new mapping
         if isinstance(edge, ir.ClockedEdge):
-            old_mapping = copy.deepcopy(new_mapping)
+            old_mapping = copy.copy(new_mapping)
 
         # Check for cyclic paths
         if (
@@ -150,15 +150,15 @@ class IncreaseWorkPerClockCycle:
                 condition=backwards_replace(node.condition, old_mapping),
                 true_edge=self.apply_recursive(
                     edge=node.true_edge,
-                    new_mapping=copy.deepcopy(new_mapping),
-                    old_mapping=copy.deepcopy(old_mapping),
-                    visited_path=copy.deepcopy(visited_path),
+                    new_mapping=copy.copy(new_mapping),
+                    old_mapping=copy.copy(old_mapping),
+                    visited_path=copy.copy(visited_path),
                 ),
                 false_edge=self.apply_recursive(
                     edge=node.false_edge,
-                    new_mapping=copy.deepcopy(new_mapping),
-                    old_mapping=copy.deepcopy(old_mapping),
-                    visited_path=copy.deepcopy(visited_path),
+                    new_mapping=copy.copy(new_mapping),
+                    old_mapping=copy.copy(old_mapping),
+                    visited_path=copy.copy(visited_path),
                 ),
             )
         elif isinstance(node, ir.AssignNode):
