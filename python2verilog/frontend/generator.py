@@ -26,20 +26,7 @@ class FromGenerator:
         """
         Initializes the parser, does quick setup work
         """
-        context.validate()
         self._context = typed_strict(context, ir.Context)
-
-        self._create_instances(context)
-
-        logging.debug("\n\n========> Parsing %s <========", context.name)
-        self._root = self.__parse_statements(
-            stmts=context.py_ast.body,
-            prefix="_state",
-            nextt=ir.DoneNode(unique_id=str(context.done_state), name="done"),
-        )
-
-        self._context.entry_state = ir.State(self._root.unique_id)
-        logging.debug("Entry state is %s", self._context.entry_state)
 
     @staticmethod
     def _create_instances(caller_cxt: ir.Context):
@@ -96,45 +83,42 @@ class FromGenerator:
         assert isinstance(name, pyast.Name)
         return ir.Var(name.id)
 
-    @property
-    def root(self):
-        """
-        Returns the root of the IR Graph
-        """
-        return self._root
-
-    @property
-    def context(self):
-        """
-        Returns the context surrounding the Python generator function
-        """
-        return self._context
-
-    @property
-    def results(self):
+    def create_root(self):
         """
         Returns tuple containing the root and the context
         """
-        return (self.root, self.context)
+        self._context.validate()
+        self._create_instances(self._context)
 
-    def __parse_targets(self, nodes: list[pyast.expr]):
-        """
-        Warning: only single target on left-hand-side supported
+        logging.debug("\n\n========> Parsing %s <========", self._context.name)
+        self._root = self.__parse_statements(
+            stmts=self._context.py_ast.body,
+            prefix="_state",
+            nextt=ir.DoneNode(unique_id=str(self._context.done_state), name="done"),
+        )
 
-        <target0, target1, ...> =
+        self._context.entry_state = ir.State(self._root.unique_id)
+        logging.debug("Entry state is %s", self._context.entry_state)
+        return (self._root, self._context)
+
+    def _target_value_visitor(self, target: pyast.expr, value: pyast.expr):
         """
-        assert len(nodes) == 1
-        node = nodes[0]
-        if isinstance(node, pyast.Subscript):
-            assert isinstance(node.value, pyast.Name)
-            if not self._context.is_declared(node.value.id):
-                self._context.add_global_var(ir.Var(py_name=node.value.id))
-        elif isinstance(node, pyast.Name):
-            if not self._context.is_declared(node.id):
-                self._context.add_global_var(ir.Var(py_name=node.id))
-        else:
-            raise TypeError(f"Unsupported lvalue type {type(node)} {pyast.dump(node)}")
-        return self.__parse_expression(node)
+        Takes two trees, ensures they're idential,
+        then yields the target/value pairs
+        """
+        logging.error(pyast.dump(target, indent=1))
+        logging.error(pyast.dump(value, indent=1))
+        if isinstance(value, pyast.Tuple):
+            assert guard(
+                target, pyast.Tuple
+            ), f"Attempted to assign {pyast.dump(target)} = {pyast.dump(value)}"
+            assert len(target.elts) == len(value.elts)
+            for t, v in zip(target.elts, value.elts):
+                yield from FromGenerator._target_value_visitor(t, v)
+        elif isinstance(target, pyast.Name):
+            yield (target.id,)
+
+        return
 
     def __parse_assign(
         self, node: pyast.Assign, prefix: str
@@ -161,7 +145,7 @@ class FromGenerator:
             if isinstance(target, pyast.Tuple):
                 targets = []
                 for var in target.elts:
-                    assert guard(var, pyast.Name)
+                    assert guard(var, pyast.Name), f"{pyast.dump(node, indent=1)}"
                     if not self._context.is_declared(var.id):
                         self._context.add_global_var(ir.Var(py_name=var.id))
                     targets.append(ir.Var(var.id))
@@ -294,8 +278,8 @@ class FromGenerator:
             edge = ir.ClockedEdge(unique_id=f"{prefix}_e", child=nextt)
             cur_node = ir.AssignNode(
                 unique_id=prefix,
-                lvalue=self.context.state_var,
-                rvalue=self.context.state_var,
+                lvalue=self._context.state_var,
+                rvalue=self._context.state_var,
                 child=edge,
             )
         else:
