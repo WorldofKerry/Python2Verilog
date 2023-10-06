@@ -106,9 +106,6 @@ class FromGenerator:
         Takes two trees, ensures they're idential,
         then yields the target/value pairs
         """
-        logging.error("called")
-        logging.error(pyast.dump(target, indent=1))
-        logging.error(pyast.dump(value, indent=1))
         if isinstance(value, pyast.Tuple):
             if guard(target, pyast.Name):
                 raise TypeError(
@@ -418,9 +415,14 @@ class FromGenerator:
     @staticmethod
     def _weave_nonclocked_edges(
         nodes: Iterable[ir.BasicElement], prefix: str, last_edge: bool = True
-    ):
+    ) -> tuple[ir.BasicNode, ir.BasicElement]:
         """
-        Weaves nodes with nonclocked edges
+        Weaves nodes with nonclocked edges.
+
+        If last_edge, then last node is an edge,
+        else last node is last assign node.
+
+        :return: (first assign node, last node)
         """
         counters = itertools.count()
         head: Optional[ir.BasicElement] = None
@@ -438,7 +440,6 @@ class FromGenerator:
             assert guard(head, ir.AssignNode)
             assert guard(prev, ir.NonClockedEdge)
             return head, prev
-        node._child = None
         assert guard(head, ir.AssignNode)
         assert guard(node, ir.AssignNode)
         return head, node

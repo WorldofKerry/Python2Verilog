@@ -33,7 +33,7 @@ class TestGenerator2Graph(unittest.TestCase):
 
         multi_assign()
 
-        logging.error(dis.Bytecode("d, e, (x, y), g = 10, 20, (a, b), c").dis())
+        # logging.debug(dis.Bytecode("d, e, (x, y), g = 10, 20, (a, b), c").dis())
 
         module, testbench = namespace_to_verilog(ns)
 
@@ -53,9 +53,7 @@ class TestGenerator2Graph(unittest.TestCase):
 
         code = "d, e, bruv, g = 10, 20, (a, b), c"
 
-        # logging.error(dis.Bytecode("d, e, (x, y), g = 10, 20, (a, b), c").dis())
         assign: ast.Assign = ast.parse(code).body[0]
-        # logging.error(ast.dump(tree, indent=1))
 
         target: ast.Tuple = assign.targets[0]
         value: ast.Tuple = assign.value
