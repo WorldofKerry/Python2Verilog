@@ -7,7 +7,7 @@ import logging
 from typing import Collection, Iterable, Literal, Optional, overload
 
 from python2verilog import ir
-from python2verilog.utils.typed import guard, typed_strict
+from python2verilog.utils.typed import guard, typed_list, typed_strict
 
 
 class GeneratorFunc:
@@ -15,46 +15,48 @@ class GeneratorFunc:
     In-order generator function parser
     """
 
-    UNDEFINED_NODE = ir.DoneNode(
-        unique_id=f"UNDEFINED_NODE",
-        name="UNDEFINED_NODE",
-    )
     UNDEFINED_EDGE = ir.ClockedEdge(unique_id="UNDEFINED_EDGE")
 
     def __init__(self, func: pyast.FunctionDef) -> None:
         self.ast = typed_strict(func, pyast.FunctionDef)
         self._context = ir.Context.from_validated()
         self._context._output_vars = [ir.Var("Numero_Uno")]
+        self.UNDEFINED_NODE = ir.AssignNode(
+            unique_id="UNDEFINED_NODE",
+            lvalue=self._context.state_var,
+            rvalue=self._context.state_var,
+        )
 
-    def parse_func(self):
+    def parse_func(self, prefix: str = "_state"):
         """
         Parses
         """
         breaks = []
-        cntnue = self.UNDEFINED_NODE
-        root = None
-
-        prev_tail = None
+        continues = []
+        body_head = None
+        prev_tails: Optional[list[ir.Edge]] = None
         counter = itertools.count()
+
         for stmt in self.ast.body:
-            head_node, tail_edge = self.parse_stmt(
+            head_node, tail_edges = self.parse_stmt(
                 stmt=stmt,
                 breaks=breaks,
-                continues=cntnue,
-                prefix=f"_state{next(counter)}",
+                continues=continues,
+                prefix=f"{prefix}{next(counter)}",
             )
-            if not root:
-                root = head_node
-            if prev_tail:
-                prev_tail.child = head_node
-            prev_tail = tail_edge
+            if not body_head:
+                body_head = head_node
+            if prev_tails:
+                for tail in prev_tails:
+                    tail.child = head_node
+            prev_tails = typed_list(tail_edges, ir.Edge)
             assert guard(head_node, ir.Node)
-            assert guard(tail_edge, ir.Edge)
 
         assert len(breaks) == 0
-        prev_tail.child = ir.DoneNode(unique_id="_state_done")
+        for tail in prev_tails:
+            tail.child = ir.DoneNode(unique_id="_state_done")
 
-        return root
+        return body_head
 
     def parse_stmt(
         self,
@@ -69,8 +71,9 @@ class GeneratorFunc:
         :param stmt: statement to-be-parsed
         :param brk: list of edges that connect to end of break stmt
         :param cntnue: where to connect continue edges
-        :return: (head, tail, updated brk)
         """
+        print(f"parse_stmt {pyast.dump(stmt)}")
+        # breakpoint()
         if isinstance(stmt, pyast.Assign):
             return self.parse_assign(assign=stmt, prefix=prefix)
         if isinstance(stmt, pyast.Yield):
@@ -92,32 +95,36 @@ class GeneratorFunc:
                 ),
             )
             breaks.append(nothing.child)
-            return nothing, nothing.child
+            return nothing, [nothing.child]
         print(f"bruv {pyast.dump(stmt)}")
-        return (self.UNDEFINED_NODE, self.UNDEFINED_EDGE)
+        return ir.DoneNode(unique_id=str(self._context.done_state)), [
+            self.UNDEFINED_EDGE
+        ]
 
     def parse_while(self, whil: pyast.While, prefix: str):
+        print(f"parse_while {pyast.dump(whil)}")
         body_head = None
-        prev_tail = None
         breaks = []
         continues = []
+        prev_tails: Optional[list[ir.Edge]] = None
         counter = itertools.count()
 
         for stmt in whil.body:
-            while_head, tail_edge = self.parse_stmt(
+            print(f"for loop {pyast.dump(stmt)}")
+            head_node, tail_edges = self.parse_stmt(
                 stmt=stmt,
                 breaks=breaks,
                 continues=continues,
                 prefix=f"{prefix}_while{next(counter)}",
             )
-            print(f"inside {while_head} {while_head.name if while_head.name else ''}")
+            # head_node, tail_edges = self.UNDEFINED_NODE, [self.UNDEFINED_EDGE]
             if not body_head:
-                body_head = while_head
-            if prev_tail:
-                prev_tail.child = while_head
-            prev_tail = tail_edge
-            assert guard(while_head, ir.Node)
-            assert guard(tail_edge, ir.Edge)
+                body_head = head_node
+            if prev_tails:
+                for tail in prev_tails:
+                    tail.child = head_node
+            prev_tails = typed_list(tail_edges, ir.Edge)
+            assert guard(head_node, ir.Node)
 
         done_edge = ir.ClockedEdge(unique_id=f"{prefix}_done_e")
         while_head = ir.IfElseNode(
@@ -126,17 +133,8 @@ class GeneratorFunc:
             true_edge=ir.ClockedEdge(unique_id=f"{prefix}_body_e", child=body_head),
             false_edge=done_edge,
         )
-        for brea in breaks:
-            brea.child = ir.AssignNode(
-                unique_id=f"{prefix}_same",
-                lvalue=self._context.state_var,
-                rvalue=self._context.state_var,
-                child=done_edge,
-            )
-        print(
-            f"parse_while {self.pprint(while_head)} {self.pprint(body_head)} {self.pprint(body_head.child.child)}"
-        )
-        return while_head, done_edge
+        print(f"parse_while {self.pprint(while_head)} {self.pprint(body_head)}")
+        return while_head, [done_edge, *breaks, *prev_tails]
 
     @staticmethod
     def pprint(elem: ir.Element):
@@ -169,7 +167,7 @@ class GeneratorFunc:
             rvalue=ir.UInt(1),
             child=ir.ClockedEdge(unique_id=f"{prefix}_e"),
         )
-        return head, tail.child.child
+        return head, [tail.child.child]
 
     def _target_value_visitor(self, target: pyast.expr, value: pyast.expr):
         """
@@ -271,11 +269,10 @@ class GeneratorFunc:
         )
         logging.debug("Assign Head %s", list(head.visit_nonclocked()))
 
-        print(f"nani {tail} {tail.child}")
         tail.child = ir.ClockedEdge(
             unique_id=f"{prefix}",
         )
-        return head, tail.child
+        return head, [tail.child]
 
     def __parse_expression(self, expr: pyast.AST) -> ir.Expression:
         """
