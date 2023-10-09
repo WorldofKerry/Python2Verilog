@@ -37,11 +37,10 @@ class GeneratorFunc:
         prev_tail = None
         counter = itertools.count()
         for stmt in self.ast.body:
-            print(pyast.dump(stmt, indent=1))
             head_node, tail_edge = self.parse_stmt(
                 stmt=stmt,
                 breaks=breaks,
-                continu=cntnue,
+                continues=cntnue,
                 prefix=f"_state{next(counter)}",
             )
             if not root:
@@ -54,12 +53,15 @@ class GeneratorFunc:
 
         assert len(breaks) == 0
         prev_tail.child = ir.DoneNode(unique_id="_state_done")
-        print(f"confused {list(root.child.child.child.child.visit_nonclocked())}")
 
         return root
 
     def parse_stmt(
-        self, stmt: pyast.stmt, breaks: list[ir.Edge], continu: ir.Node, prefix: str
+        self,
+        stmt: pyast.stmt,
+        breaks: list[ir.Edge],
+        continues: list[ir.Edge],
+        prefix: str,
     ):
         """
         Parses a statement
@@ -75,10 +77,73 @@ class GeneratorFunc:
             return self.parse_yield(yiel=stmt, prefix=prefix)
         if isinstance(stmt, pyast.Expr):
             return self.parse_stmt(
-                stmt=stmt.value, breaks=breaks, continu=continu, prefix=prefix
+                stmt=stmt.value, breaks=breaks, continues=continues, prefix=prefix
             )
-        print(f"{pyast.dump(stmt)}")
+        if isinstance(stmt, pyast.While):
+            return self.parse_while(whil=stmt, prefix=prefix)
+        if isinstance(stmt, pyast.Break):
+            nothing = ir.AssignNode(
+                unique_id=prefix,
+                name="break",
+                lvalue=self._context.state_var,
+                rvalue=self._context.state_var,
+                child=ir.NonClockedEdge(
+                    unique_id=f"{prefix}_e",
+                ),
+            )
+            breaks.append(nothing.child)
+            return nothing, nothing.child
+        print(f"bruv {pyast.dump(stmt)}")
         return (self.UNDEFINED_NODE, self.UNDEFINED_EDGE)
+
+    def parse_while(self, whil: pyast.While, prefix: str):
+        body_head = None
+        prev_tail = None
+        breaks = []
+        continues = []
+        counter = itertools.count()
+
+        for stmt in whil.body:
+            while_head, tail_edge = self.parse_stmt(
+                stmt=stmt,
+                breaks=breaks,
+                continues=continues,
+                prefix=f"{prefix}_while{next(counter)}",
+            )
+            print(f"inside {while_head} {while_head.name if while_head.name else ''}")
+            if not body_head:
+                body_head = while_head
+            if prev_tail:
+                prev_tail.child = while_head
+            prev_tail = tail_edge
+            assert guard(while_head, ir.Node)
+            assert guard(tail_edge, ir.Edge)
+
+        done_edge = ir.ClockedEdge(unique_id=f"{prefix}_done_e")
+        while_head = ir.IfElseNode(
+            unique_id=f"{prefix}_test",
+            condition=self.__parse_expression(whil.test),
+            true_edge=ir.ClockedEdge(unique_id=f"{prefix}_body_e", child=body_head),
+            false_edge=done_edge,
+        )
+        for brea in breaks:
+            brea.child = ir.AssignNode(
+                unique_id=f"{prefix}_same",
+                lvalue=self._context.state_var,
+                rvalue=self._context.state_var,
+                child=done_edge,
+            )
+        print(
+            f"parse_while {self.pprint(while_head)} {self.pprint(body_head)} {self.pprint(body_head.child.child)}"
+        )
+        return while_head, done_edge
+
+    @staticmethod
+    def pprint(elem: ir.Element):
+        """
+        Get node str
+        """
+        return str(list(elem.visit_nonclocked()))
 
     def parse_yield(self, yiel: pyast.Assign, prefix: str):
         """

@@ -13,6 +13,9 @@ class TestFresh(unittest.TestCase):
         def my_func():
             a = 0
             b = 1
+            while 1:
+                b = b + 1
+                break
             yield a
 
         inst = my_func()
