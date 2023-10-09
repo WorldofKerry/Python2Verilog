@@ -101,15 +101,17 @@ class GeneratorFunc:
             self.UNDEFINED_EDGE
         ]
 
-    def parse_while(self, whil: pyast.While, prefix: str):
-        print(f"parse_while {pyast.dump(whil)}")
+    def parse_stmts(self, stmts: list[pyast.stmt], prefix: str):
+        """
+        A helper for parsing statements
+        """
         body_head = None
         breaks = []
         continues = []
         prev_tails: Optional[list[ir.Edge]] = None
         counter = itertools.count()
 
-        for stmt in whil.body:
+        for stmt in stmts:
             print(f"for loop {pyast.dump(stmt)}")
             head_node, tail_edges = self.parse_stmt(
                 stmt=stmt,
@@ -126,6 +128,12 @@ class GeneratorFunc:
             prev_tails = typed_list(tail_edges, ir.Edge)
             assert guard(head_node, ir.Node)
 
+        return body_head, breaks, continues, prev_tails
+
+    def parse_while(self, whil: pyast.While, prefix: str):
+        body_head, breaks, continues, prev_tails = self.parse_stmts(
+            stmts=whil.body, prefix=f"{prefix}_while"
+        )
         done_edge = ir.ClockedEdge(unique_id=f"{prefix}_done_e")
         while_head = ir.IfElseNode(
             unique_id=f"{prefix}_test",
@@ -133,6 +141,8 @@ class GeneratorFunc:
             true_edge=ir.ClockedEdge(unique_id=f"{prefix}_body_e", child=body_head),
             false_edge=done_edge,
         )
+        for cont in continues:
+            cont.child = while_head
         print(f"parse_while {self.pprint(while_head)} {self.pprint(body_head)}")
         return while_head, [done_edge, *breaks, *prev_tails]
 
