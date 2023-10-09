@@ -1,0 +1,318 @@
+"""
+The freshest in-order generator parser
+"""
+import ast as pyast
+import itertools
+import logging
+from typing import Collection, Iterable, Literal, Optional, overload
+
+from python2verilog import ir
+from python2verilog.utils.typed import guard, typed_strict
+
+
+class GeneratorFunc:
+    """
+    In-order generator function parser
+    """
+
+    UNDEFINED_NODE = ir.DoneNode(
+        unique_id=f"UNDEFINED_NODE",
+        name="UNDEFINED_NODE",
+    )
+    UNDEFINED_EDGE = ir.ClockedEdge(unique_id="UNDEFINED_EDGE")
+
+    def __init__(self, func: pyast.FunctionDef) -> None:
+        self.ast = typed_strict(func, pyast.FunctionDef)
+        self._context = ir.Context.from_validated()
+        self._context._output_vars = [ir.Var("Numero_Uno")]
+
+    def parse_func(self):
+        """
+        Parses
+        """
+        breaks = []
+        cntnue = self.UNDEFINED_NODE
+        root = None
+
+        prev_tail = None
+        counter = itertools.count()
+        for stmt in self.ast.body:
+            print(pyast.dump(stmt, indent=1))
+            head_node, tail_edge = self.parse_stmt(
+                stmt=stmt,
+                breaks=breaks,
+                continu=cntnue,
+                prefix=f"_state{next(counter)}",
+            )
+            if not root:
+                root = head_node
+            if prev_tail:
+                prev_tail.child = head_node
+            prev_tail = tail_edge
+            assert guard(head_node, ir.Node)
+            assert guard(tail_edge, ir.Edge)
+
+        assert len(breaks) == 0
+        prev_tail.child = ir.DoneNode(unique_id="_state_done")
+        print(f"confused {list(root.child.child.child.child.visit_nonclocked())}")
+
+        return root
+
+    def parse_stmt(
+        self, stmt: pyast.stmt, breaks: list[ir.Edge], continu: ir.Node, prefix: str
+    ):
+        """
+        Parses a statement
+
+        :param stmt: statement to-be-parsed
+        :param brk: list of edges that connect to end of break stmt
+        :param cntnue: where to connect continue edges
+        :return: (head, tail, updated brk)
+        """
+        if isinstance(stmt, pyast.Assign):
+            return self.parse_assign(assign=stmt, prefix=prefix)
+        if isinstance(stmt, pyast.Yield):
+            return self.parse_yield(yiel=stmt, prefix=prefix)
+        if isinstance(stmt, pyast.Expr):
+            return self.parse_stmt(
+                stmt=stmt.value, breaks=breaks, continu=continu, prefix=prefix
+            )
+        print(f"{pyast.dump(stmt)}")
+        return (self.UNDEFINED_NODE, self.UNDEFINED_EDGE)
+
+    def parse_yield(self, yiel: pyast.Assign, prefix: str):
+        """
+        Parse yield
+        yield <value>
+        """
+        if isinstance(yiel.value, pyast.Tuple):
+            stmts = [self.__parse_expression(c) for c in yiel.value.elts]
+        elif isinstance(yiel.value, pyast.expr):
+            stmts = [self.__parse_expression(yiel.value)]
+        else:
+            raise TypeError(f"Expected tuple {type(yiel.value)} {pyast.dump(yiel)}")
+
+        # pylint: disable=unpacking-non-sequence
+        head, tail = self._weave_nonclocked_edges(
+            self._create_assign_nodes(self._context.output_vars, stmts, prefix),
+            f"{prefix}_e",
+            last_edge=True,
+        )
+        tail.child = ir.AssignNode(
+            unique_id=f"{prefix}_valid",
+            lvalue=self._context.signals.valid,
+            rvalue=ir.UInt(1),
+            child=ir.ClockedEdge(unique_id=f"{prefix}_e"),
+        )
+        return head, tail.child.child
+
+    def _target_value_visitor(self, target: pyast.expr, value: pyast.expr):
+        """
+        Takes two trees, ensures they're idential,
+        then yields the target/value pairs
+        """
+        if isinstance(value, pyast.Tuple):
+            if guard(target, pyast.Name):
+                raise TypeError(
+                    f"Attempted to assign {target.id} = {pyast.unparse(value)}."
+                    " Currently variables can only containt ints."
+                )
+            assert guard(target, pyast.Tuple)
+            assert len(target.elts) == len(value.elts)
+            for t, v in zip(target.elts, value.elts):
+                yield from self._target_value_visitor(t, v)
+        elif isinstance(target, pyast.Name):
+            if not self._context.is_declared(target.id):
+                self._context.add_global_var(ir.Var(py_name=target.id))
+            yield (ir.Var(target.id), self.__parse_expression(value))
+        else:
+            raise TypeError(f"{pyast.dump(target)} {pyast.dump(value)}")
+
+    @staticmethod
+    def _create_assign_nodes(
+        variables: Collection[ir.ExclusiveVar],
+        exprs: Collection[ir.Expression],
+        prefix: str,
+    ) -> Iterable[ir.AssignNode]:
+        """
+        Create assign nodes from variables and expressions
+        """
+        assert len(variables) == len(exprs), f"{variables} {exprs}"
+        counters = itertools.count()
+        for var, expr, counter in zip(variables, exprs, counters):
+            yield ir.AssignNode(
+                unique_id=f"{prefix}_assign{counter}", lvalue=var, rvalue=expr
+            )
+
+    @overload
+    @staticmethod
+    def _weave_nonclocked_edges(
+        nodes: Iterable[ir.BasicElement], prefix: str, last_edge: Literal[True]
+    ) -> tuple[ir.AssignNode, ir.NonClockedEdge]:
+        ...
+
+    @overload
+    @staticmethod
+    def _weave_nonclocked_edges(
+        nodes: Iterable[ir.BasicElement], prefix: str, last_edge: Literal[False]
+    ) -> tuple[ir.AssignNode, ir.AssignNode]:
+        ...
+
+    @staticmethod
+    def _weave_nonclocked_edges(nodes, prefix, last_edge):
+        """
+        Weaves nodes with nonclocked edges.
+
+        If last_edge, then last node is an edge,
+        else last node is last assign node.
+
+        :return: (first assign node, last node)
+        """
+        counters = itertools.count()
+        head: Optional[ir.BasicElement] = None
+        prev: Optional[ir.BasicElement] = None
+        node: ir.BasicElement = ir.BasicElement(unique_id="UNDEFINED")
+        for node, counter in zip(nodes, counters):
+            if not head:
+                head = node
+            if prev:
+                prev.child = node
+            node.child = ir.NonClockedEdge(
+                unique_id=f"{prefix}_{counter}",
+            )
+            prev = node.child
+        if last_edge:
+            assert guard(head, ir.AssignNode)
+            assert guard(prev, ir.NonClockedEdge)
+            return head, prev
+        assert guard(head, ir.AssignNode)
+        assert guard(node, ir.AssignNode)
+        return head, node
+
+    def parse_assign(self, assign: pyast.Assign, prefix: str):
+        """
+        <target0, target1, ...> = <value>;
+        """
+        assert len(assign.targets) == 1
+        targets, values = zip(
+            *self._target_value_visitor(assign.targets[0], assign.value)
+        )
+
+        # pylint: disable=unpacking-non-sequence
+        head, tail = self._weave_nonclocked_edges(
+            self._create_assign_nodes(targets, values, prefix),
+            f"{prefix}_e",
+            last_edge=False,
+        )
+        logging.debug("Assign Head %s", list(head.visit_nonclocked()))
+
+        print(f"nani {tail} {tail.child}")
+        tail.child = ir.ClockedEdge(
+            unique_id=f"{prefix}",
+        )
+        return head, tail.child
+
+    def __parse_expression(self, expr: pyast.AST) -> ir.Expression:
+        """
+        <expression> (e.g. constant, name, subscript, etc., those that return a value)
+        """
+        if isinstance(expr, pyast.Constant):
+            return ir.Int(expr.value)
+        if isinstance(expr, pyast.Name):
+            return ir.Var(py_name=expr.id)
+        if isinstance(expr, pyast.Subscript):
+            return self.__parse_subscript(expr)
+        if isinstance(expr, pyast.BinOp):
+            return self.__parse_binop(expr)
+        if isinstance(expr, pyast.UnaryOp):
+            if isinstance(expr.op, pyast.USub):
+                return ir.UnaryOp("-", self.__parse_expression(expr.operand))
+            raise TypeError(
+                "Error: unexpected unaryop type", type(expr.op), pyast.dump(expr.op)
+            )
+        if isinstance(expr, pyast.Compare):
+            return self.__parse_compare(expr)
+        if isinstance(expr, pyast.BoolOp):
+            if isinstance(expr.op, pyast.And):
+                return ir.UBinOp(
+                    self.__parse_expression(expr.values[0]),
+                    "&&",
+                    self.__parse_expression(expr.values[1]),
+                )
+        raise TypeError(
+            "Error: unexpected expression type", type(expr), pyast.dump(expr)
+        )
+
+    def __parse_subscript(self, node: pyast.Subscript) -> ir.Expression:
+        """
+        <value>[<slice>]
+        Note: built from right to left, e.g. [z] -> [y][z] -> [x][y][z] -> matrix[x][y][z]
+        """
+        return ir.Expression(
+            f"{self.__parse_expression(node.value).to_string()}\
+                [{self.__parse_expression(node.slice).to_string()}]"
+        )
+
+    def __parse_compare(self, node: pyast.Compare) -> ir.UBinOp:
+        """
+        <left> <op> <comparators>
+        """
+        assert len(node.ops) == 1
+        assert len(node.comparators) == 1
+
+        if isinstance(node.ops[0], pyast.Lt):
+            return ir.LessThan(
+                self.__parse_expression(node.left),
+                self.__parse_expression(node.comparators[0]),
+            )
+        if isinstance(node.ops[0], pyast.LtE):
+            operator = "<="
+        elif isinstance(node.ops[0], pyast.Gt):
+            operator = ">"
+        elif isinstance(node.ops[0], pyast.GtE):
+            operator = ">="
+        elif isinstance(node.ops[0], pyast.NotEq):
+            operator = "!=="
+        elif isinstance(node.ops[0], pyast.Eq):
+            operator = "==="
+        else:
+            raise TypeError(
+                "Error: unknown operator", type(node.ops[0]), pyast.dump(node.ops[0])
+            )
+        return ir.BinOp(
+            left=self.__parse_expression(node.left),
+            oper=operator,
+            right=self.__parse_expression(node.comparators[0]),
+        )
+
+    def __parse_binop(self, expr: pyast.BinOp) -> ir.Expression:
+        """
+        <left> <op> <right>
+
+        With special case for floor division
+        """
+        if isinstance(expr.op, pyast.Add):
+            return ir.Add(
+                self.__parse_expression(expr.left), self.__parse_expression(expr.right)
+            )
+        if isinstance(expr.op, pyast.Sub):
+            return ir.Sub(
+                self.__parse_expression(expr.left), self.__parse_expression(expr.right)
+            )
+
+        if isinstance(expr.op, pyast.Mult):
+            return ir.Mul(
+                self.__parse_expression(expr.left), self.__parse_expression(expr.right)
+            )
+
+        if isinstance(expr.op, pyast.FloorDiv):
+            left = self.__parse_expression(expr.left)
+            right = self.__parse_expression(expr.right)
+            return ir.FloorDiv(left, right)
+        if isinstance(expr.op, pyast.Mod):
+            left = self.__parse_expression(expr.left)
+            right = self.__parse_expression(expr.right)
+            return ir.Mod(left, right)
+        raise TypeError(
+            "Error: unexpected binop type", type(expr.op), pyast.dump(expr.op)
+        )

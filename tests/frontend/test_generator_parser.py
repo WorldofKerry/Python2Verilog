@@ -1,6 +1,4 @@
 import ast
-import dis
-import logging
 import unittest
 
 import networkx as nx
@@ -11,11 +9,11 @@ from python2verilog import (
     get_actual_raw,
     get_context,
     get_expected,
+    ir,
     namespace_to_file,
     namespace_to_verilog,
     verilogify,
 )
-from python2verilog import ir
 from python2verilog.frontend import FromGenerator
 from python2verilog.ir import Context, create_networkx_adjacency_list
 
@@ -45,7 +43,9 @@ class TestGenerator2Graph(unittest.TestCase):
         target: ast.Tuple = assign.targets[0]
         value: ast.Tuple = assign.value
 
-        result = FromGenerator(ir.Context.empty())._target_value_visitor(target, value)
+        result = FromGenerator(ir.Context.from_validated())._target_value_visitor(
+            target, value
+        )
 
         self.assertEqual(
             str(list(result)), "[(_d, 10), (_e, _c), (_x, _a), (_y, _b), (_g, 20)]"
@@ -59,7 +59,7 @@ class TestGenerator2Graph(unittest.TestCase):
         value: ast.Tuple = assign.value
 
         with self.assertRaises(TypeError):
-            result = FromGenerator(ir.Context.empty())._target_value_visitor(
+            result = FromGenerator(ir.Context.from_validated())._target_value_visitor(
                 target, value
             )
             list(result)
