@@ -31,28 +31,33 @@ class GeneratorFunc:
         """
         Parses
         """
-        breaks = []
-        continues = []
-        body_head = None
-        prev_tails: Optional[list[ir.Edge]] = None
-        counter = itertools.count()
+        # breaks = []
+        # continues = []
+        # body_head = None
+        # prev_tails: Optional[list[ir.Edge]] = None
+        # counter = itertools.count()
 
-        for stmt in self.ast.body:
-            head_node, tail_edges = self.parse_stmt(
-                stmt=stmt,
-                breaks=breaks,
-                continues=continues,
-                prefix=f"{prefix}{next(counter)}",
-            )
-            if not body_head:
-                body_head = head_node
-            if prev_tails:
-                for tail in prev_tails:
-                    tail.child = head_node
-            prev_tails = typed_list(tail_edges, ir.Edge)
-            assert guard(head_node, ir.Node)
+        # for stmt in self.ast.body:
+        #     head_node, tail_edges = self.parse_stmt(
+        #         stmt=stmt,
+        #         breaks=breaks,
+        #         continues=continues,
+        #         prefix=f"{prefix}{next(counter)}",
+        #     )
+        #     if not body_head:
+        #         body_head = head_node
+        #     if prev_tails:
+        #         for tail in prev_tails:
+        #             tail.child = head_node
+        #     prev_tails = typed_list(tail_edges, ir.Edge)
+        #     assert guard(head_node, ir.Node)
+
+        body_head, breaks, continues, prev_tails = self.parse_body(
+            self.ast.body, prefix=prefix
+        )
 
         assert len(breaks) == 0
+        assert len(continues) == 0
         for tail in prev_tails:
             tail.child = ir.DoneNode(unique_id="_state_done")
 
@@ -101,7 +106,7 @@ class GeneratorFunc:
             self.UNDEFINED_EDGE
         ]
 
-    def parse_stmts(self, stmts: list[pyast.stmt], prefix: str):
+    def parse_body(self, stmts: list[pyast.stmt], prefix: str):
         """
         A helper for parsing statements
         """
@@ -117,7 +122,7 @@ class GeneratorFunc:
                 stmt=stmt,
                 breaks=breaks,
                 continues=continues,
-                prefix=f"{prefix}_while{next(counter)}",
+                prefix=f"{prefix}{next(counter)}",
             )
             # head_node, tail_edges = self.UNDEFINED_NODE, [self.UNDEFINED_EDGE]
             if not body_head:
@@ -131,7 +136,7 @@ class GeneratorFunc:
         return body_head, breaks, continues, prev_tails
 
     def parse_while(self, whil: pyast.While, prefix: str):
-        body_head, breaks, continues, prev_tails = self.parse_stmts(
+        body_head, breaks, continues, prev_tails = self.parse_body(
             stmts=whil.body, prefix=f"{prefix}_while"
         )
         done_edge = ir.ClockedEdge(unique_id=f"{prefix}_done_e")
