@@ -35,7 +35,6 @@ class GeneratorFunc:
         body_head, prev_tails = self.parse_stmts(
             self.ast.body, prefix=prefix, breaks=breaks, continues=continues
         )
-
         assert len(breaks) == 0
         assert len(continues) == 0
         for tail in prev_tails:
@@ -57,8 +56,7 @@ class GeneratorFunc:
         :param brk: list of edges that connect to end of break stmt
         :param cntnue: where to connect continue edges
         """
-        print(f"parse_stmt {pyast.dump(stmt)}")
-        # breakpoint()
+        print(f"parse_stmt breaks {id(breaks)} {pyast.dump(stmt)}")
         if isinstance(stmt, pyast.Assign):
             return self.parse_assign(assign=stmt, prefix=prefix)
         if isinstance(stmt, pyast.Yield):
@@ -85,7 +83,6 @@ class GeneratorFunc:
             return self.parse_ifelse(
                 ifelse=stmt, prefix=prefix, breaks=breaks, continues=continues
             )
-        print(f"bruv {pyast.dump(stmt)}")
         return ir.DoneNode(unique_id=str(self._context.done_state)), [
             self.UNDEFINED_EDGE
         ]
@@ -108,8 +105,8 @@ class GeneratorFunc:
         prev_tails: Optional[list[ir.Edge]] = None
         counter = itertools.count()
 
+        print(f"parse_stmts breaks {id(breaks)}")
         for stmt in stmts:
-            print(f"for loop {pyast.dump(stmt)}")
             head_node, tail_edges = self.parse_stmt(
                 stmt=stmt,
                 breaks=breaks,
@@ -118,8 +115,6 @@ class GeneratorFunc:
             )
             if not body_head:
                 body_head = head_node
-            if breaks:
-                print(f"found break {head_node} {body_head} {self.pprint(breaks[0])}")
             if prev_tails:
                 for tail in prev_tails:
                     tail.child = head_node
@@ -130,6 +125,7 @@ class GeneratorFunc:
 
     def parse_while(self, whil: pyast.While, prefix: str):
         breaks, continues = [], []
+        print(f"head breaks {id(breaks)}")
         body_head, ends = self.parse_stmts(
             stmts=whil.body,
             prefix=f"{prefix}_while",
@@ -145,6 +141,7 @@ class GeneratorFunc:
         )
         for cont in continues:
             cont.child = while_head
+        print(f"prop break {breaks}")
         return while_head, [done_edge, *breaks, *ends]
 
     def parse_ifelse(
@@ -154,7 +151,6 @@ class GeneratorFunc:
         breaks: list[ir.Edge],
         continues: list[ir.Edge],
     ):
-        breaks, continues = [], []
         then_head, then_ends = self.parse_stmts(
             stmts=ifelse.body,
             prefix=f"{prefix}_while",

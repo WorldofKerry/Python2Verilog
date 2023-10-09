@@ -11,14 +11,14 @@ from python2verilog.frontend.fresh import GeneratorFunc
 class TestFresh(unittest.TestCase):
     def test_main(self):
         def my_func():
-            a = 0
-            while a < 20:
+            b = 0
+            while b < 20:
                 if b % 2 == 0:
                     yield b
                 if b == 7:
                     break
                 b = b + 1
-            yield b + 420
+            b = 420
 
         inst = my_func()
         # for e in inst:
