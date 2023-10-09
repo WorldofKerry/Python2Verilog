@@ -52,8 +52,9 @@ class GeneratorFunc:
         #     prev_tails = typed_list(tail_edges, ir.Edge)
         #     assert guard(head_node, ir.Node)
 
-        body_head, breaks, continues, prev_tails = self.parse_body(
-            self.ast.body, prefix=prefix
+        breaks, continues = [], []
+        body_head, prev_tails = self.parse_body(
+            self.ast.body, prefix=prefix, breaks=breaks, continues=continues
         )
 
         assert len(breaks) == 0
@@ -106,13 +107,21 @@ class GeneratorFunc:
             self.UNDEFINED_EDGE
         ]
 
-    def parse_body(self, stmts: list[pyast.stmt], prefix: str):
+    def parse_body(
+        self,
+        stmts: list[pyast.stmt],
+        prefix: str,
+        breaks: list[ir.Edge],
+        continues: list[ir.Edge],
+    ):
         """
-        A helper for parsing statements
+        A helper for parsing statements (blocks of code)
+
+        :return: (head, breaks, continues, ends)
+        - head is the head of this body (first node in body)
+        - ends are edges come from end of body (what to do after body)
         """
         body_head = None
-        breaks = []
-        continues = []
         prev_tails: Optional[list[ir.Edge]] = None
         counter = itertools.count()
 
@@ -133,11 +142,15 @@ class GeneratorFunc:
             prev_tails = typed_list(tail_edges, ir.Edge)
             assert guard(head_node, ir.Node)
 
-        return body_head, breaks, continues, prev_tails
+        return body_head, prev_tails
 
     def parse_while(self, whil: pyast.While, prefix: str):
-        body_head, breaks, continues, prev_tails = self.parse_body(
-            stmts=whil.body, prefix=f"{prefix}_while"
+        breaks, continues = [], []
+        body_head, ends = self.parse_body(
+            stmts=whil.body,
+            prefix=f"{prefix}_while",
+            breaks=breaks,
+            continues=continues,
         )
         done_edge = ir.ClockedEdge(unique_id=f"{prefix}_done_e")
         while_head = ir.IfElseNode(
@@ -148,8 +161,32 @@ class GeneratorFunc:
         )
         for cont in continues:
             cont.child = while_head
-        print(f"parse_while {self.pprint(while_head)} {self.pprint(body_head)}")
-        return while_head, [done_edge, *breaks, *prev_tails]
+        return while_head, [done_edge, *breaks, *ends]
+
+    def parse_ifelse(
+        self,
+        ifelse: pyast.If,
+        prefix: str,
+        breaks: list[ir.Edge],
+        continues: list[ir.Edge],
+    ):
+        breaks, continues = [], []
+        body_head, ends = self.parse_body(
+            stmts=ifelse.body,
+            prefix=f"{prefix}_while",
+            breaks=breaks,
+            continues=continues,
+        )
+        done_edge = ir.ClockedEdge(unique_id=f"{prefix}_done_e")
+        ifelse_head = ir.IfElseNode(
+            unique_id=f"{prefix}_test",
+            condition=self.__parse_expression(ifelse.test),
+            true_edge=ir.ClockedEdge(unique_id=f"{prefix}_body_e", child=body_head),
+            false_edge=done_edge,
+        )
+        for cont in continues:
+            cont.child = ifelse_head
+        return ifelse_head, [done_edge, *breaks, *ends]
 
     @staticmethod
     def pprint(elem: ir.Element):
