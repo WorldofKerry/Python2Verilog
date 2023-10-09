@@ -12,11 +12,13 @@ class TestFresh(unittest.TestCase):
     def test_main(self):
         def my_func():
             a = 0
-            b = 1
-            while 1:
+            while a < 20:
+                if b % 2 == 0:
+                    yield b
+                if b == 7:
+                    break
                 b = b + 1
-                break
-            yield a
+            yield b + 420
 
         inst = my_func()
         # for e in inst:

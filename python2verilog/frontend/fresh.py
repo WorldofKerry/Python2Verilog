@@ -31,29 +31,8 @@ class GeneratorFunc:
         """
         Parses
         """
-        # breaks = []
-        # continues = []
-        # body_head = None
-        # prev_tails: Optional[list[ir.Edge]] = None
-        # counter = itertools.count()
-
-        # for stmt in self.ast.body:
-        #     head_node, tail_edges = self.parse_stmt(
-        #         stmt=stmt,
-        #         breaks=breaks,
-        #         continues=continues,
-        #         prefix=f"{prefix}{next(counter)}",
-        #     )
-        #     if not body_head:
-        #         body_head = head_node
-        #     if prev_tails:
-        #         for tail in prev_tails:
-        #             tail.child = head_node
-        #     prev_tails = typed_list(tail_edges, ir.Edge)
-        #     assert guard(head_node, ir.Node)
-
         breaks, continues = [], []
-        body_head, prev_tails = self.parse_body(
+        body_head, prev_tails = self.parse_stmts(
             self.ast.body, prefix=prefix, breaks=breaks, continues=continues
         )
 
@@ -96,18 +75,22 @@ class GeneratorFunc:
                 name="break",
                 lvalue=self._context.state_var,
                 rvalue=self._context.state_var,
-                child=ir.NonClockedEdge(
+                child=ir.ClockedEdge(
                     unique_id=f"{prefix}_e",
                 ),
             )
             breaks.append(nothing.child)
-            return nothing, [nothing.child]
+            return nothing, []
+        if isinstance(stmt, pyast.If):
+            return self.parse_ifelse(
+                ifelse=stmt, prefix=prefix, breaks=breaks, continues=continues
+            )
         print(f"bruv {pyast.dump(stmt)}")
         return ir.DoneNode(unique_id=str(self._context.done_state)), [
             self.UNDEFINED_EDGE
         ]
 
-    def parse_body(
+    def parse_stmts(
         self,
         stmts: list[pyast.stmt],
         prefix: str,
@@ -133,9 +116,10 @@ class GeneratorFunc:
                 continues=continues,
                 prefix=f"{prefix}{next(counter)}",
             )
-            # head_node, tail_edges = self.UNDEFINED_NODE, [self.UNDEFINED_EDGE]
             if not body_head:
                 body_head = head_node
+            if breaks:
+                print(f"found break {head_node} {body_head} {self.pprint(breaks[0])}")
             if prev_tails:
                 for tail in prev_tails:
                     tail.child = head_node
@@ -146,7 +130,7 @@ class GeneratorFunc:
 
     def parse_while(self, whil: pyast.While, prefix: str):
         breaks, continues = [], []
-        body_head, ends = self.parse_body(
+        body_head, ends = self.parse_stmts(
             stmts=whil.body,
             prefix=f"{prefix}_while",
             breaks=breaks,
@@ -171,22 +155,38 @@ class GeneratorFunc:
         continues: list[ir.Edge],
     ):
         breaks, continues = [], []
-        body_head, ends = self.parse_body(
+        then_head, then_ends = self.parse_stmts(
             stmts=ifelse.body,
             prefix=f"{prefix}_while",
             breaks=breaks,
             continues=continues,
         )
-        done_edge = ir.ClockedEdge(unique_id=f"{prefix}_done_e")
-        ifelse_head = ir.IfElseNode(
-            unique_id=f"{prefix}_test",
-            condition=self.__parse_expression(ifelse.test),
-            true_edge=ir.ClockedEdge(unique_id=f"{prefix}_body_e", child=body_head),
-            false_edge=done_edge,
-        )
-        for cont in continues:
-            cont.child = ifelse_head
-        return ifelse_head, [done_edge, *breaks, *ends]
+        to_then = ir.NonClockedEdge(unique_id=f"{prefix}_then_e", child=then_head)
+
+        if ifelse.orelse:
+            else_head, else_ends = self.parse_stmts(
+                stmts=ifelse.orelse,
+                prefix=f"{prefix}_while",
+                breaks=breaks,
+                continues=continues,
+            )
+            to_else = ir.NonClockedEdge(unique_id=f"{prefix}_else_e", child=else_head)
+            ret = ir.IfElseNode(
+                unique_id=prefix,
+                condition=self.__parse_expression(ifelse.test),
+                true_edge=to_then,
+                false_edge=to_else,
+            )
+            return ret, [*then_ends, *else_ends]
+        else:
+            to_else = ir.NonClockedEdge(unique_id=f"{prefix}_else_e")
+            ret = ir.IfElseNode(
+                unique_id=prefix,
+                condition=self.__parse_expression(ifelse.test),
+                true_edge=to_then,
+                false_edge=to_else,
+            )
+            return ret, [*then_ends, to_else]
 
     @staticmethod
     def pprint(elem: ir.Element):
