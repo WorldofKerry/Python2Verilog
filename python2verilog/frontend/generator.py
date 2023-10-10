@@ -247,7 +247,10 @@ class FromGenerator:
         """
         For ... in ...:
         """
-        # pylint: disable=too-many-local
+        # pylint: disable=too-many-locals
+        loop_edge = ir.ClockedEdge(unique_id=f"{prefix}_edge", name="True")
+        done_edge = ir.ClockedEdge(unique_id=f"{prefix}_f", name="False", child=nextt)
+
         target = stmt.iter
         assert isinstance(target, pyast.Name)
         if target.id not in self._context.instances:
@@ -269,73 +272,74 @@ class FromGenerator:
         unique_node = unique_node_gen()
         unique_edge = unique_edge_gen()
 
-        # Head
         head = ir.AssignNode(
             unique_id=next(unique_node),
             lvalue=inst.signals.ready,
             rvalue=ir.UInt(1),
         )
-        to_head = ir.ClockedEdge(unique_id=next(unique_edge), child=head)
-
         node: ir.BasicElement = head
         node.child = ir.NonClockedEdge(unique_id=next(unique_edge))
         node = node.child
 
-        # Branch 1: ready and valid -> goto body
-        to_ready_and_valid = ir.NonClockedEdge(unique_id=next(unique_edge))
-
-        # Branch 2: ready and done -> goto end
-        to_ready_and_done = ir.NonClockedEdge(unique_id=next(unique_edge))
-
-        ifelse2 = ir.IfElseNode(
+        edge_to_head = ir.ClockedEdge(unique_id=next(unique_edge), child=head)
+        second_ifelse0 = ir.IfElseNode(
             unique_id=next(unique_node),
-            condition=ir.UBinOp(inst.signals.ready, "&&", inst.signals.done),
-            true_edge=to_ready_and_done,
-            false_edge=to_head,
+            condition=inst.signals.done,
+            true_edge=done_edge,
+            false_edge=loop_edge,
         )
-        to_ifelse2 = ir.NonClockedEdge(unique_id=next(unique_edge), child=ifelse2)
-        ifelse1 = ir.IfElseNode(
+        edge_to_second_ifelse0 = ir.NonClockedEdge(
+            unique_id=next(unique_edge), child=second_ifelse0
+        )
+        second_ifelse1 = ir.IfElseNode(
+            unique_id=next(unique_node),
+            condition=inst.signals.done,
+            true_edge=done_edge,
+            false_edge=edge_to_head,
+        )
+
+        # capture output
+        if not isinstance(stmt.target, pyast.Tuple):
+            assert isinstance(stmt.target, pyast.Name)
+            outputs = [ir.Var(stmt.target.id)]
+        else:
+            outputs = list(map(self._name_to_var, stmt.target.elts))
+        assert len(outputs) == len(inst.outputs), f"{outputs} {inst.outputs}"
+        capture_head = ir.AssignNode(
+            unique_id=next(unique_node),
+            lvalue=inst.signals.ready,
+            rvalue=ir.UInt(0),
+        )
+        capture_node: ir.BasicElement = capture_head
+        for caller, callee in zip(outputs, inst.outputs):
+            capture_node.child = ir.NonClockedEdge(unique_id=next(unique_edge))
+            capture_node = capture_node.child
+            capture_node.child = ir.AssignNode(
+                unique_id=next(unique_node), lvalue=caller, rvalue=callee
+            )
+            capture_node = capture_node.child
+            if not self._context.is_declared(caller.ver_name):
+                self._context.add_global_var(caller)
+
+        capture_node.child = edge_to_second_ifelse0
+        capture_node = capture_head
+
+        edge_to_second_ifelse1 = ir.NonClockedEdge(
+            unique_id=next(unique_edge), child=second_ifelse1
+        )
+        edge_to_capture_head = ir.NonClockedEdge(
+            unique_id=next(unique_edge), child=capture_head
+        )
+        first_ifelse = ir.IfElseNode(
             unique_id=next(unique_node),
             condition=ir.UBinOp(inst.signals.ready, "&&", inst.signals.valid),
-            true_edge=to_ready_and_valid,
-            false_edge=to_ifelse2,
+            true_edge=edge_to_capture_head,  # replaced with linked list for output
+            false_edge=edge_to_second_ifelse1,
         )
-        node.child = ifelse1
-
-        to_body = ir.ClockedEdge(
-            unique_id=next(unique_node),
-        )
-
-        def create_capture_output_nodes():
-            if not isinstance(stmt.target, pyast.Tuple):
-                assert isinstance(stmt.target, pyast.Name)
-                outputs = [ir.Var(stmt.target.id)]
-            else:
-                outputs = list(map(self._name_to_var, stmt.target.elts))
-            assert len(outputs) == len(inst.outputs), f"{outputs} {inst.outputs}"
-            capture_head = ir.AssignNode(
-                unique_id=next(unique_node),
-                lvalue=inst.signals.ready,
-                rvalue=ir.UInt(0),
-            )
-            capture_node: ir.BasicElement = capture_head
-            for caller, callee in zip(outputs, inst.outputs):
-                capture_node.child = ir.NonClockedEdge(unique_id=next(unique_edge))
-                capture_node = capture_node.child
-                capture_node.child = ir.AssignNode(
-                    unique_id=next(unique_node), lvalue=caller, rvalue=callee
-                )
-                capture_node = capture_node.child
-                if not self._context.is_declared(caller.ver_name):
-                    self._context.add_global_var(caller)
-
-            capture_node.child = to_body
-            return capture_head
-
-        capture_head = create_capture_output_nodes()
+        node.child = first_ifelse
 
         body_node = self.__parse_statements(stmt.body, f"{prefix}_for_body", head)
-        to_body.child = body_node
+        loop_edge.child = body_node
 
         return head
 
