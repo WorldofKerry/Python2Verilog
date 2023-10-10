@@ -94,7 +94,9 @@ def verilogify(
 
             if not context.output_types:
                 logging.info(
-                    f"Using input `{result}` as reference for {func.__name__}'s I/O types"
+                    "Using input `%s` as reference for %s's I/O types",
+                    result,
+                    func.__name__,
                 )
                 context.output_types = [type(arg) for arg in result]
                 context.default_output_vars()

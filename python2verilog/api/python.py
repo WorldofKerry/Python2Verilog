@@ -108,7 +108,7 @@ def py_to_context(
     for node in ast.walk(tree):
         # logging.debug(f"Walking through {ast.dump(node)}")
         if isinstance(node, ast.FunctionDef) and node.name == function_name:
-            logging.info(f"Found function at {get_file_and_line_num(node)}")
+            logging.info("Found function at %s", get_file_and_line_num(node))
             generator_ast = node
         elif (
             isinstance(node, ast.Call)
@@ -127,7 +127,7 @@ def py_to_context(
                 test_cases.append(output)
 
                 logging.info(
-                    f"Found test case at {get_file_and_line_num(node)} with {output}"
+                    "Found test case at %s with %s", get_file_and_line_num(node), output
                 )
             except ValueError as e:
                 raise ValueError(
@@ -135,14 +135,14 @@ def py_to_context(
                     f"{file_path}:{node.lineno}, but got non-literals"
                 ) from e
 
-    logging.info(f"Test cases: {test_cases}")
+    logging.info("Test cases: %s", test_cases)
 
     try:
         input_names = [var.arg for var in generator_ast.args.args]
     except UnboundLocalError as e:
         raise RuntimeError(f"Didn't find `{function_name}` in file") from e
 
-    logging.info(f"Input param names: {input_names}")
+    logging.info("Input param names %s", input_names)
 
     initialized = False
     input_types: list[type[Any]]
@@ -157,7 +157,7 @@ def py_to_context(
             ), f"Expected parameter `{input_names[i]}` to be \
                 {expected_type} but got {type(actual_value)} instead"
 
-    logging.info(f"Input param types: {input_types}")
+    logging.info("Input param types %s", input_types)
 
     locals_: dict[str, FunctionType] = {}
     lines = code.splitlines()
@@ -205,9 +205,8 @@ def py_to_context(
         context.output_types = output_types
         context.default_output_vars()
 
-    logging.info(f"Output param types: {context.output_types}")
-    logging.info(f"Output param names: {context.output_vars}")
-
+    logging.info("Output param types %s", context.output_types)
+    logging.info("Output param names %s", context.output_vars)
     context.input_vars = [ir.Var(name) for name in input_names]
     assert isinstance(input_types, list)
     context.input_types = input_types
