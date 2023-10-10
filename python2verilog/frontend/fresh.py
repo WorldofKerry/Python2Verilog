@@ -267,13 +267,13 @@ class GeneratorFunc:
         def unique_node_gen():
             counter = 0
             while True:
-                yield f"{prefix}_for_{counter}"
+                yield f"{prefix}_for{counter}"
                 counter += 1
 
         def unique_edge_gen():
             counter = 0
             while True:
-                yield f"{prefix}_for_{counter}_e"
+                yield f"{prefix}_for{counter}_e"
                 counter += 1
 
         unique_node = unique_node_gen()
