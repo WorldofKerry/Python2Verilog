@@ -1,6 +1,3 @@
-import ast as pyast
-import inspect
-import textwrap
 import unittest
 
 from python2verilog import ir

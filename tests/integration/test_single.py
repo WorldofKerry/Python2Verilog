@@ -4,7 +4,6 @@ Test suite for basic functions
 
 from types import FunctionType
 from typing import Union
-from unittest import TestCase
 
 import pytest
 from parameterized import parameterized

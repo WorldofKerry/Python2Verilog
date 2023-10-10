@@ -6,10 +6,10 @@ import logging
 import os
 import re
 import subprocess
+import unittest
 from pathlib import Path
 from types import FunctionType
 from typing import Iterable, Union
-import unittest
 
 import pandas as pd
 

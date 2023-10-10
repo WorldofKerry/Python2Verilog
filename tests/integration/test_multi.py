@@ -4,7 +4,6 @@ Test suite for functions that call other functions
 
 from types import FunctionType
 from typing import Iterable, Union
-from unittest import TestCase
 
 import pytest
 from parameterized import parameterized
