@@ -26,8 +26,7 @@ def fib(n: int):
     a, b = 0, 1
     count = 1
     while count < n:
-        if a != 21:
-            yield a
+        yield a
         a, b = b, a + b
         count = count + 1
 
@@ -120,8 +119,8 @@ def operators(x, y):
     yield x - y
     yield x * y
     # yield x / y
-    yield x == x
-    yield x == -x
+    # yield x == x
+    # yield x == -x
     if y != 0:
         yield (x // y)
         yield (x % y)
