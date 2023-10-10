@@ -1,6 +1,4 @@
 import ast
-import dis
-import logging
 import unittest
 
 import networkx as nx
@@ -11,16 +9,21 @@ from python2verilog import (
     get_actual_raw,
     get_context,
     get_expected,
+    ir,
     namespace_to_file,
     namespace_to_verilog,
     verilogify,
 )
-from python2verilog import ir
-from python2verilog.frontend import FromGenerator
+from python2verilog.backend import verilog
+from python2verilog.backend.verilog.codegen import CaseBuilder
+from python2verilog.frontend.generator import GeneratorFunc
 from python2verilog.ir import Context, create_networkx_adjacency_list
 
 
 class TestGenerator2Graph(unittest.TestCase):
+    def blank_generator():
+        yield 0
+
     def test_multi_assign(self):
         ns = {}
 
@@ -45,7 +48,9 @@ class TestGenerator2Graph(unittest.TestCase):
         target: ast.Tuple = assign.targets[0]
         value: ast.Tuple = assign.value
 
-        result = FromGenerator(ir.Context.empty())._target_value_visitor(target, value)
+        result = GeneratorFunc(ir.Context.empty_valid())._target_value_visitor(
+            target, value
+        )
 
         self.assertEqual(
             str(list(result)), "[(_d, 10), (_e, _c), (_x, _a), (_y, _b), (_g, 20)]"
@@ -59,7 +64,44 @@ class TestGenerator2Graph(unittest.TestCase):
         value: ast.Tuple = assign.value
 
         with self.assertRaises(TypeError):
-            result = FromGenerator(ir.Context.empty())._target_value_visitor(
+            result = GeneratorFunc(ir.Context.empty_valid())._target_value_visitor(
                 target, value
             )
             list(result)
+
+    def test_basics(self):
+        ns = {}
+
+        @verilogify(namespace=ns)
+        def my_func():
+            # b = 0
+            # while b < 20:
+            #     if b == 15:
+            #         yield b
+            #     b = b + 1
+            # yield b + 420
+            n = 10
+            a, b = 0, 1
+            count = 1
+            while count < n:
+                yield a
+                a, b = b, a + b
+                count += 1
+
+        my_func()
+
+        root, cxt = GeneratorFunc(get_context(my_func)).create_root()
+        case = CaseBuilder(root, ir.Context.empty_valid()).get_case()
+        sv = verilog.CodeGen(root, cxt).get_module_str()
+        # with open("./new.sv", mode="w") as f:
+        #     f.write(str(sv))
+
+        root, cxt = GeneratorFunc(get_context(my_func)).create_root()
+        case = CaseBuilder(root, cxt).get_case()
+        sv = verilog.CodeGen(root, cxt).get_module_str()
+        # with open("./old.sv", mode="w") as f:
+        #     f.write(str(sv))
+
+        # module, testbench = namespace_to_verilog(ns)
+
+        return

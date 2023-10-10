@@ -61,5 +61,5 @@ def typed_strict(obj: Union[_ValueType, None], type_: Type[_ValueType]) -> _Valu
     """
     Asserts that obj is of type type_
     """
-    assert guard(obj, type_)
+    assert guard(obj, type_), f"{type(obj)} {type_}"
     return obj

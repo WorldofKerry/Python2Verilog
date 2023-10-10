@@ -531,7 +531,7 @@ class CaseBuilder:
             state = done
         """
         return ver.IfElse(
-            condition=ir.BinOp(
+            condition=ir.UBinOp(
                 ir.UnaryOp("!", context.signals.valid), "&&", context.signals.ready
             ),
             # condition=context.signals.ready,
@@ -589,7 +589,6 @@ class CaseBuilder:
                     comment=vertex.unique_id if self.config.add_debug_comments else "",
                 )
             )
-
         else:
             raise TypeError(type(vertex))
 

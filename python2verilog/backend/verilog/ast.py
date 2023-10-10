@@ -494,6 +494,8 @@ class Case(Statement):
         """
         To Verilog Lines
         """
+        if len(self.case_items) == 0:
+            return Lines(f"// case({self.condition})\n//Empty case block\n// endcase")
         lines = Lines()
         lines += f"case ({self.condition.to_string()})"
         for item in self.case_items:

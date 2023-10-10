@@ -28,7 +28,7 @@ def fib(n: int):
     while count < n:
         yield a
         a, b = b, a + b
-        count += 1
+        count = count + 1
 
 
 def floor_div(n) -> tuple[int]:
@@ -112,72 +112,74 @@ def multiplier(multiplicand, multiplier):
 
 
 def operators(x, y):
-    # yield 0, 0, 0
-
+    yield x
+    yield y
     # Arithmetic operators
-    yield x, y, x + y
-    yield x, y, x - y
-    yield x, y, x * y
-    # yield x, y, x / y
+    yield x + y
+    yield x - y
+    yield x * y
+    # yield x / y
     if y != 0:
-        yield (x, y, x // y)
-        yield (x, y, x % y)
-    # yield x, y, x**y  #
+        yield (x // y)
+        yield (x % y)
+    # yield x**y  #
 
     # Comparison operators
-    # yield x, y, x == y
-    # yield x, y, x != y
-    # yield x, y, x < y
-    # yield x, y, x > y
-    # yield x, y, x <= y
-    # yield x, y, x >= y
+    yield x == x
+    yield x == -x
+    yield x == y
+    yield x != y
+    yield x < y
+    yield x > y
+    yield x <= y
+    yield x >= y
 
     # # Logical operators
-    # yield x, y, x and y
-    # yield x, y, x or y
-    # yield x, y, not x
+    # yield x and y
+    # yield x or y
+    # yield not x
 
     # # Bitwise operators
-    # yield x, y, x & y
-    # yield x, y, x | y
-    # yield x, y, x ^ y
-    # yield x, y, ~x
-    # yield x, y, x << y
-    # yield x, y, x >> y
+    # yield x & y
+    # yield x | y
+    # yield x ^ y
+    # yield ~x
+    # yield x << y
+    # yield x >> y
 
     # # Assignment operators
     # z = x
-    # yield x, y, z
+    # yield z
     # z += y
-    # yield x, y, z
+    # yield z
     # z -= y
-    # yield x, y, z
+    # yield z
     # z *= y
-    # yield x, y, z
+    # yield z
     # z /= y
-    # yield x, y, z
+    # yield z
     # z //= y
-    # yield x, y, z
+    # yield z
     # z %= y
-    # yield x, y, z
+    # yield z
     # z **= y
-    # yield x, y, z
+    # yield z
     # z &= y
-    # yield x, y, z
+    # yield z
     # z |= y
-    # yield x, y, z
+    # yield z
     # z ^= y
-    # yield x, y, z
+    # yield z
     # z <<= y
-    # yield x, y, z
+    # yield z
     # z >>= y
-    # yield x, y, z
+    # yield z
 
     # # Identity and membership operators
-    # yield x, y, x is y
-    # yield x, y, x is not y
-    # yield x, y, x in [y, z]
-    # yield x, y, x not in [y, z]
+    # yield x is y
+    # yield x is not y
+    # yield x in [y, z]
+    # yield x not in [y, z]
 
 
 def rectangle_filled(s_x, s_y, height, width):
@@ -290,3 +292,23 @@ def olympic_logo(mid_x, mid_y, radius):
         coords = circle_lines(x, y, radius)
         for x, y in coords:
             yield x, y, color
+
+
+def break_continue_test():
+    """
+    Testing for break and continue
+    """
+    i = 0
+    while i < 10:
+        if i % 2 == 0:
+            i += 1
+            continue
+        yield i
+        i += 3
+
+    i = 0
+    while i < 10:
+        if i == 7:
+            break
+        yield i
+        i += 1

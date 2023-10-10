@@ -4,16 +4,16 @@ Test suite for basic functions
 
 from types import FunctionType
 from typing import Union
-from unittest import TestCase
 
 import pytest
 from parameterized import parameterized
 
-from .base_tests import BaseTest
+from .base_tests import BaseTestWrapper
 from .functions import *
 from .utils import name_func
 
 PARAMETERS = [
+    (break_continue_test, [()]),
     (fib, range(10, 31, 10)),
     (floor_div, [13, 23]),
     (operators, [(13, 17)]),
@@ -27,7 +27,7 @@ PARAMETERS = [
 
 
 @pytest.mark.usefixtures("argparse")
-class TestSingle(TestCase, BaseTest):
+class TestSingle(BaseTestWrapper.BaseTest):
     @parameterized.expand(
         input=PARAMETERS,
         name_func=name_func,
@@ -35,7 +35,7 @@ class TestSingle(TestCase, BaseTest):
     def test_perf(
         self, funcs: list[FunctionType], test_cases: list[Union[tuple[int, ...], int]]
     ):
-        BaseTest.test_perf(self, funcs, test_cases)
+        BaseTestWrapper.BaseTest.test_perf(self, funcs, test_cases)
 
     @parameterized.expand(
         input=PARAMETERS,
@@ -44,8 +44,8 @@ class TestSingle(TestCase, BaseTest):
     def test_correct(
         self, funcs: list[FunctionType], test_cases: list[Union[tuple[int, ...], int]]
     ):
-        BaseTest.test_correct(self, funcs, test_cases)
+        BaseTestWrapper.BaseTest.test_correct(self, funcs, test_cases)
 
     @classmethod
     def tearDownClass(cls):
-        BaseTest.make_statistics(cls)
+        BaseTestWrapper.BaseTest.make_statistics(cls)

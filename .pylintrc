@@ -14,4 +14,3 @@ disable =
     cyclic-import,
     unused-import,
     exec-used,
-    logging-fstring-interpolation

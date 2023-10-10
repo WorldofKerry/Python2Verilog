@@ -104,6 +104,8 @@ def make_visual(generator_inst, directory: Optional[str] = None):
         plt.cla()
         plt.close()
     except IndexError as e:
-        logging.warning(f"Skipping make_visual for {data} due to negative outputs {e}")
+        logging.warning(
+            "Skipping make_visual for %s due to negative outputs %s", data, e
+        )
 
     return data
