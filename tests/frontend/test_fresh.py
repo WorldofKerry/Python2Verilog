@@ -4,8 +4,10 @@ import textwrap
 import unittest
 
 from python2verilog import ir
+from python2verilog.api import verilogify, get_context
 from python2verilog.backend.verilog.codegen import CaseBuilder
 from python2verilog.frontend.fresh import GeneratorFunc
+from python2verilog.frontend.generator import FromGenerator
 
 
 class TestFresh(unittest.TestCase):
@@ -33,8 +35,7 @@ class TestFresh(unittest.TestCase):
                         a = 1
                         if 1:
                             a = 1
-            
-            return
+            yield 10
 
         inst = my_func()
         # for e in inst:
@@ -46,6 +47,16 @@ class TestFresh(unittest.TestCase):
 
         result = GeneratorFunc(func_tree).parse_func()
         case = CaseBuilder(result, ir.Context().from_validated()).get_case()
+        # dummy = ir.BasicNode(
+        #     unique_id="DUMMMMY",
+        #     child=ir.NonClockedEdge(unique_id="DUMMY", child=result),
+        # )
+        case = CaseBuilder(result, ir.Context.from_validated()).get_case()
         print(str(case))
+        
+        ns = {}
+        wrapped = verilogify(namespace=ns)(my_func)
+        wrapped()
+        old_result = FromGenerator(get_context(wrapped)).create_root()
 
         return
