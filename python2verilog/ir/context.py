@@ -317,6 +317,7 @@ class Context(GenericReprAndStr):
                 yield var.py_name
 
         assert isinstance(name, str)
+        self.validate()
         variables = [
             *list(get_strs(self.global_vars)),
             *list(get_strs(self.input_vars)),
