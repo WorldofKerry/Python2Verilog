@@ -112,27 +112,27 @@ def multiplier(multiplicand, multiplier):
 
 
 def operators(x, y):
-    # yield 0, 0, 0
-
+    yield x
+    yield y
     # Arithmetic operators
     yield x + y
     yield x - y
     yield x * y
     # yield x / y
-    # yield x == x
-    # yield x == -x
     if y != 0:
         yield (x // y)
         yield (x % y)
     # yield x**y  #
 
     # Comparison operators
-    # yield x == y
-    # yield x != y
-    # yield x < y
-    # yield x > y
-    # yield x <= y
-    # yield x >= y
+    yield x == x
+    yield x == -x
+    yield x == y
+    yield x != y
+    yield x < y
+    yield x > y
+    yield x <= y
+    yield x >= y
 
     # # Logical operators
     # yield x and y

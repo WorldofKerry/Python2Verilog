@@ -646,7 +646,7 @@ class FromGenerator:
             raise TypeError(
                 "Error: unknown operator", type(node.ops[0]), pyast.dump(node.ops[0])
             )
-        return ir.BinOp(
+        return ir.UBinOp(
             left=self.__parse_expression(node.left),
             oper=operator,
             right=self.__parse_expression(node.comparators[0]),
