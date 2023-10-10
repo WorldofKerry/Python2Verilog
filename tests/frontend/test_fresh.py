@@ -6,6 +6,7 @@ import unittest
 from python2verilog import ir
 from python2verilog.api import get_context, verilogify
 from python2verilog.api.namespace import namespace_to_verilog
+from python2verilog.backend import verilog
 from python2verilog.backend.verilog.codegen import CaseBuilder
 from python2verilog.frontend.fresh import GeneratorFunc
 from python2verilog.frontend.generator import FromGenerator
@@ -24,23 +25,19 @@ class TestFresh(unittest.TestCase):
                 b = b + 1
             yield b + 420
 
-        inst = my_func()
-        # for e in inst:
-        #     print(e)
+        my_func()
 
-        full_tree = pyast.parse(textwrap.dedent(inspect.getsource(my_func)))
-        func_tree = full_tree.body[0]
-        print(pyast.dump(func_tree, indent=2))
-
-        result, cxt = GeneratorFunc(get_context(my_func))._parse_func()
-        case = CaseBuilder(result, ir.Context.from_validated()).get_case()
+        root, cxt = GeneratorFunc(get_context(my_func))._parse_func()
+        case = CaseBuilder(root, ir.Context.from_validated()).get_case()
+        sv = verilog.CodeGen(root, cxt).get_module_str()
         with open("./new.sv", mode="w") as f:
-            f.write(str(case))
+            f.write(str(sv))
 
         root, cxt = FromGenerator(get_context(my_func)).create_root()
         case = CaseBuilder(root, cxt).get_case()
+        sv = verilog.CodeGen(root, cxt).get_module_str()
         with open("./old.sv", mode="w") as f:
-            f.write(str(case))
+            f.write(str(sv))
 
         # module, testbench = namespace_to_verilog(ns)
 
