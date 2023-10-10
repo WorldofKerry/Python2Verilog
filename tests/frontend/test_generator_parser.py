@@ -14,7 +14,7 @@ from python2verilog import (
     namespace_to_verilog,
     verilogify,
 )
-from python2verilog.frontend.fresh import GeneratorFunc
+from python2verilog.frontend.generator import GeneratorFunc
 from python2verilog.ir import Context, create_networkx_adjacency_list
 
 

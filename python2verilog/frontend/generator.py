@@ -2,9 +2,10 @@
 The freshest in-order generator parser
 """
 import ast as pyast
+import copy
 import itertools
 import logging
-from typing import Collection, Iterable, Optional, TypeVar, cast
+from typing import Collection, Iterable, Optional, TypeAlias, TypeVar, cast
 
 from python2verilog import ir
 from python2verilog.utils.typed import guard, typed_list, typed_strict
@@ -15,18 +16,20 @@ class GeneratorFunc:
     In-order generator function parser
     """
 
+    ParseResult: TypeAlias = tuple[ir.Node, list[ir.Edge]]
+
     def __init__(self, context: ir.Context) -> None:
-        self._context = context
+        self._context = copy.deepcopy(context)
 
-    def create_root(self):
+    def create_root(self) -> tuple[ir.Node, ir.Context]:
         """
-        Wrapper for old api
+        Returns the root node and context
         """
-        return self._parse_func()
+        return self._parse_func(), self._context
 
-    def _parse_func(self, prefix: str = "_state"):
+    def _parse_func(self, prefix: str = "_state") -> ir.Node:
         """
-        Parses
+        Parses the function inside the context
         """
         breaks: list[ir.Edge] = []
         continues: list[ir.Edge] = []
@@ -39,7 +42,7 @@ class GeneratorFunc:
             tail.child = ir.DoneNode(unique_id="_state_done")
         self._context.entry_state = ir.State(body_head.unique_id)
 
-        return body_head, self._context
+        return body_head
 
     def _parse_stmt(
         self,
@@ -47,7 +50,7 @@ class GeneratorFunc:
         breaks: list[ir.Edge],
         continues: list[ir.Edge],
         prefix: str,
-    ):
+    ) -> ParseResult:
         """
         Parses a statement
 
@@ -112,6 +115,7 @@ class GeneratorFunc:
                     unique_id=f"{prefix}_e",
                 ),
             )
+            assert guard(dummy.child, ir.Edge)
             return dummy, [dummy.child]
         if isinstance(stmt, pyast.Continue):
             nothing = ir.AssignNode(
@@ -134,7 +138,7 @@ class GeneratorFunc:
         prefix: str,
         breaks: list[ir.Edge],
         continues: list[ir.Edge],
-    ):
+    ) -> ParseResult:
         """
         A helper for parsing statements (blocks of code)
 
@@ -142,7 +146,7 @@ class GeneratorFunc:
         - head is the head of this body (first node in body)
         - ends are edges come from end of body (what to do after body)
         """
-        body_head = None
+        body_head: Optional[ir.Node] = None
         prev_tails: Optional[list[ir.Edge]] = None
         counter = itertools.count()
 
@@ -161,11 +165,11 @@ class GeneratorFunc:
             prev_tails = typed_list(tail_edges, ir.Edge)
             assert guard(head_node, ir.Node)
 
+        assert prev_tails is not None
+        assert body_head is not None
         return body_head, prev_tails
 
-    def _parse_assign_to_call(
-        self, assign: pyast.Assign, prefix: str
-    ) -> tuple[ir.BasicElement, list[ir.Edge]]:
+    def _parse_assign_to_call(self, assign: pyast.Assign, prefix: str) -> ParseResult:
         """
         instance = func(args, ...)
         """
@@ -260,7 +264,7 @@ class GeneratorFunc:
         assert isinstance(name, pyast.Name)
         return ir.Var(name.id)
 
-    def _parse_for(self, stmt: pyast.For, prefix: str):
+    def _parse_for(self, stmt: pyast.For, prefix: str) -> ParseResult:
         """
         For ... in ...:
         """
@@ -369,7 +373,7 @@ class GeneratorFunc:
 
         return head, [to_ready_and_done, *breaks]
 
-    def _parse_while(self, whil: pyast.While, prefix: str):
+    def _parse_while(self, whil: pyast.While, prefix: str) -> ParseResult:
         breaks: list[ir.Edge] = []
         continues: list[ir.Edge] = []
         body_head, ends = self._parse_stmts(
@@ -397,7 +401,7 @@ class GeneratorFunc:
         prefix: str,
         breaks: list[ir.Edge],
         continues: list[ir.Edge],
-    ):
+    ) -> ParseResult:
         then_head, then_ends = self._parse_stmts(
             stmts=ifelse.body,
             prefix=f"{prefix}_then",
@@ -439,7 +443,7 @@ class GeneratorFunc:
         """
         return str(list(elem.visit_nonclocked()))
 
-    def _parse_yield(self, yiel: pyast.Yield, prefix: str):
+    def _parse_yield(self, yiel: pyast.Yield, prefix: str) -> ParseResult:
         """
         Parse yield
         yield <value>
@@ -452,20 +456,18 @@ class GeneratorFunc:
             raise TypeError(f"Expected tuple {type(yiel.value)} {pyast.dump(yiel)}")
 
         self._context.validate()
-        # pylint: disable=unpacking-non-sequence
         head, tail = self._weave_nonclocked_edges(
             self._create_assign_nodes(self._context.output_vars, stmts, prefix),
             f"{prefix}_e",
         )
-        assert guard(tail.child, ir.Edge)
-        tail_edge: ir.Edge = tail.child  # get last nonclocked edge
+        tail_edge: ir.Edge = tail.edge  # get last nonclocked edge
         tail_edge.child = ir.AssignNode(
             unique_id=f"{prefix}_valid",
             lvalue=self._context.signals.valid,
             rvalue=ir.UInt(1),
             child=ir.ClockedEdge(unique_id=f"{prefix}_e"),
         )
-        return head, [tail_edge.child.child]
+        return head, [tail_edge.child.edge]
 
     def _target_value_visitor(self, target: pyast.expr, value: pyast.expr):
         """
@@ -531,7 +533,7 @@ class GeneratorFunc:
             prev = node.child
         return cast(GeneratorFunc._BasicNodeType, head), node
 
-    def _parse_assign(self, assign: pyast.Assign, prefix: str):
+    def _parse_assign(self, assign: pyast.Assign, prefix: str) -> ParseResult:
         """
         <target0, target1, ...> = <value>;
         a, b = b, a + b
@@ -557,7 +559,6 @@ class GeneratorFunc:
             *self._target_value_visitor(assign.targets[0], assign.value)
         )
 
-        # pylint: disable=unpacking-non-sequence
         head, tail = self._weave_nonclocked_edges(
             self._create_assign_nodes(targets, values, prefix),
             f"{prefix}_e",

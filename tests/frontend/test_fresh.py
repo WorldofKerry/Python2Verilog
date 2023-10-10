@@ -5,7 +5,7 @@ from python2verilog.api import get_context, verilogify
 from python2verilog.api.namespace import namespace_to_verilog
 from python2verilog.backend import verilog
 from python2verilog.backend.verilog.codegen import CaseBuilder
-from python2verilog.frontend.fresh import GeneratorFunc
+from python2verilog.frontend.generator import GeneratorFunc
 
 
 class TestFresh(unittest.TestCase):
@@ -30,7 +30,7 @@ class TestFresh(unittest.TestCase):
 
         my_func()
 
-        root, cxt = GeneratorFunc(get_context(my_func))._parse_func()
+        root, cxt = GeneratorFunc(get_context(my_func)).create_root()
         case = CaseBuilder(root, ir.Context.from_validated()).get_case()
         sv = verilog.CodeGen(root, cxt).get_module_str()
         with open("./new.sv", mode="w") as f:
