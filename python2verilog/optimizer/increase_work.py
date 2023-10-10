@@ -192,7 +192,7 @@ class IncreaseWorkPerClockCycle:
         Creates an optimal path that maximizes nonclocked edges.
         """
         assert guard(root, ir.Node)
-        logging.info("%s on %s", self.apply.__name__, root)
+        logging.debug("%s on %s", self.apply.__name__, root)
 
         if root.unique_id in self.visited:
             return
