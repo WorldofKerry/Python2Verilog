@@ -242,7 +242,7 @@ class AssignNode(BasicNode):
         super().__init__(unique_id, *args, child=child, **kwargs)
         self.lvalue = typed_strict(lvalue, expr.Var)
         self.rvalue = typed_strict(rvalue, expr.Expression)
-        self._child = child
+        self._child = typed(child, Edge)
 
     def __repr__(self):
         return f"{self.lvalue} = {self.rvalue}"

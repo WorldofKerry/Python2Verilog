@@ -218,6 +218,10 @@ class GeneratorFunc:
             rvalue=ir.UInt(1),
         )
         node = node.child
+        node.child = ir.NonClockedEdge(
+            unique_id=next(unique_edge),
+        )
+        node = node.child
 
         assert isinstance(assign.value, pyast.Call)
 
@@ -225,12 +229,17 @@ class GeneratorFunc:
 
         assert len(arguments) == len(inst.inputs)
 
-        head, tail = self._weave_nonclocked_edges(
+        assign_head, tail = self._weave_nonclocked_edges(
             self._create_assign_nodes(inst.inputs, arguments, prefix),
             f"{prefix}_e",
-            last_edge=True,
+            last_edge=False,
         )
-        return head, [tail]
+        node.child = assign_head
+        tail.child = ir.ClockedEdge(
+            unique_id=next(unique_edge),
+        )
+
+        return head, [tail.child]
 
     @staticmethod
     def _name_to_var(name: pyast.expr) -> ir.Var:
