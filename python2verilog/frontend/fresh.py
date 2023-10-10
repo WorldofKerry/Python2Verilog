@@ -85,6 +85,8 @@ class GeneratorFunc:
             return self._parse_ifelse(
                 ifelse=stmt, prefix=prefix, breaks=breaks, continues=continues
             )
+        if isinstance(stmt, pyast.For):
+            return self._parse_for(stmt=stmt, prefix=prefix)
         if isinstance(stmt, pyast.AugAssign):
             assert isinstance(
                 stmt.target, pyast.Name
@@ -228,18 +230,126 @@ class GeneratorFunc:
             f"{prefix}_e",
             last_edge=True,
         )
-        # for arg, param in zip(arguments, inst.inputs):
-        #     node.child = ir.NonClockedEdge(unique_id=next(unique_edge))
-        #     node = node.child
-        #     node.child = ir.AssignNode(
-        #         unique_id=next(unique_node),
-        #         lvalue=param,
-        #         rvalue=arg,
-        #     )
-        #     node = node.child
-
-        # raise TypeError(f"{type(node)}")
         return head, [tail]
+
+    @staticmethod
+    def _name_to_var(name: pyast.expr) -> ir.Var:
+        """
+        Converts a pyast.Name to a ir.Var using its id
+        """
+        assert isinstance(name, pyast.Name)
+        return ir.Var(name.id)
+
+    def _parse_for(self, stmt: pyast.For, prefix: str):
+        """
+        For ... in ...:
+        """
+        # pylint: disable=too-many-locals
+        breaks, continues = [], []
+        loop_edge = ir.ClockedEdge(unique_id=f"{prefix}_edge", name="True")
+        done_edge = ir.ClockedEdge(unique_id=f"{prefix}_f", name="False")
+
+        target = stmt.iter
+        assert isinstance(target, pyast.Name)
+        if target.id not in self._context.instances:
+            raise RuntimeError(f"No iterator instance {self._context.instances}")
+        inst = self._context.instances[target.id]
+
+        def unique_node_gen():
+            counter = 0
+            while True:
+                yield f"{prefix}_for_{counter}"
+                counter += 1
+
+        def unique_edge_gen():
+            counter = 0
+            while True:
+                yield f"{prefix}_for_{counter}_e"
+                counter += 1
+
+        unique_node = unique_node_gen()
+        unique_edge = unique_edge_gen()
+
+        head = ir.AssignNode(
+            unique_id=next(unique_node),
+            lvalue=inst.signals.ready,
+            rvalue=ir.UInt(1),
+        )
+        node: ir.BasicElement = head
+        node.child = ir.NonClockedEdge(unique_id=next(unique_edge))
+        node = node.child
+
+        edge_to_head = ir.ClockedEdge(unique_id=next(unique_edge), child=head)
+        second_ifelse0 = ir.IfElseNode(
+            unique_id=next(unique_node),
+            condition=inst.signals.done,
+            true_edge=done_edge,
+            false_edge=loop_edge,
+        )
+        edge_to_second_ifelse0 = ir.NonClockedEdge(
+            unique_id=next(unique_edge), child=second_ifelse0
+        )
+        second_ifelse1 = ir.IfElseNode(
+            unique_id=next(unique_node),
+            condition=inst.signals.done,
+            true_edge=done_edge,
+            false_edge=edge_to_head,
+        )
+
+        # capture output
+        if not isinstance(stmt.target, pyast.Tuple):
+            assert isinstance(stmt.target, pyast.Name)
+            outputs = [ir.Var(stmt.target.id)]
+        else:
+            outputs = list(map(self._name_to_var, stmt.target.elts))
+        assert len(outputs) == len(inst.outputs), f"{outputs} {inst.outputs}"
+        capture_head = ir.AssignNode(
+            unique_id=next(unique_node),
+            lvalue=inst.signals.ready,
+            rvalue=ir.UInt(0),
+        )
+        capture_node: ir.BasicElement = capture_head
+        for caller, callee in zip(outputs, inst.outputs):
+            capture_node.child = ir.NonClockedEdge(unique_id=next(unique_edge))
+            capture_node = capture_node.child
+            capture_node.child = ir.AssignNode(
+                unique_id=next(unique_node), lvalue=caller, rvalue=callee
+            )
+            capture_node = capture_node.child
+            if not self._context.is_declared(caller.ver_name):
+                self._context.add_global_var(caller)
+
+        capture_node.child = edge_to_second_ifelse0
+        capture_node = capture_head
+
+        edge_to_second_ifelse1 = ir.NonClockedEdge(
+            unique_id=next(unique_edge), child=second_ifelse1
+        )
+        edge_to_capture_head = ir.NonClockedEdge(
+            unique_id=next(unique_edge), child=capture_head
+        )
+        first_ifelse = ir.IfElseNode(
+            unique_id=next(unique_node),
+            condition=ir.UBinOp(inst.signals.ready, "&&", inst.signals.valid),
+            true_edge=edge_to_capture_head,  # replaced with linked list for output
+            false_edge=edge_to_second_ifelse1,
+        )
+        node.child = first_ifelse
+
+        body_head, ends = self._parse_stmts(
+            stmts=stmt.body,
+            prefix=f"{prefix}_for",
+            breaks=breaks,
+            continues=continues,
+        )
+        loop_edge.child = body_head
+
+        for cont in continues:
+            cont.child = head
+        for end in ends:
+            end.child = head
+
+        return head, [done_edge, *breaks]
 
     def _parse_while(self, whil: pyast.While, prefix: str):
         breaks, continues = [], []

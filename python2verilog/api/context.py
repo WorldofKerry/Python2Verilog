@@ -23,8 +23,8 @@ def context_to_codegen(context: ir.Context):
     """
     context = copy.deepcopy(context)  # context should be changed to frozened
     logging.info("Running %s", FromGenerator.__name__)
-    # ir_root, context = FromGenerator(context).create_root()
-    ir_root, context = GeneratorFunc(context).create_root()
+    ir_root, context = FromGenerator(context).create_root()
+    # ir_root, context = GeneratorFunc(context).create_root()
     logging.debug(
         "context to codegen %s %s -O%s",
         ir_root.unique_id,
