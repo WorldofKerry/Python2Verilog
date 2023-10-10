@@ -18,12 +18,19 @@ class TestFresh(unittest.TestCase):
 
         @verilogify(namespace=ns)
         def my_func():
-            b = 0
-            while b < 20:
-                if b == 15:
-                    yield b
-                b = b + 1
-            yield b + 420
+            # b = 0
+            # while b < 20:
+            #     if b == 15:
+            #         yield b
+            #     b = b + 1
+            # yield b + 420
+            n = 10
+            a, b = 0, 1
+            count = 1
+            while count < n:
+                yield a
+                a, b = b, a + b
+                count += 1
 
         my_func()
 

@@ -26,9 +26,10 @@ def fib(n: int):
     a, b = 0, 1
     count = 1
     while count < n:
-        yield a
+        if a != 21:
+            yield a
         a, b = b, a + b
-        count += 1
+        count = count + 1
 
 
 def floor_div(n) -> tuple[int]:
@@ -115,69 +116,71 @@ def operators(x, y):
     # yield 0, 0, 0
 
     # Arithmetic operators
-    yield x, y, x + y
-    yield x, y, x - y
-    yield x, y, x * y
-    # yield x, y, x / y
+    yield x + y
+    yield x - y
+    yield x * y
+    # yield x / y
+    yield x == x
+    yield x == -x
     if y != 0:
-        yield (x, y, x // y)
-        yield (x, y, x % y)
-    # yield x, y, x**y  #
+        yield (x // y)
+        yield (x % y)
+    # yield x**y  #
 
     # Comparison operators
-    # yield x, y, x == y
-    # yield x, y, x != y
-    # yield x, y, x < y
-    # yield x, y, x > y
-    # yield x, y, x <= y
-    # yield x, y, x >= y
+    # yield x == y
+    # yield x != y
+    # yield x < y
+    # yield x > y
+    # yield x <= y
+    # yield x >= y
 
     # # Logical operators
-    # yield x, y, x and y
-    # yield x, y, x or y
-    # yield x, y, not x
+    # yield x and y
+    # yield x or y
+    # yield not x
 
     # # Bitwise operators
-    # yield x, y, x & y
-    # yield x, y, x | y
-    # yield x, y, x ^ y
-    # yield x, y, ~x
-    # yield x, y, x << y
-    # yield x, y, x >> y
+    # yield x & y
+    # yield x | y
+    # yield x ^ y
+    # yield ~x
+    # yield x << y
+    # yield x >> y
 
     # # Assignment operators
     # z = x
-    # yield x, y, z
+    # yield z
     # z += y
-    # yield x, y, z
+    # yield z
     # z -= y
-    # yield x, y, z
+    # yield z
     # z *= y
-    # yield x, y, z
+    # yield z
     # z /= y
-    # yield x, y, z
+    # yield z
     # z //= y
-    # yield x, y, z
+    # yield z
     # z %= y
-    # yield x, y, z
+    # yield z
     # z **= y
-    # yield x, y, z
+    # yield z
     # z &= y
-    # yield x, y, z
+    # yield z
     # z |= y
-    # yield x, y, z
+    # yield z
     # z ^= y
-    # yield x, y, z
+    # yield z
     # z <<= y
-    # yield x, y, z
+    # yield z
     # z >>= y
-    # yield x, y, z
+    # yield z
 
     # # Identity and membership operators
-    # yield x, y, x is y
-    # yield x, y, x is not y
-    # yield x, y, x in [y, z]
-    # yield x, y, x not in [y, z]
+    # yield x is y
+    # yield x is not y
+    # yield x in [y, z]
+    # yield x not in [y, z]
 
 
 def rectangle_filled(s_x, s_y, height, width):

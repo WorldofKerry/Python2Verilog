@@ -5,6 +5,7 @@ import ast as pyast
 import itertools
 import logging
 from typing import Collection, Iterable, Literal, Optional, overload
+import warnings
 
 from python2verilog import ir
 from python2verilog.utils.typed import guard, typed_list, typed_strict
@@ -24,7 +25,7 @@ class GeneratorFunc:
             lvalue=self._context.state_var,
             rvalue=self._context.state_var,
         )
-    
+
     def create_root(self):
         return self._parse_func()
 
@@ -84,9 +85,17 @@ class GeneratorFunc:
             return self._parse_ifelse(
                 ifelse=stmt, prefix=prefix, breaks=breaks, continues=continues
             )
-        return ir.DoneNode(unique_id=str(self._context.done_state)), [
-            self.UNDEFINED_EDGE
-        ]
+        warnings.warn(f"Unparseable stmt {pyast.dump(stmt)}")
+        dummy = ir.AssignNode(
+            unique_id=prefix,
+            name="dummy",
+            lvalue=self._context.state_var,
+            rvalue=self._context.state_var,
+            child=ir.ClockedEdge(
+                unique_id=f"{prefix}_e",
+            ),
+        )
+        return dummy, [dummy.child]
 
     def _parse_stmts(
         self,
@@ -133,7 +142,7 @@ class GeneratorFunc:
         )
         done_edge = ir.ClockedEdge(unique_id=f"{prefix}_done_e")
         while_head = ir.IfElseNode(
-            unique_id=f"{prefix}_while_test",
+            unique_id=f"{prefix}_while",
             condition=self._parse_expression(whil.test),
             true_edge=ir.ClockedEdge(unique_id=f"{prefix}_body_e", child=body_head),
             false_edge=done_edge,
@@ -153,7 +162,7 @@ class GeneratorFunc:
     ):
         then_head, then_ends = self._parse_stmts(
             stmts=ifelse.body,
-            prefix=f"{prefix}_ifelse_test",
+            prefix=f"{prefix}_then",
             breaks=breaks,
             continues=continues,
         )
@@ -162,7 +171,7 @@ class GeneratorFunc:
         if ifelse.orelse:
             else_head, else_ends = self._parse_stmts(
                 stmts=ifelse.orelse,
-                prefix=f"{prefix}_while",
+                prefix=f"{prefix}_else",
                 breaks=breaks,
                 continues=continues,
             )

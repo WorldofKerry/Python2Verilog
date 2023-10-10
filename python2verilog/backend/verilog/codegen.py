@@ -589,7 +589,6 @@ class CaseBuilder:
                     comment=vertex.unique_id if self.config.add_debug_comments else "",
                 )
             )
-
         else:
             raise TypeError(type(vertex))
 
