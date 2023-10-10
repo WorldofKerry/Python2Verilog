@@ -305,6 +305,20 @@ class GeneratorFunc:
     def parse_assign(self, assign: pyast.Assign, prefix: str):
         """
         <target0, target1, ...> = <value>;
+        a, b = b, a + b
+
+        target value visitor
+        a -> b
+        b -> a + b
+        
+        create assign nodes
+        a = b
+        b = a + b
+        
+        weave
+        a = b 
+          -> b = a + b
+            -> None
         """
         assert len(assign.targets) == 1
         targets, values = zip(
