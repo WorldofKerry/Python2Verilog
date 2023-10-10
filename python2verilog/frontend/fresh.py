@@ -141,8 +141,10 @@ class GeneratorFunc:
         )
         for cont in continues:
             cont.child = while_head
+        for end in ends:
+            end.child = while_head
         print(f"prop break {breaks}")
-        return while_head, [done_edge, *breaks, *ends]
+        return while_head, [done_edge, *breaks]
 
     def parse_ifelse(
         self,
@@ -153,7 +155,7 @@ class GeneratorFunc:
     ):
         then_head, then_ends = self.parse_stmts(
             stmts=ifelse.body,
-            prefix=f"{prefix}_while",
+            prefix=f"{prefix}_ifelse",
             breaks=breaks,
             continues=continues,
         )
