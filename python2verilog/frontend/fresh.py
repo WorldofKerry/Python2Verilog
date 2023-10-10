@@ -149,6 +149,98 @@ class GeneratorFunc:
 
         return body_head, prev_tails
 
+    def _parse_assign_to_call(
+        self, assign: pyast.Assign, prefix: str
+    ) -> tuple[ir.BasicElement, ir.BasicElement]:
+        """
+        instance = func(args, ...)
+        """
+        assert isinstance(assign.value, pyast.Call)
+        assert len(assign.targets) == 1
+        target = assign.targets[0]
+        assert isinstance(target, pyast.Name)
+
+        def create_instance(caller_cxt: ir.Context):
+            # Figure out target name
+            target_name = target.id
+
+            # Figure out func being called
+            func = assign.value.func
+            assert guard(func, pyast.Name)
+            func_name = func.id
+
+            # Get context of generator function being called
+            callee_cxt = caller_cxt.namespace[func_name]
+
+            # Create an instance of that generator
+            instance = callee_cxt.create_instance(target_name)
+
+            # Add instance to own context
+            caller_cxt.instances[target_name] = instance
+
+        create_instance(self._context)
+        inst = self._context.instances[target.id]
+
+        def unique_node_gen():
+            counter = 0
+            while True:
+                yield f"{prefix}_call_{counter}"
+                counter += 1
+
+        def unique_edge_gen():
+            counter = 0
+            while True:
+                yield f"{prefix}_call_{counter}_e"
+                counter += 1
+
+        unique_node = unique_node_gen()
+        unique_edge = unique_edge_gen()
+
+        # Nessessary for exclusivity
+        head = ir.AssignNode(
+            unique_id=next(unique_node),
+            lvalue=inst.signals.ready,
+            rvalue=ir.UInt(0),
+        )
+
+        node: ir.BasicElement = head
+
+        node.child = ir.NonClockedEdge(
+            unique_id=next(unique_edge),
+        )
+        node = node.child
+
+        node.child = ir.AssignNode(
+            unique_id=next(unique_node),
+            lvalue=inst.signals.start,
+            rvalue=ir.UInt(1),
+        )
+        node = node.child
+
+        assert isinstance(assign.value, pyast.Call)
+
+        arguments = list(map(self._parse_expression, assign.value.args))
+
+        assert len(arguments) == len(inst.inputs)
+
+        head, tail = self._weave_nonclocked_edges(
+            self._create_assign_nodes(inst.inputs, arguments, prefix),
+            f"{prefix}_e",
+            last_edge=True,
+        )
+        # for arg, param in zip(arguments, inst.inputs):
+        #     node.child = ir.NonClockedEdge(unique_id=next(unique_edge))
+        #     node = node.child
+        #     node.child = ir.AssignNode(
+        #         unique_id=next(unique_node),
+        #         lvalue=param,
+        #         rvalue=arg,
+        #     )
+        #     node = node.child
+
+        # raise TypeError(f"{type(node)}")
+        return head, [tail]
+
     def _parse_while(self, whil: pyast.While, prefix: str):
         breaks, continues = [], []
         body_head, ends = self._parse_stmts(
@@ -229,6 +321,7 @@ class GeneratorFunc:
         else:
             raise TypeError(f"Expected tuple {type(yiel.value)} {pyast.dump(yiel)}")
 
+        self._context.validate()
         # pylint: disable=unpacking-non-sequence
         head, tail = self._weave_nonclocked_edges(
             self._create_assign_nodes(self._context.output_vars, stmts, prefix),
@@ -344,6 +437,9 @@ class GeneratorFunc:
           -> b = a + b
             -> None
         """
+        if isinstance(assign.value, pyast.Call):
+            return self._parse_assign_to_call(assign=assign, prefix=prefix)
+
         assert len(assign.targets) == 1
         targets, values = zip(
             *self._target_value_visitor(assign.targets[0], assign.value)
