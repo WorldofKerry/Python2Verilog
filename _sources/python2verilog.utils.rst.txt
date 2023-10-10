@@ -4,14 +4,6 @@ python2verilog.utils package
 Submodules
 ----------
 
-python2verilog.utils.assertions module
---------------------------------------
-
-.. automodule:: python2verilog.utils.assertions
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 python2verilog.utils.cytoscape module
 -------------------------------------
 
@@ -56,6 +48,30 @@ python2verilog.utils.lines module
 ---------------------------------
 
 .. automodule:: python2verilog.utils.lines
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+python2verilog.utils.mit\_license module
+----------------------------------------
+
+.. automodule:: python2verilog.utils.mit_license
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+python2verilog.utils.peek\_counter module
+-----------------------------------------
+
+.. automodule:: python2verilog.utils.peek_counter
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+python2verilog.utils.typed module
+---------------------------------
+
+.. automodule:: python2verilog.utils.typed
    :members:
    :undoc-members:
    :show-inheritance:
