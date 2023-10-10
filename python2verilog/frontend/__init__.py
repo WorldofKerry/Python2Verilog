@@ -2,4 +2,4 @@
 Python to IR Parsers
 """
 
-from .generator import FromGenerator
+from .fresh import GeneratorFunc

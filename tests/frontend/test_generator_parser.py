@@ -14,7 +14,7 @@ from python2verilog import (
     namespace_to_verilog,
     verilogify,
 )
-from python2verilog.frontend import FromGenerator
+from python2verilog.frontend.fresh import GeneratorFunc
 from python2verilog.ir import Context, create_networkx_adjacency_list
 
 
@@ -46,7 +46,7 @@ class TestGenerator2Graph(unittest.TestCase):
         target: ast.Tuple = assign.targets[0]
         value: ast.Tuple = assign.value
 
-        result = FromGenerator(ir.Context.from_validated())._target_value_visitor(
+        result = GeneratorFunc(ir.Context.from_validated())._target_value_visitor(
             target, value
         )
 
@@ -62,7 +62,7 @@ class TestGenerator2Graph(unittest.TestCase):
         value: ast.Tuple = assign.value
 
         with self.assertRaises(TypeError):
-            result = FromGenerator(ir.Context.from_validated())._target_value_visitor(
+            result = GeneratorFunc(ir.Context.from_validated())._target_value_visitor(
                 target, value
             )
             list(result)

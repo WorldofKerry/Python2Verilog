@@ -16,7 +16,6 @@ class GeneratorFunc:
     """
 
     def __init__(self, context: ir.Context) -> None:
-        context.validate()
         self._context = context
 
     def create_root(self):
