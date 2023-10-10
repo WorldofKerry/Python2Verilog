@@ -4,8 +4,8 @@ The freshest in-order generator parser
 import ast as pyast
 import itertools
 import logging
-from typing import Collection, Iterable, Literal, Optional, overload
 import warnings
+from typing import Collection, Iterable, Literal, Optional, overload
 
 from python2verilog import ir
 from python2verilog.utils.typed import guard, typed_list, typed_strict
@@ -85,7 +85,24 @@ class GeneratorFunc:
             return self._parse_ifelse(
                 ifelse=stmt, prefix=prefix, breaks=breaks, continues=continues
             )
+        if isinstance(stmt, pyast.AugAssign):
+            assert isinstance(
+                stmt.target, pyast.Name
+            ), "Error: only supports single target"
+            edge = ir.ClockedEdge(unique_id=f"{prefix}_e")
+            lvalue = self._parse_expression(stmt.target)
+            assert guard(lvalue, ir.Var)
+            cur_node = ir.AssignNode(
+                unique_id=prefix,
+                lvalue=lvalue,
+                rvalue=self._parse_expression(
+                    pyast.BinOp(stmt.target, stmt.op, stmt.value)
+                ),
+                child=edge,
+            )
+            return cur_node, [edge]
         warnings.warn(f"Unparseable stmt {pyast.dump(stmt)}")
+        logging.warning(f"Unparseable stmt {pyast.dump(stmt)}")
         dummy = ir.AssignNode(
             unique_id=prefix,
             name="dummy",
@@ -412,7 +429,7 @@ class GeneratorFunc:
             raise TypeError(
                 "Error: unknown operator", type(node.ops[0]), pyast.dump(node.ops[0])
             )
-        return ir.BinOp(
+        return ir.UBinOp(
             left=self._parse_expression(node.left),
             oper=operator,
             right=self._parse_expression(node.comparators[0]),
