@@ -4,7 +4,6 @@ The freshest in-order generator parser
 import ast as pyast
 import itertools
 import logging
-import warnings
 from typing import Collection, Iterable, Optional
 
 from python2verilog import ir
@@ -102,18 +101,20 @@ class GeneratorFunc:
                 child=edge,
             )
             return cur_node, [edge]
-        warnings.warn(f"Unparseable stmt {pyast.dump(stmt)}")
-        logging.warning(f"Unparseable stmt {pyast.dump(stmt)}")
-        dummy = ir.AssignNode(
-            unique_id=prefix,
-            name="dummy",
-            lvalue=self._context.state_var,
-            rvalue=self._context.state_var,
-            child=ir.ClockedEdge(
-                unique_id=f"{prefix}_e",
-            ),
-        )
-        return dummy, [dummy.child]
+        if isinstance(stmt, pyast.Constant):
+            # Probably a triple-quote comment
+            assert guard(stmt.value, str)
+            dummy = ir.AssignNode(
+                unique_id=prefix,
+                name="dummy",
+                lvalue=self._context.state_var,
+                rvalue=self._context.state_var,
+                child=ir.ClockedEdge(
+                    unique_id=f"{prefix}_e",
+                ),
+            )
+            return dummy, [dummy.child]
+        raise TypeError(f"Unparseable stmt {pyast.dump(stmt)}")
 
     def _parse_stmts(
         self,
