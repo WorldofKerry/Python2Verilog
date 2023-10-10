@@ -233,7 +233,6 @@ class GeneratorFunc:
         assign_head, tail = self._weave_nonclocked_edges(
             self._create_assign_nodes(inst.inputs, arguments, prefix),
             f"{prefix}_e",
-            last_edge=False,
         )
         node.child = assign_head
         tail.child = ir.ClockedEdge(
@@ -443,8 +442,8 @@ class GeneratorFunc:
         head, tail = self._weave_nonclocked_edges(
             self._create_assign_nodes(self._context.output_vars, stmts, prefix),
             f"{prefix}_e",
-            last_edge=True,
         )
+        tail = tail.child  # get last nonclocked edge
         tail.child = ir.AssignNode(
             unique_id=f"{prefix}_valid",
             lvalue=self._context.signals.valid,
@@ -491,34 +490,19 @@ class GeneratorFunc:
                 unique_id=f"{prefix}_assign{counter}", lvalue=var, rvalue=expr
             )
 
-    @overload
     @staticmethod
     def _weave_nonclocked_edges(
-        nodes: Iterable[ir.BasicElement], prefix: str, last_edge: Literal[True]
-    ) -> tuple[ir.AssignNode, ir.NonClockedEdge]:
-        ...
-
-    @overload
-    @staticmethod
-    def _weave_nonclocked_edges(
-        nodes: Iterable[ir.BasicElement], prefix: str, last_edge: Literal[False]
-    ) -> tuple[ir.AssignNode, ir.AssignNode]:
-        ...
-
-    @staticmethod
-    def _weave_nonclocked_edges(nodes, prefix, last_edge):
+        nodes: Iterable[ir.BasicNode], prefix: str
+    ) -> tuple[ir.BasicNode, ir.BasicNode]:
         """
         Weaves nodes with nonclocked edges.
 
-        If last_edge, then last node is an edge,
-        else last node is last assign node.
-
-        :return: (first assign node, last node)
+        :return: (first assign node, last assign node)
         """
         counters = itertools.count()
         head: Optional[ir.BasicElement] = None
         prev: Optional[ir.BasicElement] = None
-        node: ir.BasicElement = ir.BasicElement(unique_id="UNDEFINED")
+        node: ir.BasicElement = ir.BasicElement(unique_id="DUMMY")
         for node, counter in zip(nodes, counters):
             if not head:
                 head = node
@@ -528,12 +512,8 @@ class GeneratorFunc:
                 unique_id=f"{prefix}_{counter}",
             )
             prev = node.child
-        if last_edge:
-            assert guard(head, ir.AssignNode)
-            assert guard(prev, ir.NonClockedEdge)
-            return head, prev
-        assert guard(head, ir.AssignNode)
-        assert guard(node, ir.AssignNode)
+        assert guard(head, ir.BasicNode)
+        assert guard(node, ir.BasicNode)
         return head, node
 
     def _parse_assign(self, assign: pyast.Assign, prefix: str):
@@ -566,7 +546,6 @@ class GeneratorFunc:
         head, tail = self._weave_nonclocked_edges(
             self._create_assign_nodes(targets, values, prefix),
             f"{prefix}_e",
-            last_edge=False,
         )
         logging.debug("Assign Head %s", list(head.visit_nonclocked()))
 
