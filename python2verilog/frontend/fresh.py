@@ -502,7 +502,7 @@ class GeneratorFunc:
         """
         Weaves nodes with nonclocked edges.
 
-        :return: (first assign node, last assign node)
+        :return: (first basic node, last basic node)
         """
         counters = itertools.count()
         head: Optional[ir.BasicNode] = None
