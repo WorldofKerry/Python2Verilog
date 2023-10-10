@@ -39,11 +39,13 @@ class TestFresh(unittest.TestCase):
         #     child=ir.NonClockedEdge(unique_id="DUMMY", child=result),
         # )
         case = CaseBuilder(result, ir.Context.from_validated()).get_case()
-        print(str(case))
+        with open("./new.sv", mode="w") as f:
+            f.write(str(case))
 
         root, cxt = FromGenerator(get_context(my_func)).create_root()
         case = CaseBuilder(root, cxt).get_case()
-        print(str(case))
+        with open("./old.sv", mode="w") as f:
+            f.write(str(case))
 
         # module, testbench = namespace_to_verilog(ns)
 
