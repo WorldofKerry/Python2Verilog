@@ -17,15 +17,16 @@ class GeneratorFunc:
 
     UNDEFINED_EDGE = ir.ClockedEdge(unique_id="UNDEFINED_EDGE")
 
-    def __init__(self, func: pyast.FunctionDef, context: ir.Context) -> None:
-        self.ast = typed_strict(func, pyast.FunctionDef)
+    def __init__(self, context: ir.Context) -> None:
         self._context = context
-        self._context._output_vars = [ir.Var("Numero_Uno")]
         self.UNDEFINED_NODE = ir.AssignNode(
             unique_id="UNDEFINED_NODE",
             lvalue=self._context.state_var,
             rvalue=self._context.state_var,
         )
+    
+    def create_root(self):
+        return self._parse_func()
 
     def _parse_func(self, prefix: str = "_state"):
         """
@@ -33,12 +34,13 @@ class GeneratorFunc:
         """
         breaks, continues = [], []
         body_head, prev_tails = self._parse_stmts(
-            self.ast.body, prefix=prefix, breaks=breaks, continues=continues
+            self._context.py_ast.body, prefix=prefix, breaks=breaks, continues=continues
         )
         assert len(breaks) == 0
         assert len(continues) == 0
         for tail in prev_tails:
             tail.child = ir.DoneNode(unique_id="_state_done")
+        self._context.entry_state = ir.State(body_head.unique_id)
 
         return body_head, self._context
 
@@ -56,7 +58,6 @@ class GeneratorFunc:
         :param brk: list of edges that connect to end of break stmt
         :param cntnue: where to connect continue edges
         """
-        print(f"parse_stmt breaks {id(breaks)} {pyast.dump(stmt)}")
         if isinstance(stmt, pyast.Assign):
             return self._parse_assign(assign=stmt, prefix=prefix)
         if isinstance(stmt, pyast.Yield):
@@ -105,7 +106,6 @@ class GeneratorFunc:
         prev_tails: Optional[list[ir.Edge]] = None
         counter = itertools.count()
 
-        print(f"parse_stmts breaks {id(breaks)}")
         for stmt in stmts:
             head_node, tail_edges = self._parse_stmt(
                 stmt=stmt,
@@ -125,7 +125,6 @@ class GeneratorFunc:
 
     def _parse_while(self, whil: pyast.While, prefix: str):
         breaks, continues = [], []
-        print(f"head breaks {id(breaks)}")
         body_head, ends = self._parse_stmts(
             stmts=whil.body,
             prefix=f"{prefix}_while",
@@ -134,7 +133,7 @@ class GeneratorFunc:
         )
         done_edge = ir.ClockedEdge(unique_id=f"{prefix}_done_e")
         while_head = ir.IfElseNode(
-            unique_id=f"{prefix}_test",
+            unique_id=f"{prefix}_while_test",
             condition=self._parse_expression(whil.test),
             true_edge=ir.ClockedEdge(unique_id=f"{prefix}_body_e", child=body_head),
             false_edge=done_edge,
@@ -143,7 +142,6 @@ class GeneratorFunc:
             cont.child = while_head
         for end in ends:
             end.child = while_head
-        print(f"prop break {breaks}")
         return while_head, [done_edge, *breaks]
 
     def _parse_ifelse(
@@ -155,7 +153,7 @@ class GeneratorFunc:
     ):
         then_head, then_ends = self._parse_stmts(
             stmts=ifelse.body,
-            prefix=f"{prefix}_ifelse",
+            prefix=f"{prefix}_ifelse_test",
             breaks=breaks,
             continues=continues,
         )
