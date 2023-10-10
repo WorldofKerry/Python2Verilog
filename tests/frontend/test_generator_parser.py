@@ -93,14 +93,14 @@ class TestGenerator2Graph(unittest.TestCase):
         root, cxt = GeneratorFunc(get_context(my_func)).create_root()
         case = CaseBuilder(root, ir.Context.empty_valid()).get_case()
         sv = verilog.CodeGen(root, cxt).get_module_str()
-        with open("./new.sv", mode="w") as f:
-            f.write(str(sv))
+        # with open("./new.sv", mode="w") as f:
+        #     f.write(str(sv))
 
         root, cxt = GeneratorFunc(get_context(my_func)).create_root()
         case = CaseBuilder(root, cxt).get_case()
         sv = verilog.CodeGen(root, cxt).get_module_str()
-        with open("./old.sv", mode="w") as f:
-            f.write(str(sv))
+        # with open("./old.sv", mode="w") as f:
+        #     f.write(str(sv))
 
         # module, testbench = namespace_to_verilog(ns)
 
