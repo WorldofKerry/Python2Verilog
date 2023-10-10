@@ -5,7 +5,9 @@ import ast as pyast
 import copy
 import itertools
 import logging
-from typing import Collection, Iterable, Optional, TypeAlias, TypeVar, cast
+from typing import Collection, Iterable, Optional, TypeVar, cast
+
+from typing_extensions import TypeAlias
 
 from python2verilog import ir
 from python2verilog.utils.typed import guard, typed_list, typed_strict
