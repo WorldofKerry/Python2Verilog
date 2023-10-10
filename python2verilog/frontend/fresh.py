@@ -4,7 +4,7 @@ The freshest in-order generator parser
 import ast as pyast
 import itertools
 import logging
-from typing import Collection, Iterable, Optional
+from typing import Collection, Iterable, Optional, TypeVar, cast
 
 from python2verilog import ir
 from python2verilog.utils.typed import guard, typed_list, typed_strict
@@ -493,17 +493,19 @@ class GeneratorFunc:
                 unique_id=f"{prefix}_assign{counter}", lvalue=var, rvalue=expr
             )
 
+    _BasicNodeType = TypeVar("_BasicNodeType", bound=ir.BasicNode)
+
     @staticmethod
     def _weave_nonclocked_edges(
-        nodes: Iterable[ir.BasicNode], prefix: str
-    ) -> tuple[ir.BasicNode, ir.BasicNode]:
+        nodes: Iterable[_BasicNodeType], prefix: str
+    ) -> tuple[_BasicNodeType, _BasicNodeType]:
         """
         Weaves nodes with nonclocked edges.
 
         :return: (first assign node, last assign node)
         """
         counters = itertools.count()
-        head: Optional[ir.BasicElement] = None
+        head: Optional[ir.BasicNode] = None
         prev: Optional[ir.BasicElement] = None
         node: ir.BasicElement = ir.BasicElement(unique_id="DUMMY")
         for node, counter in zip(nodes, counters):
@@ -515,9 +517,7 @@ class GeneratorFunc:
                 unique_id=f"{prefix}_{counter}",
             )
             prev = node.child
-        assert guard(head, ir.BasicNode)
-        assert guard(node, ir.BasicNode)
-        return head, node
+        return cast(GeneratorFunc._BasicNodeType, head), node
 
     def _parse_assign(self, assign: pyast.Assign, prefix: str):
         """
