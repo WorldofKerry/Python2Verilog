@@ -5,7 +5,7 @@ import ast as pyast
 import itertools
 import logging
 import warnings
-from typing import Collection, Iterable, Literal, Optional, overload
+from typing import Collection, Iterable, Optional
 
 from python2verilog import ir
 from python2verilog.utils.typed import guard, typed_list, typed_strict
@@ -16,25 +16,22 @@ class GeneratorFunc:
     In-order generator function parser
     """
 
-    UNDEFINED_EDGE = ir.ClockedEdge(unique_id="UNDEFINED_EDGE")
-
     def __init__(self, context: ir.Context) -> None:
         context.validate()
         self._context = context
-        self.UNDEFINED_NODE = ir.AssignNode(
-            unique_id="UNDEFINED_NODE",
-            lvalue=self._context.state_var,
-            rvalue=self._context.state_var,
-        )
 
     def create_root(self):
+        """
+        Wrapper for old api
+        """
         return self._parse_func()
 
     def _parse_func(self, prefix: str = "_state"):
         """
         Parses
         """
-        breaks, continues = [], []
+        breaks: list[ir.Edge] = []
+        continues: list[ir.Edge] = []
         body_head, prev_tails = self._parse_stmts(
             self._context.py_ast.body, prefix=prefix, breaks=breaks, continues=continues
         )
@@ -48,7 +45,7 @@ class GeneratorFunc:
 
     def _parse_stmt(
         self,
-        stmt: pyast.stmt,
+        stmt: pyast.AST,
         breaks: list[ir.Edge],
         continues: list[ir.Edge],
         prefix: str,
@@ -57,8 +54,8 @@ class GeneratorFunc:
         Parses a statement
 
         :param stmt: statement to-be-parsed
-        :param brk: list of edges that connect to end of break stmt
-        :param cntnue: where to connect continue edges
+        :param breaks: list of edges that connect to end of break stmt
+        :param continues: where to connect continue edges
         """
         if isinstance(stmt, pyast.Assign):
             return self._parse_assign(assign=stmt, prefix=prefix)
@@ -80,6 +77,7 @@ class GeneratorFunc:
                     unique_id=f"{prefix}_e",
                 ),
             )
+            assert guard(nothing.child, ir.Edge)
             breaks.append(nothing.child)
             return nothing, []
         if isinstance(stmt, pyast.If):
@@ -144,7 +142,7 @@ class GeneratorFunc:
             )
             if not body_head:
                 body_head = head_node
-            if prev_tails:
+            if prev_tails is not None:
                 for tail in prev_tails:
                     tail.child = head_node
             prev_tails = typed_list(tail_edges, ir.Edge)
@@ -154,7 +152,7 @@ class GeneratorFunc:
 
     def _parse_assign_to_call(
         self, assign: pyast.Assign, prefix: str
-    ) -> tuple[ir.BasicElement, ir.BasicElement]:
+    ) -> tuple[ir.BasicElement, list[ir.Edge]]:
         """
         instance = func(args, ...)
         """
@@ -168,6 +166,7 @@ class GeneratorFunc:
             target_name = target.id
 
             # Figure out func being called
+            assert guard(assign.value, pyast.Call)
             func = assign.value.func
             assert guard(func, pyast.Name)
             func_name = func.id
@@ -238,7 +237,6 @@ class GeneratorFunc:
         tail.child = ir.ClockedEdge(
             unique_id=next(unique_edge),
         )
-
         return head, [tail.child]
 
     @staticmethod
@@ -253,8 +251,9 @@ class GeneratorFunc:
         """
         For ... in ...:
         """
-        # pylint: disable=too-many-local
-        breaks, continues = [], []
+        # pylint: disable=too-many-locals
+        breaks: list[ir.Edge] = []
+        continues: list[ir.Edge] = []
         target = stmt.iter
         assert isinstance(target, pyast.Name)
         if target.id not in self._context.instances:
@@ -358,7 +357,8 @@ class GeneratorFunc:
         return head, [to_ready_and_done, *breaks]
 
     def _parse_while(self, whil: pyast.While, prefix: str):
-        breaks, continues = [], []
+        breaks: list[ir.Edge] = []
+        continues: list[ir.Edge] = []
         body_head, ends = self._parse_stmts(
             stmts=whil.body,
             prefix=f"{prefix}_while",
@@ -408,15 +408,16 @@ class GeneratorFunc:
                 false_edge=to_else,
             )
             return ret, [*then_ends, *else_ends]
-        else:
-            to_else = ir.NonClockedEdge(unique_id=f"{prefix}_else_e")
-            ret = ir.IfElseNode(
-                unique_id=prefix,
-                condition=self._parse_expression(ifelse.test),
-                true_edge=to_then,
-                false_edge=to_else,
-            )
-            return ret, [*then_ends, to_else]
+
+        # No else
+        to_else = ir.NonClockedEdge(unique_id=f"{prefix}_else_e")
+        ret = ir.IfElseNode(
+            unique_id=prefix,
+            condition=self._parse_expression(ifelse.test),
+            true_edge=to_then,
+            false_edge=to_else,
+        )
+        return ret, [*then_ends, to_else]
 
     @staticmethod
     def pprint(elem: ir.Element):
@@ -425,7 +426,7 @@ class GeneratorFunc:
         """
         return str(list(elem.visit_nonclocked()))
 
-    def _parse_yield(self, yiel: pyast.Assign, prefix: str):
+    def _parse_yield(self, yiel: pyast.Yield, prefix: str):
         """
         Parse yield
         yield <value>
@@ -443,14 +444,15 @@ class GeneratorFunc:
             self._create_assign_nodes(self._context.output_vars, stmts, prefix),
             f"{prefix}_e",
         )
-        tail = tail.child  # get last nonclocked edge
-        tail.child = ir.AssignNode(
+        assert guard(tail.child, ir.Edge)
+        tail_edge: ir.Edge = tail.child  # get last nonclocked edge
+        tail_edge.child = ir.AssignNode(
             unique_id=f"{prefix}_valid",
             lvalue=self._context.signals.valid,
             rvalue=ir.UInt(1),
             child=ir.ClockedEdge(unique_id=f"{prefix}_e"),
         )
-        return head, [tail.child.child]
+        return head, [tail_edge.child.child]
 
     def _target_value_visitor(self, target: pyast.expr, value: pyast.expr):
         """
@@ -476,7 +478,7 @@ class GeneratorFunc:
 
     @staticmethod
     def _create_assign_nodes(
-        variables: Collection[ir.ExclusiveVar],
+        variables: Collection[ir.Var],
         exprs: Collection[ir.Expression],
         prefix: str,
     ) -> Iterable[ir.AssignNode]:

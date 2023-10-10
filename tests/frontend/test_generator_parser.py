@@ -21,7 +21,7 @@ from python2verilog.ir import Context, create_networkx_adjacency_list
 class TestGenerator2Graph(unittest.TestCase):
     def blank_generator():
         yield 0
-    
+
     def test_multi_assign(self):
         ns = {}
 
