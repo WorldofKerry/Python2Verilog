@@ -5,14 +5,8 @@ name: docs
 on:
   push:
     branches: ["main"]
-    paths: "docs/**"
   pull_request:
     branches: ["main"]
-    paths: "docs/**"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
-  cancel-in-progress: true
 
 jobs:
   docs:
