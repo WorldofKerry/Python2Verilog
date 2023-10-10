@@ -46,7 +46,7 @@ class TestGenerator2Graph(unittest.TestCase):
         target: ast.Tuple = assign.targets[0]
         value: ast.Tuple = assign.value
 
-        result = GeneratorFunc(ir.Context.from_validated())._target_value_visitor(
+        result = GeneratorFunc(ir.Context.empty_valid())._target_value_visitor(
             target, value
         )
 
@@ -62,7 +62,7 @@ class TestGenerator2Graph(unittest.TestCase):
         value: ast.Tuple = assign.value
 
         with self.assertRaises(TypeError):
-            result = GeneratorFunc(ir.Context.from_validated())._target_value_visitor(
+            result = GeneratorFunc(ir.Context.empty_valid())._target_value_visitor(
                 target, value
             )
             list(result)

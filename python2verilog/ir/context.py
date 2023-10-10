@@ -76,7 +76,7 @@ class Context(GenericReprAndStr):
     instances: dict[str, Instance] = field(default_factory=dict)  # generator instances
 
     @classmethod
-    def from_validated(cls):
+    def empty_valid(cls):
         """
         Creates an empty but valid context for testing purposes
         """
