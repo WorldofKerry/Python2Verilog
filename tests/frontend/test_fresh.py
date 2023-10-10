@@ -32,8 +32,8 @@ class TestFresh(unittest.TestCase):
         func_tree = full_tree.body[0]
         print(pyast.dump(func_tree, indent=2))
 
-        result = GeneratorFunc(func_tree).parse_func()
-        case = CaseBuilder(result, ir.Context.from_validated()).get_case()
+        result, cxt = GeneratorFunc(func_tree, get_context(my_func))._parse_func()
+        case = CaseBuilder(result, cxt).get_case()
         # dummy = ir.BasicNode(
         #     unique_id="DUMMMMY",
         #     child=ir.NonClockedEdge(unique_id="DUMMY", child=result),

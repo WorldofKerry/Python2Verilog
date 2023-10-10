@@ -17,9 +17,9 @@ class GeneratorFunc:
 
     UNDEFINED_EDGE = ir.ClockedEdge(unique_id="UNDEFINED_EDGE")
 
-    def __init__(self, func: pyast.FunctionDef) -> None:
+    def __init__(self, func: pyast.FunctionDef, context: ir.Context) -> None:
         self.ast = typed_strict(func, pyast.FunctionDef)
-        self._context = ir.Context.from_validated()
+        self._context = context
         self._context._output_vars = [ir.Var("Numero_Uno")]
         self.UNDEFINED_NODE = ir.AssignNode(
             unique_id="UNDEFINED_NODE",
@@ -27,12 +27,12 @@ class GeneratorFunc:
             rvalue=self._context.state_var,
         )
 
-    def parse_func(self, prefix: str = "_state"):
+    def _parse_func(self, prefix: str = "_state"):
         """
         Parses
         """
         breaks, continues = [], []
-        body_head, prev_tails = self.parse_stmts(
+        body_head, prev_tails = self._parse_stmts(
             self.ast.body, prefix=prefix, breaks=breaks, continues=continues
         )
         assert len(breaks) == 0
@@ -40,9 +40,9 @@ class GeneratorFunc:
         for tail in prev_tails:
             tail.child = ir.DoneNode(unique_id="_state_done")
 
-        return body_head
+        return body_head, self._context
 
-    def parse_stmt(
+    def _parse_stmt(
         self,
         stmt: pyast.stmt,
         breaks: list[ir.Edge],
@@ -58,15 +58,15 @@ class GeneratorFunc:
         """
         print(f"parse_stmt breaks {id(breaks)} {pyast.dump(stmt)}")
         if isinstance(stmt, pyast.Assign):
-            return self.parse_assign(assign=stmt, prefix=prefix)
+            return self._parse_assign(assign=stmt, prefix=prefix)
         if isinstance(stmt, pyast.Yield):
-            return self.parse_yield(yiel=stmt, prefix=prefix)
+            return self._parse_yield(yiel=stmt, prefix=prefix)
         if isinstance(stmt, pyast.Expr):
-            return self.parse_stmt(
+            return self._parse_stmt(
                 stmt=stmt.value, breaks=breaks, continues=continues, prefix=prefix
             )
         if isinstance(stmt, pyast.While):
-            return self.parse_while(whil=stmt, prefix=prefix)
+            return self._parse_while(whil=stmt, prefix=prefix)
         if isinstance(stmt, pyast.Break):
             nothing = ir.AssignNode(
                 unique_id=prefix,
@@ -80,14 +80,14 @@ class GeneratorFunc:
             breaks.append(nothing.child)
             return nothing, []
         if isinstance(stmt, pyast.If):
-            return self.parse_ifelse(
+            return self._parse_ifelse(
                 ifelse=stmt, prefix=prefix, breaks=breaks, continues=continues
             )
         return ir.DoneNode(unique_id=str(self._context.done_state)), [
             self.UNDEFINED_EDGE
         ]
 
-    def parse_stmts(
+    def _parse_stmts(
         self,
         stmts: list[pyast.stmt],
         prefix: str,
@@ -107,7 +107,7 @@ class GeneratorFunc:
 
         print(f"parse_stmts breaks {id(breaks)}")
         for stmt in stmts:
-            head_node, tail_edges = self.parse_stmt(
+            head_node, tail_edges = self._parse_stmt(
                 stmt=stmt,
                 breaks=breaks,
                 continues=continues,
@@ -123,10 +123,10 @@ class GeneratorFunc:
 
         return body_head, prev_tails
 
-    def parse_while(self, whil: pyast.While, prefix: str):
+    def _parse_while(self, whil: pyast.While, prefix: str):
         breaks, continues = [], []
         print(f"head breaks {id(breaks)}")
-        body_head, ends = self.parse_stmts(
+        body_head, ends = self._parse_stmts(
             stmts=whil.body,
             prefix=f"{prefix}_while",
             breaks=breaks,
@@ -135,7 +135,7 @@ class GeneratorFunc:
         done_edge = ir.ClockedEdge(unique_id=f"{prefix}_done_e")
         while_head = ir.IfElseNode(
             unique_id=f"{prefix}_test",
-            condition=self.__parse_expression(whil.test),
+            condition=self._parse_expression(whil.test),
             true_edge=ir.ClockedEdge(unique_id=f"{prefix}_body_e", child=body_head),
             false_edge=done_edge,
         )
@@ -146,14 +146,14 @@ class GeneratorFunc:
         print(f"prop break {breaks}")
         return while_head, [done_edge, *breaks]
 
-    def parse_ifelse(
+    def _parse_ifelse(
         self,
         ifelse: pyast.If,
         prefix: str,
         breaks: list[ir.Edge],
         continues: list[ir.Edge],
     ):
-        then_head, then_ends = self.parse_stmts(
+        then_head, then_ends = self._parse_stmts(
             stmts=ifelse.body,
             prefix=f"{prefix}_ifelse",
             breaks=breaks,
@@ -162,7 +162,7 @@ class GeneratorFunc:
         to_then = ir.NonClockedEdge(unique_id=f"{prefix}_then_e", child=then_head)
 
         if ifelse.orelse:
-            else_head, else_ends = self.parse_stmts(
+            else_head, else_ends = self._parse_stmts(
                 stmts=ifelse.orelse,
                 prefix=f"{prefix}_while",
                 breaks=breaks,
@@ -171,7 +171,7 @@ class GeneratorFunc:
             to_else = ir.NonClockedEdge(unique_id=f"{prefix}_else_e", child=else_head)
             ret = ir.IfElseNode(
                 unique_id=prefix,
-                condition=self.__parse_expression(ifelse.test),
+                condition=self._parse_expression(ifelse.test),
                 true_edge=to_then,
                 false_edge=to_else,
             )
@@ -180,7 +180,7 @@ class GeneratorFunc:
             to_else = ir.NonClockedEdge(unique_id=f"{prefix}_else_e")
             ret = ir.IfElseNode(
                 unique_id=prefix,
-                condition=self.__parse_expression(ifelse.test),
+                condition=self._parse_expression(ifelse.test),
                 true_edge=to_then,
                 false_edge=to_else,
             )
@@ -193,15 +193,15 @@ class GeneratorFunc:
         """
         return str(list(elem.visit_nonclocked()))
 
-    def parse_yield(self, yiel: pyast.Assign, prefix: str):
+    def _parse_yield(self, yiel: pyast.Assign, prefix: str):
         """
         Parse yield
         yield <value>
         """
         if isinstance(yiel.value, pyast.Tuple):
-            stmts = [self.__parse_expression(c) for c in yiel.value.elts]
+            stmts = [self._parse_expression(c) for c in yiel.value.elts]
         elif isinstance(yiel.value, pyast.expr):
-            stmts = [self.__parse_expression(yiel.value)]
+            stmts = [self._parse_expression(yiel.value)]
         else:
             raise TypeError(f"Expected tuple {type(yiel.value)} {pyast.dump(yiel)}")
 
@@ -237,7 +237,7 @@ class GeneratorFunc:
         elif isinstance(target, pyast.Name):
             if not self._context.is_declared(target.id):
                 self._context.add_global_var(ir.Var(py_name=target.id))
-            yield (ir.Var(target.id), self.__parse_expression(value))
+            yield (ir.Var(target.id), self._parse_expression(value))
         else:
             raise TypeError(f"{pyast.dump(target)} {pyast.dump(value)}")
 
@@ -302,7 +302,7 @@ class GeneratorFunc:
         assert guard(node, ir.AssignNode)
         return head, node
 
-    def parse_assign(self, assign: pyast.Assign, prefix: str):
+    def _parse_assign(self, assign: pyast.Assign, prefix: str):
         """
         <target0, target1, ...> = <value>;
         a, b = b, a + b
@@ -310,13 +310,13 @@ class GeneratorFunc:
         target value visitor
         a -> b
         b -> a + b
-        
+
         create assign nodes
         a = b
         b = a + b
-        
+
         weave
-        a = b 
+        a = b
           -> b = a + b
             -> None
         """
@@ -338,7 +338,7 @@ class GeneratorFunc:
         )
         return head, [tail.child]
 
-    def __parse_expression(self, expr: pyast.AST) -> ir.Expression:
+    def _parse_expression(self, expr: pyast.AST) -> ir.Expression:
         """
         <expression> (e.g. constant, name, subscript, etc., those that return a value)
         """
@@ -347,39 +347,39 @@ class GeneratorFunc:
         if isinstance(expr, pyast.Name):
             return ir.Var(py_name=expr.id)
         if isinstance(expr, pyast.Subscript):
-            return self.__parse_subscript(expr)
+            return self._parse_subscript(expr)
         if isinstance(expr, pyast.BinOp):
-            return self.__parse_binop(expr)
+            return self._parse_binop(expr)
         if isinstance(expr, pyast.UnaryOp):
             if isinstance(expr.op, pyast.USub):
-                return ir.UnaryOp("-", self.__parse_expression(expr.operand))
+                return ir.UnaryOp("-", self._parse_expression(expr.operand))
             raise TypeError(
                 "Error: unexpected unaryop type", type(expr.op), pyast.dump(expr.op)
             )
         if isinstance(expr, pyast.Compare):
-            return self.__parse_compare(expr)
+            return self._parse_compare(expr)
         if isinstance(expr, pyast.BoolOp):
             if isinstance(expr.op, pyast.And):
                 return ir.UBinOp(
-                    self.__parse_expression(expr.values[0]),
+                    self._parse_expression(expr.values[0]),
                     "&&",
-                    self.__parse_expression(expr.values[1]),
+                    self._parse_expression(expr.values[1]),
                 )
         raise TypeError(
             "Error: unexpected expression type", type(expr), pyast.dump(expr)
         )
 
-    def __parse_subscript(self, node: pyast.Subscript) -> ir.Expression:
+    def _parse_subscript(self, node: pyast.Subscript) -> ir.Expression:
         """
         <value>[<slice>]
         Note: built from right to left, e.g. [z] -> [y][z] -> [x][y][z] -> matrix[x][y][z]
         """
         return ir.Expression(
-            f"{self.__parse_expression(node.value).to_string()}\
-                [{self.__parse_expression(node.slice).to_string()}]"
+            f"{self._parse_expression(node.value).to_string()}\
+                [{self._parse_expression(node.slice).to_string()}]"
         )
 
-    def __parse_compare(self, node: pyast.Compare) -> ir.UBinOp:
+    def _parse_compare(self, node: pyast.Compare) -> ir.UBinOp:
         """
         <left> <op> <comparators>
         """
@@ -388,8 +388,8 @@ class GeneratorFunc:
 
         if isinstance(node.ops[0], pyast.Lt):
             return ir.LessThan(
-                self.__parse_expression(node.left),
-                self.__parse_expression(node.comparators[0]),
+                self._parse_expression(node.left),
+                self._parse_expression(node.comparators[0]),
             )
         if isinstance(node.ops[0], pyast.LtE):
             operator = "<="
@@ -406,12 +406,12 @@ class GeneratorFunc:
                 "Error: unknown operator", type(node.ops[0]), pyast.dump(node.ops[0])
             )
         return ir.BinOp(
-            left=self.__parse_expression(node.left),
+            left=self._parse_expression(node.left),
             oper=operator,
-            right=self.__parse_expression(node.comparators[0]),
+            right=self._parse_expression(node.comparators[0]),
         )
 
-    def __parse_binop(self, expr: pyast.BinOp) -> ir.Expression:
+    def _parse_binop(self, expr: pyast.BinOp) -> ir.Expression:
         """
         <left> <op> <right>
 
@@ -419,25 +419,25 @@ class GeneratorFunc:
         """
         if isinstance(expr.op, pyast.Add):
             return ir.Add(
-                self.__parse_expression(expr.left), self.__parse_expression(expr.right)
+                self._parse_expression(expr.left), self._parse_expression(expr.right)
             )
         if isinstance(expr.op, pyast.Sub):
             return ir.Sub(
-                self.__parse_expression(expr.left), self.__parse_expression(expr.right)
+                self._parse_expression(expr.left), self._parse_expression(expr.right)
             )
 
         if isinstance(expr.op, pyast.Mult):
             return ir.Mul(
-                self.__parse_expression(expr.left), self.__parse_expression(expr.right)
+                self._parse_expression(expr.left), self._parse_expression(expr.right)
             )
 
         if isinstance(expr.op, pyast.FloorDiv):
-            left = self.__parse_expression(expr.left)
-            right = self.__parse_expression(expr.right)
+            left = self._parse_expression(expr.left)
+            right = self._parse_expression(expr.right)
             return ir.FloorDiv(left, right)
         if isinstance(expr.op, pyast.Mod):
-            left = self.__parse_expression(expr.left)
-            right = self.__parse_expression(expr.right)
+            left = self._parse_expression(expr.left)
+            right = self._parse_expression(expr.right)
             return ir.Mod(left, right)
         raise TypeError(
             "Error: unexpected binop type", type(expr.op), pyast.dump(expr.op)
