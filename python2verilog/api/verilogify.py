@@ -5,6 +5,7 @@ Decorators
 from __future__ import annotations
 
 import ast
+import copy
 import inspect
 import logging
 import textwrap
@@ -120,9 +121,9 @@ def verilogify(
 
 def get_context(verilogified: FunctionType) -> ir.Context:
     """
-    Gets context from verilogified function
+    Gets a copy of the context from a verilogified function
     """
-    return verilogified._python2verilog_context  # type: ignore # pylint: disable=protected-access
+    return copy.deepcopy(verilogified._python2verilog_context)  # type: ignore # pylint: disable=protected-access
 
 
 def get_original_func(verilogified: FunctionType) -> FunctionType:
