@@ -113,6 +113,19 @@ class GeneratorFunc:
                 ),
             )
             return dummy, [dummy.child]
+        if isinstance(stmt, pyast.Continue):
+            nothing = ir.AssignNode(
+                unique_id=prefix,
+                name="break",
+                lvalue=self._context.state_var,
+                rvalue=self._context.state_var,
+                child=ir.ClockedEdge(
+                    unique_id=f"{prefix}_e",
+                ),
+            )
+            assert guard(nothing.child, ir.Edge)
+            continues.append(nothing.child)
+            return nothing, []
         raise TypeError(f"Unparseable stmt {pyast.dump(stmt)}")
 
     def _parse_stmts(

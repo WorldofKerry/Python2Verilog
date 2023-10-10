@@ -292,3 +292,23 @@ def olympic_logo(mid_x, mid_y, radius):
         coords = circle_lines(x, y, radius)
         for x, y in coords:
             yield x, y, color
+
+
+def break_continue_test():
+    """
+    Testing for break and continue
+    """
+    i = 0
+    while i < 10:
+        if i % 2 == 0:
+            i += 1
+            continue
+        yield i
+        i += 3
+
+    i = 0
+    while i < 10:
+        if i == 7:
+            break
+        yield i
+        i += 1
