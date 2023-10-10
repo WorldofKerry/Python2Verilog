@@ -19,6 +19,7 @@ class GeneratorFunc:
     UNDEFINED_EDGE = ir.ClockedEdge(unique_id="UNDEFINED_EDGE")
 
     def __init__(self, context: ir.Context) -> None:
+        context.validate()
         self._context = context
         self.UNDEFINED_NODE = ir.AssignNode(
             unique_id="UNDEFINED_NODE",
