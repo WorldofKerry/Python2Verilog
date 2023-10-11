@@ -2,8 +2,21 @@ import logging
 import subprocess
 import unittest
 
+from python2verilog.api.python import py_to_verilog
+
 
 class TestConvert(unittest.TestCase):
+    def test_from_text(self):
+        code = """
+def fib() -> int:
+  a, b = 0, 1
+  while a < 30:
+    yield a
+    a, b = b, a + b
+"""
+        module, tb = py_to_verilog(code, "fib", file_path="./from_text", extra_test_cases=[])
+        logging.error(module)
+    
     def test_help(self):
         CMD = "python3 -m python2verilog --help"
         result = subprocess.run(

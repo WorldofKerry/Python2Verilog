@@ -22,6 +22,7 @@ class GeneratorFunc:
 
     def __init__(self, context: ir.Context) -> None:
         self._context = copy.deepcopy(context)
+        print(self._context)
 
     def create_root(self) -> tuple[ir.Node, ir.Context]:
         """

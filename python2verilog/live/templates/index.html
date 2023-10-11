@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Code Editor Example</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/dracula.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/python/python.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body style="margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh;">
+    <div style="flex: 1; display: flex;">
+        <div style="flex: 1;">
+            <textarea id="code-editor" style="width: 100%; height: 100%;"></textarea>
+        </div>
+        <div style="flex: 1;">
+            <textarea id="right-textbox" style="width: 100%; height: 100%;" readonly></textarea>
+        </div>
+    </div>
+
+    <script>
+        var codeEditor = CodeMirror.fromTextArea(document.getElementById("code-editor"), {
+            mode: "python",
+            theme: "dracula",
+            lineNumbers: true,
+        });
+
+        codeEditor.on("change", function(instance) {
+            var code = instance.getValue();
+            console.log("being ran" + code)
+            $.ajax({
+                type: 'POST',
+                url: '/update_text',
+                data: { text: code },
+                success: function(response) {
+                    var updatedText = response.updated_text;
+                    $('#right-textbox').val(updatedText);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
