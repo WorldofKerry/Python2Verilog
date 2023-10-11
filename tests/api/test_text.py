@@ -14,9 +14,11 @@ def fib() -> int:
     yield a
     a, b = b, a + b
 """
-        module, tb = py_to_verilog(code, "fib", file_path="./from_text", extra_test_cases=[])
+        module, tb = py_to_verilog(
+            code, "fib", file_path="./from_text", extra_test_cases=[]
+        )
         logging.error(module)
-    
+
     def test_help(self):
         CMD = "python3 -m python2verilog --help"
         result = subprocess.run(

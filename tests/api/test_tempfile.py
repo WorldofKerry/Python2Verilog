@@ -13,16 +13,17 @@ def fib() -> int:
 """
 
 # Create a temporary source code file
-with tempfile.NamedTemporaryFile(suffix='.py') as tmp:
+with tempfile.NamedTemporaryFile(suffix=".py") as tmp:
     tmp.write(raw.encode())
     tmp.flush()
 
     # Now load that file as a module
-    spec = util.spec_from_file_location('tmp', tmp.name)
+    spec = util.spec_from_file_location("tmp", tmp.name)
     module = util.module_from_spec(spec)
     spec.loader.exec_module(module)
 
     # ...or, while the tmp file exists, you can query it externally
     import inspect
+
     print(inspect.getsource(module.fib))
     print(module.ns)

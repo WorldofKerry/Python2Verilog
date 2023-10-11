@@ -19,11 +19,18 @@
     </div>
 
     <script>
-        var codeEditor = CodeMirror.fromTextArea(document.getElementById("code-editor"), {
+        const codeEditor = CodeMirror.fromTextArea(document.getElementById("code-editor"), {
             mode: "python",
             theme: "dracula",
             lineNumbers: true,
         });
+
+        console.log("Modes" + CodeMirror.modes)
+        const verilogDisplay = CodeMirror.fromTextArea(document.getElementById("right-textbox"), {
+            mode: "verilog/systemverilog",
+            theme: "dracula",
+            lineNumbers: true,
+        })
 
         codeEditor.on("change", function(instance) {
             var code = instance.getValue();
@@ -34,7 +41,8 @@
                 data: { text: code },
                 success: function(response) {
                     var updatedText = response.updated_text;
-                    $('#right-textbox').val(updatedText);
+                    verilogDisplay.getDoc().setValue(updatedText)
+                    // $('#right-textbox').val(updatedText);
                 }
             });
         });

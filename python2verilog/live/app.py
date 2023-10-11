@@ -1,6 +1,8 @@
-from importlib import util
 import tempfile
-from flask import Flask, render_template, request, jsonify
+from importlib import util
+
+from flask import Flask, jsonify, render_template, request
+
 from python2verilog import py_to_verilog
 from python2verilog.api.namespace import get_namespace, namespace_to_verilog
 
@@ -48,8 +50,9 @@ def tempfile_wrapper(raw: str):
         print(inspect.getsource(module.fib))
 
         ns = get_namespace(tmp.name)
-        module, _ = namespace_to_verilog(ns)        
+        module, _ = namespace_to_verilog(ns)
         return module
+
 
 @app.route("/update_text", methods=["POST"])
 def update_text():
