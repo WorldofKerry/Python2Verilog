@@ -35,7 +35,7 @@
           lineWrapping: true,
         }
       );
-      codeEditor.setSize(null, window.screen.height);
+      codeEditor.setSize("100%", "100%");
 
       console.log("Modes" + CodeMirror.modes);
       const verilogDisplay = CodeMirror.fromTextArea(
@@ -48,11 +48,10 @@
           lineWrapping: true,
         }
       );
-      verilogDisplay.setSize(null, window.screen.height);
+      verilogDisplay.setSize("100%", "100%");
 
       codeEditor.on("change", function (instance) {
         var code = instance.getValue();
-        console.log("being ran" + code);
         $.ajax({
           type: "POST",
           url: "/update_text",
