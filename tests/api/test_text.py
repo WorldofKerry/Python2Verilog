@@ -17,7 +17,7 @@ def fib() -> int:
         module, tb = py_to_verilog(
             code, "fib", file_path="./from_text", extra_test_cases=[]
         )
-        logging.error(module)
+        logging.debug(module)
 
     def test_help(self):
         CMD = "python3 -m python2verilog --help"

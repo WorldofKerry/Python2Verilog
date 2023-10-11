@@ -14,24 +14,12 @@ def index():
     return render_template("index.html")
 
 
-def wrapper(input: str):
-    """
-    Closure for running the exec
-    """
-    input = """
-def fib() -> int:
-  a, b = 0, 1
-  while a < 30:
-    yield a
-    a, b = b, a + b
-"""
-    module, tb = py_to_verilog(
-        input, "fib", extra_test_cases=[], file_path="./flask_testing"
-    )
-    print(module)
-
-
 def tempfile_wrapper(raw: str):
+    #     raw = """
+    # @verilogify
+    # def func() -> int:
+    #     yield 123
+    #     """
     raw = "from python2verilog import verilogify\n" + raw
 
     # Create a temporary source code file
@@ -40,18 +28,18 @@ def tempfile_wrapper(raw: str):
         tmp.flush()
 
         # Now load that file as a module
-        spec = util.spec_from_file_location("tmp", tmp.name)
-        module = util.module_from_spec(spec)
-        spec.loader.exec_module(module)
+        try:
+            spec = util.spec_from_file_location("tmp", tmp.name)
+            module = util.module_from_spec(spec)
+            spec.loader.exec_module(module)
 
-        # ...or, while the tmp file exists, you can query it externally
-        import inspect
+            # ...or, while the tmp file exists, you can query it externally
+            ns = get_namespace(tmp.name)
+            module, _ = namespace_to_verilog(ns)
+            return module
 
-        print(inspect.getsource(module.fib))
-
-        ns = get_namespace(tmp.name)
-        module, _ = namespace_to_verilog(ns)
-        return module
+        except Exception as e:
+            return str(e)
 
 
 @app.route("/update_text", methods=["POST"])

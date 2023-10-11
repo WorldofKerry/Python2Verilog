@@ -98,7 +98,7 @@ class Context(GenericReprAndStr):
         """
         Avoids recursion on itself
         """
-        dic = self.__dict__
+        dic = copy.deepcopy(self.__dict__)
         del dic["namespace"]
         return dic
 
@@ -258,7 +258,7 @@ class Context(GenericReprAndStr):
         """
         Output variables
         """
-        assert guard(self._output_vars, list), self
+        assert guard(self._output_vars, list), f"Unknown output variables {self}"
         return copy.deepcopy(self._output_vars)
 
     @output_vars.setter
