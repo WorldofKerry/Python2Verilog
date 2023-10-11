@@ -12,7 +12,7 @@ from python2verilog.api.context import context_to_codegen
 from python2verilog.api.modes import Modes
 from python2verilog.api.namespace import get_namespace
 from python2verilog.backend.verilog.config import CodegenConfig, TestbenchConfig
-from python2verilog.utils.typed import typed, typed_list
+from python2verilog.utils.typed import guard, typed, typed_list
 
 
 def py_to_codegen(
@@ -150,7 +150,7 @@ def py_to_context(
         if not initialized:
             input_types = [type(val) for val in output]
             initialized = True
-
+        assert guard(input_types, list)
         for i, (expected_type, actual_value) in enumerate(zip(input_types, output)):
             assert expected_type == type(
                 actual_value
