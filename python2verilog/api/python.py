@@ -12,7 +12,7 @@ from python2verilog.api.context import context_to_codegen
 from python2verilog.api.modes import Modes
 from python2verilog.api.namespace import get_namespace
 from python2verilog.backend.verilog.config import CodegenConfig, TestbenchConfig
-from python2verilog.utils.typed import typed, typed_list
+from python2verilog.utils.typed import guard, typed, typed_list
 
 
 def py_to_codegen(
@@ -145,12 +145,12 @@ def py_to_context(
     logging.info("Input param names %s", input_names)
 
     initialized = False
-    input_types: list[type[Any]]
+    input_types: Optional[list[type[Any]]] = None
     for output in test_cases:
         if not initialized:
             input_types = [type(val) for val in output]
             initialized = True
-
+        assert guard(input_types, list)
         for i, (expected_type, actual_value) in enumerate(zip(input_types, output)):
             assert expected_type == type(
                 actual_value
@@ -163,7 +163,6 @@ def py_to_context(
     lines = code.splitlines()
     func_lines = lines[generator_ast.lineno - 1 : generator_ast.end_lineno]
     func_str = "\n".join(func_lines)
-    # logging.debug(func_str)
     exec(func_str, None, locals_)
     try:
         generator_func = locals_[function_name]
@@ -205,11 +204,13 @@ def py_to_context(
         context.output_types = output_types
         context.default_output_vars()
 
-    logging.info("Output param types %s", context.output_types)
-    logging.info("Output param names %s", context.output_vars)
+        logging.info("Output param types %s", context.output_types)
+        logging.info("Output param names %s", context.output_vars)
+
     context.input_vars = [ir.Var(name) for name in input_names]
-    assert isinstance(input_types, list)
-    context.input_types = input_types
+    if input_types is not None:
+        assert isinstance(input_types, list)
+        context.input_types = input_types
     context.test_cases = test_cases
     context.py_ast = generator_ast
     context.py_func = generator_func

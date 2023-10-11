@@ -1,17 +1,63 @@
+import logging
+import tempfile
 import unittest
+from importlib import util
 from pathlib import Path
 
 import pytest
 
 from python2verilog.api import verilogify
 from python2verilog.api.modes import Modes
-from python2verilog.api.namespace import namespace_to_verilog, new_namespace
+from python2verilog.api.namespace import (
+    get_namespace,
+    namespace_to_verilog,
+    new_namespace,
+)
 from python2verilog.api.verilogify import get_actual, get_actual_raw, get_expected
 from python2verilog.simulation import iverilog
 
 
 @pytest.mark.usefixtures("argparse")
 class TestSimulation(unittest.TestCase):
+    def test_type_hint(self):
+        ns = {}
+
+        @verilogify(namespace=ns)
+        def func() -> int:
+            yield 123
+
+        module, testbench = namespace_to_verilog(ns)
+        logging.debug(module)
+
+    def test_type_hint_text(self):
+        raw = """
+@verilogify
+def func() -> int:
+    yield 123
+        """
+        raw = "from python2verilog import verilogify\n" + raw
+
+        # Create a temporary source code file
+        with tempfile.NamedTemporaryFile(suffix=".py") as tmp:
+            tmp.write(raw.encode())
+            tmp.flush()
+
+            # Now load that file as a module
+            try:
+                spec = util.spec_from_file_location("tmp", tmp.name)
+                module = util.module_from_spec(spec)
+                spec.loader.exec_module(module)
+
+                # ...or, while the tmp file exists, you can query it externally
+                ns = get_namespace(tmp.name)
+                logging.debug(ns)
+                module, _ = namespace_to_verilog(ns)
+                logging.debug(module)
+
+            except Exception as e:
+                logging.error(e)
+                self.assertTrue(False)
+
     def test_o0(self):
         ns = {}
 
