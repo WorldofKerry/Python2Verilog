@@ -11,7 +11,7 @@ import io
 import logging
 from dataclasses import dataclass, field
 from types import FunctionType
-from typing import Any, Optional, Sequence, Union
+from typing import Any, Optional, Sequence
 
 from python2verilog.api.modes import Modes
 from python2verilog.ir.expressions import ExclusiveVar, State, Var
@@ -102,6 +102,53 @@ class Context(GenericReprAndStr):
         del dic["namespace"]
         return dic
 
+    def _use_input_type_hints(self):
+        """
+        Uses input type hints
+        """
+
+        def input_mapper(arg: ast.arg) -> type[Any]:
+            """
+            Maps a string annotation id to type
+            """
+            assert arg.annotation, f"{ast.dump(arg)}"
+            assert isinstance(arg.annotation, ast.Name)
+            if arg.annotation.id == "int":
+                return type(0)
+            raise TypeError(f"{ast.dump(arg)}")
+
+        logging.info("Using type hints of %s for input types", self.name)
+        input_args: list[ast.arg] = self.py_ast.args.args
+        assert isinstance(input_args, list), f"{ast.dump(self.py_ast)}"
+        self.input_types = list(map(input_mapper, input_args))
+
+    def _use_output_type_hints(self):
+        """
+        Use output type hints
+        """
+
+        def output_mapper(arg: ast.Name) -> type[Any]:
+            """
+            Maps a string annotation id to type
+            """
+            if arg.id == "int":
+                return type(0)
+            raise TypeError(f"{ast.dump(arg)}")
+
+        logging.info("Using type hints of %s for return types", self.name)
+        output_args: list[ast.Name]
+        if isinstance(self.py_ast.returns, ast.Subscript):
+            assert isinstance(self.py_ast.returns.slice, ast.Tuple)
+            output_args = []
+            for elt in self.py_ast.returns.slice.elts:
+                assert guard(elt, ast.Name)
+                output_args.append(elt)
+        else:
+            output_args = [self.py_ast.returns]
+        assert isinstance(output_args, list), f"{ast.dump(self.py_ast)}"
+        self.output_types = list(map(output_mapper, output_args))
+        self.default_output_vars()
+
     def validate(self):
         """
         Validates that all fields of context are populated.
@@ -112,58 +159,20 @@ class Context(GenericReprAndStr):
 
         :return: self
         """
-        if not is_debug_mode():
-            return self
-
         assert isinstance(self.py_ast, ast.FunctionDef), self
         assert isinstance(self.py_func, FunctionType), self
 
-        def check_list(list_: Union[list[Any], None]):
-            return isinstance(list_, list)
+        if self.input_types is None:
+            self._use_input_type_hints()
 
-        if not check_list(self.input_types):
+        assert isinstance(self.input_types, list), self
+        assert isinstance(self.input_vars, list), self
 
-            def input_mapper(arg: ast.arg) -> type[Any]:
-                """
-                Maps a string annotation id to type
-                """
-                assert arg.annotation, f"{ast.dump(arg)}"
-                assert isinstance(arg.annotation, ast.Name)
-                if arg.annotation.id == "int":
-                    return type(0)
-                raise TypeError(f"{ast.dump(arg)}")
+        if self.output_types is None:
+            self._use_output_type_hints()
 
-            logging.info("Using type hints of %s for input types", self.name)
-            input_args: list[ast.arg] = self.py_ast.args.args
-            assert isinstance(input_args, list), f"{ast.dump(self.py_ast)}"
-            self.input_types = list(map(input_mapper, input_args))
-        assert check_list(self.input_types), self
-        assert check_list(self.input_vars), self
-
-        if not check_list(self.output_types):
-
-            def output_mapper(arg: ast.Name) -> type[Any]:
-                """
-                Maps a string annotation id to type
-                """
-                if arg.id == "int":
-                    return type(0)
-                raise TypeError(f"{ast.dump(arg)}")
-
-            logging.info("Using type hints of %s for return types", self.name)
-            output_args: list[ast.arg]
-            if isinstance(self.py_ast.returns, ast.Subscript):
-                assert isinstance(self.py_ast.returns.slice, ast.Tuple)
-                output_args = self.py_ast.returns.slice.elts
-            else:
-                output_args = [self.py_ast.returns]
-            assert isinstance(output_args, list), f"{ast.dump(self.py_ast)}"
-            self.output_types = list(map(output_mapper, output_args))
-            self.default_output_vars()
-
-        assert check_list(self.output_types), self
-        assert check_list(self.output_vars), self
-        assert isinstance(self._output_vars, list)
+        assert isinstance(self.output_types, list), self
+        assert isinstance(self._output_vars, list), self
 
         assert isinstance(self.optimization_level, int), self
         assert self.optimization_level >= 0, f"{self.optimization_level} {self.name}"
