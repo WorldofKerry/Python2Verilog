@@ -27,7 +27,7 @@
 
         console.log("Modes" + CodeMirror.modes)
         const verilogDisplay = CodeMirror.fromTextArea(document.getElementById("right-textbox"), {
-            mode: "verilog/systemverilog",
+            mode: "verilog",
             theme: "dracula",
             lineNumbers: true,
         })
@@ -42,7 +42,6 @@
                 success: function(response) {
                     var updatedText = response.updated_text;
                     verilogDisplay.getDoc().setValue(updatedText)
-                    // $('#right-textbox').val(updatedText);
                 }
             });
         });
