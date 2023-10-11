@@ -40,7 +40,9 @@
       const codeEditor = CodeMirror.fromTextArea(
         document.getElementById("code-editor"),
         {
-          mode: "python",
+          mode: {
+            name: "python"
+          },
           lineNumbers: true,
         }
       );
@@ -49,7 +51,9 @@
       const verilogDisplay = CodeMirror.fromTextArea(
         document.getElementById("right-textbox"),
         {
-          mode: "verilog",
+          mode: {
+            name: "verilog",
+          },
           lineNumbers: true,
         }
       );

@@ -29,6 +29,19 @@ from python2verilog.utils.typed import (
 )
 
 
+class TypeInferenceError(Exception):
+    """
+    Type inferrence failed, either use the function in code or provide type hints
+    """
+
+    def __init__(self, *args: object) -> None:
+        super().__init__(
+            "Input/output type inferrence failed, "
+            "either use the function in Python code or provide type hints",
+            *args,
+        )
+
+
 @dataclass
 class Context(GenericReprAndStr):
     """
@@ -111,7 +124,7 @@ class Context(GenericReprAndStr):
             """
             Maps a string annotation id to type
             """
-            assert arg.annotation, f"{ast.dump(arg)}"
+            assert arg.annotation, f"No type hint annotation on argument {arg.arg}"
             assert isinstance(arg.annotation, ast.Name)
             if arg.annotation.id == "int":
                 return type(0)
@@ -120,7 +133,10 @@ class Context(GenericReprAndStr):
         logging.info("Using type hints of %s for input types", self.name)
         input_args: list[ast.arg] = self.py_ast.args.args
         assert isinstance(input_args, list), f"{ast.dump(self.py_ast)}"
-        self.input_types = list(map(input_mapper, input_args))
+        try:
+            self.input_types = list(map(input_mapper, input_args))
+        except Exception as e:
+            raise TypeInferenceError() from e
 
     def _use_output_type_hints(self):
         """
@@ -131,6 +147,7 @@ class Context(GenericReprAndStr):
             """
             Maps a string annotation id to type
             """
+            assert arg, "No return type hint annotation"
             if arg.id == "int":
                 return type(0)
             raise TypeError(f"{ast.dump(arg)}")
@@ -146,16 +163,17 @@ class Context(GenericReprAndStr):
         else:
             output_args = [self.py_ast.returns]
         assert isinstance(output_args, list), f"{ast.dump(self.py_ast)}"
-        self.output_types = list(map(output_mapper, output_args))
+        try:
+            self.output_types = list(map(output_mapper, output_args))
+        except Exception as e:
+            raise TypeInferenceError() from e
         self.default_output_vars()
 
     def validate(self):
         """
         Validates that all fields of context are populated.
 
-        Checks invariants.
-
-        Only does checks in debug mode.
+        Populate input & output types from type hints if they're not determined
 
         :return: self
         """
