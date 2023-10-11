@@ -31,7 +31,7 @@ def tempfile_wrapper(raw: str):
             ns = get_namespace(tmp.name)
             result, _ = namespace_to_verilog(ns)
         except Exception:
-            result = traceback.format_exc()
+            result = traceback.format_exc(limit=1)
         finally:
             return result
 
