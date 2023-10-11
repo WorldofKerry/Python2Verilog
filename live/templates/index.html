@@ -16,10 +16,10 @@
   </head>
   <body>
     <div style="display: flex;">
-      <div style="flex: 1">
+      <div style="flex: 1; width: 50%">
         <textarea id="code-editor"></textarea>
       </div>
-      <div style="flex: 1">
+      <div style="flex: 1; width: 50%">
         <textarea id="right-textbox" readonly></textarea>
       </div>
     </div>
@@ -35,7 +35,7 @@
           lineWrapping: true,
         }
       );
-      codeEditor.setSize("100%", "100%");
+      codeEditor.setSize(null, "100%");
 
       console.log("Modes" + CodeMirror.modes);
       const verilogDisplay = CodeMirror.fromTextArea(
@@ -48,7 +48,7 @@
           lineWrapping: true,
         }
       );
-      verilogDisplay.setSize("100%", "100%");
+      verilogDisplay.setSize(null, "100%");
 
       codeEditor.on("change", function (instance) {
         var code = instance.getValue();
