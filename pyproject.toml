@@ -15,7 +15,7 @@ classifiers = [
 "Bug Tracker" = "https://github.com/WorldofKerry/Python2Verilog/issues"
 
 [build-system]
-requires = ["typing-extensions"]
+requires = ["setuptools", "typing-extensions"]
 
 [project.optional-dependencies]
 full = ["matplotlib", "numpy", "dash_cytoscape", "dash"]
