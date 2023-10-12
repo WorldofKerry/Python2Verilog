@@ -371,6 +371,7 @@ class CodeGen:
         initial_body.append(ver.BlockingSub(self.context.signals.reset, ir.UInt(0)))
         initial_body.append(ver.Statement())
 
+        logging.debug("Making test cases")
         for i, test_case in enumerate(self.context.test_cases):
             # New test case and start
             initial_body.append(
@@ -444,6 +445,7 @@ class CodeGen:
 
         initial_loop = ver.Initial(body=initial_body)
 
+        logging.debug("Creating python test code")
         python_test_code = Lines()
         for case in self.context.test_cases:
             python_test_code += f"print(list({self.context.name}(*{case})))"
