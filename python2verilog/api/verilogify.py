@@ -9,9 +9,10 @@ import copy
 import inspect
 import logging
 import textwrap
+import warnings
 from functools import wraps
 from types import FunctionType
-from typing import Iterator, Optional, Union
+from typing import Iterator, Optional, Union, cast
 
 import __main__ as main
 
@@ -79,34 +80,73 @@ def verilogify(
     def generator_wrapper(*args, **kwargs):
         nonlocal context
         if kwargs:
-            raise RuntimeError(
+            warnings.warn(
                 "Keyword arguments not yet supported, use positional arguments only"
             )
+        for arg in args:
+            assert guard(arg, int)
+
         context.test_cases.append(args)
+
+        # Input inference
         if not context.input_types:
             context.input_types = [type(arg) for arg in args]
         else:
             context.check_input_types(args)
 
-        for i, result in enumerate(func(*args, **kwargs)):
-            if not isinstance(result, tuple):
-                result = (result,)
+        def tuplefy(either: Union[int, tuple[int]]) -> tuple[int]:
+            """
+            Converts int to tuple, otherwise returns input
+            """
+            ret: tuple[int]
+            if isinstance(either, int):
+                ret = (either,)
+            else:
+                ret = either
 
+            for value in ret:
+                try:
+                    assert guard(value, int)
+                except Exception as e:
+                    raise TypeError("Expected `int` type inputs and outputs") from e
+            return ret
+
+        # Always get output one-ahead of what func user sees
+        # For output type inference even if user doesn't use generator
+        instance = func(*args)
+        try:
+            result = cast(Union[int, tuple[int]], next(instance))
+            tupled_result = tuplefy(result)
             if not context.output_types:
                 logging.info(
                     "Using input `%s` as reference for %s's I/O types",
-                    result,
+                    tupled_result,
                     func.__name__,
                 )
-                context.output_types = [type(arg) for arg in result]
+                context.output_types = [type(arg) for arg in tupled_result]
                 context.default_output_vars()
             else:
-                context.check_output_types(result)
+                context.check_output_types(tupled_result)
+        except StopIteration as e:
+            raise RuntimeError(
+                f"Attempted to call next on generator {func.__name__}"
+            ) from e
+        except Exception as e:
+            raise e
 
-            if i > 10000:
-                raise RuntimeError(f"{func.__name__} yields more than 10000 values")
+        @wraps(func)
+        def inside():
+            nonlocal result
+            for i, new_result in enumerate(instance):
+                tupled_new_result = tuplefy(new_result)
+                context.check_output_types(tupled_new_result)
+                yield result
+                result = new_result
+                if i > 10000:
+                    raise RuntimeError(f"{func.__name__} yields more than 10000 values")
+            yield result
 
-        return func(*args, **kwargs)
+        return inside()
 
     @wraps(func)
     def function_wrapper(*_0, **_1):

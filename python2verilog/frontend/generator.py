@@ -10,6 +10,7 @@ from typing import Collection, Iterable, Optional, TypeVar, cast
 from typing_extensions import TypeAlias
 
 from python2verilog import ir
+from python2verilog.exceptions import UnsupportedSyntaxError
 from python2verilog.utils.typed import guard, typed_list, typed_strict
 
 
@@ -22,7 +23,6 @@ class GeneratorFunc:
 
     def __init__(self, context: ir.Context) -> None:
         self._context = copy.deepcopy(context)
-        print(self._context)
 
     def create_root(self) -> tuple[ir.Node, ir.Context]:
         """
@@ -133,7 +133,7 @@ class GeneratorFunc:
             assert guard(nothing.child, ir.Edge)
             continues.append(nothing.child)
             return nothing, []
-        raise TypeError(f"Unparseable stmt {pyast.dump(stmt)}")
+        raise TypeError(f"Unexpected statement {pyast.dump(stmt)}")
 
     def _parse_stmts(
         self,
@@ -274,6 +274,7 @@ class GeneratorFunc:
         # pylint: disable=too-many-locals
         breaks: list[ir.Edge] = []
         continues: list[ir.Edge] = []
+        assert not stmt.orelse, "for-else statements not supported"
         target = stmt.iter
         assert isinstance(target, pyast.Name)
         if target.id not in self._context.instances:
@@ -377,6 +378,7 @@ class GeneratorFunc:
         return head, [to_ready_and_done, *breaks]
 
     def _parse_while(self, whil: pyast.While, prefix: str) -> ParseResult:
+        assert not whil.orelse, "while-else statements not supported"
         breaks: list[ir.Edge] = []
         continues: list[ir.Edge] = []
         body_head, ends = self._parse_stmts(
@@ -577,32 +579,30 @@ class GeneratorFunc:
         """
         <expression> (e.g. constant, name, subscript, etc., those that return a value)
         """
-        if isinstance(expr, pyast.Constant):
-            return ir.Int(expr.value)
-        if isinstance(expr, pyast.Name):
-            return ir.Var(py_name=expr.id)
-        if isinstance(expr, pyast.Subscript):
-            return self._parse_subscript(expr)
-        if isinstance(expr, pyast.BinOp):
-            return self._parse_binop(expr)
-        if isinstance(expr, pyast.UnaryOp):
-            if isinstance(expr.op, pyast.USub):
-                return ir.UnaryOp("-", self._parse_expression(expr.operand))
-            raise TypeError(
-                "Error: unexpected unaryop type", type(expr.op), pyast.dump(expr.op)
-            )
-        if isinstance(expr, pyast.Compare):
-            return self._parse_compare(expr)
-        if isinstance(expr, pyast.BoolOp):
-            if isinstance(expr.op, pyast.And):
-                return ir.UBinOp(
-                    self._parse_expression(expr.values[0]),
-                    "&&",
-                    self._parse_expression(expr.values[1]),
-                )
-        raise TypeError(
-            "Error: unexpected expression type", type(expr), pyast.dump(expr)
-        )
+        try:
+            if isinstance(expr, pyast.Constant):
+                return ir.Int(expr.value)
+            if isinstance(expr, pyast.Name):
+                return ir.Var(py_name=expr.id)
+            if isinstance(expr, pyast.Subscript):
+                return self._parse_subscript(expr)
+            if isinstance(expr, pyast.BinOp):
+                return self._parse_binop(expr)
+            if isinstance(expr, pyast.UnaryOp):
+                if isinstance(expr.op, pyast.USub):
+                    return ir.UnaryOp("-", self._parse_expression(expr.operand))
+            if isinstance(expr, pyast.Compare):
+                return self._parse_compare(expr)
+            if isinstance(expr, pyast.BoolOp):
+                if isinstance(expr.op, pyast.And):
+                    return ir.UBinOp(
+                        self._parse_expression(expr.values[0]),
+                        "&&",
+                        self._parse_expression(expr.values[1]),
+                    )
+        except Exception as e:
+            raise UnsupportedSyntaxError.from_pyast(expr) from e
+        raise UnsupportedSyntaxError.from_pyast(expr)
 
     def _parse_subscript(self, node: pyast.Subscript) -> ir.Expression:
         """
@@ -637,9 +637,7 @@ class GeneratorFunc:
         elif isinstance(node.ops[0], pyast.Eq):
             operator = "==="
         else:
-            raise TypeError(
-                "Error: unknown operator", type(node.ops[0]), pyast.dump(node.ops[0])
-            )
+            raise UnsupportedSyntaxError(f"Unknown operator {pyast.dump(node.ops[0])}")
         return ir.UBinOp(
             left=self._parse_expression(node.left),
             oper=operator,
@@ -674,6 +672,4 @@ class GeneratorFunc:
             left = self._parse_expression(expr.left)
             right = self._parse_expression(expr.right)
             return ir.Mod(left, right)
-        raise TypeError(
-            "Error: unexpected binop type", type(expr.op), pyast.dump(expr.op)
-        )
+        raise UnsupportedSyntaxError(f"Unexpected binop type {pyast.dump(expr.op)}")

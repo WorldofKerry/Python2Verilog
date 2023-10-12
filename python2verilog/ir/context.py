@@ -14,6 +14,7 @@ from types import FunctionType
 from typing import Any, Optional, Sequence
 
 from python2verilog.api.modes import Modes
+from python2verilog.exceptions import TypeInferenceError
 from python2verilog.ir.expressions import ExclusiveVar, State, Var
 from python2verilog.ir.graph import DoneNode
 from python2verilog.ir.instance import Instance
@@ -27,19 +28,6 @@ from python2verilog.utils.typed import (
     typed_list,
     typed_strict,
 )
-
-
-class TypeInferenceError(Exception):
-    """
-    Type inferrence failed, either use the function in code or provide type hints
-    """
-
-    def __init__(self, *args: object) -> None:
-        super().__init__(
-            "Input/output type inferrence failed, "
-            "either use the function in Python code or provide type hints",
-            *args,
-        )
 
 
 @dataclass
@@ -375,7 +363,7 @@ class Context(GenericReprAndStr):
             assert isinstance(
                 actual, expected
             ), f"Expected {expected}, got {type(actual)}, with value {actual}, \
-                with function name {self.name}"
+                in call to {self.name}"
 
     def check_input_types(self, input_):
         """
