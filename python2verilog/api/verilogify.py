@@ -98,7 +98,6 @@ def verilogify(
             """
             Converts int to tuple, otherwise returns input
             """
-            ret: tuple[int]
             if isinstance(either, int):
                 ret = (either,)
             else:
