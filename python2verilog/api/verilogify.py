@@ -126,10 +126,8 @@ def verilogify(
                 context.default_output_vars()
             else:
                 context.check_output_types(tupled_result)
-        except StopIteration as e:
-            raise RuntimeError(
-                f"Attempted to call next on generator {func.__name__}"
-            ) from e
+        except StopIteration:
+            pass
         except Exception as e:
             raise e
 
