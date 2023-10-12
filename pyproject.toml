@@ -14,6 +14,9 @@ classifiers = [
 "Homepage" = "https://github.com/WorldofKerry/Python2Verilog/"
 "Bug Tracker" = "https://github.com/WorldofKerry/Python2Verilog/issues"
 
+[build-system]
+requires = ["typing-extensions"]
+
 [project.optional-dependencies]
 full = ["matplotlib", "numpy", "dash_cytoscape", "dash"]
 
