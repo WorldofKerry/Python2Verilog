@@ -88,7 +88,7 @@ def verilogify(
         else:
             context.check_input_types(args)
 
-        for result in func(*args, **kwargs):
+        for i, result in enumerate(func(*args, **kwargs)):
             if not isinstance(result, tuple):
                 result = (result,)
 
@@ -102,6 +102,9 @@ def verilogify(
                 context.default_output_vars()
             else:
                 context.check_output_types(result)
+
+            if i > 10000:
+                raise RuntimeError(f"{func.__name__} yields more than 10000 values")
 
         return func(*args, **kwargs)
 
