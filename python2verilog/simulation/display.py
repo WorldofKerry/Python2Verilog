@@ -4,6 +4,8 @@ Parses Verilog display statements
 
 from typing import Iterable, Iterator, Union
 
+from python2verilog.exceptions import UnknownValueError
+
 
 def parse_stdout(stdout: str) -> Iterator[tuple[str, ...]]:
     """
@@ -77,10 +79,4 @@ def strip_valid(
             else:
                 yield int(row[0])
         except ValueError as e:
-            raise UnknownValue(f"Unknown logic value in outputs {row}") from e
-
-
-class UnknownValue(Exception):
-    """
-    An unexpected 'x' or 'z' was encountered
-    """
+            raise UnknownValueError(f"Unknown logic value in outputs {row}") from e
