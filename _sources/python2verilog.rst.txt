@@ -9,6 +9,7 @@ Subpackages
 
    python2verilog.api
    python2verilog.backend
+   python2verilog.exceptions
    python2verilog.frontend
    python2verilog.ir
    python2verilog.optimizer
