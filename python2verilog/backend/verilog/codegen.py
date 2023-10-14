@@ -568,7 +568,11 @@ class CaseBuilder:
         stmts: list[ver.Statement] = []
 
         if isinstance(vertex, ir.DoneNode):
-            stmts.append(self.create_quick_done(self.context))
+            stmts.append(
+                ver.NonBlockingSubsitution(
+                    self.context.state_var, self.context.done_state
+                )
+            )
 
         elif isinstance(vertex, ir.AssignNode):
             stmts.append(
