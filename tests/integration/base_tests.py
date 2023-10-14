@@ -63,6 +63,8 @@ class BaseTestWrapper:
 
                 module, testbench = namespace_to_verilog(ns, config)
 
+                logging.debug("Testing Verilog")
+
                 if config.random_ready:
                     assert "urandom_range" in testbench
 
@@ -81,7 +83,10 @@ class BaseTestWrapper:
                     )
                     logging.info(cmd)
 
+                logging.debug("Getting expected")
                 expected = list(get_expected(verilogified))
+
+                logging.debug("Getting actual")
                 actual_with_invalid = list(
                     strip_ready(
                         get_actual_raw(

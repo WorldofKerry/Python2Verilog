@@ -175,13 +175,23 @@ def get_original_func(verilogified: FunctionType) -> FunctionType:
     return verilogified._python2verilog_original_func  # type: ignore # pylint: disable=protected-access
 
 
-def get_expected(verilogified: FunctionType) -> Iterator[tuple[int, ...]]:
+def get_expected(
+    verilogified: FunctionType, max_yields_per_test_case: int = 5000
+) -> Iterator[tuple[int, ...]]:
     """
     Get expected output of testbench
+
+    Limits number of values generator can yield
     """
     generator_func = get_original_func(verilogified)
     for test in get_context(verilogified).test_cases:
-        yield from generator_func(*test)
+        logging.debug("Test case %s", test)
+        for i, value in enumerate(generator_func(*test)):
+            yield value
+            if i > max_yields_per_test_case:
+                raise RuntimeError(
+                    f"Generator yielded more than {max_yields_per_test_case} values"
+                )
 
 
 def get_actual_raw(
