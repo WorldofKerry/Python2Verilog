@@ -105,6 +105,12 @@ class BasicElement(Element):
     def child(self, other: Element):
         self._child = typed_strict(other, Element)
 
+    def has_child(self) -> bool:
+        """
+        Returns True if has child
+        """
+        return bool(self._child)
+
     def children(self):
         if self._child:
             yield self._child
@@ -250,7 +256,8 @@ class AssignNode(BasicNode):
     def variables(self):
         yield from get_variables(self.lvalue)
         yield from get_variables(self.rvalue)
-        yield from self.child.variables()
+        if self._child:
+            yield from self.child.variables()
 
 
 class DoneNode(Node, Element):

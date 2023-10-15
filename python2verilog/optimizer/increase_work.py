@@ -162,21 +162,25 @@ class IncreaseWorkPerClockCycle:
                 ),
             )
         elif isinstance(node, ir.AssignNode):
+            unique_id = f"{node.unique_id}_optimal_{self.make_unique()}"
             new_rvalue = backwards_replace(node.rvalue, old_mapping)
             new_mapping[node.lvalue] = new_rvalue
-            assert guard(node.child, ir.Edge)
-            unique_id = f"{node.unique_id}_optimal_{self.make_unique()}"
-            new_edge.child = ir.AssignNode(
-                unique_id=unique_id,
-                lvalue=node.lvalue,
-                rvalue=new_rvalue,
-                child=self.apply_recursive(
-                    edge=node.child,
-                    new_mapping=new_mapping,
-                    old_mapping=old_mapping,
-                    visited_path=visited_path,
-                ),
-            )
+            if node.has_child():
+                assert guard(node.child, ir.Edge)
+                new_edge.child = ir.AssignNode(
+                    unique_id=unique_id,
+                    lvalue=node.lvalue,
+                    rvalue=new_rvalue,
+                    child=self.apply_recursive(
+                        edge=node.child,
+                        new_mapping=new_mapping,
+                        old_mapping=old_mapping,
+                        visited_path=visited_path,
+                    ),
+                )
+            else:
+                new_edge.child = node
+
         elif isinstance(node, ir.DoneNode):
             new_edge.child = node
         else:

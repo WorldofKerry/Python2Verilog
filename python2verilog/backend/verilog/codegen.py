@@ -614,4 +614,6 @@ class CaseBuilder:
                     self.context.state_var, ir.State(edge.optimal_child.unique_id)
                 )
             ]
+        if isinstance(edge, type(None)):
+            return []
         raise RuntimeError(f"{type(edge)}")
