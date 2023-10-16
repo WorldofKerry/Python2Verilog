@@ -326,9 +326,9 @@ class GeneratorFunc:
         unique_node = gen_unique_node()
         unique_edge = gen_unique_edge()
 
-        to_done = ir.NonClockedEdge(next(unique_edge))  # goto end of for
+        to_done = ir.ClockedEdge(next(unique_edge))  # goto end of for
         to_body = ir.ClockedEdge(next(unique_edge))  # goto body of for
-        to_wait = ir.NonClockedEdge(next(unique_edge))  # repeat check
+        to_wait = ir.ClockedEdge(next(unique_edge))  # repeat check
 
         to_inner = ir.NonClockedEdge(
             next(unique_edge)
