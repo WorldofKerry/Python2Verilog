@@ -91,7 +91,7 @@ class TestGenerator2Graph(unittest.TestCase):
         my_func()
 
         root, cxt = GeneratorFunc(get_context(my_func)).create_root()
-        case = CaseBuilder(root, ir.Context.empty_valid()).get_case()
+        case = CaseBuilder(root, cxt).get_case()
         sv = verilog.CodeGen(root, cxt).get_module_str()
         # with open("./new.sv", mode="w") as f:
         #     f.write(str(sv))

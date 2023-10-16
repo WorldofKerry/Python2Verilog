@@ -101,7 +101,6 @@ class CodeGen:
                 ver.Statement("`ifdef DEBUG"),
                 ver.Statement(make_debug_display(context)),
                 ver.Statement("`endif"),
-                ver.NonBlockingSubsitution(context.signals.done, ir.UInt(0)),
                 ver.Statement(),
             ]
             + list(create_instance_zeroed_signals())
@@ -111,7 +110,14 @@ class CodeGen:
                     context.signals.ready,
                     cast(
                         list[ver.Statement],
-                        [ver.NonBlockingSubsitution(context.signals.valid, ir.UInt(0))],
+                        [
+                            ver.NonBlockingSubsitution(
+                                context.signals.valid, ir.UInt(0)
+                            ),
+                            ver.NonBlockingSubsitution(
+                                context.signals.done, ir.UInt(0)
+                            ),
+                        ],
                     ),
                     [],
                 ),
@@ -120,11 +126,19 @@ class CodeGen:
                 ver.Statement(),
                 ver.Statement(comment="Start signal takes precedence over reset"),
                 ver.IfElse(
-                    context.signals.reset,
+                    ir.UBinOp(context.signals.reset, "||", context.signals.start),
                     then_body=[
                         ver.NonBlockingSubsitution(
-                            lvalue=context.state_var,
-                            rvalue=context.idle_state,
+                            context.state_var,
+                            context.idle_state,
+                        ),
+                        ver.NonBlockingSubsitution(
+                            context.signals.done,
+                            ir.UInt(0),
+                        ),
+                        ver.NonBlockingSubsitution(
+                            context.signals.valid,
+                            ir.UInt(0),
                         ),
                     ],
                     else_body=[],
@@ -272,7 +286,7 @@ class CodeGen:
             )
 
         if_else = ver.IfElse(
-            ir.Expression("_start"),
+            context.signals.start,
             then_body,
             [
                 ver.Statement(
@@ -289,7 +303,6 @@ class CodeGen:
                 ),
             ],
         )
-        # logging.debug(f"make start if else {if_else}")
         return [if_else]
 
     @property
@@ -405,22 +418,17 @@ class CodeGen:
 
             # While loop waitng for ready signal
             while_body: list[ver.Statement] = []
-            # while_body.append(make_display_stmt())
-            if config.random_ready:
-                while_body.append(ver.Statement("_ready = $urandom_range(0, 4) === 0;"))
-            while_body.append(
-                ver.Statement(
-                    comment="`if (_ready && _valid)` also works as a conditional"
-                )
-            )
+            while_body.append(ver.AtPosedgeStatement(self.context.signals.clock))
             while_body.append(
                 ver.IfElse(
-                    condition=ir.Expression("_ready"),
+                    condition=self.context.signals.ready,
                     then_body=[make_display_stmt()],
                     else_body=[],
                 )
             )
             while_body.append(ver.AtNegedgeStatement(self.context.signals.clock))
+            if config.random_ready:
+                while_body.append(ver.Statement("_ready = $urandom_range(0, 4) === 0;"))
 
             initial_body.append(
                 ver.While(
@@ -432,13 +440,13 @@ class CodeGen:
                     body=while_body,
                 )
             )
-            initial_body.append(
-                ver.IfElse(
-                    condition=ir.Expression("_ready"),
-                    then_body=[make_display_stmt()],
-                    else_body=[],
-                )
-            )
+            # initial_body.append(
+            #     ver.IfElse(
+            #         condition=self.context.signals.ready,
+            #         then_body=[make_display_stmt()],
+            #         else_body=[],
+            #     )
+            # )
             initial_body.append(ver.Statement())
 
         initial_body.append(ver.Statement(literal="$finish;"))
@@ -510,17 +518,6 @@ class CaseBuilder:
         # Reverse states for readability (states are built backwards)
         self.case.case_items = list(reversed(self.case.case_items))
 
-        # Add done state if it doesn't exist in cases
-        if all(
-            case.condition != self.context.done_state for case in self.case.case_items
-        ):
-            self.case.case_items.append(
-                ver.CaseItem(
-                    condition=self.context.done_state,
-                    statements=[self.create_quick_done(self.context)],
-                )
-            )
-
         return self.case
 
     @staticmethod
@@ -536,7 +533,6 @@ class CaseBuilder:
             condition=ir.UBinOp(
                 ir.UnaryOp("!", context.signals.valid), "&&", context.signals.ready
             ),
-            # condition=context.signals.ready,
             then_body=[
                 ver.NonBlockingSubsitution(context.signals.done, ir.UInt(1)),
                 ver.NonBlockingSubsitution(context.state_var, context.idle_state),
@@ -567,10 +563,7 @@ class CaseBuilder:
 
         stmts: list[ver.Statement] = []
 
-        if isinstance(vertex, ir.DoneNode):
-            stmts.append(self.create_quick_done(self.context))
-
-        elif isinstance(vertex, ir.AssignNode):
+        if isinstance(vertex, ir.AssignNode):
             stmts.append(
                 ver.NonBlockingSubsitution(
                     vertex.lvalue,
@@ -610,4 +603,6 @@ class CaseBuilder:
                     self.context.state_var, ir.State(edge.optimal_child.unique_id)
                 )
             ]
+        if isinstance(edge, type(None)):
+            return []
         raise RuntimeError(f"{type(edge)}")

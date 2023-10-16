@@ -52,15 +52,11 @@ class TestGraphApplyMapping(unittest.TestCase):
         node.child = ir.ClockedEdge(ui())
         node = node.child
         node.child = ir.AssignNode(ui(), lvalue=a, rvalue=c)
-        node = node.child
-        node.child = ir.ClockedEdge(ui())
-        node = node.child
-        node.child = ir.DoneNode(ui())
 
         IncreaseWorkPerClockCycle(head.child)
         case = CaseBuilder(head.child, ir.Context()).get_case()
-        self.assertEqual(len(case.case_items), 2)
-        # logging.error(cases.to_string())
+        # logging.error(case.to_string())
+        self.assertEqual(len(case.case_items), 1)
 
     def test_combine_exclusive(self):
         a = ir.ExclusiveVar("a")
@@ -77,15 +73,11 @@ class TestGraphApplyMapping(unittest.TestCase):
         node.child = ir.ClockedEdge(ui())
         node = node.child
         node.child = ir.AssignNode(ui(), lvalue=a, rvalue=c)
-        node = node.child
-        node.child = ir.ClockedEdge(ui())
-        node = node.child
-        node.child = ir.DoneNode(ui())
 
         IncreaseWorkPerClockCycle(head.child)
         case = CaseBuilder(head.child, ir.Context()).get_case()
-        self.assertEqual(len(case.case_items), 3)
-        # logging.error(cases.to_string())
+        # logging.error(case.to_string())
+        self.assertEqual(len(case.case_items), 2)
 
     def test_seq_nonclocked(self):
         """
@@ -108,10 +100,6 @@ class TestGraphApplyMapping(unittest.TestCase):
         node.child = ir.NonClockedEdge(ui())
         node = node.child
         node.child = ir.AssignNode(ui(), lvalue=b, rvalue=a)
-        node = node.child
-        node.child = ir.ClockedEdge(ui())
-        node = node.child
-        node.child = ir.DoneNode(ui())
 
         IncreaseWorkPerClockCycle(head.child)
         case = CaseBuilder(head.child, ir.Context()).get_case()

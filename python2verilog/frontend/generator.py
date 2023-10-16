@@ -30,6 +30,30 @@ class GeneratorFunc:
         """
         return self._parse_func(), self._context
 
+    def _create_done(self, prefix: str) -> ir.Node:
+        """
+        Creates the done nodes
+
+        Signals that module is done, happens in one clock cycle
+
+        Current implementation is as follows:
+
+        done = 1
+        valid = 1
+        """
+        left_hand_sides = [
+            self._context.signals.done,
+            self._context.signals.valid,
+            self._context.state_var,
+        ]
+        right_hand_sides = [ir.UInt(1), ir.UInt(1), self._context.idle_state]
+        head, _tail = self._weave_nonclocked_edges(
+            self._create_assign_nodes(left_hand_sides, right_hand_sides, prefix=prefix),
+            prefix=f"{prefix}_e",
+            last_edge=False,
+        )
+        return head
+
     def _parse_func(self, prefix: str = "_state") -> ir.Node:
         """
         Parses the function inside the context
@@ -42,7 +66,7 @@ class GeneratorFunc:
         assert len(breaks) == 0
         assert len(continues) == 0
         for tail in prev_tails:
-            tail.child = ir.DoneNode(unique_id="_state_done")
+            tail.child = self._create_done(prefix="_state_done")
         self._context.entry_state = ir.State(body_head.unique_id)
 
         return body_head
@@ -133,6 +157,12 @@ class GeneratorFunc:
             assert guard(nothing.child, ir.Edge)
             continues.append(nothing.child)
             return nothing, []
+        if isinstance(stmt, pyast.Return):
+            if stmt.value is not None:
+                raise UnsupportedSyntaxError.from_pyast(stmt)
+            done = self._create_done(prefix=prefix)
+            return done, []
+
         raise TypeError(f"Unexpected statement {pyast.dump(stmt)}")
 
     def _parse_stmts(
@@ -281,56 +311,71 @@ class GeneratorFunc:
             raise RuntimeError(f"No iterator instance {self._context.instances}")
         inst = self._context.instances[target.id]
 
-        def unique_node_gen():
+        def gen_unique_node():
             counter = 0
             while True:
                 yield f"{prefix}_for_{counter}"
                 counter += 1
 
-        def unique_edge_gen():
+        def gen_unique_edge():
             counter = 0
             while True:
                 yield f"{prefix}_for_{counter}_e"
                 counter += 1
 
-        unique_node = unique_node_gen()
-        unique_edge = unique_edge_gen()
+        unique_node = gen_unique_node()
+        unique_edge = gen_unique_edge()
 
-        # Head
-        head = ir.AssignNode(
-            unique_id=next(unique_node),
-            lvalue=inst.signals.ready,
-            rvalue=ir.UInt(1),
-        )
-        to_head = ir.ClockedEdge(unique_id=next(unique_edge), child=head)
+        to_done = ir.ClockedEdge(next(unique_edge))  # goto end of for
+        to_body = ir.ClockedEdge(next(unique_edge))  # goto body of for
+        to_wait = ir.ClockedEdge(next(unique_edge))  # repeat check
 
-        node: ir.BasicElement = head
-        node.child = ir.NonClockedEdge(unique_id=next(unique_edge))
-        node = node.child
+        to_inner = ir.NonClockedEdge(
+            next(unique_edge)
+        )  # to inner ifelse (done or iterate)
 
-        # Branch 1: ready and valid -> goto body
-        to_ready_and_valid = ir.NonClockedEdge(unique_id=next(unique_edge))
-
-        # Branch 2: ready and done -> goto end
-        to_ready_and_done = ir.NonClockedEdge(unique_id=next(unique_edge))
-
-        ifelse2 = ir.IfElseNode(
-            unique_id=next(unique_node),
-            condition=ir.UBinOp(inst.signals.ready, "&&", inst.signals.done),
-            true_edge=to_ready_and_done,
-            false_edge=to_head,
-        )
-        to_ifelse2 = ir.NonClockedEdge(unique_id=next(unique_edge), child=ifelse2)
-        ifelse1 = ir.IfElseNode(
+        head = ir.IfElseNode(
             unique_id=next(unique_node),
             condition=ir.UBinOp(inst.signals.ready, "&&", inst.signals.valid),
-            true_edge=to_ready_and_valid,
-            false_edge=to_ifelse2,
+            true_edge=to_inner,
+            false_edge=to_wait,
         )
-        node.child = ifelse1
 
-        to_body = ir.ClockedEdge(
+        # repeat check
+        to_wait.child = ir.IfElseNode(
             unique_id=next(unique_node),
+            condition=ir.UBinOp(
+                self._context.signals.ready,
+                "||",
+                ir.UnaryOp("!", self._context.signals.valid),
+            ),
+            true_edge=ir.NonClockedEdge(
+                next(unique_edge),
+                child=ir.AssignNode(
+                    unique_id=next(unique_node),
+                    lvalue=inst.signals.ready,
+                    rvalue=ir.UInt(1),
+                    child=ir.ClockedEdge(next(unique_edge), child=head),
+                ),
+            ),
+            false_edge=ir.ClockedEdge(next(unique_edge), child=head),
+        )
+
+        # inner ifelse
+        to_capture = ir.NonClockedEdge(next(unique_edge))
+        to_inner.child = ir.AssignNode(
+            unique_id=next(unique_node),
+            lvalue=inst.signals.ready,
+            rvalue=ir.UInt(0),
+            child=ir.NonClockedEdge(
+                next(unique_edge),
+                child=ir.IfElseNode(
+                    unique_id=next(unique_node),
+                    condition=inst.signals.done,
+                    true_edge=to_done,
+                    false_edge=to_capture,
+                ),
+            ),
         )
 
         def create_capture_output_nodes():
@@ -340,27 +385,30 @@ class GeneratorFunc:
             else:
                 outputs = list(map(self._name_to_var, stmt.target.elts))
             assert len(outputs) == len(inst.outputs), f"{outputs} {inst.outputs}"
-            capture_head = ir.AssignNode(
-                unique_id=next(unique_node),
-                lvalue=inst.signals.ready,
-                rvalue=ir.UInt(0),
-            )
-            capture_node: ir.BasicElement = capture_head
+
+            dummy = ir.NonClockedEdge(next(unique_edge))
+            prev_edge: ir.Edge = dummy
             for caller, callee in zip(outputs, inst.outputs):
-                capture_node.child = ir.NonClockedEdge(unique_id=next(unique_edge))
-                capture_node = capture_node.child
-                capture_node.child = ir.AssignNode(
-                    unique_id=next(unique_node), lvalue=caller, rvalue=callee
+                assert guard(prev_edge, ir.Edge)
+                prev_assign = ir.AssignNode(
+                    unique_id=next(unique_node),
+                    lvalue=caller,
+                    rvalue=callee,
+                    child=ir.NonClockedEdge(next(unique_edge)),
                 )
-                capture_node = capture_node.child
+                prev_edge.child = prev_assign
+                assert guard(prev_assign.child, ir.Edge)
+                prev_edge = prev_assign.child
                 if not self._context.is_declared(caller.ver_name):
                     self._context.add_global_var(caller)
 
-            capture_node.child = to_body
-            return capture_head
+            assert guard(prev_assign, ir.AssignNode)
+            prev_assign.child = to_body
+            return dummy.child
 
-        capture_head = create_capture_output_nodes()
-        to_ready_and_valid.child = capture_head
+        capture_node = create_capture_output_nodes()
+        assert guard(capture_node, ir.AssignNode)
+        to_capture.child = capture_node
 
         body_node, ends = self._parse_stmts(
             stmts=stmt.body,
@@ -375,7 +423,7 @@ class GeneratorFunc:
         for end in ends:
             end.child = head
 
-        return head, [to_ready_and_done, *breaks]
+        return head, [to_done, *breaks]
 
     def _parse_while(self, whil: pyast.While, prefix: str) -> ParseResult:
         assert not whil.orelse, "while-else statements not supported"
@@ -516,11 +564,12 @@ class GeneratorFunc:
 
     @staticmethod
     def _weave_nonclocked_edges(
-        nodes: Iterable[_BasicNodeType], prefix: str
+        nodes: Iterable[_BasicNodeType], prefix: str, last_edge: bool = True
     ) -> tuple[_BasicNodeType, _BasicNodeType]:
         """
         Weaves nodes with nonclocked edges.
 
+        :param last_edge: if True, include last nonclocked edge
         :return: (first basic node, last basic node)
         """
         counters = itertools.count()
@@ -536,6 +585,8 @@ class GeneratorFunc:
                 unique_id=f"{prefix}_{counter}",
             )
             prev = node.child
+        if not last_edge:
+            node._child = None  # pylint: disable=protected-access
         return cast(GeneratorFunc._BasicNodeType, head), node
 
     def _parse_assign(self, assign: pyast.Assign, prefix: str) -> ParseResult:

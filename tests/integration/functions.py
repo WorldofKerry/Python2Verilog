@@ -102,7 +102,7 @@ def happy_face(s_x, s_y, height):
         i += 1
 
 
-def multiplier(multiplicand, multiplier):
+def multiplier(multiplicand: int, multiplier: int) -> int:
     product = 0
     count = 0
     while count < multiplier:
@@ -294,9 +294,9 @@ def olympic_logo(mid_x, mid_y, radius):
             yield x, y, color
 
 
-def break_continue_test():
+def keyword_test():
     """
-    Testing for break and continue
+    Testing for break, continue, return
     """
     i = 0
     while i < 10:
@@ -312,3 +312,33 @@ def break_continue_test():
             break
         yield i
         i += 1
+
+    i = 0
+    while i < 10:
+        if i == 5:
+            return
+        yield i
+        i += 1
+
+
+def quad_multiply(left, right):
+    """
+    Given left and right,
+    yields
+    left * right
+    left * -right
+    -left * right
+    -left * -right
+    """
+    inst = multiplier(left, right)
+    for val in inst:
+        yield val
+    inst = multiplier(left, -right)
+    for val in inst:
+        yield val
+    inst = multiplier(-left, right)
+    for val in inst:
+        yield val
+    inst = multiplier(-left, -right)
+    for val in inst:
+        yield val

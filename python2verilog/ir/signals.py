@@ -5,7 +5,7 @@ Protocol signals used by the converter
 from dataclasses import dataclass, fields
 from typing import Iterator
 
-from python2verilog.ir.expressions import Var
+from python2verilog.ir.expressions import ExclusiveVar, Var
 
 
 @dataclass(frozen=True)
@@ -15,11 +15,11 @@ class InstanceSignals:
     """
 
     # pylint: disable=too-many-instance-attributes
-    start: Var
-    done: Var
+    start: Var = Var("start")
+    done: ExclusiveVar = ExclusiveVar("done")
 
-    ready: Var
-    valid: Var
+    ready: Var = Var("ready")
+    valid: ExclusiveVar = ExclusiveVar("valid")
 
 
 @dataclass(frozen=True)

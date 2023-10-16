@@ -524,7 +524,9 @@ class IfElse(Statement):
 
     def to_lines(self):
         lines = Lines()
-        lines += f"if ({self.condition.verilog()}) begin"
+        lines += f"if ({self.condition.verilog()}) begin" + (
+            f" // {self.comment}" if self.comment else ""
+        )
         for stmt in self.then_body:
             lines.concat(stmt.to_lines(), indent=1)
         if self.else_body:

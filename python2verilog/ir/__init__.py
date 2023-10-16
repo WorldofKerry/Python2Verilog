@@ -32,7 +32,6 @@ from .graph import (
     BasicElement,
     BasicNode,
     ClockedEdge,
-    DoneNode,
     Edge,
     Element,
     IfElseNode,

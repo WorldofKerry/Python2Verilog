@@ -49,6 +49,13 @@ params = [
         action="store",
         help="Path to iverilog",
     ),
+    Argument(
+        "E",
+        "env_debug",
+        default=False,
+        action="store_true",
+        help="Set env variables for debugging",
+    ),
 ]
 """
 Other useful flags
@@ -87,5 +94,7 @@ def argparse(request):
         env.set_var(env.Vars.IS_SYSTEM_VERILOG, None)
     else:
         env.set_var(env.Vars.IS_SYSTEM_VERILOG, "")
+    if args["env_debug"]:
+        env.set_var(env.Vars.DEBUG_COMMENTS, "1")
 
     setattr(request.cls, "args", type("Args", (object,), args))
