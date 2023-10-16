@@ -38,6 +38,8 @@
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
+
 <span class="kn">from</span> <span class="nn">python2verilog.utils.generics</span> <span class="kn">import</span> <span class="n">GenericRepr</span>
 <span class="kn">from</span> <span class="nn">python2verilog.utils.typed</span> <span class="kn">import</span> <span class="n">guard</span><span class="p">,</span> <span class="n">typed</span><span class="p">,</span> <span class="n">typed_list</span><span class="p">,</span> <span class="n">typed_strict</span>
 
@@ -129,7 +131,10 @@
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">))</span></div>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
 
 
 
@@ -202,7 +207,24 @@
 <span class="sd">    Can only be set once before a clock cycle must occur,</span>
 <span class="sd">    used by the optimizer to determine if it needs to make</span>
 <span class="sd">    a edge clocked or not</span>
-<span class="sd">    &quot;&quot;&quot;</span></div>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">py_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">ver_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="n">width</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">32</span><span class="p">,</span>
+        <span class="n">is_signed</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">initial_value</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;0&quot;</span><span class="p">,</span>
+        <span class="n">exclusive_group</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">_</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">py_name</span><span class="p">,</span> <span class="n">ver_name</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">is_signed</span><span class="p">,</span> <span class="n">initial_value</span><span class="p">,</span> <span class="o">**</span><span class="n">_</span><span class="p">)</span>
+
+        <span class="c1"># Default exclusive group is it&#39;s Verilog variable name</span>
+        <span class="k">if</span> <span class="n">exclusive_group</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">exclusive_group</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ver_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">exclusive_group</span> <span class="o">=</span> <span class="n">exclusive_group</span></div>
 
 
 

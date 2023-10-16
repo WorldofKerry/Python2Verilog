@@ -105,11 +105,15 @@
         <span class="k">yield from</span> <span class="p">()</span></div>
 
 
-<div class="viewcode-block" id="Element.variables">
-<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.graph.Element.variables">[docs]</a>
-    <span class="k">def</span> <span class="nf">variables</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">expr</span><span class="o">.</span><span class="n">Var</span><span class="p">]:</span>
+<div class="viewcode-block" id="Element.exclusions">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.graph.Element.exclusions">[docs]</a>
+    <span class="k">def</span> <span class="nf">exclusions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Yields all variables and their nonclocked children</span>
+<span class="sd">        Yields all exclusion groups that will be read or written to</span>
+<span class="sd">        within this group of nonclocked nodes.</span>
+
+<span class="sd">        The reason reads are also included is because checking a callee&#39;s</span>
+<span class="sd">        ready signal more than once in a clock cycle is usually incorrect.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">yield from</span> <span class="p">()</span></div>
 </div>
@@ -257,12 +261,14 @@
             <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_optimal_false_edge</span></div>
 
 
-<div class="viewcode-block" id="IfElseNode.variables">
-<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.graph.IfElseNode.variables">[docs]</a>
-    <span class="k">def</span> <span class="nf">variables</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">yield from</span> <span class="n">get_variables</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">condition</span><span class="p">)</span>
-        <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimal_true_edge</span><span class="o">.</span><span class="n">variables</span><span class="p">()</span>
-        <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimal_false_edge</span><span class="o">.</span><span class="n">variables</span><span class="p">()</span></div>
+<div class="viewcode-block" id="IfElseNode.exclusions">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.graph.IfElseNode.exclusions">[docs]</a>
+    <span class="k">def</span> <span class="nf">exclusions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">get_variables</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">condition</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">expr</span><span class="o">.</span><span class="n">ExclusiveVar</span><span class="p">):</span>
+                <span class="k">yield</span> <span class="n">var</span><span class="o">.</span><span class="n">exclusive_group</span>
+        <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimal_true_edge</span><span class="o">.</span><span class="n">exclusions</span><span class="p">()</span>
+        <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimal_false_edge</span><span class="o">.</span><span class="n">exclusions</span><span class="p">()</span></div>
 
 
     <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -272,7 +278,9 @@
 <a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.graph.IfElseNode.visit_nonclocked">[docs]</a>
     <span class="k">def</span> <span class="nf">visit_nonclocked</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Element</span><span class="p">]:</span>
         <span class="k">yield</span> <span class="bp">self</span>
+        <span class="k">yield</span> <span class="n">Node</span><span class="p">(</span><span class="n">unique_id</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;True&quot;</span><span class="p">)</span>
         <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimal_true_edge</span><span class="o">.</span><span class="n">visit_nonclocked</span><span class="p">()</span>
+        <span class="k">yield</span> <span class="n">Node</span><span class="p">(</span><span class="n">unique_id</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;False&quot;</span><span class="p">)</span>
         <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimal_false_edge</span><span class="o">.</span><span class="n">visit_nonclocked</span><span class="p">()</span></div>
 </div>
 
@@ -331,13 +339,15 @@
     <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">lvalue</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">rvalue</span><span class="si">}</span><span class="s2">&quot;</span>
 
-<div class="viewcode-block" id="AssignNode.variables">
-<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.graph.AssignNode.variables">[docs]</a>
-    <span class="k">def</span> <span class="nf">variables</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">yield from</span> <span class="n">get_variables</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lvalue</span><span class="p">)</span>
+<div class="viewcode-block" id="AssignNode.exclusions">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.graph.AssignNode.exclusions">[docs]</a>
+    <span class="k">def</span> <span class="nf">exclusions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">get_variables</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lvalue</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">expr</span><span class="o">.</span><span class="n">ExclusiveVar</span><span class="p">):</span>
+                <span class="k">yield</span> <span class="n">var</span><span class="o">.</span><span class="n">exclusive_group</span>
         <span class="k">yield from</span> <span class="n">get_variables</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rvalue</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_child</span><span class="p">:</span>
-            <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">child</span><span class="o">.</span><span class="n">variables</span><span class="p">()</span></div>
+            <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">child</span><span class="o">.</span><span class="n">exclusions</span><span class="p">()</span></div>
 </div>
 
 
@@ -372,10 +382,10 @@
 <span class="sd">    i.e. no clock cycle has to pass for the next node to be executed</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="NonClockedEdge.variables">
-<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.graph.NonClockedEdge.variables">[docs]</a>
-    <span class="k">def</span> <span class="nf">variables</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">child</span><span class="o">.</span><span class="n">variables</span><span class="p">()</span></div>
+<div class="viewcode-block" id="NonClockedEdge.exclusions">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.graph.NonClockedEdge.exclusions">[docs]</a>
+    <span class="k">def</span> <span class="nf">exclusions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">child</span><span class="o">.</span><span class="n">exclusions</span><span class="p">()</span></div>
 
 
     <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -391,9 +401,9 @@
 <span class="sd">    i.e. a clock cycle has to pass for the next node to be executed</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="ClockedEdge.variables">
-<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.graph.ClockedEdge.variables">[docs]</a>
-    <span class="k">def</span> <span class="nf">variables</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="ClockedEdge.exclusions">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.graph.ClockedEdge.exclusions">[docs]</a>
+    <span class="k">def</span> <span class="nf">exclusions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">yield from</span> <span class="p">()</span></div>
 
 

@@ -282,7 +282,7 @@ For mixed unsigned and signed operations, the following page explains well
 
 <dl class="py class">
 <dt class="sig sig-object py" id="python2verilog.ir.expressions.ExclusiveVar">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ExclusiveVar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">py_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ver_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">32</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_signed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'0'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">_</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/ir/expressions.html#ExclusiveVar"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.ir.expressions.ExclusiveVar" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ExclusiveVar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">py_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ver_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">32</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_signed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'0'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exclusive_group</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">_</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/ir/expressions.html#ExclusiveVar"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.ir.expressions.ExclusiveVar" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#python2verilog.ir.expressions.Var" title="python2verilog.ir.expressions.Var"><code class="xref py py-class docutils literal notranslate"><span class="pre">Var</span></code></a></p>
 <p>Exclusive Variable</p>
 <p>Can only be set once before a clock cycle must occur,
@@ -491,9 +491,12 @@ Element := Vertex | Edge</p>
 i.e. assignments that do not block the execution of
 the next statements, without a clock cycle having to pass</p>
 <dl class="py method">
-<dt class="sig sig-object py" id="python2verilog.ir.graph.AssignNode.variables">
-<span class="sig-name descname"><span class="pre">variables</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/ir/graph.html#AssignNode.variables"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.ir.graph.AssignNode.variables" title="Link to this definition">¶</a></dt>
-<dd><p>Yields all variables and their nonclocked children</p>
+<dt class="sig sig-object py" id="python2verilog.ir.graph.AssignNode.exclusions">
+<span class="sig-name descname"><span class="pre">exclusions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/ir/graph.html#AssignNode.exclusions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.ir.graph.AssignNode.exclusions" title="Link to this definition">¶</a></dt>
+<dd><p>Yields all exclusion groups that will be read or written to
+within this group of nonclocked nodes.</p>
+<p>The reason reads are also included is because checking a callee’s
+ready signal more than once in a clock cycle is usually incorrect.</p>
 </dd></dl>
 
 </dd></dl>
@@ -561,9 +564,12 @@ Has one child.</p>
 <p>Represents a clocked edge,
 i.e. a clock cycle has to pass for the next node to be executed</p>
 <dl class="py method">
-<dt class="sig sig-object py" id="python2verilog.ir.graph.ClockedEdge.variables">
-<span class="sig-name descname"><span class="pre">variables</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/ir/graph.html#ClockedEdge.variables"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.ir.graph.ClockedEdge.variables" title="Link to this definition">¶</a></dt>
-<dd><p>Yields all variables and their nonclocked children</p>
+<dt class="sig sig-object py" id="python2verilog.ir.graph.ClockedEdge.exclusions">
+<span class="sig-name descname"><span class="pre">exclusions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/ir/graph.html#ClockedEdge.exclusions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.ir.graph.ClockedEdge.exclusions" title="Link to this definition">¶</a></dt>
+<dd><p>Yields all exclusion groups that will be read or written to
+within this group of nonclocked nodes.</p>
+<p>The reason reads are also included is because checking a callee’s
+ready signal more than once in a clock cycle is usually incorrect.</p>
 </dd></dl>
 
 </dd></dl>
@@ -593,9 +599,12 @@ i.e. a clock cycle has to pass for the next node to be executed</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="python2verilog.ir.graph.Element.variables">
-<span class="sig-name descname"><span class="pre">variables</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Iterator</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#python2verilog.ir.expressions.Var" title="python2verilog.ir.expressions.Var"><span class="pre">Var</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/python2verilog/ir/graph.html#Element.variables"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.ir.graph.Element.variables" title="Link to this definition">¶</a></dt>
-<dd><p>Yields all variables and their nonclocked children</p>
+<dt class="sig sig-object py" id="python2verilog.ir.graph.Element.exclusions">
+<span class="sig-name descname"><span class="pre">exclusions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Iterator</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/python2verilog/ir/graph.html#Element.exclusions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.ir.graph.Element.exclusions" title="Link to this definition">¶</a></dt>
+<dd><p>Yields all exclusion groups that will be read or written to
+within this group of nonclocked nodes.</p>
+<p>The reason reads are also included is because checking a callee’s
+ready signal more than once in a clock cycle is usually incorrect.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -622,6 +631,15 @@ i.e. a clock cycle has to pass for the next node to be executed</p>
 <dd><p>Gets edges</p>
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="python2verilog.ir.graph.IfElseNode.exclusions">
+<span class="sig-name descname"><span class="pre">exclusions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/ir/graph.html#IfElseNode.exclusions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.ir.graph.IfElseNode.exclusions" title="Link to this definition">¶</a></dt>
+<dd><p>Yields all exclusion groups that will be read or written to
+within this group of nonclocked nodes.</p>
+<p>The reason reads are also included is because checking a callee’s
+ready signal more than once in a clock cycle is usually incorrect.</p>
+</dd></dl>
+
 <dl class="py property">
 <dt class="sig sig-object py" id="python2verilog.ir.graph.IfElseNode.optimal_false_edge">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">optimal_false_edge</span></span><a class="headerlink" href="#python2verilog.ir.graph.IfElseNode.optimal_false_edge" title="Link to this definition">¶</a></dt>
@@ -632,12 +650,6 @@ i.e. a clock cycle has to pass for the next node to be executed</p>
 <dt class="sig sig-object py" id="python2verilog.ir.graph.IfElseNode.optimal_true_edge">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">optimal_true_edge</span></span><a class="headerlink" href="#python2verilog.ir.graph.IfElseNode.optimal_true_edge" title="Link to this definition">¶</a></dt>
 <dd><p>optimal true edge or edge otherwise</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="python2verilog.ir.graph.IfElseNode.variables">
-<span class="sig-name descname"><span class="pre">variables</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/ir/graph.html#IfElseNode.variables"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.ir.graph.IfElseNode.variables" title="Link to this definition">¶</a></dt>
-<dd><p>Yields all variables and their nonclocked children</p>
 </dd></dl>
 
 <dl class="py method">
@@ -667,9 +679,12 @@ i.e. a clock cycle has to pass for the next node to be executed</p>
 <p>Represents a non-clocked edge,
 i.e. no clock cycle has to pass for the next node to be executed</p>
 <dl class="py method">
-<dt class="sig sig-object py" id="python2verilog.ir.graph.NonClockedEdge.variables">
-<span class="sig-name descname"><span class="pre">variables</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/ir/graph.html#NonClockedEdge.variables"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.ir.graph.NonClockedEdge.variables" title="Link to this definition">¶</a></dt>
-<dd><p>Yields all variables and their nonclocked children</p>
+<dt class="sig sig-object py" id="python2verilog.ir.graph.NonClockedEdge.exclusions">
+<span class="sig-name descname"><span class="pre">exclusions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/python2verilog/ir/graph.html#NonClockedEdge.exclusions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python2verilog.ir.graph.NonClockedEdge.exclusions" title="Link to this definition">¶</a></dt>
+<dd><p>Yields all exclusion groups that will be read or written to
+within this group of nonclocked nodes.</p>
+<p>The reason reads are also included is because checking a callee’s
+ready signal more than once in a clock cycle is usually incorrect.</p>
 </dd></dl>
 
 </dd></dl>
