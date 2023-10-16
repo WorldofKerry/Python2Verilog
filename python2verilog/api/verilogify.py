@@ -176,7 +176,7 @@ def get_original_func(verilogified: FunctionType) -> FunctionType:
 
 
 def get_expected(
-    verilogified: FunctionType, max_yields_per_test_case: int = 5000
+    verilogified: FunctionType, max_yields_per_test_case: int = 10000
 ) -> Iterator[tuple[int, ...]]:
     """
     Get expected output of testbench
