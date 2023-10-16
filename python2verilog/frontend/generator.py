@@ -30,6 +30,26 @@ class GeneratorFunc:
         """
         return self._parse_func(), self._context
 
+    def _create_done(self, prefix: str) -> ir.Node:
+        """
+        Creates the done nodes
+
+        Signals that module is done, happens in one clock cycle
+
+        Current implementation is as follows:
+
+        done = 1
+        valid = 1
+        """
+        left_hand_sides = [self._context.signals.done, self._context.signals.valid]
+        right_hand_sides = [ir.UInt(1), ir.UInt(1)]
+        head, tail = self._weave_nonclocked_edges(
+            self._create_assign_nodes(left_hand_sides, right_hand_sides, prefix=prefix),
+            prefix=f"{prefix}_e",
+        )
+        tail._child = None  # No final nonclocked edge
+        return head
+
     def _parse_func(self, prefix: str = "_state") -> ir.Node:
         """
         Parses the function inside the context
@@ -42,7 +62,8 @@ class GeneratorFunc:
         assert len(breaks) == 0
         assert len(continues) == 0
         for tail in prev_tails:
-            tail.child = ir.DoneNode(unique_id="_state_done")
+            # tail.child = ir.DoneNode(unique_id="_state_done")
+            tail.child = self._create_done(prefix="_state_done")
         self._context.entry_state = ir.State(body_head.unique_id)
 
         return body_head
