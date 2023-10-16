@@ -13,7 +13,7 @@ from .functions import *
 from .utils import name_func
 
 PARAMETERS = [
-    (break_continue_test, [()]),
+    (keyword_test, [()]),
     (fib, range(10, 31, 10)),
     (floor_div, [13, 23]),
     (operators, [(13, 17)]),

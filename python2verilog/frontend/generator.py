@@ -157,6 +157,12 @@ class GeneratorFunc:
             assert guard(nothing.child, ir.Edge)
             continues.append(nothing.child)
             return nothing, []
+        if isinstance(stmt, pyast.Return):
+            if stmt.value is not None:
+                raise UnsupportedSyntaxError.from_pyast(stmt)
+            done = self._create_done(prefix=prefix)
+            return done, []
+
         raise TypeError(f"Unexpected statement {pyast.dump(stmt)}")
 
     def _parse_stmts(
