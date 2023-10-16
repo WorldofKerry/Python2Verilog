@@ -126,11 +126,15 @@ class CodeGen:
                 ver.Statement(),
                 ver.Statement(comment="Start signal takes precedence over reset"),
                 ver.IfElse(
-                    context.signals.reset,
+                    ir.UBinOp(context.signals.reset, "||", context.signals.start),
                     then_body=[
                         ver.NonBlockingSubsitution(
-                            lvalue=context.state_var,
-                            rvalue=context.idle_state,
+                            context.state_var,
+                            context.idle_state,
+                        ),
+                        ver.NonBlockingSubsitution(
+                            context.signals.done,
+                            ir.UInt(0),
                         ),
                     ],
                     else_body=[],
