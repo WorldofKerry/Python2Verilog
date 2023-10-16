@@ -59,12 +59,7 @@ class Context(GenericReprAndStr):
     _output_vars: Optional[list[ExclusiveVar]] = None
     _states: set[str] = field(default_factory=set)
 
-    signals: ProtocolSignals = ProtocolSignals(
-        start=Var("start"),
-        done=Var("done"),
-        ready=Var("ready"),
-        valid=Var("valid"),
-    )
+    signals: ProtocolSignals = ProtocolSignals()
 
     state_var: Var = Var("state")
 

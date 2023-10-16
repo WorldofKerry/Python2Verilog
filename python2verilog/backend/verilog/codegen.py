@@ -432,13 +432,13 @@ class CodeGen:
                     body=while_body,
                 )
             )
-            initial_body.append(
-                ver.IfElse(
-                    condition=ir.Expression("_ready"),
-                    then_body=[make_display_stmt()],
-                    else_body=[],
-                )
-            )
+            # initial_body.append(
+            #     ver.IfElse(
+            #         condition=self.context.signals.ready,
+            #         then_body=[make_display_stmt()],
+            #         else_body=[],
+            #     )
+            # )
             initial_body.append(ver.Statement())
 
         initial_body.append(ver.Statement(literal="$finish;"))
@@ -511,15 +511,15 @@ class CaseBuilder:
         self.case.case_items = list(reversed(self.case.case_items))
 
         # Add done state if it doesn't exist in cases
-        if all(
-            case.condition != self.context.done_state for case in self.case.case_items
-        ):
-            self.case.case_items.append(
-                ver.CaseItem(
-                    condition=self.context.done_state,
-                    statements=[self.create_quick_done(self.context)],
-                )
-            )
+        # if all(
+        #     case.condition != self.context.done_state for case in self.case.case_items
+        # ):
+        #     self.case.case_items.append(
+        #         ver.CaseItem(
+        #             condition=self.context.done_state,
+        #             statements=[self.create_quick_done(self.context)],
+        #         )
+        #     )
 
         return self.case
 
@@ -536,7 +536,6 @@ class CaseBuilder:
             condition=ir.UBinOp(
                 ir.UnaryOp("!", context.signals.valid), "&&", context.signals.ready
             ),
-            # condition=context.signals.ready,
             then_body=[
                 ver.NonBlockingSubsitution(context.signals.done, ir.UInt(1)),
                 ver.NonBlockingSubsitution(context.state_var, context.idle_state),
@@ -568,6 +567,7 @@ class CaseBuilder:
         stmts: list[ver.Statement] = []
 
         if isinstance(vertex, ir.DoneNode):
+            raise RuntimeError()
             stmts.append(
                 ver.NonBlockingSubsitution(
                     self.context.state_var, self.context.done_state

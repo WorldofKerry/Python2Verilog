@@ -18,6 +18,7 @@ PARAMETERS = [
     (floor_div, [13, 23]),
     (operators, [(13, 17)]),
     (multiplier, [(13, 17), (78, 67)]),
+    (hrange, [(0, 1, 10)]),
     (division, [(6, 7, 10), (2, 3, 30), (13, 17, 5)]),
     (circle_lines, [(21, 37, 7), (79, 45, 43)]),
     (happy_face, [(50, 51, 7), (76, 97, 43)]),

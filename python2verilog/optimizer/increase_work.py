@@ -105,9 +105,6 @@ class IncreaseWorkPerClockCycle:
             old_mapping,
         )
 
-        # if self.make_unique_peek() == 10:
-        #     breakpoint()
-
         # If clocked, then switch to new mapping
         if isinstance(edge, ir.ClockedEdge):
             old_mapping = copy.copy(new_mapping)
@@ -120,6 +117,9 @@ class IncreaseWorkPerClockCycle:
             assert guard(node, ir.Node)
             self.apply(node)
             return edge
+
+        # if self.make_unique_peek() == 29:
+        #     breakpoint()
 
         # Exclusive vars can only be visited once
         exclusive_vars = set(self.exclusive_vars(node.variables()))
