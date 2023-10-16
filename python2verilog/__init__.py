@@ -1,9 +1,9 @@
 """
 Python 2 Verilog
 """
-import pkg_resources
+import importlib.metadata
 
-__version__ = pkg_resources.get_distribution("python2verilog").version
+__version__ = importlib.metadata.version("python2verilog")
 
 from .api import (
     Modes,
