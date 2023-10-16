@@ -1,6 +1,9 @@
 """
 Python 2 Verilog
 """
+import pkg_resources
+
+__version__ = pkg_resources.get_distribution("python2verilog").version
 
 from .api import (
     Modes,
