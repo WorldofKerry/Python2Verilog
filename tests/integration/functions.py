@@ -312,6 +312,7 @@ def keyword_test():
             break
         yield i
         i += 1
+
     i = 0
     while i < 10:
         if i == 5:

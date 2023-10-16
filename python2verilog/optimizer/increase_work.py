@@ -118,7 +118,7 @@ class IncreaseWorkPerClockCycle:
             self.apply(node)
             return edge
 
-        # if self.make_unique_peek() == 29:
+        # if "_state2_for_5" in node.unique_id:
         #     breakpoint()
 
         # Exclusive vars can only be visited once
@@ -134,6 +134,10 @@ class IncreaseWorkPerClockCycle:
             if isinstance(edge, ir.ClockedEdge):
                 assert guard(node, ir.Node)
                 self.apply(node)
+            else:
+                logging.error(f"{node} {exclusive_vars & visited_path.keys()}")
+                # self.apply(node)
+                pass
             return edge
 
         # Update visited
