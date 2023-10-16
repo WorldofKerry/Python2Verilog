@@ -131,13 +131,9 @@ class IncreaseWorkPerClockCycle:
                 visited_path.keys(),
                 node,
             )
-            if isinstance(edge, ir.ClockedEdge):
-                assert guard(node, ir.Node)
-                self.apply(node)
-            else:
-                logging.error(f"{node} {exclusive_vars & visited_path.keys()}")
-                # self.apply(node)
-                pass
+            assert guard(edge, ir.ClockedEdge)
+            assert guard(node, ir.Node)
+            self.apply(node)
             return edge
 
         # Update visited

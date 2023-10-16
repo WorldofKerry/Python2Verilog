@@ -342,11 +342,23 @@ class GeneratorFunc:
         )
 
         # repeat check
-        to_wait.child = ir.AssignNode(
+        to_wait.child = ir.IfElseNode(
             unique_id=next(unique_node),
-            lvalue=inst.signals.ready,
-            rvalue=ir.UInt(1),
-            child=ir.ClockedEdge(next(unique_edge), child=head),
+            condition=ir.UBinOp(
+                self._context.signals.ready,
+                "||",
+                ir.UnaryOp("!", self._context.signals.valid),
+            ),
+            true_edge=ir.NonClockedEdge(
+                next(unique_edge),
+                child=ir.AssignNode(
+                    unique_id=next(unique_node),
+                    lvalue=inst.signals.ready,
+                    rvalue=ir.UInt(1),
+                    child=ir.ClockedEdge(next(unique_edge), child=head),
+                ),
+            ),
+            false_edge=ir.ClockedEdge(next(unique_edge), child=head),
         )
 
         # inner ifelse
