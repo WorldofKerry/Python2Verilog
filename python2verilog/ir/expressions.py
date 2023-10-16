@@ -7,6 +7,8 @@ that are synthesizable
 """
 from __future__ import annotations
 
+from typing import Optional
+
 from python2verilog.utils.generics import GenericRepr
 from python2verilog.utils.typed import guard, typed, typed_list, typed_strict
 
@@ -80,6 +82,9 @@ class UInt(Expression):
         assert isinstance(value, int)
         super().__init__(str(value))
 
+    def __repr__(self):
+        return str(self)
+
 
 class Unknown(Expression):
     """
@@ -140,6 +145,23 @@ class ExclusiveVar(Var):
     used by the optimizer to determine if it needs to make
     a edge clocked or not
     """
+
+    def __init__(
+        self,
+        py_name: str,
+        ver_name: str = "",
+        width: int = 32,
+        is_signed: bool = True,
+        initial_value: str = "0",
+        exclusive_group: Optional[str] = None,
+        **_,
+    ):
+        super().__init__(py_name, ver_name, width, is_signed, initial_value, **_)
+
+        # Default exclusive group is it's Verilog variable name
+        if exclusive_group is None:
+            exclusive_group = self.ver_name
+        self.exclusive_group = exclusive_group
 
 
 class Ternary(Expression):
