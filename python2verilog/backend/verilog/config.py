@@ -24,4 +24,7 @@ class CodegenConfig(TestbenchConfig):
     """
 
     # Enable debug comments graph elements as comment
-    add_debug_comments: bool = env.get_var(env.Vars.DEBUG_COMMENTS)
+    add_debug_comments: bool = False
+
+    def __post_init__(self):
+        self.add_debug_comments |= bool(env.get_var(env.Vars.DEBUG_COMMENTS))

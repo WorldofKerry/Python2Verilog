@@ -65,6 +65,7 @@ def pytest_addoption(parser: pytest.Parser):
 
 
 env.set_var(env.Vars.NO_WRITE_TO_FS, "1")
+env.set_var(env.Vars.DEBUG_COMMENTS, "1")
 
 
 @pytest.fixture()
