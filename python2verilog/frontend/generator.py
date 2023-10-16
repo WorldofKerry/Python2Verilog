@@ -400,6 +400,9 @@ class GeneratorFunc:
         for end in ends:
             end.child = head
 
+        # if "_state2_for_0" in head.unique_id:
+        #     breakpoint()
+
         return head, [to_ready_and_done, *breaks]
 
     def _parse_while(self, whil: pyast.While, prefix: str) -> ParseResult:
