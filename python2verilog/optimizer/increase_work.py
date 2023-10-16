@@ -209,11 +209,12 @@ class IncreaseWorkPerClockCycle:
                 mapper[root.lvalue] = root.rvalue
                 if isinstance(root.lvalue, ir.ExclusiveVar):
                     visited_path[root.lvalue] = 1
-            assert guard(root.child, ir.Edge)
-            assert guard(root.child.child, ir.Node)
-            root.optimal_child = self.apply_recursive(
-                root.child, mapper, {}, visited_path
-            )
+            if root.has_child():
+                assert guard(root.child, ir.Edge)
+                assert guard(root.child.child, ir.Node)
+                root.optimal_child = self.apply_recursive(
+                    root.child, mapper, {}, visited_path
+                )
         elif isinstance(root, ir.IfElseNode):
             root.optimal_true_edge = self.apply_recursive(root.true_edge, {}, {}, {})
             root.optimal_false_edge = self.apply_recursive(root.false_edge, {}, {}, {})
