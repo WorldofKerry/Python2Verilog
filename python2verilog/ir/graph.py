@@ -265,7 +265,7 @@ class AssignNode(BasicNode):
         for var in get_variables(self.lvalue):
             if isinstance(var, expr.ExclusiveVar):
                 yield var.exclusive_group
-        yield from get_variables(self.rvalue)  # TODO: keep?
+        yield from get_variables(self.rvalue)
         if self._child:
             yield from self.child.exclusions()
 

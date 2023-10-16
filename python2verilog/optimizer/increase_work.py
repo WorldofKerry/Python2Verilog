@@ -5,7 +5,7 @@ IncreaseWorkPerClockCycle
 import copy
 import itertools
 import logging
-from typing import Any, Callable, Iterator, Union
+from typing import Any, Callable, Iterator
 
 from python2verilog import ir
 from python2verilog.optimizer.helpers import backwards_replace
@@ -204,7 +204,7 @@ class IncreaseWorkPerClockCycle:
 
         if isinstance(root, ir.BasicNode):
             mapper: dict[ir.Var, ir.Expression] = {}
-            visited_path: dict[Union[ir.Var, str], int] = {}
+            visited_path: dict[str, int] = {}
             if isinstance(root, ir.AssignNode):
                 mapper[root.lvalue] = root.rvalue
                 if isinstance(root.lvalue, ir.ExclusiveVar):
