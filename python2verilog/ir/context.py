@@ -16,7 +16,6 @@ from typing import Any, Optional, Sequence
 from python2verilog.api.modes import Modes
 from python2verilog.exceptions import TypeInferenceError
 from python2verilog.ir.expressions import ExclusiveVar, State, Var
-from python2verilog.ir.graph import DoneNode
 from python2verilog.ir.instance import Instance
 from python2verilog.ir.signals import ProtocolSignals
 from python2verilog.utils.env import is_debug_mode
@@ -396,7 +395,7 @@ class Context(GenericReprAndStr):
             for key, value in self.signals.instance_specific_items()
         }
 
-        signals = ProtocolSignals(**args)
+        signals = ProtocolSignals(**args)  # type: ignore[arg-type]
 
         return Instance(
             self.name,

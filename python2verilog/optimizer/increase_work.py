@@ -180,9 +180,6 @@ class IncreaseWorkPerClockCycle:
                 )
             else:
                 new_edge.child = node
-
-        elif isinstance(node, ir.DoneNode):
-            new_edge.child = node
         else:
             raise RuntimeError(f"{type(node)}")
         return new_edge
@@ -218,7 +215,5 @@ class IncreaseWorkPerClockCycle:
         elif isinstance(root, ir.IfElseNode):
             root.optimal_true_edge = self.apply_recursive(root.true_edge, {}, {}, {})
             root.optimal_false_edge = self.apply_recursive(root.false_edge, {}, {}, {})
-        elif isinstance(root, ir.DoneNode):
-            pass
         else:
             raise RuntimeError(f"{type(root)}")

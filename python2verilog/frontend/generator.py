@@ -47,11 +47,11 @@ class GeneratorFunc:
             self._context.state_var,
         ]
         right_hand_sides = [ir.UInt(1), ir.UInt(1), self._context.idle_state]
-        head, tail = self._weave_nonclocked_edges(
+        head, _tail = self._weave_nonclocked_edges(
             self._create_assign_nodes(left_hand_sides, right_hand_sides, prefix=prefix),
             prefix=f"{prefix}_e",
+            last_edge=False,
         )
-        tail._child = None  # No final nonclocked edge
         return head
 
     def _parse_func(self, prefix: str = "_state") -> ir.Node:
@@ -66,7 +66,6 @@ class GeneratorFunc:
         assert len(breaks) == 0
         assert len(continues) == 0
         for tail in prev_tails:
-            # tail.child = ir.DoneNode(unique_id="_state_done")
             tail.child = self._create_done(prefix="_state_done")
         self._context.entry_state = ir.State(body_head.unique_id)
 
@@ -548,11 +547,12 @@ class GeneratorFunc:
 
     @staticmethod
     def _weave_nonclocked_edges(
-        nodes: Iterable[_BasicNodeType], prefix: str
+        nodes: Iterable[_BasicNodeType], prefix: str, last_edge: bool = True
     ) -> tuple[_BasicNodeType, _BasicNodeType]:
         """
         Weaves nodes with nonclocked edges.
 
+        :param last_edge: if True, include last nonclocked edge
         :return: (first basic node, last basic node)
         """
         counters = itertools.count()
@@ -568,6 +568,8 @@ class GeneratorFunc:
                 unique_id=f"{prefix}_{counter}",
             )
             prev = node.child
+        if not last_edge:
+            node._child = None  # pylint: disable=protected-access
         return cast(GeneratorFunc._BasicNodeType, head), node
 
     def _parse_assign(self, assign: pyast.Assign, prefix: str) -> ParseResult:

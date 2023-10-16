@@ -260,15 +260,6 @@ class AssignNode(BasicNode):
             yield from self.child.variables()
 
 
-class DoneNode(Node, Element):
-    """
-    Signals done
-    """
-
-    def __repr__(self) -> str:
-        return "Done"
-
-
 class Edge(BasicElement):
     """
     Represents an edge between two vertices

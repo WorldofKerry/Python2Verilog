@@ -571,15 +571,7 @@ class CaseBuilder:
 
         stmts: list[ver.Statement] = []
 
-        if isinstance(vertex, ir.DoneNode):
-            raise RuntimeError()
-            stmts.append(
-                ver.NonBlockingSubsitution(
-                    self.context.state_var, self.context.done_state
-                )
-            )
-
-        elif isinstance(vertex, ir.AssignNode):
+        if isinstance(vertex, ir.AssignNode):
             stmts.append(
                 ver.NonBlockingSubsitution(
                     vertex.lvalue,
