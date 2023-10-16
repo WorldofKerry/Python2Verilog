@@ -136,6 +136,10 @@ class CodeGen:
                             context.signals.done,
                             ir.UInt(0),
                         ),
+                        ver.NonBlockingSubsitution(
+                            context.signals.valid,
+                            ir.UInt(0),
+                        ),
                     ],
                     else_body=[],
                 ),
@@ -282,7 +286,7 @@ class CodeGen:
             )
 
         if_else = ver.IfElse(
-            ir.Expression("_start"),
+            context.signals.start,
             then_body,
             [
                 ver.Statement(
@@ -299,7 +303,6 @@ class CodeGen:
                 ),
             ],
         )
-        # logging.debug(f"make start if else {if_else}")
         return [if_else]
 
     @property
