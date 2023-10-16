@@ -134,7 +134,6 @@
                 <span class="n">ver</span><span class="o">.</span><span class="n">Statement</span><span class="p">(</span><span class="s2">&quot;`ifdef DEBUG&quot;</span><span class="p">),</span>
                 <span class="n">ver</span><span class="o">.</span><span class="n">Statement</span><span class="p">(</span><span class="n">make_debug_display</span><span class="p">(</span><span class="n">context</span><span class="p">)),</span>
                 <span class="n">ver</span><span class="o">.</span><span class="n">Statement</span><span class="p">(</span><span class="s2">&quot;`endif&quot;</span><span class="p">),</span>
-                <span class="n">ver</span><span class="o">.</span><span class="n">NonBlockingSubsitution</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">done</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">UInt</span><span class="p">(</span><span class="mi">0</span><span class="p">)),</span>
                 <span class="n">ver</span><span class="o">.</span><span class="n">Statement</span><span class="p">(),</span>
             <span class="p">]</span>
             <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">create_instance_zeroed_signals</span><span class="p">())</span>
@@ -144,7 +143,14 @@
                     <span class="n">context</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">ready</span><span class="p">,</span>
                     <span class="n">cast</span><span class="p">(</span>
                         <span class="nb">list</span><span class="p">[</span><span class="n">ver</span><span class="o">.</span><span class="n">Statement</span><span class="p">],</span>
-                        <span class="p">[</span><span class="n">ver</span><span class="o">.</span><span class="n">NonBlockingSubsitution</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">valid</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">UInt</span><span class="p">(</span><span class="mi">0</span><span class="p">))],</span>
+                        <span class="p">[</span>
+                            <span class="n">ver</span><span class="o">.</span><span class="n">NonBlockingSubsitution</span><span class="p">(</span>
+                                <span class="n">context</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">valid</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">UInt</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                            <span class="p">),</span>
+                            <span class="n">ver</span><span class="o">.</span><span class="n">NonBlockingSubsitution</span><span class="p">(</span>
+                                <span class="n">context</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">done</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">UInt</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                            <span class="p">),</span>
+                        <span class="p">],</span>
                     <span class="p">),</span>
                     <span class="p">[],</span>
                 <span class="p">),</span>
@@ -153,11 +159,19 @@
                 <span class="n">ver</span><span class="o">.</span><span class="n">Statement</span><span class="p">(),</span>
                 <span class="n">ver</span><span class="o">.</span><span class="n">Statement</span><span class="p">(</span><span class="n">comment</span><span class="o">=</span><span class="s2">&quot;Start signal takes precedence over reset&quot;</span><span class="p">),</span>
                 <span class="n">ver</span><span class="o">.</span><span class="n">IfElse</span><span class="p">(</span>
-                    <span class="n">context</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">reset</span><span class="p">,</span>
+                    <span class="n">ir</span><span class="o">.</span><span class="n">UBinOp</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">reset</span><span class="p">,</span> <span class="s2">&quot;||&quot;</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">start</span><span class="p">),</span>
                     <span class="n">then_body</span><span class="o">=</span><span class="p">[</span>
                         <span class="n">ver</span><span class="o">.</span><span class="n">NonBlockingSubsitution</span><span class="p">(</span>
-                            <span class="n">lvalue</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">state_var</span><span class="p">,</span>
-                            <span class="n">rvalue</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">idle_state</span><span class="p">,</span>
+                            <span class="n">context</span><span class="o">.</span><span class="n">state_var</span><span class="p">,</span>
+                            <span class="n">context</span><span class="o">.</span><span class="n">idle_state</span><span class="p">,</span>
+                        <span class="p">),</span>
+                        <span class="n">ver</span><span class="o">.</span><span class="n">NonBlockingSubsitution</span><span class="p">(</span>
+                            <span class="n">context</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">done</span><span class="p">,</span>
+                            <span class="n">ir</span><span class="o">.</span><span class="n">UInt</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+                        <span class="p">),</span>
+                        <span class="n">ver</span><span class="o">.</span><span class="n">NonBlockingSubsitution</span><span class="p">(</span>
+                            <span class="n">context</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">valid</span><span class="p">,</span>
+                            <span class="n">ir</span><span class="o">.</span><span class="n">UInt</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
                         <span class="p">),</span>
                     <span class="p">],</span>
                     <span class="n">else_body</span><span class="o">=</span><span class="p">[],</span>
@@ -305,7 +319,7 @@
             <span class="p">)</span>
 
         <span class="n">if_else</span> <span class="o">=</span> <span class="n">ver</span><span class="o">.</span><span class="n">IfElse</span><span class="p">(</span>
-            <span class="n">ir</span><span class="o">.</span><span class="n">Expression</span><span class="p">(</span><span class="s2">&quot;_start&quot;</span><span class="p">),</span>
+            <span class="n">context</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">start</span><span class="p">,</span>
             <span class="n">then_body</span><span class="p">,</span>
             <span class="p">[</span>
                 <span class="n">ver</span><span class="o">.</span><span class="n">Statement</span><span class="p">(</span>
@@ -322,7 +336,6 @@
                 <span class="p">),</span>
             <span class="p">],</span>
         <span class="p">)</span>
-        <span class="c1"># logging.debug(f&quot;make start if else {if_else}&quot;)</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">if_else</span><span class="p">]</span>
 
     <span class="nd">@property</span>
@@ -446,22 +459,17 @@
 
             <span class="c1"># While loop waitng for ready signal</span>
             <span class="n">while_body</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ver</span><span class="o">.</span><span class="n">Statement</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="c1"># while_body.append(make_display_stmt())</span>
-            <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">random_ready</span><span class="p">:</span>
-                <span class="n">while_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ver</span><span class="o">.</span><span class="n">Statement</span><span class="p">(</span><span class="s2">&quot;_ready = $urandom_range(0, 4) === 0;&quot;</span><span class="p">))</span>
-            <span class="n">while_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="n">ver</span><span class="o">.</span><span class="n">Statement</span><span class="p">(</span>
-                    <span class="n">comment</span><span class="o">=</span><span class="s2">&quot;`if (_ready &amp;&amp; _valid)` also works as a conditional&quot;</span>
-                <span class="p">)</span>
-            <span class="p">)</span>
+            <span class="n">while_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ver</span><span class="o">.</span><span class="n">AtPosedgeStatement</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">clock</span><span class="p">))</span>
             <span class="n">while_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="n">ver</span><span class="o">.</span><span class="n">IfElse</span><span class="p">(</span>
-                    <span class="n">condition</span><span class="o">=</span><span class="n">ir</span><span class="o">.</span><span class="n">Expression</span><span class="p">(</span><span class="s2">&quot;_ready&quot;</span><span class="p">),</span>
+                    <span class="n">condition</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">ready</span><span class="p">,</span>
                     <span class="n">then_body</span><span class="o">=</span><span class="p">[</span><span class="n">make_display_stmt</span><span class="p">()],</span>
                     <span class="n">else_body</span><span class="o">=</span><span class="p">[],</span>
                 <span class="p">)</span>
             <span class="p">)</span>
             <span class="n">while_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ver</span><span class="o">.</span><span class="n">AtNegedgeStatement</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">clock</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">random_ready</span><span class="p">:</span>
+                <span class="n">while_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ver</span><span class="o">.</span><span class="n">Statement</span><span class="p">(</span><span class="s2">&quot;_ready = $urandom_range(0, 4) === 0;&quot;</span><span class="p">))</span>
 
             <span class="n">initial_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="n">ver</span><span class="o">.</span><span class="n">While</span><span class="p">(</span>
@@ -473,13 +481,13 @@
                     <span class="n">body</span><span class="o">=</span><span class="n">while_body</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="p">)</span>
-            <span class="n">initial_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="n">ver</span><span class="o">.</span><span class="n">IfElse</span><span class="p">(</span>
-                    <span class="n">condition</span><span class="o">=</span><span class="n">ir</span><span class="o">.</span><span class="n">Expression</span><span class="p">(</span><span class="s2">&quot;_ready&quot;</span><span class="p">),</span>
-                    <span class="n">then_body</span><span class="o">=</span><span class="p">[</span><span class="n">make_display_stmt</span><span class="p">()],</span>
-                    <span class="n">else_body</span><span class="o">=</span><span class="p">[],</span>
-                <span class="p">)</span>
-            <span class="p">)</span>
+            <span class="c1"># initial_body.append(</span>
+            <span class="c1">#     ver.IfElse(</span>
+            <span class="c1">#         condition=self.context.signals.ready,</span>
+            <span class="c1">#         then_body=[make_display_stmt()],</span>
+            <span class="c1">#         else_body=[],</span>
+            <span class="c1">#     )</span>
+            <span class="c1"># )</span>
             <span class="n">initial_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ver</span><span class="o">.</span><span class="n">Statement</span><span class="p">())</span>
 
         <span class="n">initial_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ver</span><span class="o">.</span><span class="n">Statement</span><span class="p">(</span><span class="n">literal</span><span class="o">=</span><span class="s2">&quot;$finish;&quot;</span><span class="p">))</span>
@@ -563,17 +571,6 @@
         <span class="c1"># Reverse states for readability (states are built backwards)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">case</span><span class="o">.</span><span class="n">case_items</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">case</span><span class="o">.</span><span class="n">case_items</span><span class="p">))</span>
 
-        <span class="c1"># Add done state if it doesn&#39;t exist in cases</span>
-        <span class="k">if</span> <span class="nb">all</span><span class="p">(</span>
-            <span class="k">case</span><span class="o">.</span><span class="n">condition</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">done_state</span> <span class="k">for</span> <span class="n">case</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">case</span><span class="o">.</span><span class="n">case_items</span>
-        <span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">case</span><span class="o">.</span><span class="n">case_items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="n">ver</span><span class="o">.</span><span class="n">CaseItem</span><span class="p">(</span>
-                    <span class="n">condition</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">done_state</span><span class="p">,</span>
-                    <span class="n">statements</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">create_quick_done</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="p">)],</span>
-                <span class="p">)</span>
-            <span class="p">)</span>
-
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">case</span></div>
 
 
@@ -592,7 +589,6 @@
             <span class="n">condition</span><span class="o">=</span><span class="n">ir</span><span class="o">.</span><span class="n">UBinOp</span><span class="p">(</span>
                 <span class="n">ir</span><span class="o">.</span><span class="n">UnaryOp</span><span class="p">(</span><span class="s2">&quot;!&quot;</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">valid</span><span class="p">),</span> <span class="s2">&quot;&amp;&amp;&quot;</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">ready</span>
             <span class="p">),</span>
-            <span class="c1"># condition=context.signals.ready,</span>
             <span class="n">then_body</span><span class="o">=</span><span class="p">[</span>
                 <span class="n">ver</span><span class="o">.</span><span class="n">NonBlockingSubsitution</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">done</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">UInt</span><span class="p">(</span><span class="mi">1</span><span class="p">)),</span>
                 <span class="n">ver</span><span class="o">.</span><span class="n">NonBlockingSubsitution</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">state_var</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">idle_state</span><span class="p">),</span>
@@ -629,10 +625,7 @@
 
         <span class="n">stmts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ver</span><span class="o">.</span><span class="n">Statement</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">vertex</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">DoneNode</span><span class="p">):</span>
-            <span class="n">stmts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">create_quick_done</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="p">))</span>
-
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">vertex</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">AssignNode</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">vertex</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">AssignNode</span><span class="p">):</span>
             <span class="n">stmts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="n">ver</span><span class="o">.</span><span class="n">NonBlockingSubsitution</span><span class="p">(</span>
                     <span class="n">vertex</span><span class="o">.</span><span class="n">lvalue</span><span class="p">,</span>
@@ -675,6 +668,8 @@
                     <span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">state_var</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">State</span><span class="p">(</span><span class="n">edge</span><span class="o">.</span><span class="n">optimal_child</span><span class="o">.</span><span class="n">unique_id</span><span class="p">)</span>
                 <span class="p">)</span>
             <span class="p">]</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">edge</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="kc">None</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="p">[]</span>
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">edge</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 </div>
 

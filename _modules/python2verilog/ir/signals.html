@@ -36,7 +36,7 @@
 <span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">fields</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterator</span>
 
-<span class="kn">from</span> <span class="nn">python2verilog.ir.expressions</span> <span class="kn">import</span> <span class="n">Var</span>
+<span class="kn">from</span> <span class="nn">python2verilog.ir.expressions</span> <span class="kn">import</span> <span class="n">ExclusiveVar</span><span class="p">,</span> <span class="n">Var</span>
 
 
 <div class="viewcode-block" id="InstanceSignals">
@@ -48,11 +48,11 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="c1"># pylint: disable=too-many-instance-attributes</span>
-    <span class="n">start</span><span class="p">:</span> <span class="n">Var</span>
-    <span class="n">done</span><span class="p">:</span> <span class="n">Var</span>
+    <span class="n">start</span><span class="p">:</span> <span class="n">Var</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="s2">&quot;start&quot;</span><span class="p">)</span>
+    <span class="n">done</span><span class="p">:</span> <span class="n">ExclusiveVar</span> <span class="o">=</span> <span class="n">ExclusiveVar</span><span class="p">(</span><span class="s2">&quot;done&quot;</span><span class="p">)</span>
 
-    <span class="n">ready</span><span class="p">:</span> <span class="n">Var</span>
-    <span class="n">valid</span><span class="p">:</span> <span class="n">Var</span></div>
+    <span class="n">ready</span><span class="p">:</span> <span class="n">Var</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="s2">&quot;ready&quot;</span><span class="p">)</span>
+    <span class="n">valid</span><span class="p">:</span> <span class="n">ExclusiveVar</span> <span class="o">=</span> <span class="n">ExclusiveVar</span><span class="p">(</span><span class="s2">&quot;valid&quot;</span><span class="p">)</span></div>
 
 
 

@@ -149,9 +149,6 @@
             <span class="n">old_mapping</span><span class="p">,</span>
         <span class="p">)</span>
 
-        <span class="c1"># if self.make_unique_peek() == 10:</span>
-        <span class="c1">#     breakpoint()</span>
-
         <span class="c1"># If clocked, then switch to new mapping</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">edge</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">ClockedEdge</span><span class="p">):</span>
             <span class="n">old_mapping</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">new_mapping</span><span class="p">)</span>
@@ -165,6 +162,9 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">edge</span>
 
+        <span class="c1"># if &quot;_state2_for_5&quot; in node.unique_id:</span>
+        <span class="c1">#     breakpoint()</span>
+
         <span class="c1"># Exclusive vars can only be visited once</span>
         <span class="n">exclusive_vars</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">exclusive_vars</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">variables</span><span class="p">()))</span>
         <span class="k">if</span> <span class="n">exclusive_vars</span> <span class="o">&amp;</span> <span class="n">visited_path</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
@@ -175,9 +175,9 @@
                 <span class="n">visited_path</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span>
                 <span class="n">node</span><span class="p">,</span>
             <span class="p">)</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">edge</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">ClockedEdge</span><span class="p">):</span>
-                <span class="k">assert</span> <span class="n">guard</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Node</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="n">guard</span><span class="p">(</span><span class="n">edge</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">ClockedEdge</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="n">guard</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Node</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">edge</span>
 
         <span class="c1"># Update visited</span>
@@ -206,23 +206,24 @@
                 <span class="p">),</span>
             <span class="p">)</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">AssignNode</span><span class="p">):</span>
+            <span class="n">unique_id</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">unique_id</span><span class="si">}</span><span class="s2">_optimal_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">make_unique</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span>
             <span class="n">new_rvalue</span> <span class="o">=</span> <span class="n">backwards_replace</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">rvalue</span><span class="p">,</span> <span class="n">old_mapping</span><span class="p">)</span>
             <span class="n">new_mapping</span><span class="p">[</span><span class="n">node</span><span class="o">.</span><span class="n">lvalue</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_rvalue</span>
-            <span class="k">assert</span> <span class="n">guard</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">child</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Edge</span><span class="p">)</span>
-            <span class="n">unique_id</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">unique_id</span><span class="si">}</span><span class="s2">_optimal_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">make_unique</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span>
-            <span class="n">new_edge</span><span class="o">.</span><span class="n">child</span> <span class="o">=</span> <span class="n">ir</span><span class="o">.</span><span class="n">AssignNode</span><span class="p">(</span>
-                <span class="n">unique_id</span><span class="o">=</span><span class="n">unique_id</span><span class="p">,</span>
-                <span class="n">lvalue</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">lvalue</span><span class="p">,</span>
-                <span class="n">rvalue</span><span class="o">=</span><span class="n">new_rvalue</span><span class="p">,</span>
-                <span class="n">child</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">apply_recursive</span><span class="p">(</span>
-                    <span class="n">edge</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">child</span><span class="p">,</span>
-                    <span class="n">new_mapping</span><span class="o">=</span><span class="n">new_mapping</span><span class="p">,</span>
-                    <span class="n">old_mapping</span><span class="o">=</span><span class="n">old_mapping</span><span class="p">,</span>
-                    <span class="n">visited_path</span><span class="o">=</span><span class="n">visited_path</span><span class="p">,</span>
-                <span class="p">),</span>
-            <span class="p">)</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">DoneNode</span><span class="p">):</span>
-            <span class="n">new_edge</span><span class="o">.</span><span class="n">child</span> <span class="o">=</span> <span class="n">node</span>
+            <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">has_child</span><span class="p">():</span>
+                <span class="k">assert</span> <span class="n">guard</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">child</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Edge</span><span class="p">)</span>
+                <span class="n">new_edge</span><span class="o">.</span><span class="n">child</span> <span class="o">=</span> <span class="n">ir</span><span class="o">.</span><span class="n">AssignNode</span><span class="p">(</span>
+                    <span class="n">unique_id</span><span class="o">=</span><span class="n">unique_id</span><span class="p">,</span>
+                    <span class="n">lvalue</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">lvalue</span><span class="p">,</span>
+                    <span class="n">rvalue</span><span class="o">=</span><span class="n">new_rvalue</span><span class="p">,</span>
+                    <span class="n">child</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">apply_recursive</span><span class="p">(</span>
+                        <span class="n">edge</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">child</span><span class="p">,</span>
+                        <span class="n">new_mapping</span><span class="o">=</span><span class="n">new_mapping</span><span class="p">,</span>
+                        <span class="n">old_mapping</span><span class="o">=</span><span class="n">old_mapping</span><span class="p">,</span>
+                        <span class="n">visited_path</span><span class="o">=</span><span class="n">visited_path</span><span class="p">,</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">new_edge</span><span class="o">.</span><span class="n">child</span> <span class="o">=</span> <span class="n">node</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">node</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">new_edge</span></div>
@@ -252,16 +253,15 @@
                 <span class="n">mapper</span><span class="p">[</span><span class="n">root</span><span class="o">.</span><span class="n">lvalue</span><span class="p">]</span> <span class="o">=</span> <span class="n">root</span><span class="o">.</span><span class="n">rvalue</span>
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">lvalue</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">ExclusiveVar</span><span class="p">):</span>
                     <span class="n">visited_path</span><span class="p">[</span><span class="n">root</span><span class="o">.</span><span class="n">lvalue</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
-            <span class="k">assert</span> <span class="n">guard</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">child</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Edge</span><span class="p">)</span>
-            <span class="k">assert</span> <span class="n">guard</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">child</span><span class="o">.</span><span class="n">child</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Node</span><span class="p">)</span>
-            <span class="n">root</span><span class="o">.</span><span class="n">optimal_child</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">apply_recursive</span><span class="p">(</span>
-                <span class="n">root</span><span class="o">.</span><span class="n">child</span><span class="p">,</span> <span class="n">mapper</span><span class="p">,</span> <span class="p">{},</span> <span class="n">visited_path</span>
-            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">root</span><span class="o">.</span><span class="n">has_child</span><span class="p">():</span>
+                <span class="k">assert</span> <span class="n">guard</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">child</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Edge</span><span class="p">)</span>
+                <span class="k">assert</span> <span class="n">guard</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">child</span><span class="o">.</span><span class="n">child</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Node</span><span class="p">)</span>
+                <span class="n">root</span><span class="o">.</span><span class="n">optimal_child</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">apply_recursive</span><span class="p">(</span>
+                    <span class="n">root</span><span class="o">.</span><span class="n">child</span><span class="p">,</span> <span class="n">mapper</span><span class="p">,</span> <span class="p">{},</span> <span class="n">visited_path</span>
+                <span class="p">)</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">IfElseNode</span><span class="p">):</span>
             <span class="n">root</span><span class="o">.</span><span class="n">optimal_true_edge</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">apply_recursive</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">true_edge</span><span class="p">,</span> <span class="p">{},</span> <span class="p">{},</span> <span class="p">{})</span>
             <span class="n">root</span><span class="o">.</span><span class="n">optimal_false_edge</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">apply_recursive</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">false_edge</span><span class="p">,</span> <span class="p">{},</span> <span class="p">{},</span> <span class="p">{})</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">DoneNode</span><span class="p">):</span>
-            <span class="k">pass</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">root</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 </div>

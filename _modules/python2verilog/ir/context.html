@@ -47,7 +47,6 @@
 <span class="kn">from</span> <span class="nn">python2verilog.api.modes</span> <span class="kn">import</span> <span class="n">Modes</span>
 <span class="kn">from</span> <span class="nn">python2verilog.exceptions</span> <span class="kn">import</span> <span class="n">TypeInferenceError</span>
 <span class="kn">from</span> <span class="nn">python2verilog.ir.expressions</span> <span class="kn">import</span> <span class="n">ExclusiveVar</span><span class="p">,</span> <span class="n">State</span><span class="p">,</span> <span class="n">Var</span>
-<span class="kn">from</span> <span class="nn">python2verilog.ir.graph</span> <span class="kn">import</span> <span class="n">DoneNode</span>
 <span class="kn">from</span> <span class="nn">python2verilog.ir.instance</span> <span class="kn">import</span> <span class="n">Instance</span>
 <span class="kn">from</span> <span class="nn">python2verilog.ir.signals</span> <span class="kn">import</span> <span class="n">ProtocolSignals</span>
 <span class="kn">from</span> <span class="nn">python2verilog.utils.env</span> <span class="kn">import</span> <span class="n">is_debug_mode</span>
@@ -92,12 +91,7 @@
     <span class="n">_output_vars</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">ExclusiveVar</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">_states</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">set</span><span class="p">)</span>
 
-    <span class="n">signals</span><span class="p">:</span> <span class="n">ProtocolSignals</span> <span class="o">=</span> <span class="n">ProtocolSignals</span><span class="p">(</span>
-        <span class="n">start</span><span class="o">=</span><span class="n">Var</span><span class="p">(</span><span class="s2">&quot;start&quot;</span><span class="p">),</span>
-        <span class="n">done</span><span class="o">=</span><span class="n">Var</span><span class="p">(</span><span class="s2">&quot;done&quot;</span><span class="p">),</span>
-        <span class="n">ready</span><span class="o">=</span><span class="n">Var</span><span class="p">(</span><span class="s2">&quot;ready&quot;</span><span class="p">),</span>
-        <span class="n">valid</span><span class="o">=</span><span class="n">Var</span><span class="p">(</span><span class="s2">&quot;valid&quot;</span><span class="p">),</span>
-    <span class="p">)</span>
+    <span class="n">signals</span><span class="p">:</span> <span class="n">ProtocolSignals</span> <span class="o">=</span> <span class="n">ProtocolSignals</span><span class="p">()</span>
 
     <span class="n">state_var</span><span class="p">:</span> <span class="n">Var</span> <span class="o">=</span> <span class="n">Var</span><span class="p">(</span><span class="s2">&quot;state&quot;</span><span class="p">)</span>
 
@@ -463,7 +457,7 @@
             <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">instance_specific_items</span><span class="p">()</span>
         <span class="p">}</span>
 
-        <span class="n">signals</span> <span class="o">=</span> <span class="n">ProtocolSignals</span><span class="p">(</span><span class="o">**</span><span class="n">args</span><span class="p">)</span>
+        <span class="n">signals</span> <span class="o">=</span> <span class="n">ProtocolSignals</span><span class="p">(</span><span class="o">**</span><span class="n">args</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span>
 
         <span class="k">return</span> <span class="n">Instance</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>

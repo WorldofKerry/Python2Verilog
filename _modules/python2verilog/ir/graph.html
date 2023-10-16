@@ -156,6 +156,15 @@
     <span class="k">def</span> <span class="nf">child</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Element</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_child</span> <span class="o">=</span> <span class="n">typed_strict</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Element</span><span class="p">)</span>
 
+<div class="viewcode-block" id="BasicElement.has_child">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.graph.BasicElement.has_child">[docs]</a>
+    <span class="k">def</span> <span class="nf">has_child</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns True if has child</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_child</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span></div>
+
+
 <div class="viewcode-block" id="BasicElement.children">
 <a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.graph.BasicElement.children">[docs]</a>
     <span class="k">def</span> <span class="nf">children</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -327,20 +336,9 @@
     <span class="k">def</span> <span class="nf">variables</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">yield from</span> <span class="n">get_variables</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lvalue</span><span class="p">)</span>
         <span class="k">yield from</span> <span class="n">get_variables</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rvalue</span><span class="p">)</span>
-        <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">child</span><span class="o">.</span><span class="n">variables</span><span class="p">()</span></div>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_child</span><span class="p">:</span>
+            <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">child</span><span class="o">.</span><span class="n">variables</span><span class="p">()</span></div>
 </div>
-
-
-
-<div class="viewcode-block" id="DoneNode">
-<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.graph.DoneNode">[docs]</a>
-<span class="k">class</span> <span class="nc">DoneNode</span><span class="p">(</span><span class="n">Node</span><span class="p">,</span> <span class="n">Element</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Signals done</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s2">&quot;Done&quot;</span></div>
 
 
 
