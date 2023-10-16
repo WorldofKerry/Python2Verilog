@@ -118,7 +118,7 @@ class IncreaseWorkPerClockCycle:
             self.apply(node)
             return edge
 
-        # if "_state_done_assign0" in node.unique_id:
+        # if "_state3_while" in node.unique_id:
         #     breakpoint()
 
         # Exclusive vars can only be visited once
@@ -208,7 +208,7 @@ class IncreaseWorkPerClockCycle:
             if isinstance(root, ir.AssignNode):
                 mapper[root.lvalue] = root.rvalue
                 if isinstance(root.lvalue, ir.ExclusiveVar):
-                    visited_path[root.lvalue] = 1
+                    visited_path[root.lvalue.exclusive_group] = 1
             if root.has_child():
                 assert guard(root.child, ir.Edge)
                 assert guard(root.child.child, ir.Node)

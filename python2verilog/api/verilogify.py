@@ -31,7 +31,7 @@ from python2verilog.utils.typed import guard, guard_dict, typed
 def verilogify(
     func: FunctionType,
     namespace: Optional[dict[str, ir.Context]] = None,
-    optimization_level: int = 1,
+    optimization_level: int = 2,
     mode: Modes = Modes.OVERWRITE,
 ):
     """

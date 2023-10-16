@@ -65,9 +65,11 @@ class Element:
 
     def exclusions(self) -> Iterator[str]:
         """
-        Yields all exclusion groups that will be written to in this group of nonclocked nodes
+        Yields all exclusion groups that will be read or written to
+        within this group of nonclocked nodes.
 
-        Note: currently also yields the variables used in an IfElse node's condition
+        The reason reads are also included is because checking a callee's
+        ready signal more than once in a clock cycle is usually incorrect.
         """
         yield from ()
 
@@ -263,7 +265,7 @@ class AssignNode(BasicNode):
         for var in get_variables(self.lvalue):
             if isinstance(var, expr.ExclusiveVar):
                 yield var.exclusive_group
-        # yield from get_variables(self.rvalue) # TODO: keep?
+        yield from get_variables(self.rvalue)  # TODO: keep?
         if self._child:
             yield from self.child.exclusions()
 
