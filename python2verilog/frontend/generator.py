@@ -348,7 +348,11 @@ class GeneratorFunc:
         to_ifelse2 = ir.NonClockedEdge(unique_id=next(unique_edge), child=ifelse2)
         ifelse1 = ir.IfElseNode(
             unique_id=next(unique_node),
-            condition=ir.UBinOp(inst.signals.ready, "&&", inst.signals.valid),
+            condition=ir.UBinOp(
+                ir.UBinOp(inst.signals.ready, "&&", inst.signals.valid),
+                "&&",
+                ir.UnaryOp("!", inst.signals.done),
+            ),
             true_edge=to_ready_and_valid,
             false_edge=to_ifelse2,
         )
