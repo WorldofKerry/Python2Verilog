@@ -109,7 +109,7 @@ class BasicElement(Element):
         """
         Returns True if has child
         """
-        return bool(self._child)
+        return self._child is not None
 
     def children(self):
         if self._child:
