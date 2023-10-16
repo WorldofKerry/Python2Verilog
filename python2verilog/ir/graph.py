@@ -63,9 +63,11 @@ class Element:
         """
         yield from ()
 
-    def variables(self) -> Iterator[expr.Var]:
+    def exclusions(self) -> Iterator[str]:
         """
-        Yields all variables and their nonclocked children
+        Yields all exclusion groups that will be written to in this group of nonclocked nodes
+
+        Note: currently also yields the variables used in an IfElse node's condition
         """
         yield from ()
 
@@ -191,17 +193,21 @@ class IfElseNode(Node, Element):
         if self._optimal_false_edge:
             yield self._optimal_false_edge
 
-    def variables(self):
-        yield from get_variables(self.condition)
-        yield from self.optimal_true_edge.variables()
-        yield from self.optimal_false_edge.variables()
+    def exclusions(self):
+        for var in get_variables(self.condition):
+            if isinstance(var, expr.ExclusiveVar):
+                yield var.exclusive_group
+        yield from self.optimal_true_edge.exclusions()
+        yield from self.optimal_false_edge.exclusions()
 
     def __repr__(self):
         return f"If{self.condition}"
 
     def visit_nonclocked(self) -> Iterator[Element]:
         yield self
+        yield Node(unique_id="", name="True")
         yield from self.optimal_true_edge.visit_nonclocked()
+        yield Node(unique_id="", name="False")
         yield from self.optimal_false_edge.visit_nonclocked()
 
 
@@ -253,11 +259,13 @@ class AssignNode(BasicNode):
     def __repr__(self):
         return f"{self.lvalue} = {self.rvalue}"
 
-    def variables(self):
-        yield from get_variables(self.lvalue)
-        yield from get_variables(self.rvalue)
+    def exclusions(self):
+        for var in get_variables(self.lvalue):
+            if isinstance(var, expr.ExclusiveVar):
+                yield var.exclusive_group
+        # yield from get_variables(self.rvalue) # TODO: keep?
         if self._child:
-            yield from self.child.variables()
+            yield from self.child.exclusions()
 
 
 class Edge(BasicElement):
@@ -282,8 +290,8 @@ class NonClockedEdge(Edge):
     i.e. no clock cycle has to pass for the next node to be executed
     """
 
-    def variables(self):
-        yield from self.child.variables()
+    def exclusions(self):
+        yield from self.child.exclusions()
 
     def __repr__(self) -> str:
         return "=>"
@@ -295,7 +303,7 @@ class ClockedEdge(Edge):
     i.e. a clock cycle has to pass for the next node to be executed
     """
 
-    def variables(self):
+    def exclusions(self):
         yield from ()
 
     def __repr__(self):

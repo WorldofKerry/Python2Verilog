@@ -1,4 +1,5 @@
 import itertools
+import logging
 import unittest
 
 from python2verilog import ir
@@ -76,7 +77,7 @@ class TestGraphApplyMapping(unittest.TestCase):
 
         IncreaseWorkPerClockCycle(head.child)
         case = CaseBuilder(head.child, ir.Context()).get_case()
-        # logging.error(case.to_string())
+        logging.error(case.to_string())
         self.assertEqual(len(case.case_items), 2)
 
     def test_seq_nonclocked(self):

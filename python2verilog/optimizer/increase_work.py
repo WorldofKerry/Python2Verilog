@@ -70,7 +70,7 @@ class IncreaseWorkPerClockCycle:
         edge: ir.Edge,
         new_mapping: dict[ir.Var, ir.Expression],
         old_mapping: dict[ir.Var, ir.Expression],
-        visited_path: dict[Union[str, ir.Var], int],
+        visited_path: dict[str, int],
     ) -> ir.Edge:
         """
         Recursively visits the children, conditionally adding them to an optimal path
@@ -92,8 +92,8 @@ class IncreaseWorkPerClockCycle:
         assert guard_dict(old_mapping, ir.Var, ir.Expression)
         assert guard(visited_path, dict)
         for key, value in visited_path.items():
-            assert isinstance(key, (str, ir.Var))
-            assert guard(value, int)
+            assert isinstance(key, (str, ir.Var)), f"{type(key)}"
+            assert guard(value, int), f"{type(value)}"
 
         node = edge.child
         assert node
@@ -118,11 +118,11 @@ class IncreaseWorkPerClockCycle:
             self.apply(node)
             return edge
 
-        # if "_state2_for_5" in node.unique_id:
+        # if "_state_done_assign0" in node.unique_id:
         #     breakpoint()
 
         # Exclusive vars can only be visited once
-        exclusive_vars = set(self.exclusive_vars(node.variables()))
+        exclusive_vars = set(node.exclusions())
         if exclusive_vars & visited_path.keys():
             logging.debug(
                 "Intersection %s = {%s & %s} ending on %s",
@@ -138,7 +138,10 @@ class IncreaseWorkPerClockCycle:
 
         # Update visited
         if isinstance(node, ir.AssignNode) and isinstance(node.lvalue, ir.ExclusiveVar):
-            visited_path[node.lvalue] = 1
+            assert guard(
+                node.lvalue.exclusive_group, str
+            ), f"{type(node.lvalue.exclusive_group)}"
+            visited_path[node.lvalue.exclusive_group] = 1
         visited_path[node.unique_id] = visited_path.get(node.unique_id, 0) + 1
 
         new_edge: ir.Edge = ir.NonClockedEdge(
