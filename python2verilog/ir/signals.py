@@ -16,10 +16,10 @@ class InstanceSignals:
 
     # pylint: disable=too-many-instance-attributes
     start: Var = Var("start")
-    done: ExclusiveVar = ExclusiveVar("done")
+    done: ExclusiveVar = ExclusiveVar("done", exclusive_group="excl_done_valid")
 
     ready: Var = Var("ready")
-    valid: ExclusiveVar = ExclusiveVar("valid")
+    valid: ExclusiveVar = ExclusiveVar("valid", exclusive_group="excl_done_valid")
 
 
 @dataclass(frozen=True)

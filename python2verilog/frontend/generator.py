@@ -43,10 +43,14 @@ class GeneratorFunc:
         """
         left_hand_sides = [
             self._context.signals.done,
-            self._context.signals.valid,
+            # self._context.signals.valid,
             self._context.state_var,
         ]
-        right_hand_sides = [ir.UInt(1), ir.UInt(1), self._context.idle_state]
+        right_hand_sides = [
+            ir.UInt(1),
+            # ir.UInt(1),
+            self._context.idle_state,
+        ]
         head, _tail = self._weave_nonclocked_edges(
             self._create_assign_nodes(left_hand_sides, right_hand_sides, prefix=prefix),
             prefix=f"{prefix}_e",
