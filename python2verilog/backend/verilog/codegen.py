@@ -79,7 +79,7 @@ class CodeGen:
             vars_ += map(lambda x: x.py_name, context.input_vars)
             vars_ += map(lambda x: x.ver_name, context.input_vars)
             vars_ += map(lambda x: x.ver_name, context.output_vars)
-            vars_ += map(lambda x: x.ver_name, context.global_vars)
+            vars_ += map(lambda x: x.ver_name, context.local_vars)
             str_ = f'$display("{context.name},%s,'
             str_ += "=%0d,".join(vars_) + '=%0d", '
             str_ += f"{context.state_var.ver_name}.name, "
@@ -91,7 +91,7 @@ class CodeGen:
             """
             Instance signals that should always be set to zero be default
             """
-            for instance in context.instances.values():
+            for instance in context.generator_instances.values():
                 yield ver.NonBlockingSubsitution(instance.signals.ready, ir.UInt(0))
                 yield ver.NonBlockingSubsitution(instance.signals.start, ir.UInt(0))
 
@@ -152,11 +152,10 @@ class CodeGen:
         body += [
             ver.Statement(comment="Global variables"),
         ]
-
-        context.global_vars = sorted(context.global_vars, key=lambda x: x.ver_name)
+        context.local_vars.sort(key=lambda x: x.ver_name)
         body += [
             ver.Declaration(v.ver_name, reg=True, signed=True)
-            for v in context.global_vars
+            for v in context.local_vars
         ]
 
         body += [
@@ -164,7 +163,7 @@ class CodeGen:
             for var in context.input_vars
         ]
 
-        for instance in context.instances.values():
+        for instance in context.generator_instances.values():
             body.append(
                 ver.Statement(
                     comment="================ Function Instance ================"

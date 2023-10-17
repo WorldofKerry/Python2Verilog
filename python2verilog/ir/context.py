@@ -10,11 +10,16 @@ import copy
 import io
 import logging
 from dataclasses import dataclass, field
+from itertools import zip_longest
 from types import FunctionType
-from typing import Any, Optional, Sequence
+from typing import Any, Optional
 
 from python2verilog.api.modes import Modes
-from python2verilog.exceptions import TypeInferenceError
+from python2verilog.exceptions import (
+    StaticTypingError,
+    TypeInferenceError,
+    UnsupportedSyntaxError,
+)
 from python2verilog.ir.expressions import ExclusiveVar, State, Var
 from python2verilog.ir.instance import Instance
 from python2verilog.ir.signals import ProtocolSignals
@@ -53,8 +58,8 @@ class Context(GenericReprAndStr):
 
     mode: Modes = Modes.NO_WRITE
 
-    _global_vars: list[Var] = field(default_factory=list)
-    _input_vars: Optional[list[Var]] = None
+    _local_vars: list[Var] = field(default_factory=list)
+    _input_vars: Optional[list[ExclusiveVar]] = None
     _output_vars: Optional[list[ExclusiveVar]] = None
     _states: set[str] = field(default_factory=set)
 
@@ -68,7 +73,9 @@ class Context(GenericReprAndStr):
 
     # Function calls
     namespace: dict[str, Context] = field(default_factory=dict)  # callable functions
-    instances: dict[str, Instance] = field(default_factory=dict)  # generator instances
+    generator_instances: dict[str, Instance] = field(
+        default_factory=dict
+    )  # generator instances
 
     @classmethod
     def empty_valid(cls):
@@ -259,8 +266,8 @@ class Context(GenericReprAndStr):
         return copy.deepcopy(self._input_vars)
 
     @input_vars.setter
-    def input_vars(self, other: list[Var]):
-        self._input_vars = typed_list(other, Var)
+    def input_vars(self, other: list[ExclusiveVar]):
+        self._input_vars = typed_list(other, ExclusiveVar)
 
     @property
     def output_vars(self):
@@ -284,28 +291,22 @@ class Context(GenericReprAndStr):
         ]
 
     @property
-    def global_vars(self):
+    def local_vars(self) -> list[Var]:
         """
-        Global variables
+        Gets local variables
         """
-        return tuple(self._global_vars)
+        return self._local_vars
 
-    @global_vars.setter
-    def global_vars(self, other: list[Var]):
-        self._global_vars = typed_list(other, Var)
-
-    def add_global_var(self, var: Var):
+    def add_local_var(self, var: Var):
         """
         Appends global var
         """
-        var = typed_strict(var, Var)
-        if (
-            var in self._global_vars
-            or var in self.input_vars
-            or var in self.output_vars
-        ):
-            return
-        self._global_vars.append(typed_strict(var, Var))
+        if var.py_name in self.generator_instances:
+            raise StaticTypingError(
+                f"{var.py_name} changed type from generator instance to another type"
+            )
+        if var not in (*self._local_vars, *self.input_vars, *self.output_vars):
+            self._local_vars.append(typed_strict(var, Var))
 
     @property
     def states(self):
@@ -313,26 +314,6 @@ class Context(GenericReprAndStr):
         State variables
         """
         return copy.deepcopy(self._states)
-
-    def is_declared(self, name: str):
-        """
-        Checks if a Python variable has been already declared or not
-        """
-
-        def get_strs(variables: Sequence[Var]):
-            """
-            Maps vars to str
-            """
-            for var in variables:
-                yield var.py_name
-
-        assert isinstance(name, str)
-        variables = [
-            *list(get_strs(self.global_vars)),
-            *list(get_strs(self.input_vars)),
-            *list(get_strs(self.output_vars)),
-        ]
-        return name in variables
 
     def add_state(self, name: str):
         """
@@ -352,8 +333,9 @@ class Context(GenericReprAndStr):
     def __check_types(
         self, expected_types: list[type[Any]], actual_values: list[type[Any]]
     ):
-        assert len(expected_types) == len(actual_values)
-        for expected, actual in zip(expected_types, actual_values):
+        for expected, actual in zip_longest(
+            expected_types, actual_values, fillvalue=type(None)
+        ):
             assert isinstance(
                 actual, expected
             ), f"Expected {expected}, got {type(actual)}, with value {actual}, \
@@ -373,11 +355,12 @@ class Context(GenericReprAndStr):
         assert guard(self.output_types, list)
         self.__check_types(self.output_types, output)
 
-    def create_instance(self, name: str) -> Instance:
+    def create_generator_instance(self, name: str) -> Instance:
         """
         Create generator instance
         """
         self.validate()
+
         inst_input_vars: list[Var] = list(
             map(
                 lambda var: ExclusiveVar(f"{name}_{self.name}_{var.py_name}"),

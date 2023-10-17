@@ -69,7 +69,7 @@ def verilogify(
     context.py_func = func
     context.py_string = inspect.getsource(func)
 
-    context.input_vars = [ir.Var(name.arg) for name in func_ast.args.args]
+    context.input_vars = [ir.ExclusiveVar(name.arg) for name in func_ast.args.args]
 
     context.mode = mode
     context.optimization_level = optimization_level

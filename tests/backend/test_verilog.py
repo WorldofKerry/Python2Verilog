@@ -11,7 +11,9 @@ def assert_lines(test_case: unittest.TestCase, first: str, second: str):
     Asserts that each stripped line in first matches each stripped line in second
     """
     test_case.assertTrue(isinstance(first, str) and isinstance(second, str))
-    for a_line, b_line in zip(first.splitlines(), second.splitlines()):
+    first_lines, second_lines = first.splitlines(), second.splitlines()
+    assert len(first_lines) == len(second_lines)
+    for a_line, b_line in zip(first_lines, second_lines):
         test_case.assertEqual(a_line.strip(), b_line.strip())
 
 

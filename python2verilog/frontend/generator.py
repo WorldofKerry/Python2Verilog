@@ -10,7 +10,7 @@ from typing import Collection, Iterable, Optional, TypeVar, cast
 from typing_extensions import TypeAlias
 
 from python2verilog import ir
-from python2verilog.exceptions import UnsupportedSyntaxError
+from python2verilog.exceptions import StaticTypingError, UnsupportedSyntaxError
 from python2verilog.utils.typed import guard, typed_list, typed_strict
 
 
@@ -221,17 +221,30 @@ class GeneratorFunc:
             assert guard(func, pyast.Name)
             func_name = func.id
 
+            if target_name in map(
+                lambda x: x.py_name,
+                (
+                    *caller_cxt.local_vars,
+                    *caller_cxt.input_vars,
+                    *caller_cxt.output_vars,
+                ),
+            ):
+                raise StaticTypingError(
+                    f"{target_name} changed type from another type to generator instance"
+                )
+
             # Get context of generator function being called
             callee_cxt = caller_cxt.namespace[func_name]
 
             # Create an instance of that generator
-            instance = callee_cxt.create_instance(target_name)
+            instance = callee_cxt.create_generator_instance(target_name)
 
             # Add instance to own context
-            caller_cxt.instances[target_name] = instance
+            caller_cxt.generator_instances[target_name] = instance
 
-        create_instance(self._context)
-        inst = self._context.instances[target.id]
+            return instance
+
+        inst = create_instance(self._context)
 
         def unique_node_gen():
             counter = 0
@@ -307,9 +320,11 @@ class GeneratorFunc:
         assert not stmt.orelse, "for-else statements not supported"
         target = stmt.iter
         assert isinstance(target, pyast.Name)
-        if target.id not in self._context.instances:
-            raise RuntimeError(f"No iterator instance {self._context.instances}")
-        inst = self._context.instances[target.id]
+        if target.id not in self._context.generator_instances:
+            raise RuntimeError(
+                f"No iterator instance {self._context.generator_instances}"
+            )
+        inst = self._context.generator_instances[target.id]
 
         def gen_unique_node():
             counter = 0
@@ -399,8 +414,7 @@ class GeneratorFunc:
                 prev_edge.child = prev_assign
                 assert guard(prev_assign.child, ir.Edge)
                 prev_edge = prev_assign.child
-                if not self._context.is_declared(caller.ver_name):
-                    self._context.add_global_var(caller)
+                self._context.add_local_var(caller)
 
             assert guard(prev_assign, ir.AssignNode)
             prev_assign.child = to_body
@@ -538,8 +552,7 @@ class GeneratorFunc:
             for t, v in zip(target.elts, value.elts):
                 yield from self._target_value_visitor(t, v)
         elif isinstance(target, pyast.Name):
-            if not self._context.is_declared(target.id):
-                self._context.add_global_var(ir.Var(py_name=target.id))
+            self._context.add_local_var(ir.Var(target.id))
             yield (ir.Var(target.id), self._parse_expression(value))
         else:
             raise TypeError(f"{pyast.dump(target)} {pyast.dump(value)}")
