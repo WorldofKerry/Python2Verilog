@@ -79,7 +79,7 @@ class CodeGen:
             vars_ += map(lambda x: x.py_name, context.input_vars)
             vars_ += map(lambda x: x.ver_name, context.input_vars)
             vars_ += map(lambda x: x.ver_name, context.output_vars)
-            vars_ += map(lambda x: x.ver_name, context.global_vars)
+            vars_ += map(lambda x: x.ver_name, context.local_vars)
             str_ = f'$display("{context.name},%s,'
             str_ += "=%0d,".join(vars_) + '=%0d", '
             str_ += f"{context.state_var.ver_name}.name, "
@@ -153,10 +153,10 @@ class CodeGen:
             ver.Statement(comment="Global variables"),
         ]
 
-        context.global_vars = sorted(context.global_vars, key=lambda x: x.ver_name)
+        context.local_vars = sorted(context.local_vars, key=lambda x: x.ver_name)
         body += [
             ver.Declaration(v.ver_name, reg=True, signed=True)
-            for v in context.global_vars
+            for v in context.local_vars
         ]
 
         body += [

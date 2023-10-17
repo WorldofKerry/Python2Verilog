@@ -22,10 +22,11 @@ def context_to_codegen(context: ir.Context):
     context.validate()
     ir_root, context = GeneratorFunc(context).create_root()
     logging.debug(
-        "context to codegen %s %s -O%s",
+        "context to codegen %s %s -O%s with %s",
         ir_root.unique_id,
         context.name,
         context.optimization_level,
+        context,
     )
     if context.optimization_level > 0:
         logging.info("Running %s", IncreaseWorkPerClockCycle.__name__)

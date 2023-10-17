@@ -53,7 +53,7 @@ class Context(GenericReprAndStr):
 
     mode: Modes = Modes.NO_WRITE
 
-    _global_vars: list[Var] = field(default_factory=list)
+    local_vars: list[Var] = field(default_factory=list)
     _input_vars: Optional[list[Var]] = None
     _output_vars: Optional[list[ExclusiveVar]] = None
     _states: set[str] = field(default_factory=set)
@@ -283,29 +283,20 @@ class Context(GenericReprAndStr):
             ExclusiveVar(f"out{i}") for i in range(len(self.output_types))
         ]
 
-    @property
-    def global_vars(self):
+    def get_local_vars(self) -> list[Var]:
         """
-        Global variables
+        Gets local variables
         """
-        return tuple(self._global_vars)
+        return tuple(self.local_vars)
 
-    @global_vars.setter
-    def global_vars(self, other: list[Var]):
-        self._global_vars = typed_list(other, Var)
-
-    def add_global_var(self, var: Var):
+    def add_local_var(self, var: Var):
         """
         Appends global var
         """
         var = typed_strict(var, Var)
-        if (
-            var in self._global_vars
-            or var in self.input_vars
-            or var in self.output_vars
-        ):
+        if var in self.local_vars or var in self.input_vars or var in self.output_vars:
             return
-        self._global_vars.append(typed_strict(var, Var))
+        self.local_vars.append(typed_strict(var, Var))
 
     @property
     def states(self):
@@ -328,9 +319,10 @@ class Context(GenericReprAndStr):
 
         assert isinstance(name, str)
         variables = [
-            *list(get_strs(self.global_vars)),
-            *list(get_strs(self.input_vars)),
-            *list(get_strs(self.output_vars)),
+            *(get_strs(self.local_vars),),
+            *(get_strs(self.input_vars),),
+            *(get_strs(self.output_vars),),
+            *self.instances.keys(),
         ]
         return name in variables
 

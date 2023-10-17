@@ -400,7 +400,7 @@ class GeneratorFunc:
                 assert guard(prev_assign.child, ir.Edge)
                 prev_edge = prev_assign.child
                 if not self._context.is_declared(caller.ver_name):
-                    self._context.add_global_var(caller)
+                    self._context.add_local_var(caller)
 
             assert guard(prev_assign, ir.AssignNode)
             prev_assign.child = to_body
@@ -539,7 +539,7 @@ class GeneratorFunc:
                 yield from self._target_value_visitor(t, v)
         elif isinstance(target, pyast.Name):
             if not self._context.is_declared(target.id):
-                self._context.add_global_var(ir.Var(py_name=target.id))
+                self._context.add_local_var(ir.Var(py_name=target.id))
             yield (ir.Var(target.id), self._parse_expression(value))
         else:
             raise TypeError(f"{pyast.dump(target)} {pyast.dump(value)}")
