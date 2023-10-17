@@ -11,7 +11,7 @@ import io
 import logging
 from dataclasses import dataclass, field
 from types import FunctionType
-from typing import Any, Optional, Sequence
+from typing import Any, Optional
 
 from python2verilog.api.modes import Modes
 from python2verilog.exceptions import TypeInferenceError
@@ -304,27 +304,6 @@ class Context(GenericReprAndStr):
         State variables
         """
         return copy.deepcopy(self._states)
-
-    def is_declared(self, name: str):
-        """
-        Checks if a Python variable has been already declared or not
-        """
-
-        def get_strs(variables: Sequence[Var]):
-            """
-            Maps vars to str
-            """
-            for var in variables:
-                yield var.py_name
-
-        assert isinstance(name, str)
-        variables = [
-            *(get_strs(self._local_vars),),
-            *(get_strs(self.input_vars),),
-            *(get_strs(self.output_vars),),
-            *self.instances.keys(),
-        ]
-        return name in variables
 
     def add_state(self, name: str):
         """
