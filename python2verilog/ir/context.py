@@ -10,6 +10,7 @@ import copy
 import io
 import logging
 from dataclasses import dataclass, field
+from itertools import zip_longest
 from types import FunctionType
 from typing import Any, Optional
 
@@ -323,8 +324,9 @@ class Context(GenericReprAndStr):
     def __check_types(
         self, expected_types: list[type[Any]], actual_values: list[type[Any]]
     ):
-        assert len(expected_types) == len(actual_values)
-        for expected, actual in zip(expected_types, actual_values):
+        for expected, actual in zip_longest(
+            expected_types, actual_values, fillvalue=type(None)
+        ):
             assert isinstance(
                 actual, expected
             ), f"Expected {expected}, got {type(actual)}, with value {actual}, \
