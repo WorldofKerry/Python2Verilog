@@ -94,13 +94,13 @@ class BaseTestWrapper:
                                 verilogified,
                                 module,
                                 testbench,
-                                timeout=1 + len(expected) // 64,
+                                timeout=1,
                             )
                         )
                     )
                 except Exception as e:
                     raise RuntimeError(
-                        f"{test_name} -O{opti_level} {test_cases} {expected}"
+                        f"{test_name} {test_cases} {len(expected)}"
                     ) from e
                 actual = list(strip_valid(actual_with_invalid))
                 logging.info(

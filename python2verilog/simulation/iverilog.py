@@ -80,7 +80,8 @@ def _run_cmd_with_fifos(
             stderr = process.stderr.read()
             logging.debug("%s, %s, %s", e, stdout, stderr)
             os.killpg(os.getpgid(process.pid), signal.SIGTERM)
-            raise e
+            return stdout, stderr
+            # raise RuntimeError(f"{len(stdout.splitlines())} {stderr}") from e
 
 
 def _run_cmd_with_files(
@@ -119,7 +120,8 @@ def _run_cmd_with_files(
             stderr = process.stderr.read()
             logging.debug("%s, %s, %s", e, stdout, stderr)
             os.killpg(os.getpgid(process.pid), signal.SIGTERM)
-            raise e
+            return stdout, stderr
+            raise RuntimeError(f"{len(stdout.splitlines())} {stderr}") from e
 
 
 def run_with_fifos(
