@@ -22,7 +22,7 @@ def context_to_codegen(context: ir.Context):
     context.validate()
     ir_root, context = GeneratorFunc(context).create_root()
     logging.debug(
-        "context to codegen %s %s -O%s %s",
+        "context to codegen %s %s -O%s with %s",
         ir_root.unique_id,
         context.name,
         context.optimization_level,

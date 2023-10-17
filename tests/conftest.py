@@ -86,8 +86,9 @@ def argparse(request):
     args["optimization_levels"] = (
         set(args["optimization_levels"]) if args["optimization_levels"] else {1}
     )
-    if max(args["optimization_levels"]) > 8:
-        sys.setrecursionlimit(2000)
+    sys.setrecursionlimit(
+        min(max(args["optimization_levels"]) * 250, sys.getrecursionlimit())
+    )
     env.set_var(env.Vars.IVERILOG_PATH, args["iverilog_path"])
     if args["synthesis"]:
         # Synthesis tool yosys does not support SystemVerilog features
