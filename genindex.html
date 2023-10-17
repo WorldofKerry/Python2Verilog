@@ -63,7 +63,7 @@
 </li>
       <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.config.CodegenConfig.add_debug_comments">add_debug_comments (CodegenConfig attribute)</a>
 </li>
-      <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.add_global_var">add_global_var() (Context method)</a>
+      <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.add_local_var">add_local_var() (Context method)</a>
 </li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.add_state">add_state() (Context method)</a>
 </li>
@@ -153,7 +153,7 @@
 </li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.graph.create_cytoscape_elements">create_cytoscape_elements() (in module python2verilog.ir.graph)</a>
 </li>
-      <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.create_instance">create_instance() (Context method)</a>
+      <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.create_generator_instance">create_generator_instance() (Context method)</a>
 </li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.graph.create_networkx_adjacency_list">create_networkx_adjacency_list() (in module python2verilog.ir.graph)</a>
 </li>
@@ -241,6 +241,8 @@
 <h2 id="G">G</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.generator_instances">generator_instances (Context attribute)</a>
+</li>
       <li><a href="python2verilog.utils.html#python2verilog.utils.generics.GenericRepr">GenericRepr (class in python2verilog.utils.generics)</a>
 </li>
       <li><a href="python2verilog.utils.html#python2verilog.utils.generics.GenericReprAndStr">GenericReprAndStr (class in python2verilog.utils.generics)</a>
@@ -255,10 +257,10 @@
 </li>
       <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.codegen.CodeGen.get_module_lines">get_module_lines() (CodeGen method)</a>
 </li>
-      <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.codegen.CodeGen.get_module_str">get_module_str() (CodeGen method)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.codegen.CodeGen.get_module_str">get_module_str() (CodeGen method)</a>
+</li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.graph.Edge.get_name">get_name() (Edge method)</a>
 </li>
       <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.codegen.CodeGen.get_testbench">get_testbench() (CodeGen method)</a>
@@ -270,8 +272,6 @@
       <li><a href="python2verilog.utils.html#python2verilog.utils.env.get_var">get_var() (in module python2verilog.utils.env)</a>
 </li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.graph.get_variables">get_variables() (in module python2verilog.ir.graph)</a>
-</li>
-      <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.global_vars">global_vars (Context property)</a>
 </li>
       <li><a href="python2verilog.utils.html#python2verilog.utils.typed.guard">guard() (in module python2verilog.utils.typed)</a>
 </li>
@@ -313,10 +313,10 @@
 </li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.input_types">input_types (Context attribute)</a>
 </li>
-      <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.input_vars">input_vars (Context property)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.input_vars">input_vars (Context property)</a>
+</li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.instance.Instance.inputs">inputs (Instance attribute)</a>
 </li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.instance.Instance">Instance (class in python2verilog.ir.instance)</a>
@@ -325,8 +325,6 @@
 </li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.signals.ProtocolSignals.instance_specific_values">instance_specific_values() (ProtocolSignals method)</a>
 </li>
-      <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.instances">instances (Context attribute)</a>
-</li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.signals.InstanceSignals">InstanceSignals (class in python2verilog.ir.signals)</a>
 </li>
       <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.ast.Instantiation">Instantiation (class in python2verilog.backend.verilog.ast)</a>
@@ -334,8 +332,6 @@
       <li><a href="python2verilog.ir.html#python2verilog.ir.expressions.Int">Int (class in python2verilog.ir.expressions)</a>
 </li>
       <li><a href="python2verilog.utils.html#python2verilog.utils.env.is_debug_mode">is_debug_mode() (in module python2verilog.utils.env)</a>
-</li>
-      <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.is_declared">is_declared() (Context method)</a>
 </li>
       <li><a href="python2verilog.utils.html#python2verilog.utils.env.Vars.IS_SYSTEM_VERILOG">IS_SYSTEM_VERILOG (Vars attribute)</a>
 </li>
@@ -351,9 +347,11 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="python2verilog.ir.html#python2verilog.ir.expressions.LessThan">LessThan (class in python2verilog.ir.expressions)</a>
 </li>
+      <li><a href="python2verilog.utils.html#python2verilog.utils.lines.Lines">Lines (class in python2verilog.utils.lines)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="python2verilog.utils.html#python2verilog.utils.lines.Lines">Lines (class in python2verilog.utils.lines)</a>
+      <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.local_vars">local_vars (Context property)</a>
 </li>
       <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.ast.LocalParam">LocalParam (class in python2verilog.backend.verilog.ast)</a>
 </li>
@@ -734,15 +732,17 @@
       </ul></li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.signals.InstanceSignals.start">start (InstanceSignals attribute)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="python2verilog.ir.html#python2verilog.ir.expressions.State">State (class in python2verilog.ir.expressions)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.state_var">state_var (Context attribute)</a>
 </li>
       <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.ast.Statement">Statement (class in python2verilog.backend.verilog.ast)</a>
 </li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.states">states (Context property)</a>
+</li>
+      <li><a href="python2verilog.exceptions.html#python2verilog.exceptions.StaticTypingError">StaticTypingError</a>
 </li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.expressions.Sub">Sub (class in python2verilog.ir.expressions)</a>
 </li>

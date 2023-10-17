@@ -41,11 +41,16 @@
 <span class="kn">import</span> <span class="nn">io</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">zip_longest</span>
 <span class="kn">from</span> <span class="nn">types</span> <span class="kn">import</span> <span class="n">FunctionType</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">from</span> <span class="nn">python2verilog.api.modes</span> <span class="kn">import</span> <span class="n">Modes</span>
-<span class="kn">from</span> <span class="nn">python2verilog.exceptions</span> <span class="kn">import</span> <span class="n">TypeInferenceError</span>
+<span class="kn">from</span> <span class="nn">python2verilog.exceptions</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">StaticTypingError</span><span class="p">,</span>
+    <span class="n">TypeInferenceError</span><span class="p">,</span>
+    <span class="n">UnsupportedSyntaxError</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">python2verilog.ir.expressions</span> <span class="kn">import</span> <span class="n">ExclusiveVar</span><span class="p">,</span> <span class="n">State</span><span class="p">,</span> <span class="n">Var</span>
 <span class="kn">from</span> <span class="nn">python2verilog.ir.instance</span> <span class="kn">import</span> <span class="n">Instance</span>
 <span class="kn">from</span> <span class="nn">python2verilog.ir.signals</span> <span class="kn">import</span> <span class="n">ProtocolSignals</span>
@@ -86,8 +91,8 @@
 
     <span class="n">mode</span><span class="p">:</span> <span class="n">Modes</span> <span class="o">=</span> <span class="n">Modes</span><span class="o">.</span><span class="n">NO_WRITE</span>
 
-    <span class="n">_global_vars</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Var</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
-    <span class="n">_input_vars</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Var</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">_local_vars</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Var</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">_input_vars</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">ExclusiveVar</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">_output_vars</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">ExclusiveVar</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">_states</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">set</span><span class="p">)</span>
 
@@ -101,7 +106,9 @@
 
     <span class="c1"># Function calls</span>
     <span class="n">namespace</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Context</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>  <span class="c1"># callable functions</span>
-    <span class="n">instances</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Instance</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>  <span class="c1"># generator instances</span>
+    <span class="n">generator_instances</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Instance</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span>
+    <span class="p">)</span>  <span class="c1"># generator instances</span>
 
 <div class="viewcode-block" id="Context.empty_valid">
 <a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.Context.empty_valid">[docs]</a>
@@ -298,8 +305,8 @@
         <span class="k">return</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_input_vars</span><span class="p">)</span>
 
     <span class="nd">@input_vars</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">input_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Var</span><span class="p">]):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_input_vars</span> <span class="o">=</span> <span class="n">typed_list</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Var</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">input_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ExclusiveVar</span><span class="p">]):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_input_vars</span> <span class="o">=</span> <span class="n">typed_list</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">ExclusiveVar</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">output_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -326,30 +333,24 @@
 
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">global_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">local_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Var</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Global variables</span>
+<span class="sd">        Gets local variables</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_global_vars</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_local_vars</span>
 
-    <span class="nd">@global_vars</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">global_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Var</span><span class="p">]):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_global_vars</span> <span class="o">=</span> <span class="n">typed_list</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Var</span><span class="p">)</span>
-
-<div class="viewcode-block" id="Context.add_global_var">
-<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.Context.add_global_var">[docs]</a>
-    <span class="k">def</span> <span class="nf">add_global_var</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var</span><span class="p">:</span> <span class="n">Var</span><span class="p">):</span>
+<div class="viewcode-block" id="Context.add_local_var">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.Context.add_local_var">[docs]</a>
+    <span class="k">def</span> <span class="nf">add_local_var</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var</span><span class="p">:</span> <span class="n">Var</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Appends global var</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">var</span> <span class="o">=</span> <span class="n">typed_strict</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">Var</span><span class="p">)</span>
-        <span class="k">if</span> <span class="p">(</span>
-            <span class="n">var</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_vars</span>
-            <span class="ow">or</span> <span class="n">var</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_vars</span>
-            <span class="ow">or</span> <span class="n">var</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_vars</span>
-        <span class="p">):</span>
-            <span class="k">return</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_global_vars</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">typed_strict</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">Var</span><span class="p">))</span></div>
+        <span class="k">if</span> <span class="n">var</span><span class="o">.</span><span class="n">py_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">generator_instances</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">StaticTypingError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">var</span><span class="o">.</span><span class="n">py_name</span><span class="si">}</span><span class="s2"> changed type from generator instance to another type&quot;</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">var</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_local_vars</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">input_vars</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">output_vars</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_local_vars</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">typed_strict</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">Var</span><span class="p">))</span></div>
 
 
     <span class="nd">@property</span>
@@ -358,29 +359,6 @@
 <span class="sd">        State variables</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_states</span><span class="p">)</span>
-
-<div class="viewcode-block" id="Context.is_declared">
-<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.Context.is_declared">[docs]</a>
-    <span class="k">def</span> <span class="nf">is_declared</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Checks if a Python variable has been already declared or not</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-
-        <span class="k">def</span> <span class="nf">get_strs</span><span class="p">(</span><span class="n">variables</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Var</span><span class="p">]):</span>
-<span class="w">            </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">            Maps vars to str</span>
-<span class="sd">            &quot;&quot;&quot;</span>
-            <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">variables</span><span class="p">:</span>
-                <span class="k">yield</span> <span class="n">var</span><span class="o">.</span><span class="n">py_name</span>
-
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
-        <span class="n">variables</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="o">*</span><span class="nb">list</span><span class="p">(</span><span class="n">get_strs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">global_vars</span><span class="p">)),</span>
-            <span class="o">*</span><span class="nb">list</span><span class="p">(</span><span class="n">get_strs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_vars</span><span class="p">)),</span>
-            <span class="o">*</span><span class="nb">list</span><span class="p">(</span><span class="n">get_strs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_vars</span><span class="p">)),</span>
-        <span class="p">]</span>
-        <span class="k">return</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">variables</span></div>
-
 
 <div class="viewcode-block" id="Context.add_state">
 <a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.Context.add_state">[docs]</a>
@@ -406,8 +384,9 @@
     <span class="k">def</span> <span class="nf">__check_types</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">expected_types</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">Any</span><span class="p">]],</span> <span class="n">actual_values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span>
     <span class="p">):</span>
-        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">expected_types</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">actual_values</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">expected</span><span class="p">,</span> <span class="n">actual</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">expected_types</span><span class="p">,</span> <span class="n">actual_values</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">expected</span><span class="p">,</span> <span class="n">actual</span> <span class="ow">in</span> <span class="n">zip_longest</span><span class="p">(</span>
+            <span class="n">expected_types</span><span class="p">,</span> <span class="n">actual_values</span><span class="p">,</span> <span class="n">fillvalue</span><span class="o">=</span><span class="nb">type</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+        <span class="p">):</span>
             <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
                 <span class="n">actual</span><span class="p">,</span> <span class="n">expected</span>
             <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;Expected </span><span class="si">{</span><span class="n">expected</span><span class="si">}</span><span class="s2">, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">actual</span><span class="p">)</span><span class="si">}</span><span class="s2">, with value </span><span class="si">{</span><span class="n">actual</span><span class="si">}</span><span class="s2">, </span><span class="se">\</span>
@@ -433,13 +412,14 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">__check_types</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_types</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="Context.create_instance">
-<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.Context.create_instance">[docs]</a>
-    <span class="k">def</span> <span class="nf">create_instance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Instance</span><span class="p">:</span>
+<div class="viewcode-block" id="Context.create_generator_instance">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.Context.create_generator_instance">[docs]</a>
+    <span class="k">def</span> <span class="nf">create_generator_instance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Instance</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Create generator instance</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">validate</span><span class="p">()</span>
+
         <span class="n">inst_input_vars</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Var</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
             <span class="nb">map</span><span class="p">(</span>
                 <span class="k">lambda</span> <span class="n">var</span><span class="p">:</span> <span class="n">ExclusiveVar</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">var</span><span class="o">.</span><span class="n">py_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">),</span>
