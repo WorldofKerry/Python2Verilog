@@ -87,21 +87,16 @@ class BaseTestWrapper:
                 expected = list(get_expected(verilogified))
 
                 logging.debug("Getting actual")
-                try:
-                    actual_with_invalid = list(
-                        strip_ready(
-                            get_actual_raw(
-                                verilogified,
-                                module,
-                                testbench,
-                                timeout=1,
-                            )
+                actual_with_invalid = list(
+                    strip_ready(
+                        get_actual_raw(
+                            verilogified,
+                            module,
+                            testbench,
+                            timeout=1,
                         )
                     )
-                except Exception as e:
-                    raise RuntimeError(
-                        f"{test_name} {test_cases} {len(expected)}"
-                    ) from e
+                )
                 actual = list(strip_valid(actual_with_invalid))
                 logging.info(
                     f"Test cases {test_cases}, actual output length of {len(actual)}"

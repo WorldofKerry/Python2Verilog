@@ -14,7 +14,7 @@ from .utils import name_func
 
 PARAMETERS = [
     ([quad_multiply, multiplier], [(3, 7), (31, 43)]),
-    ([double_for, hrange], [5, 50]),
+    ([double_for, hrange], [5, 100]),
     ([dupe, hrange], [(0, 1, 10), (3, 7, 73)]),
     ([olympic_logo_naive, circle_lines], [(10, 10, 4), (13, 13, 7)]),
     (
