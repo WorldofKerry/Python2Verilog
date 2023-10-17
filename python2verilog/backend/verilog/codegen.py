@@ -91,7 +91,7 @@ class CodeGen:
             """
             Instance signals that should always be set to zero be default
             """
-            for instance in context.instances.values():
+            for instance in context.generator_instances.values():
                 yield ver.NonBlockingSubsitution(instance.signals.ready, ir.UInt(0))
                 yield ver.NonBlockingSubsitution(instance.signals.start, ir.UInt(0))
 
@@ -163,7 +163,7 @@ class CodeGen:
             for var in context.input_vars
         ]
 
-        for instance in context.instances.values():
+        for instance in context.generator_instances.values():
             body.append(
                 ver.Statement(
                     comment="================ Function Instance ================"

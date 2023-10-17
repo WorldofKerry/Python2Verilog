@@ -3,6 +3,8 @@ Exceptions
 """
 import ast
 
+from python2verilog.ir.expressions import Var
+
 
 class UnknownValueError(Exception):
     """
@@ -28,6 +30,18 @@ class UnsupportedSyntaxError(Exception):
         """
         inst = cls(f"Unsupported Python syntax {ast.dump(node)}")
         return inst
+
+
+class StaticTypingError(Exception):
+    """
+    Variable changed type dynamically.
+    Currently requires strongly typed variables.
+    """
+
+    def __init__(self, *args: object) -> None:
+        super().__init__(
+            *args,
+        )
 
 
 class TypeInferenceError(Exception):

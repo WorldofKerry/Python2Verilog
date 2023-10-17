@@ -15,7 +15,11 @@ from types import FunctionType
 from typing import Any, Optional
 
 from python2verilog.api.modes import Modes
-from python2verilog.exceptions import TypeInferenceError
+from python2verilog.exceptions import (
+    StaticTypingError,
+    TypeInferenceError,
+    UnsupportedSyntaxError,
+)
 from python2verilog.ir.expressions import ExclusiveVar, State, Var
 from python2verilog.ir.instance import Instance
 from python2verilog.ir.signals import ProtocolSignals
@@ -69,7 +73,9 @@ class Context(GenericReprAndStr):
 
     # Function calls
     namespace: dict[str, Context] = field(default_factory=dict)  # callable functions
-    instances: dict[str, Instance] = field(default_factory=dict)  # generator instances
+    generator_instances: dict[str, Instance] = field(
+        default_factory=dict
+    )  # generator instances
 
     @classmethod
     def empty_valid(cls):
@@ -295,9 +301,12 @@ class Context(GenericReprAndStr):
         """
         Appends global var
         """
-        if var in self._local_vars or var in self.input_vars or var in self.output_vars:
-            return
-        self._local_vars.append(typed_strict(var, Var))
+        if var.py_name in self.generator_instances:
+            raise StaticTypingError(
+                f"{var.py_name} changed type from generator instance to another type"
+            )
+        if var not in (*self._local_vars, *self.input_vars, *self.output_vars):
+            self._local_vars.append(typed_strict(var, Var))
 
     @property
     def states(self):
@@ -346,11 +355,12 @@ class Context(GenericReprAndStr):
         assert guard(self.output_types, list)
         self.__check_types(self.output_types, output)
 
-    def create_instance(self, name: str) -> Instance:
+    def create_generator_instance(self, name: str) -> Instance:
         """
         Create generator instance
         """
         self.validate()
+
         inst_input_vars: list[Var] = list(
             map(
                 lambda var: ExclusiveVar(f"{name}_{self.name}_{var.py_name}"),
