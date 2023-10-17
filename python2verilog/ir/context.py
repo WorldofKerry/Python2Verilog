@@ -53,8 +53,8 @@ class Context(GenericReprAndStr):
 
     mode: Modes = Modes.NO_WRITE
 
-    local_vars: list[Var] = field(default_factory=list)
-    _input_vars: Optional[list[Var]] = None
+    _local_vars: list[Var] = field(default_factory=list)
+    _input_vars: Optional[list[ExclusiveVar]] = None
     _output_vars: Optional[list[ExclusiveVar]] = None
     _states: set[str] = field(default_factory=set)
 
@@ -259,8 +259,8 @@ class Context(GenericReprAndStr):
         return copy.deepcopy(self._input_vars)
 
     @input_vars.setter
-    def input_vars(self, other: list[Var]):
-        self._input_vars = typed_list(other, Var)
+    def input_vars(self, other: list[ExclusiveVar]):
+        self._input_vars = typed_list(other, ExclusiveVar)
 
     @property
     def output_vars(self):
@@ -283,19 +283,20 @@ class Context(GenericReprAndStr):
             ExclusiveVar(f"out{i}") for i in range(len(self.output_types))
         ]
 
-    def get_local_vars(self) -> list[Var]:
+    @property
+    def local_vars(self) -> list[Var]:
         """
         Gets local variables
         """
-        return tuple(self.local_vars)
+        return self._local_vars
 
     def add_local_var(self, var: Var):
         """
         Appends global var
         """
-        if var in self.local_vars or var in self.input_vars or var in self.output_vars:
+        if var in self._local_vars or var in self.input_vars or var in self.output_vars:
             return
-        self.local_vars.append(typed_strict(var, Var))
+        self._local_vars.append(typed_strict(var, Var))
 
     @property
     def states(self):
@@ -318,7 +319,7 @@ class Context(GenericReprAndStr):
 
         assert isinstance(name, str)
         variables = [
-            *(get_strs(self.local_vars),),
+            *(get_strs(self._local_vars),),
             *(get_strs(self.input_vars),),
             *(get_strs(self.output_vars),),
             *self.instances.keys(),

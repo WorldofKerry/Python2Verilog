@@ -152,8 +152,7 @@ class CodeGen:
         body += [
             ver.Statement(comment="Global variables"),
         ]
-
-        context.local_vars = sorted(context.local_vars, key=lambda x: x.ver_name)
+        context.local_vars.sort(key=lambda x: x.ver_name)
         body += [
             ver.Declaration(v.ver_name, reg=True, signed=True)
             for v in context.local_vars
