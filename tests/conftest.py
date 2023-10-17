@@ -87,7 +87,7 @@ def argparse(request):
         set(args["optimization_levels"]) if args["optimization_levels"] else {1}
     )
     sys.setrecursionlimit(
-        min(max(args["optimization_levels"]) * 250, sys.getrecursionlimit())
+        min(max(args["optimization_levels"]) * 500, sys.getrecursionlimit())
     )
     env.set_var(env.Vars.IVERILOG_PATH, args["iverilog_path"])
     if args["synthesis"]:
