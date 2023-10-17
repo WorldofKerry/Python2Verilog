@@ -293,7 +293,6 @@ class Context(GenericReprAndStr):
         """
         Appends global var
         """
-        var = typed_strict(var, Var)
         if var in self.local_vars or var in self.input_vars or var in self.output_vars:
             return
         self.local_vars.append(typed_strict(var, Var))
