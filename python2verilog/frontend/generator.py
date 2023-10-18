@@ -147,24 +147,14 @@ class GeneratorFunc:
             return nothing, []
         if isinstance(stmt, pyast.Return):
             return self._parse_return(ret=stmt, prefix=prefix)
-        if isinstance(stmt, pyast.Constant):
-            # Probably a triple-quote comment
-            assert guard(stmt.value, str)
-            dummy = ir.AssignNode(
-                unique_id=prefix,
-                name="dummy",
-                lvalue=self._context.state_var,
-                rvalue=self._context.state_var,
-                child=ir.ClockedEdge(
-                    unique_id=f"{prefix}_e",
-                ),
-            )
-            assert guard(dummy.child, ir.Edge)
-            return dummy, [dummy.child]
-        if isinstance(stmt, pyast.Call):
-            warnings.warn(
-                f"Ignored function call {pyast.dump(stmt, include_attributes=True)}"
-            )
+        if isinstance(stmt, (pyast.Call, pyast.Constant)):
+            if isinstance(stmt, pyast.Constant):
+                # Probably a triple-quote comment
+                assert guard(stmt.value, str)
+            else:
+                warnings.warn(
+                    f"Ignored function call {pyast.dump(stmt, include_attributes=True)}"
+                )
             dummy = ir.AssignNode(
                 unique_id=prefix,
                 name="dummy",

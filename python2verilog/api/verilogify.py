@@ -199,9 +199,12 @@ def verilogify(
             "make sure your function has at least one `yield` statement"
         )
 
-    wrapper = (
-        generator_wrapper if inspect.isgeneratorfunction(func) else function_wrapper
-    )
+    if inspect.isgeneratorfunction(func):
+        wrapper = generator_wrapper
+        context.is_generator = True
+    else:
+        wrapper = function_wrapper
+        context.is_generator = False
     wrapper._python2verilog_context = context  # type: ignore # pylint: disable=protected-access
     wrapper._python2verilog_original_func = func  # type: ignore # pylint: disable=protected-access
     namespace[wrapper.__name__] = context
