@@ -1,6 +1,7 @@
 """
 The freshest in-order generator parser
 """
+from __future__ import annotations
 import ast as pyast
 import copy
 import itertools
@@ -22,8 +23,16 @@ class GeneratorFunc:
 
     ParseResult: TypeAlias = tuple[ir.Node, list[ir.Edge]]
 
-    def __init__(self, context: ir.Context) -> None:
+    def __init__(self, context: ir.Context, prefix: str = "") -> None:
         self.context = copy.deepcopy(context)
+        self.context.prefix = prefix
+        self.context.default_output_vars()  # Have output vars use prefix
+        self.context.refresh_input_vars()  # Update input vars to use prefix
+
+    def inline(self):
+        """
+        Creates inline function call
+        """
 
     def create_root(self) -> tuple[ir.Node, ir.Context]:
         """
@@ -193,24 +202,6 @@ class GeneratorFunc:
         )
         tail.edge = ir.ClockedEdge(unique_id=f"{prefix}_last_e")
         return head, [tail.edge]
-        tail_edge: ir.Edge = tail.edge  # get last nonclocked edge
-        tail_edge.child = ir.AssignNode(
-            unique_id=f"{prefix}_valid",
-            lvalue=self.context.signals.valid,
-            rvalue=ir.UInt(1),
-            child=ir.NonClockedEdge(
-                unique_id=f"{prefix}_e",
-                child=ir.AssignNode(
-                    unique_id=f"{prefix}_done",
-                    lvalue=self.context.signals.done,
-                    rvalue=ir.UInt(1),
-                ),
-            ),
-        )
-        return head, []
-        raise RuntimeError(pyast.dump(ret))
-        raise RuntimeError(self.context)
-        raise UnsupportedSyntaxError.from_pyast(stmt)
 
     def _parse_stmts(
         self,
@@ -299,7 +290,7 @@ class GeneratorFunc:
             )
         return self._parse_assign_to_func_result(
             assign=assign,
-            callee_cxt=callee_cxt,
+            func_name=func_name,
             target_name=target_name,
             prefix=prefix,
         )
@@ -307,28 +298,19 @@ class GeneratorFunc:
     def _parse_assign_to_func_result(
         self,
         assign: pyast.Assign,
-        callee_cxt: ir.Context,
+        func_name: str,
         target_name: str,
         prefix: str,
     ) -> ParseResult:
-        callee_cxt.prefix = f"_{target_name}_{prefix}_"
-        callee_cxt.default_output_vars()  # Have output vars use prefix
-        callee_cxt.refresh_input_vars()  # Have input vars use prefix
-        generator_func = GeneratorFunc(callee_cxt)
-        callee_cxt = generator_func.context
-
-        logging.error(
-            "before "
-            + str(
-                list(
-                    (
-                        *callee_cxt.input_vars,
-                        *callee_cxt.output_vars,
-                        *callee_cxt.local_vars,
-                    )
-                )
-            )
+        """
+        Parses assignment to function call result
+        """
+        callee_cxt = self.context.namespace[func_name]
+        generator_func = GeneratorFunc(
+            callee_cxt, prefix=f"{prefix}_{target_name}_{target_name}_"
         )
+
+        callee_cxt = generator_func.context
 
         breaks: list[ir.Edge] = []
         continues: list[ir.Edge] = []
@@ -708,9 +690,9 @@ class GeneratorFunc:
         elif isinstance(target, pyast.Name):
             var = self.context.make_var(target.id)
             self.context.add_local_var(var)
-            logging.error(
-                f"{target.id} {var.py_name} {var.ver_name} {self.context.local_vars} {self.context.input_vars} {self.context.output_vars}"
-            )
+            # logging.error(
+            #     f"{target.id} {var.py_name} {var.ver_name} {self.context.local_vars} {self.context.input_vars} {self.context.output_vars}"
+            # )
             yield (var, self._parse_expression(value))
         else:
             raise TypeError(f"{pyast.dump(target)} {pyast.dump(value)}")

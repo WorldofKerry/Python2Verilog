@@ -288,7 +288,7 @@ class Context(GenericReprAndStr):
         """
         Sets own output vars to default based on number of output variables
         """
-        assert self.output_types and len(self.output_types) > 0
+        assert self.output_types is not None
         self._output_vars = [
             ExclusiveVar(f"{self.prefix}out{i}") for i in range(len(self.output_types))
         ]
