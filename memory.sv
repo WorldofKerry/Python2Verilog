@@ -135,10 +135,10 @@ module read32to8 (
             _state <= _state;
             _i <= $signed(0);
             if (($signed(0) < count)) begin
-                _data__state2_while0_addr <= $signed(base + $signed(count * $signed(4)));
+                __data__state2_while0_addr <= $signed(base + $signed(count * $signed(4)));
                 _state <= _state;
                 _state <= _state;
-                _data__state2_while0_out0 <= $signed($signed(base + $signed(count * $signed(4))) + $signed(42069));
+                __data__state2_while0_out0 <= $signed($signed(base + $signed(count * $signed(4))) + $signed(42069));
                 _data <= $signed($signed(base + $signed(count * $signed(4))) + $signed(42069));
                 _j <= $signed(0);
                 if (($signed(0) < $signed(4))) begin
@@ -159,10 +159,10 @@ module read32to8 (
                 case (_state)
                     _state2_while: begin
                         if ((_i < _count)) begin
-                            _data__state2_while0_addr <= $signed(_base + $signed(_count * $signed(4)));
+                            __data__state2_while0_addr <= $signed(_base + $signed(_count * $signed(4)));
                             _state <= _state;
                             _state <= _state;
-                            _data__state2_while0_out0 <= $signed($signed(_base + $signed(_count * $signed(4))) + $signed(42069));
+                            __data__state2_while0_out0 <= $signed($signed(_base + $signed(_count * $signed(4))) + $signed(42069));
                             _data <= $signed($signed(_base + $signed(_count * $signed(4))) + $signed(42069));
                             _j <= $signed(0);
                             _state <= _state2_while2_while;
@@ -180,10 +180,10 @@ module read32to8 (
                                 _state <= _state2_while2_while0_assign0;
                             end else begin
                                 if ((_i < _count)) begin
-                                    _data__state2_while0_addr <= $signed(_base + $signed(_count * $signed(4)));
+                                    __data__state2_while0_addr <= $signed(_base + $signed(_count * $signed(4)));
                                     _state <= _state;
                                     _state <= _state;
-                                    _data__state2_while0_out0 <= $signed($signed(_base + $signed(_count * $signed(4))) + $signed(42069));
+                                    __data__state2_while0_out0 <= $signed($signed(_base + $signed(_count * $signed(4))) + $signed(42069));
                                     _data <= $signed($signed(_base + $signed(_count * $signed(4))) + $signed(42069));
                                     _j <= $signed(0);
                                     _state <= _state2_while2_while;
@@ -193,10 +193,10 @@ module read32to8 (
                             end
                         end else begin
                             if ((_i < _count)) begin
-                                _data__state2_while0_addr <= $signed(_base + $signed(_count * $signed(4)));
+                                __data__state2_while0_addr <= $signed(_base + $signed(_count * $signed(4)));
                                 _state <= _state;
                                 _state <= _state;
-                                _data__state2_while0_out0 <= $signed($signed(_base + $signed(_count * $signed(4))) + $signed(42069));
+                                __data__state2_while0_out0 <= $signed($signed(_base + $signed(_count * $signed(4))) + $signed(42069));
                                 _data <= $signed($signed(_base + $signed(_count * $signed(4))) + $signed(42069));
                                 _j <= $signed(0);
                                 _state <= _state2_while2_while;
@@ -214,10 +214,10 @@ module read32to8 (
                             _state <= _state2_while2_while0_assign0;
                         end else begin
                             if ((_i < _count)) begin
-                                _data__state2_while0_addr <= $signed(_base + $signed(_count * $signed(4)));
+                                __data__state2_while0_addr <= $signed(_base + $signed(_count * $signed(4)));
                                 _state <= _state;
                                 _state <= _state;
-                                _data__state2_while0_out0 <= $signed($signed(_base + $signed(_count * $signed(4))) + $signed(42069));
+                                __data__state2_while0_out0 <= $signed($signed(_base + $signed(_count * $signed(4))) + $signed(42069));
                                 _data <= $signed($signed(_base + $signed(_count * $signed(4))) + $signed(42069));
                                 _j <= $signed(0);
                                 _state <= _state2_while2_while;

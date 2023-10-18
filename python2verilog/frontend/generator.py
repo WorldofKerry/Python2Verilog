@@ -312,7 +312,7 @@ class GeneratorFunc:
         prefix: str,
     ) -> ParseResult:
         callee_cxt_copy = copy.deepcopy(callee_cxt)
-        callee_cxt_copy.prefix = f"{target_name}_{prefix}_"
+        callee_cxt_copy.prefix = f"_{target_name}_{prefix}_"
         callee_cxt_copy.default_output_vars()  # Have output vars use prefix
         callee_cxt_copy.refresh_input_vars()  # Have input vars use prefix
         generator_func = GeneratorFunc(callee_cxt_copy)
