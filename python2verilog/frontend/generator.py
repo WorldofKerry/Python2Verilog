@@ -191,6 +191,8 @@ class GeneratorFunc:
             self._create_assign_nodes(self.context.output_vars, stmts, prefix),
             f"{prefix}_e",
         )
+        tail.edge = ir.ClockedEdge(unique_id=f"{prefix}_last_e")
+        return head, [tail.edge]
         tail_edge: ir.Edge = tail.edge  # get last nonclocked edge
         tail_edge.child = ir.AssignNode(
             unique_id=f"{prefix}_valid",
@@ -328,7 +330,7 @@ class GeneratorFunc:
         assert isinstance(assign.value, pyast.Call)
         arguments = list(map(self._parse_expression, assign.value.args))
 
-        head, tail = self._weave_nonclocked_edges(
+        inputs_head, tail = self._weave_nonclocked_edges(
             self._create_assign_nodes(
                 callee_cxt_copy.input_vars,
                 arguments,
@@ -336,26 +338,31 @@ class GeneratorFunc:
             ),
             prefix=f"{prefix}_inputs_e",
         )
-        tail.edge = ir.ClockedEdge(
-            unique_id=f"{prefix}_inputs_last_e", child=body_head
-        )
-        
+        tail.edge = ir.ClockedEdge(unique_id=f"{prefix}_inputs_last_e", child=body_head)
+
+        # raise RuntimeError(f"{pyast.dump(assign)}")
+        results = list(map(self._parse_expression, assign.targets))
         head, tail = self._weave_nonclocked_edges(
             self._create_assign_nodes(
-                callee_cxt_copy.input_vars,
-                arguments,
-                prefix=f"{prefix}_inputs",
+                results,
+                callee_cxt_copy.output_vars,
+                prefix=f"{prefix}_outputs",
             ),
-            prefix=f"{prefix}_inputs_e",
+            prefix=f"{prefix}_outputs_e",
         )
-        tail.edge = ir.ClockedEdge(
-            unique_id=f"{prefix}_inputs_last_e", child=body_head
-        )
-        
+        tail.edge = ir.ClockedEdge(unique_id=f"{prefix}_outputs_last_e")
+        for prev_tail in prev_tails:
+            print(type(prev_tail))
+            prev_tail.child = head
+
         assert len(breaks) == 0
         assert len(continues) == 0
 
-        return head, prev_tails
+        raise RuntimeError(
+            f"{list(inputs_head.edge.child.edge.child.edge.child.visit_nonclocked())}"
+        )
+
+        return inputs_head, [tail.edge]
 
     def _parse_assign_to_gen_inst(
         self,
