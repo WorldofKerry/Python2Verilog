@@ -2,6 +2,7 @@
 The freshest in-order generator parser
 """
 from __future__ import annotations
+
 import ast as pyast
 import copy
 import itertools
@@ -690,9 +691,6 @@ class GeneratorFunc:
         elif isinstance(target, pyast.Name):
             var = self.context.make_var(target.id)
             self.context.add_local_var(var)
-            # logging.error(
-            #     f"{target.id} {var.py_name} {var.ver_name} {self.context.local_vars} {self.context.input_vars} {self.context.output_vars}"
-            # )
             yield (var, self._parse_expression(value))
         else:
             raise TypeError(f"{pyast.dump(target)} {pyast.dump(value)}")

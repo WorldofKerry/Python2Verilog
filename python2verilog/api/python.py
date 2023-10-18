@@ -207,7 +207,7 @@ def py_to_context(
         logging.info("Output param types %s", context.output_types)
         logging.info("Output param names %s", context.output_vars)
 
-    context.input_vars = [ir.ExclusiveVar(name) for name in input_names]
+    context.input_vars = [ir.Var(name) for name in input_names]
     if input_types is not None:
         assert isinstance(input_types, list)
         context.input_types = input_types

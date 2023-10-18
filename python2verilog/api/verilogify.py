@@ -69,7 +69,7 @@ def verilogify(
     context.py_func = func
     context.py_string = inspect.getsource(func)
 
-    context.input_vars = [ir.ExclusiveVar(name.arg) for name in func_ast.args.args]
+    context.input_vars = [ir.Var(name.arg) for name in func_ast.args.args]
 
     context.mode = mode
     context.optimization_level = optimization_level
@@ -193,11 +193,6 @@ def verilogify(
             context.check_output_types(tupled_result)
 
         return result
-
-        raise TypeError(
-            "Non-generator functions currently not supported, "
-            "make sure your function has at least one `yield` statement"
-        )
 
     if inspect.isgeneratorfunction(func):
         wrapper = generator_wrapper

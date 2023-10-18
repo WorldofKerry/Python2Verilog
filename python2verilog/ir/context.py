@@ -9,7 +9,6 @@ import ast
 import copy
 import io
 import logging
-import warnings
 from dataclasses import dataclass, field
 from itertools import zip_longest
 from types import FunctionType
@@ -62,7 +61,7 @@ class Context(GenericReprAndStr):
     mode: Modes = Modes.NO_WRITE
 
     _local_vars: list[Var] = field(default_factory=list)
-    _input_vars: Optional[list[ExclusiveVar]] = None
+    _input_vars: Optional[list[Var]] = None
     _output_vars: Optional[list[ExclusiveVar]] = None
     _states: set[str] = field(default_factory=set)
 
@@ -395,7 +394,7 @@ class Context(GenericReprAndStr):
             signals,
         )
 
-    def make_var(self, name: str):
+    def make_var(self, name: str) -> Var:
         """
         Makes a variable with own prefix
         """

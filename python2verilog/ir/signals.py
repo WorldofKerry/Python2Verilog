@@ -2,7 +2,6 @@
 Protocol signals used by the converter
 """
 
-import warnings
 from dataclasses import dataclass, fields
 from typing import Iterator
 
