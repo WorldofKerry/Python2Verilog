@@ -64,13 +64,14 @@ class GeneratorFunc:
         body_head, prev_tails = self._parse_stmts(
             self._context.py_ast.body, prefix=prefix, breaks=breaks, continues=continues
         )
-        assert len(breaks) == 0
-        assert len(continues) == 0
-        for tail in prev_tails:
-            tail.child = self._create_done(prefix="_state_done")
         self._context.entry_state = ir.State(body_head.unique_id)
 
-        # raise RuntimeError(f"{list(body_head.child.child.visit_nonclocked())}")
+        assert len(breaks) == 0
+        assert len(continues) == 0
+
+        for tail in prev_tails:
+            tail.child = self._create_done(prefix="_state_done")
+
         return body_head
 
     def _parse_stmt(
@@ -173,9 +174,10 @@ class GeneratorFunc:
         """
         Parses return
         """
-        if ret.value is None:
+        if ret.value is None and self._context.is_generator:
             done = self._create_done(prefix=prefix)
             return done, []
+        assert not self._context.is_generator
 
         if isinstance(ret.value, pyast.Tuple):
             stmts = [self._parse_expression(c) for c in ret.value.elts]
@@ -194,9 +196,16 @@ class GeneratorFunc:
             unique_id=f"{prefix}_valid",
             lvalue=self._context.signals.valid,
             rvalue=ir.UInt(1),
-            child=ir.ClockedEdge(unique_id=f"{prefix}_e"),
+            child=ir.NonClockedEdge(
+                unique_id=f"{prefix}_e",
+                child=ir.AssignNode(
+                    unique_id=f"{prefix}_done",
+                    lvalue=self._context.signals.done,
+                    rvalue=ir.UInt(1),
+                ),
+            ),
         )
-        return head, [tail_edge.child.edge]
+        return head, []
         raise RuntimeError(pyast.dump(ret))
         raise RuntimeError(self._context)
         raise UnsupportedSyntaxError.from_pyast(stmt)

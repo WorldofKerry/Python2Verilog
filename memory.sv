@@ -19,8 +19,7 @@ module get_data (
     // State variables
     localparam _state0 = 0;
     localparam _state_done = 1;
-    localparam _state_done_assign0 = 2;
-    localparam _state_idle = 3;
+    localparam _state_idle = 2;
     reg [31:0] _state;
     // Global variables
     reg signed [31:0] _addr;
@@ -45,17 +44,13 @@ module get_data (
             _state <= _state;
             _out0 <= $signed(addr + $signed(420));
             _valid <= 1;
-            _state <= _state_done_assign0;
+            _done <= 1;
         end else begin
             // If ready or not valid, then continue computation
             if ((_ready || !(_valid))) begin
-                case (_state)
-                    _state_done_assign0: begin
-                        _done <= 1;
-                        _valid <= 1;
-                        _state <= _state_idle;
-                    end
-                endcase
+                // case(_state)
+                //Empty case block
+                // endcase
             end
         end
     end
