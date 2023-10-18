@@ -294,7 +294,7 @@ class GeneratorFunc:
             )
         return self._parse_assign_to_func_result(
             assign=assign,
-            func_name=func_name,
+            callee_cxt=callee_cxt,
             target_name=target_name,
             prefix=prefix,
         )
@@ -302,14 +302,13 @@ class GeneratorFunc:
     def _parse_assign_to_func_result(
         self,
         assign: pyast.Assign,
-        func_name: str,
+        callee_cxt: ir.Context,
         target_name: str,
         prefix: str,
     ) -> ParseResult:
         """
         Parses assignment to function call result
         """
-        callee_cxt = self.context.namespace[func_name]
         generator_func = GeneratorFunc(
             callee_cxt, prefix=f"{prefix}_{target_name}_{target_name}_"
         )

@@ -25,6 +25,9 @@ class InstanceSignals:
 
     @staticmethod
     def apply_prefix(name: str, prefix: str):
+        """
+        Creates a Var with prefix
+        """
         return ExclusiveVar(f"{prefix}{name}", f"_{prefix}{name}")
 
     def __post_init__(self):

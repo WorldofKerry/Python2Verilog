@@ -41,7 +41,7 @@ class Context(GenericReprAndStr):
     E.g. variables, I/O, parameters, localparam
     """
 
-    # pylint: disable=too-many-instance-attributes
+    # pylint: disable=too-many-instance-attributes, too-many-public-methods
     name: str = ""
     testbench_suffix: str = "_tb"
     is_generator: bool = False
@@ -88,7 +88,7 @@ class Context(GenericReprAndStr):
         cxt.input_types = []
         cxt.input_vars = []
         cxt.output_types = []
-        cxt.output_vars = []
+        cxt._output_vars = []
         return cxt
 
     @property
@@ -277,11 +277,7 @@ class Context(GenericReprAndStr):
         Output variables
         """
         assert guard(self._output_vars, list), f"Unknown output variables {self}"
-        return copy.deepcopy(self._output_vars)
-
-    @output_vars.setter
-    def output_vars(self, other: list[Var]):
-        self._output_vars = typed_list(other, Var)
+        return self._output_vars
 
     def default_output_vars(self):
         """
