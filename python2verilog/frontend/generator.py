@@ -295,6 +295,57 @@ class GeneratorFunc:
                 target_name=target_name,
                 prefix=prefix,
             )
+        return self._parse_assign_to_func_result(
+            assign=assign,
+            callee_cxt=callee_cxt,
+            target_name=target_name,
+            prefix=prefix,
+        )
+
+    def _parse_assign_to_func_result(
+        self,
+        assign: pyast.Assign,
+        callee_cxt: ir.Context,
+        target_name: str,
+        prefix: str,
+    ) -> ParseResult:
+        inst = callee_cxt.create_generator_instance(target_name)
+        self.context.generator_instances[target_name] = inst
+
+        def unique_node_gen():
+            counter = 0
+            while True:
+                yield f"{prefix}_call_{counter}"
+                counter += 1
+
+        def unique_edge_gen():
+            counter = 0
+            while True:
+                yield f"{prefix}_call_{counter}_e"
+                counter += 1
+
+        unique_node = unique_node_gen()
+        unique_edge = unique_edge_gen()
+
+        generator_func = GeneratorFunc(callee_cxt)
+
+        breaks: list[ir.Edge] = []
+        continues: list[ir.Edge] = []
+        body_head, prev_tails = generator_func._parse_stmts(
+            generator_func.context.py_ast.body,
+            prefix=prefix,
+            breaks=breaks,
+            continues=continues,
+        )
+        generator_func.context.entry_state = ir.State(body_head.unique_id)
+
+        assert len(breaks) == 0
+        assert len(continues) == 0
+
+        for tail in prev_tails:
+            tail.child = generator_func._create_done(prefix="_state_done")
+
+        return body_head, prev_tails
 
     def _parse_assign_to_gen_inst(
         self,
@@ -303,10 +354,7 @@ class GeneratorFunc:
         target_name: str,
         prefix: str,
     ) -> ParseResult:
-        # Create an instance of that generator
         inst = callee_cxt.create_generator_instance(target_name)
-
-        # Add instance to own context
         self.context.generator_instances[target_name] = inst
 
         def unique_node_gen():

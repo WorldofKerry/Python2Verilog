@@ -136,12 +136,10 @@ module read32to8 (
 );
     // State variables
     localparam _state0 = 0;
-    localparam _state2_while = 1;
-    localparam _state2_while2_while = 2;
-    localparam _state2_while2_while0_assign0 = 3;
-    localparam _state_done = 4;
-    localparam _state_done_assign0 = 5;
-    localparam _state_idle = 6;
+    localparam _state2_while03_while = 1;
+    localparam _state2_while03_while0 = 2;
+    localparam _state_done = 3;
+    localparam _state_idle = 4;
     reg [31:0] _state;
     // Global variables
     reg signed [31:0] _i;
@@ -188,16 +186,16 @@ module read32to8 (
             _state <= _state;
             _i <= $signed(0);
             if (($signed(0) < count)) begin
-                _data_get_data__ready <= 0;
-                _data_get_data__start <= 1;
-                _data_get_data_addr <= $signed(base + $signed(count * $signed(4)));
-                _j <= $signed(0);
-                if (($signed(0) < $signed(4))) begin
-                    _out0 <= _data;
-                    _valid <= 1;
-                    _state <= _state2_while2_while;
+                _state <= _state;
+                _state <= _state;
+                _i <= $signed(0);
+                if (($signed(0) < _addr)) begin
+                    _i <= $signed($signed(0) + $signed(1));
+                    _state <= _state2_while03_while;
                 end else begin
-                    _state <= _state2_while;
+                    _out0 <= $signed(0);
+                    _valid <= 1;
+                    _done <= 1;
                 end
             end else begin
                 _done <= 1;
@@ -208,71 +206,32 @@ module read32to8 (
             // If ready or not valid, then continue computation
             if ((_ready || !(_valid))) begin
                 case (_state)
-                    _state2_while: begin
-                        if ((_i < _count)) begin
-                            _data_get_data__ready <= 0;
-                            _data_get_data__start <= 1;
-                            _data_get_data_addr <= $signed(_base + $signed(_count * $signed(4)));
-                            _j <= $signed(0);
-                            _state <= _state2_while2_while;
-                        end else begin
-                            _done <= 1;
-                            _valid <= 1;
-                            _state <= _state_idle;
-                        end
-                    end
-                    _state2_while2_while: begin
-                        if ((_j < $signed(4))) begin
-                            _out0 <= _data;
-                            _valid <= 1;
-                            if ((_j < $signed(4))) begin
-                                _state <= _state2_while2_while0_assign0;
+                    _state2_while03_while: begin
+                        if ((_i < _addr)) begin
+                            _i <= $signed(_i + $signed(1));
+                            if (($signed(_i + $signed(1)) < _addr)) begin
+                                _state <= _state2_while03_while0;
                             end else begin
-                                if ((_i < _count)) begin
-                                    _data_get_data__ready <= 0;
-                                    _data_get_data__start <= 1;
-                                    _data_get_data_addr <= $signed(_base + $signed(_count * $signed(4)));
-                                    _j <= $signed(0);
-                                    _state <= _state2_while2_while;
-                                end else begin
-                                    _state <= _state_done_assign0;
-                                end
-                            end
-                        end else begin
-                            if ((_i < _count)) begin
-                                _data_get_data__ready <= 0;
-                                _data_get_data__start <= 1;
-                                _data_get_data_addr <= $signed(_base + $signed(_count * $signed(4)));
-                                _j <= $signed(0);
-                                _state <= _state2_while2_while;
-                            end else begin
-                                _done <= 1;
+                                _out0 <= $signed(_i + $signed(1));
                                 _valid <= 1;
-                                _state <= _state_idle;
+                                _done <= 1;
                             end
-                        end
-                    end
-                    _state2_while2_while0_assign0: begin
-                        _out0 <= _data;
-                        _valid <= 1;
-                        if ((_j < $signed(4))) begin
-                            _state <= _state2_while2_while0_assign0;
                         end else begin
-                            if ((_i < _count)) begin
-                                _data_get_data__ready <= 0;
-                                _data_get_data__start <= 1;
-                                _data_get_data_addr <= $signed(_base + $signed(_count * $signed(4)));
-                                _j <= $signed(0);
-                                _state <= _state2_while2_while;
-                            end else begin
-                                _state <= _state_done_assign0;
-                            end
+                            _out0 <= _i;
+                            _valid <= 1;
+                            _done <= 1;
                         end
                     end
-                    _state_done_assign0: begin
-                        _done <= 1;
-                        _valid <= 1;
-                        _state <= _state_idle;
+                    _state2_while03_while0: begin
+                        _i <= $signed(_i + $signed(1));
+                        if (($signed(_i + $signed(1)) < _addr)) begin
+                            _i <= $signed($signed(_i + $signed(1)) + $signed(1));
+                            _state <= _state2_while03_while;
+                        end else begin
+                            _out0 <= $signed(_i + $signed(1));
+                            _valid <= 1;
+                            _done <= 1;
+                        end
                     end
                 endcase
             end
