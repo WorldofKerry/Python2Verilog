@@ -5,6 +5,7 @@ import ast as pyast
 import copy
 import itertools
 import logging
+import warnings
 from typing import Collection, Iterable, Optional, TypeVar, cast
 
 from typing_extensions import TypeAlias
@@ -69,6 +70,7 @@ class GeneratorFunc:
             tail.child = self._create_done(prefix="_state_done")
         self._context.entry_state = ir.State(body_head.unique_id)
 
+        # raise RuntimeError(f"{list(body_head.child.child.visit_nonclocked())}")
         return body_head
 
     def _parse_stmt(
@@ -130,20 +132,6 @@ class GeneratorFunc:
                 child=edge,
             )
             return cur_node, [edge]
-        if isinstance(stmt, pyast.Constant):
-            # Probably a triple-quote comment
-            assert guard(stmt.value, str)
-            dummy = ir.AssignNode(
-                unique_id=prefix,
-                name="dummy",
-                lvalue=self._context.state_var,
-                rvalue=self._context.state_var,
-                child=ir.ClockedEdge(
-                    unique_id=f"{prefix}_e",
-                ),
-            )
-            assert guard(dummy.child, ir.Edge)
-            return dummy, [dummy.child]
         if isinstance(stmt, pyast.Continue):
             nothing = ir.AssignNode(
                 unique_id=prefix,
@@ -158,12 +146,70 @@ class GeneratorFunc:
             continues.append(nothing.child)
             return nothing, []
         if isinstance(stmt, pyast.Return):
-            if stmt.value is not None:
-                raise UnsupportedSyntaxError.from_pyast(stmt)
+            return self._parse_return(ret=stmt, prefix=prefix)
+        if isinstance(stmt, pyast.Constant):
+            # Probably a triple-quote comment
+            assert guard(stmt.value, str)
+            dummy = ir.AssignNode(
+                unique_id=prefix,
+                name="dummy",
+                lvalue=self._context.state_var,
+                rvalue=self._context.state_var,
+                child=ir.ClockedEdge(
+                    unique_id=f"{prefix}_e",
+                ),
+            )
+            assert guard(dummy.child, ir.Edge)
+            return dummy, [dummy.child]
+        if isinstance(stmt, pyast.Call):
+            warnings.warn(
+                f"Ignored function call {pyast.dump(stmt, include_attributes=True)}"
+            )
+            dummy = ir.AssignNode(
+                unique_id=prefix,
+                name="dummy",
+                lvalue=self._context.state_var,
+                rvalue=self._context.state_var,
+                child=ir.ClockedEdge(
+                    unique_id=f"{prefix}_e",
+                ),
+            )
+            assert guard(dummy.child, ir.Edge)
+            return dummy, [dummy.child]
+
+        raise TypeError(f"Unexpected statement {pyast.dump(stmt)}")
+
+    def _parse_return(self, ret: pyast.Return, prefix: str) -> ParseResult:
+        """
+        Parses return
+        """
+        if ret.value is None:
             done = self._create_done(prefix=prefix)
             return done, []
 
-        raise TypeError(f"Unexpected statement {pyast.dump(stmt)}")
+        if isinstance(ret.value, pyast.Tuple):
+            stmts = [self._parse_expression(c) for c in ret.value.elts]
+        elif isinstance(ret.value, pyast.expr):
+            stmts = [self._parse_expression(ret.value)]
+        else:
+            raise TypeError(f"Expected tuple {type(ret.value)} {pyast.dump(ret)}")
+
+        self._context.validate()
+        head, tail = self._weave_nonclocked_edges(
+            self._create_assign_nodes(self._context.output_vars, stmts, prefix),
+            f"{prefix}_e",
+        )
+        tail_edge: ir.Edge = tail.edge  # get last nonclocked edge
+        tail_edge.child = ir.AssignNode(
+            unique_id=f"{prefix}_valid",
+            lvalue=self._context.signals.valid,
+            rvalue=ir.UInt(1),
+            child=ir.ClockedEdge(unique_id=f"{prefix}_e"),
+        )
+        return head, [tail_edge.child.edge]
+        raise RuntimeError(pyast.dump(ret))
+        raise RuntimeError(self._context)
+        raise UnsupportedSyntaxError.from_pyast(stmt)
 
     def _parse_stmts(
         self,

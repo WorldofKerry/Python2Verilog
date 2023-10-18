@@ -146,7 +146,54 @@ def verilogify(
         return inside()
 
     @wraps(func)
-    def function_wrapper(*_0, **_1):
+    def function_wrapper(*args, **kwargs):
+        nonlocal context
+        if kwargs:
+            warnings.warn(
+                "Keyword arguments not yet supported, use positional arguments only"
+            )
+        for arg in args:
+            assert guard(arg, int)
+
+        context.test_cases.append(args)
+
+        # Input inference
+        if not context.input_types:
+            context.input_types = [type(arg) for arg in args]
+        else:
+            context.check_input_types(args)
+
+        def tuplefy(either: Union[int, tuple[int]]) -> tuple[int]:
+            """
+            Converts int to tuple, otherwise returns input
+            """
+            if isinstance(either, int):
+                ret = (either,)
+            else:
+                ret = either
+
+            for value in ret:
+                try:
+                    assert guard(value, int)
+                except Exception as e:
+                    raise TypeError("Expected `int` type inputs and outputs") from e
+            return ret
+
+        result = func(*args)
+        tupled_result = tuplefy(result)
+        if not context.output_types:
+            logging.info(
+                "Using input `%s` as reference for %s's I/O types",
+                tupled_result,
+                func.__name__,
+            )
+            context.output_types = [type(arg) for arg in tupled_result]
+            context.default_output_vars()
+        else:
+            context.check_output_types(tupled_result)
+
+        return result
+
         raise TypeError(
             "Non-generator functions currently not supported, "
             "make sure your function has at least one `yield` statement"
