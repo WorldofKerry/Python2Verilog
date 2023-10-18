@@ -39,7 +39,7 @@ class GeneratorFunc:
         """
         Returns the root node and context
         """
-        return self._parse_func()[0], self.context
+        return self.parse_func()[0], self.context
 
     def _create_done(self, prefix: str) -> ir.Node:
         """
@@ -65,14 +65,17 @@ class GeneratorFunc:
         )
         return head
 
-    def _parse_func(self, prefix: str = "_state") -> ir.Node:
+    def parse_func(self) -> ir.Node:
         """
         Parses the function inside the context
         """
         breaks: list[ir.Edge] = []
         continues: list[ir.Edge] = []
         body_head, prev_tails = self._parse_stmts(
-            self.context.py_ast.body, prefix=prefix, breaks=breaks, continues=continues
+            self.context.py_ast.body,
+            prefix=f"_state{self.context.prefix}",
+            breaks=breaks,
+            continues=continues,
         )
         self.context.entry_state = ir.State(body_head.unique_id)
 
@@ -313,15 +316,7 @@ class GeneratorFunc:
 
         callee_cxt = generator_func.context
 
-        breaks: list[ir.Edge] = []
-        continues: list[ir.Edge] = []
-        body_head, prev_tails = generator_func._parse_stmts(
-            generator_func.context.py_ast.body,
-            prefix=callee_cxt.prefix,
-            breaks=breaks,
-            continues=continues,
-        )
-        generator_func.context.entry_state = ir.State(body_head.unique_id)
+        body_head, prev_tails = generator_func.parse_func()
 
         assert isinstance(assign.value, pyast.Call)
         arguments = list(map(self._parse_expression, assign.value.args))
@@ -336,8 +331,7 @@ class GeneratorFunc:
         )
         tail.edge = ir.ClockedEdge(unique_id=f"{prefix}_inputs_last_e", child=body_head)
 
-        # raise RuntimeError(f"{pyast.dump(assign)}")
-        results = list(map(self._parse_expression, assign.targets))
+        results = typed_list(list(map(self._parse_expression, assign.targets)), ir.Var)
         head, tail = self._weave_nonclocked_edges(
             self._create_assign_nodes(
                 results,
@@ -350,9 +344,6 @@ class GeneratorFunc:
         for prev_tail in prev_tails:
             print(type(prev_tail))
             prev_tail.child = head
-
-        assert len(breaks) == 0
-        assert len(continues) == 0
 
         logging.error(
             list(

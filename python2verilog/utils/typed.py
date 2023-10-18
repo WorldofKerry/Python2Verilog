@@ -13,9 +13,7 @@ _KeyType = TypeVar("_KeyType")  # pylint: disable=invalid-name
 _ClassInfo: TypeAlias = Union[type, tuple["_ClassInfo", ...]]
 
 
-def typed_list(
-    list_: Optional[list[_ValueType]], type_: Type[_ValueType]
-) -> list[_ValueType]:
+def typed_list(list_: Optional[list[Any]], type_: Type[_ValueType]) -> list[_ValueType]:
     """
     Asserts that all elems in list_ are of type_, then returns list_ or [] if list_ is None
     """
