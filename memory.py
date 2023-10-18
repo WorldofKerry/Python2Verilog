@@ -7,7 +7,11 @@ def get_data(addr):
     Dummy function
     """
     print(addr)
-    return addr + 420
+    # Testing reg func that takes more than one clock cycle
+    i = 0
+    while i < addr:
+        i += 1
+    return i
 
 
 @verilogify

@@ -23,13 +23,13 @@ class GeneratorFunc:
     ParseResult: TypeAlias = tuple[ir.Node, list[ir.Edge]]
 
     def __init__(self, context: ir.Context) -> None:
-        self._context = copy.deepcopy(context)
+        self.context = copy.deepcopy(context)
 
     def create_root(self) -> tuple[ir.Node, ir.Context]:
         """
         Returns the root node and context
         """
-        return self._parse_func(), self._context
+        return self._parse_func(), self.context
 
     def _create_done(self, prefix: str) -> ir.Node:
         """
@@ -43,11 +43,11 @@ class GeneratorFunc:
         valid = 1
         """
         left_hand_sides = [
-            self._context.signals.done,
-            self._context.signals.valid,
-            self._context.state_var,
+            self.context.signals.done,
+            self.context.signals.valid,
+            self.context.state_var,
         ]
-        right_hand_sides = [ir.UInt(1), ir.UInt(1), self._context.idle_state]
+        right_hand_sides = [ir.UInt(1), ir.UInt(1), self.context.idle_state]
         head, _tail = self._weave_nonclocked_edges(
             self._create_assign_nodes(left_hand_sides, right_hand_sides, prefix=prefix),
             prefix=f"{prefix}_e",
@@ -62,9 +62,9 @@ class GeneratorFunc:
         breaks: list[ir.Edge] = []
         continues: list[ir.Edge] = []
         body_head, prev_tails = self._parse_stmts(
-            self._context.py_ast.body, prefix=prefix, breaks=breaks, continues=continues
+            self.context.py_ast.body, prefix=prefix, breaks=breaks, continues=continues
         )
-        self._context.entry_state = ir.State(body_head.unique_id)
+        self.context.entry_state = ir.State(body_head.unique_id)
 
         assert len(breaks) == 0
         assert len(continues) == 0
@@ -102,8 +102,8 @@ class GeneratorFunc:
             nothing = ir.AssignNode(
                 unique_id=prefix,
                 name="break",
-                lvalue=self._context.state_var,
-                rvalue=self._context.state_var,
+                lvalue=self.context.state_var,
+                rvalue=self.context.state_var,
                 child=ir.ClockedEdge(
                     unique_id=f"{prefix}_e",
                 ),
@@ -137,8 +137,8 @@ class GeneratorFunc:
             nothing = ir.AssignNode(
                 unique_id=prefix,
                 name="break",
-                lvalue=self._context.state_var,
-                rvalue=self._context.state_var,
+                lvalue=self.context.state_var,
+                rvalue=self.context.state_var,
                 child=ir.ClockedEdge(
                     unique_id=f"{prefix}_e",
                 ),
@@ -159,8 +159,8 @@ class GeneratorFunc:
             dummy = ir.AssignNode(
                 unique_id=prefix,
                 name="dummy",
-                lvalue=self._context.state_var,
-                rvalue=self._context.state_var,
+                lvalue=self.context.state_var,
+                rvalue=self.context.state_var,
                 child=ir.ClockedEdge(
                     unique_id=f"{prefix}_e",
                 ),
@@ -174,10 +174,10 @@ class GeneratorFunc:
         """
         Parses return
         """
-        if ret.value is None and self._context.is_generator:
+        if ret.value is None and self.context.is_generator:
             done = self._create_done(prefix=prefix)
             return done, []
-        assert not self._context.is_generator
+        assert not self.context.is_generator
 
         if isinstance(ret.value, pyast.Tuple):
             stmts = [self._parse_expression(c) for c in ret.value.elts]
@@ -186,28 +186,28 @@ class GeneratorFunc:
         else:
             raise TypeError(f"Expected tuple {type(ret.value)} {pyast.dump(ret)}")
 
-        self._context.validate()
+        self.context.validate()
         head, tail = self._weave_nonclocked_edges(
-            self._create_assign_nodes(self._context.output_vars, stmts, prefix),
+            self._create_assign_nodes(self.context.output_vars, stmts, prefix),
             f"{prefix}_e",
         )
         tail_edge: ir.Edge = tail.edge  # get last nonclocked edge
         tail_edge.child = ir.AssignNode(
             unique_id=f"{prefix}_valid",
-            lvalue=self._context.signals.valid,
+            lvalue=self.context.signals.valid,
             rvalue=ir.UInt(1),
             child=ir.NonClockedEdge(
                 unique_id=f"{prefix}_e",
                 child=ir.AssignNode(
                     unique_id=f"{prefix}_done",
-                    lvalue=self._context.signals.done,
+                    lvalue=self.context.signals.done,
                     rvalue=ir.UInt(1),
                 ),
             ),
         )
         return head, []
         raise RuntimeError(pyast.dump(ret))
-        raise RuntimeError(self._context)
+        raise RuntimeError(self.context)
         raise UnsupportedSyntaxError.from_pyast(stmt)
 
     def _parse_stmts(
@@ -256,7 +256,10 @@ class GeneratorFunc:
         target = assign.targets[0]
         assert isinstance(target, pyast.Name)
 
-        def create_instance(caller_cxt: ir.Context):
+        def get_func_call_names(caller_cxt: ir.Context):
+            """
+            :return: target_name, func_name
+            """
             # Figure out target name
             target_name = target.id
 
@@ -278,18 +281,18 @@ class GeneratorFunc:
                     f"{target_name} changed type from another type to generator instance"
                 )
 
-            # Get context of generator function being called
-            callee_cxt = caller_cxt.namespace[func_name]
+            return target_name, func_name
 
-            # Create an instance of that generator
-            instance = callee_cxt.create_generator_instance(target_name)
+        target_name, func_name = get_func_call_names(self.context)
 
-            # Add instance to own context
-            caller_cxt.generator_instances[target_name] = instance
+        # Get context of generator function being called
+        callee_cxt = self.context.namespace[func_name]
 
-            return instance
+        # Create an instance of that generator
+        inst = callee_cxt.create_generator_instance(target_name)
 
-        inst = create_instance(self._context)
+        # Add instance to own context
+        self.context.generator_instances[target_name] = inst
 
         def unique_node_gen():
             counter = 0
@@ -365,11 +368,11 @@ class GeneratorFunc:
         assert not stmt.orelse, "for-else statements not supported"
         target = stmt.iter
         assert isinstance(target, pyast.Name)
-        if target.id not in self._context.generator_instances:
+        if target.id not in self.context.generator_instances:
             raise RuntimeError(
-                f"No iterator instance {self._context.generator_instances}"
+                f"No iterator instance {self.context.generator_instances}"
             )
-        inst = self._context.generator_instances[target.id]
+        inst = self.context.generator_instances[target.id]
 
         def gen_unique_node():
             counter = 0
@@ -405,9 +408,9 @@ class GeneratorFunc:
         to_wait.child = ir.IfElseNode(
             unique_id=next(unique_node),
             condition=ir.UBinOp(
-                self._context.signals.ready,
+                self.context.signals.ready,
                 "||",
-                ir.UnaryOp("!", self._context.signals.valid),
+                ir.UnaryOp("!", self.context.signals.valid),
             ),
             true_edge=ir.NonClockedEdge(
                 next(unique_edge),
@@ -459,7 +462,7 @@ class GeneratorFunc:
                 prev_edge.child = prev_assign
                 assert guard(prev_assign.child, ir.Edge)
                 prev_edge = prev_assign.child
-                self._context.add_local_var(caller)
+                self.context.add_local_var(caller)
 
             assert guard(prev_assign, ir.AssignNode)
             prev_assign.child = to_body
@@ -567,15 +570,15 @@ class GeneratorFunc:
         else:
             raise TypeError(f"Expected tuple {type(yiel.value)} {pyast.dump(yiel)}")
 
-        self._context.validate()
+        self.context.validate()
         head, tail = self._weave_nonclocked_edges(
-            self._create_assign_nodes(self._context.output_vars, stmts, prefix),
+            self._create_assign_nodes(self.context.output_vars, stmts, prefix),
             f"{prefix}_e",
         )
         tail_edge: ir.Edge = tail.edge  # get last nonclocked edge
         tail_edge.child = ir.AssignNode(
             unique_id=f"{prefix}_valid",
-            lvalue=self._context.signals.valid,
+            lvalue=self.context.signals.valid,
             rvalue=ir.UInt(1),
             child=ir.ClockedEdge(unique_id=f"{prefix}_e"),
         )
@@ -597,7 +600,7 @@ class GeneratorFunc:
             for t, v in zip(target.elts, value.elts):
                 yield from self._target_value_visitor(t, v)
         elif isinstance(target, pyast.Name):
-            self._context.add_local_var(ir.Var(target.id))
+            self.context.add_local_var(ir.Var(target.id))
             yield (ir.Var(target.id), self._parse_expression(value))
         else:
             raise TypeError(f"{pyast.dump(target)} {pyast.dump(value)}")
