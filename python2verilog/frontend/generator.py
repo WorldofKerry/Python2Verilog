@@ -39,7 +39,7 @@ class GeneratorFunc:
         """
         Returns the root node and context
         """
-        return self._parse_func(), self.context
+        return self._parse_func()[0], self.context
 
     def _create_done(self, prefix: str) -> ir.Node:
         """
@@ -82,7 +82,7 @@ class GeneratorFunc:
         for tail in prev_tails:
             tail.child = self._create_done(prefix="_state_done")
 
-        return body_head
+        return body_head, prev_tails
 
     def _parse_stmt(
         self,

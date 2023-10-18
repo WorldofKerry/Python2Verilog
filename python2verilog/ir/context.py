@@ -268,8 +268,8 @@ class Context(GenericReprAndStr):
         return copy.deepcopy(self._input_vars)
 
     @input_vars.setter
-    def input_vars(self, other: list[ExclusiveVar]):
-        self._input_vars = typed_list(other, ExclusiveVar)
+    def input_vars(self, other: list[Var]):
+        self._input_vars = typed_list(other, Var)
 
     @property
     def output_vars(self):
@@ -280,8 +280,8 @@ class Context(GenericReprAndStr):
         return copy.deepcopy(self._output_vars)
 
     @output_vars.setter
-    def output_vars(self, other: list[ExclusiveVar]):
-        self._output_vars = typed_list(other, ExclusiveVar)
+    def output_vars(self, other: list[Var]):
+        self._output_vars = typed_list(other, Var)
 
     def default_output_vars(self):
         """
