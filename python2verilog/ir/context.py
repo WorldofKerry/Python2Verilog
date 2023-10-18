@@ -293,6 +293,14 @@ class Context(GenericReprAndStr):
             ExclusiveVar(f"{self.prefix}out{i}") for i in range(len(self.output_types))
         ]
 
+    def refresh_input_vars(self):
+        """
+        Update input vars with prefix
+        """
+        self._input_vars = list(
+            map(lambda x: self.make_var(x.py_name), self._input_vars),
+        )
+
     @property
     def local_vars(self) -> list[Var]:
         """

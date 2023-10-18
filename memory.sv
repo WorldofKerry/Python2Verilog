@@ -130,9 +130,10 @@ module read32to8 (
             _state <= _state;
             _i <= $signed(0);
             if (($signed(0) < count)) begin
+                _data__state2_while0_addr <= $signed(base + $signed(count * $signed(4)));
                 _state <= _state;
                 _state <= _state;
-                _out0 <= $signed(_data_addr + $signed(42069));
+                _data__state2_while0_out0 <= $signed($signed(base + $signed(count * $signed(4))) + $signed(42069));
                 _valid <= 1;
                 _done <= 1;
             end else begin

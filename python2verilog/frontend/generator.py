@@ -310,27 +310,52 @@ class GeneratorFunc:
         prefix: str,
     ) -> ParseResult:
         callee_cxt_copy = copy.deepcopy(callee_cxt)
-        callee_cxt_copy.prefix = f"{target_name}_"
-        callee_cxt_copy.default_output_vars()
+        callee_cxt_copy.prefix = f"{target_name}_{prefix}_"
+        callee_cxt_copy.default_output_vars()  # Have output vars use prefix
+        callee_cxt_copy.refresh_input_vars()  # Have input vars use prefix
         generator_func = GeneratorFunc(callee_cxt_copy)
 
         breaks: list[ir.Edge] = []
         continues: list[ir.Edge] = []
         body_head, prev_tails = generator_func._parse_stmts(
             generator_func.context.py_ast.body,
-            prefix=f"_{target_name}",
+            prefix=callee_cxt_copy.prefix,
             breaks=breaks,
             continues=continues,
         )
         generator_func.context.entry_state = ir.State(body_head.unique_id)
 
+        assert isinstance(assign.value, pyast.Call)
+        arguments = list(map(self._parse_expression, assign.value.args))
+
+        head, tail = self._weave_nonclocked_edges(
+            self._create_assign_nodes(
+                callee_cxt_copy.input_vars,
+                arguments,
+                prefix=f"{prefix}_inputs",
+            ),
+            prefix=f"{prefix}_inputs_e",
+        )
+        tail.edge = ir.ClockedEdge(
+            unique_id=f"{prefix}_inputs_last_e", child=body_head
+        )
+        
+        head, tail = self._weave_nonclocked_edges(
+            self._create_assign_nodes(
+                callee_cxt_copy.input_vars,
+                arguments,
+                prefix=f"{prefix}_inputs",
+            ),
+            prefix=f"{prefix}_inputs_e",
+        )
+        tail.edge = ir.ClockedEdge(
+            unique_id=f"{prefix}_inputs_last_e", child=body_head
+        )
+        
         assert len(breaks) == 0
         assert len(continues) == 0
 
-        # for tail in prev_tails:
-        #     tail.child = generator_func._create_done(prefix="_state_done")
-
-        return body_head, prev_tails
+        return head, prev_tails
 
     def _parse_assign_to_gen_inst(
         self,
