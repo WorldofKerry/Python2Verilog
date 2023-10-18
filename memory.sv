@@ -139,10 +139,10 @@ module read32to8 (
                 _state <= _state;
                 _state <= _state;
                 _data__state2_while0_out0 <= $signed($signed(base + $signed(count * $signed(4))) + $signed(42069));
-                _data <= _data__state2_while0_out0;
+                _data <= $signed($signed(base + $signed(count * $signed(4))) + $signed(42069));
                 _j <= $signed(0);
                 if (($signed(0) < $signed(4))) begin
-                    _out0 <= _data__state2_while0_out0;
+                    _out0 <= $signed($signed(base + $signed(count * $signed(4))) + $signed(42069));
                     _valid <= 1;
                     _state <= _state2_while2_while;
                 end else begin
@@ -163,7 +163,7 @@ module read32to8 (
                             _state <= _state;
                             _state <= _state;
                             _data__state2_while0_out0 <= $signed($signed(_base + $signed(_count * $signed(4))) + $signed(42069));
-                            _data <= _data__state2_while0_out0;
+                            _data <= $signed($signed(_base + $signed(_count * $signed(4))) + $signed(42069));
                             _j <= $signed(0);
                             _state <= _state2_while2_while;
                         end else begin
@@ -184,7 +184,7 @@ module read32to8 (
                                     _state <= _state;
                                     _state <= _state;
                                     _data__state2_while0_out0 <= $signed($signed(_base + $signed(_count * $signed(4))) + $signed(42069));
-                                    _data <= _data__state2_while0_out0;
+                                    _data <= $signed($signed(_base + $signed(_count * $signed(4))) + $signed(42069));
                                     _j <= $signed(0);
                                     _state <= _state2_while2_while;
                                 end else begin
@@ -197,7 +197,7 @@ module read32to8 (
                                 _state <= _state;
                                 _state <= _state;
                                 _data__state2_while0_out0 <= $signed($signed(_base + $signed(_count * $signed(4))) + $signed(42069));
-                                _data <= _data__state2_while0_out0;
+                                _data <= $signed($signed(_base + $signed(_count * $signed(4))) + $signed(42069));
                                 _j <= $signed(0);
                                 _state <= _state2_while2_while;
                             end else begin
@@ -218,7 +218,7 @@ module read32to8 (
                                 _state <= _state;
                                 _state <= _state;
                                 _data__state2_while0_out0 <= $signed($signed(_base + $signed(_count * $signed(4))) + $signed(42069));
-                                _data <= _data__state2_while0_out0;
+                                _data <= $signed($signed(_base + $signed(_count * $signed(4))) + $signed(42069));
                                 _j <= $signed(0);
                                 _state <= _state2_while2_while;
                             end else begin

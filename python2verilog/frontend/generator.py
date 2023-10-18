@@ -358,9 +358,9 @@ class GeneratorFunc:
         assert len(breaks) == 0
         assert len(continues) == 0
 
-        raise RuntimeError(
-            f"{list(inputs_head.edge.child.edge.child.edge.child.visit_nonclocked())}"
-        )
+        # raise RuntimeError(
+        #     f"{list(inputs_head.edge.child.edge.child.edge.child.visit_nonclocked())}"
+        # )
 
         return inputs_head, [tail.edge]
 
