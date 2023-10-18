@@ -288,6 +288,21 @@ class GeneratorFunc:
         # Get context of generator function being called
         callee_cxt = self.context.namespace[func_name]
 
+        if callee_cxt.is_generator:
+            return self._parse_assign_to_gen_inst(
+                assign=assign,
+                callee_cxt=callee_cxt,
+                target_name=target_name,
+                prefix=prefix,
+            )
+
+    def _parse_assign_to_gen_inst(
+        self,
+        assign: pyast.Assign,
+        callee_cxt: ir.Context,
+        target_name: str,
+        prefix: str,
+    ) -> ParseResult:
         # Create an instance of that generator
         inst = callee_cxt.create_generator_instance(target_name)
 
