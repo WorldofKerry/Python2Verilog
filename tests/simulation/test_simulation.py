@@ -332,11 +332,11 @@ def func() -> int:
             """
             print(addr)
             # # Testing reg func that takes more than one clock cycle
-            # i = 0
-            # while i < addr:
-            #     i += 1
-            # return i
-            return addr + 42069
+            iii = 0
+            while iii < addr:
+                iii += 1
+            return iii
+            # return addr + 42069
 
         @verilogify(namespace=ns)
         def read32to8(base, count):

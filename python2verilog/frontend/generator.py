@@ -358,6 +358,16 @@ class GeneratorFunc:
         assert len(breaks) == 0
         assert len(continues) == 0
 
+        logging.error(
+            list(
+                (
+                    *callee_cxt_copy.input_vars,
+                    *callee_cxt_copy.output_vars,
+                    *callee_cxt_copy.local_vars,
+                    *results,
+                )
+            )
+        )
         for var in (
             *callee_cxt_copy.input_vars,
             *callee_cxt_copy.output_vars,
@@ -685,6 +695,9 @@ class GeneratorFunc:
         elif isinstance(target, pyast.Name):
             var = self.context.make_var(target.id)
             self.context.add_local_var(var)
+            logging.error(
+                f"{target.id} {var.py_name} {var.ver_name} {self.context.local_vars} {self.context.input_vars} {self.context.output_vars}"
+            )
             yield (var, self._parse_expression(value))
         else:
             raise TypeError(f"{pyast.dump(target)} {pyast.dump(value)}")
