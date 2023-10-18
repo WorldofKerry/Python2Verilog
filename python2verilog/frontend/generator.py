@@ -311,17 +311,30 @@ class GeneratorFunc:
         target_name: str,
         prefix: str,
     ) -> ParseResult:
-        callee_cxt_copy = copy.deepcopy(callee_cxt)
-        callee_cxt_copy.prefix = f"_{target_name}_{prefix}_"
-        callee_cxt_copy.default_output_vars()  # Have output vars use prefix
-        callee_cxt_copy.refresh_input_vars()  # Have input vars use prefix
-        generator_func = GeneratorFunc(callee_cxt_copy)
+        callee_cxt.prefix = f"_{target_name}_{prefix}_"
+        callee_cxt.default_output_vars()  # Have output vars use prefix
+        callee_cxt.refresh_input_vars()  # Have input vars use prefix
+        generator_func = GeneratorFunc(callee_cxt)
+        callee_cxt = generator_func.context
+
+        logging.error(
+            "before "
+            + str(
+                list(
+                    (
+                        *callee_cxt.input_vars,
+                        *callee_cxt.output_vars,
+                        *callee_cxt.local_vars,
+                    )
+                )
+            )
+        )
 
         breaks: list[ir.Edge] = []
         continues: list[ir.Edge] = []
         body_head, prev_tails = generator_func._parse_stmts(
             generator_func.context.py_ast.body,
-            prefix=callee_cxt_copy.prefix,
+            prefix=callee_cxt.prefix,
             breaks=breaks,
             continues=continues,
         )
@@ -332,7 +345,7 @@ class GeneratorFunc:
 
         inputs_head, tail = self._weave_nonclocked_edges(
             self._create_assign_nodes(
-                callee_cxt_copy.input_vars,
+                callee_cxt.input_vars,
                 arguments,
                 prefix=f"{prefix}_inputs",
             ),
@@ -345,7 +358,7 @@ class GeneratorFunc:
         head, tail = self._weave_nonclocked_edges(
             self._create_assign_nodes(
                 results,
-                callee_cxt_copy.output_vars,
+                callee_cxt.output_vars,
                 prefix=f"{prefix}_outputs",
             ),
             prefix=f"{prefix}_outputs_e",
@@ -361,17 +374,17 @@ class GeneratorFunc:
         logging.error(
             list(
                 (
-                    *callee_cxt_copy.input_vars,
-                    *callee_cxt_copy.output_vars,
-                    *callee_cxt_copy.local_vars,
+                    *callee_cxt.input_vars,
+                    *callee_cxt.output_vars,
+                    *callee_cxt.local_vars,
                     *results,
                 )
             )
         )
         for var in (
-            *callee_cxt_copy.input_vars,
-            *callee_cxt_copy.output_vars,
-            *callee_cxt_copy.local_vars,
+            *callee_cxt.input_vars,
+            *callee_cxt.output_vars,
+            *callee_cxt.local_vars,
             *results,
         ):
             self.context.add_local_var(var)

@@ -3,6 +3,7 @@ Functions that take text as input
 """
 
 
+import copy
 import logging
 
 from python2verilog import ir
@@ -20,6 +21,7 @@ def context_to_codegen(context: ir.Context):
     :return: (codegen, ir)
     """
     context.validate()
+    context = copy.deepcopy(context)
     ir_root, context = GeneratorFunc(context).create_root()
     logging.debug(
         "context to codegen %s %s -O%s with %s",
