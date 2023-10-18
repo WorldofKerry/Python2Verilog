@@ -65,7 +65,7 @@ class GeneratorFunc:
         )
         return head
 
-    def parse_func(self) -> ir.Node:
+    def parse_func(self) -> tuple[ir.Node, list[ir.Edge]]:
         """
         Parses the function inside the context
         """

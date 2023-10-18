@@ -293,7 +293,7 @@ class Context(GenericReprAndStr):
         Update input vars with prefix
         """
         self._input_vars = list(
-            map(lambda x: self.make_var(x.py_name), self._input_vars),
+            map(lambda x: self.make_var(x.py_name), self.input_vars),
         )
 
     @property
