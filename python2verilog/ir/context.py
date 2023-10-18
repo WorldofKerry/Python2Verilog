@@ -9,6 +9,7 @@ import ast
 import copy
 import io
 import logging
+import warnings
 from dataclasses import dataclass, field
 from itertools import zip_longest
 from types import FunctionType
@@ -45,6 +46,7 @@ class Context(GenericReprAndStr):
     name: str = ""
     testbench_suffix: str = "_tb"
     is_generator: bool = False
+    prefix: str = ""
 
     test_cases: list[tuple[int, ...]] = field(default_factory=list)
 
@@ -188,7 +190,7 @@ class Context(GenericReprAndStr):
         if self._entry_state:
             assert str(self.entry_state) in self.states, self
 
-        for value in self.signals.values():
+        for value in self.signals.variable_values():
             assert typed(value, Var)
 
         return self
@@ -380,6 +382,10 @@ class Context(GenericReprAndStr):
         }
 
         signals = ProtocolSignals(**args)  # type: ignore[arg-type]
+
+        signals = ProtocolSignals(prefix=f"{name}_{self.name}__")
+
+        # warnings.warn(f"{signals} {signals2}")
 
         return Instance(
             self.name,

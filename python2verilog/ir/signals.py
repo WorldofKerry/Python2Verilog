@@ -2,13 +2,14 @@
 Protocol signals used by the converter
 """
 
+import warnings
 from dataclasses import dataclass, fields
 from typing import Iterator
 
 from python2verilog.ir.expressions import ExclusiveVar, Var
 
 
-@dataclass(frozen=True)
+@dataclass
 class InstanceSignals:
     """
     Signals that are often named differently for each instance
@@ -21,8 +22,20 @@ class InstanceSignals:
     ready: Var = Var("ready")
     valid: ExclusiveVar = ExclusiveVar("valid")
 
+    prefix: str = ""
 
-@dataclass(frozen=True)
+    @staticmethod
+    def apply_prefix(name: str, prefix: str):
+        return ExclusiveVar(f"{prefix}{name}", f"_{prefix}{name}")
+
+    def __post_init__(self):
+        self.start = self.apply_prefix("start", self.prefix)
+        self.done = self.apply_prefix("done", self.prefix)
+        self.ready = self.apply_prefix("ready", self.prefix)
+        self.valid = self.apply_prefix("valid", self.prefix)
+
+
+@dataclass
 class ProtocolSignals(InstanceSignals):
     """
     Protocol signals
@@ -33,30 +46,29 @@ class ProtocolSignals(InstanceSignals):
     reset: Var = Var("reset")
     clock: Var = Var("clock")
 
-    def __iter__(self):
-        for key in self.__dict__:
-            yield key
+    prefix: str = ""
 
-    def values(self) -> Iterator[Var]:
+    def variable_values(self) -> Iterator[Var]:
         """
         Values
         """
-        for value in self.__dict__.values():
+        for _, value in self.variable_items():
             yield value
 
-    def items(self) -> Iterator[tuple[str, Var]]:
+    def variable_items(self) -> Iterator[tuple[str, Var]]:
         """
         Key, Value pairs
         """
         for key, value in self.__dict__.items():
-            yield key, value
+            if isinstance(value, Var):
+                yield key, value
 
     def instance_specific_items(self) -> Iterator[tuple[str, Var]]:
         """
         Get the instance-specific signals
         """
         instance_signals = map(lambda field_: field_.name, fields(InstanceSignals))
-        for key, value in self.items():
+        for key, value in self.variable_items():
             if key in instance_signals:
                 yield key, value
 

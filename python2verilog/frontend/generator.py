@@ -309,25 +309,7 @@ class GeneratorFunc:
         target_name: str,
         prefix: str,
     ) -> ParseResult:
-        inst = callee_cxt.create_generator_instance(target_name)
-        self.context.generator_instances[target_name] = inst
-
-        def unique_node_gen():
-            counter = 0
-            while True:
-                yield f"{prefix}_call_{counter}"
-                counter += 1
-
-        def unique_edge_gen():
-            counter = 0
-            while True:
-                yield f"{prefix}_call_{counter}_e"
-                counter += 1
-
-        unique_node = unique_node_gen()
-        unique_edge = unique_edge_gen()
-
-        generator_func = GeneratorFunc(callee_cxt)
+        generator_func = GeneratorFunc(copy.deepcopy(callee_cxt))
 
         breaks: list[ir.Edge] = []
         continues: list[ir.Edge] = []

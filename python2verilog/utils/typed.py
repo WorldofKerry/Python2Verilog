@@ -53,7 +53,7 @@ def typed(
     """
     Asserts that obj is of type type_, then returns obj or None if obj is None
     """
-    assert obj is None or guard(obj, type_)
+    assert obj is None or guard(obj, type_), f"{obj} {type(obj)}"
     return obj
 
 
