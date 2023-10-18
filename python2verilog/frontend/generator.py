@@ -358,9 +358,13 @@ class GeneratorFunc:
         assert len(breaks) == 0
         assert len(continues) == 0
 
-        # raise RuntimeError(
-        #     f"{list(inputs_head.edge.child.edge.child.edge.child.visit_nonclocked())}"
-        # )
+        for var in (
+            *callee_cxt_copy.input_vars,
+            *callee_cxt_copy.output_vars,
+            *callee_cxt_copy.local_vars,
+            *results,
+        ):
+            self.context.add_local_var(var)
 
         return inputs_head, [tail.edge]
 

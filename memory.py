@@ -17,7 +17,6 @@ def get_data(addr):
 
 @verilogify
 def read32to8(base, count):
-    """ """
     i = 0
     while i < count:
         data = get_data(base + count * 4)
