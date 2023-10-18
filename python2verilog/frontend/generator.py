@@ -395,13 +395,12 @@ class GeneratorFunc:
         )
         return head, [tail.child]
 
-    @staticmethod
-    def _name_to_var(name: pyast.expr) -> ir.Var:
+    def _name_to_var(self, name: pyast.expr) -> ir.Var:
         """
         Converts a pyast.Name to a ir.Var using its id
         """
         assert isinstance(name, pyast.Name)
-        return ir.Var(name.id)
+        return self.context.make_var(name.id)
 
     def _parse_for(self, stmt: pyast.For, prefix: str) -> ParseResult:
         """
@@ -489,7 +488,7 @@ class GeneratorFunc:
         def create_capture_output_nodes():
             if not isinstance(stmt.target, pyast.Tuple):
                 assert isinstance(stmt.target, pyast.Name)
-                outputs = [ir.Var(stmt.target.id)]
+                outputs = [self.context.make_var(stmt.target.id)]
             else:
                 outputs = list(map(self._name_to_var, stmt.target.elts))
             assert len(outputs) == len(inst.outputs), f"{outputs} {inst.outputs}"
@@ -645,8 +644,9 @@ class GeneratorFunc:
             for t, v in zip(target.elts, value.elts):
                 yield from self._target_value_visitor(t, v)
         elif isinstance(target, pyast.Name):
-            self.context.add_local_var(ir.Var(target.id))
-            yield (ir.Var(target.id), self._parse_expression(value))
+            var = self.context.make_var(target.id)
+            self.context.add_local_var(var)
+            yield (var, self._parse_expression(value))
         else:
             raise TypeError(f"{pyast.dump(target)} {pyast.dump(value)}")
 
@@ -740,7 +740,7 @@ class GeneratorFunc:
             if isinstance(expr, pyast.Constant):
                 return ir.Int(expr.value)
             if isinstance(expr, pyast.Name):
-                return ir.Var(py_name=expr.id)
+                return self.context.make_var(expr.id)
             if isinstance(expr, pyast.Subscript):
                 return self._parse_subscript(expr)
             if isinstance(expr, pyast.BinOp):

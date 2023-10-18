@@ -376,14 +376,8 @@ class Context(GenericReprAndStr):
                 self.output_vars,
             )
         )
-        args: dict[str, Var] = {
-            key: ExclusiveVar(f"{name}_{self.name}__{value.py_name}")
-            for key, value in self.signals.instance_specific_items()
-        }
 
-        signals = ProtocolSignals(**args)  # type: ignore[arg-type]
-
-        signals = ProtocolSignals(prefix=f"{name}_{self.name}__")
+        signals = ProtocolSignals(prefix=f"{self.prefix}{name}_{self.name}__")
 
         # warnings.warn(f"{signals} {signals2}")
 
@@ -394,3 +388,9 @@ class Context(GenericReprAndStr):
             inst_output_vars,
             signals,
         )
+
+    def make_var(self, name: str):
+        """
+        Makes a variable with own prefix
+        """
+        return Var(py_name=f"{self.prefix}{name}", ver_name=f"_{self.prefix}{name}")
