@@ -18,18 +18,15 @@ module get_data (
 );
     // State variables
     localparam _state0 = 0;
-    localparam _state3_while = 1;
-    localparam _state3_while0 = 2;
-    localparam _state_done = 3;
-    localparam _state_idle = 4;
+    localparam _state_done = 1;
+    localparam _state_idle = 2;
     reg [31:0] _state;
     // Global variables
-    reg signed [31:0] _i;
     reg signed [31:0] _addr;
     // Core
     always @(posedge _clock) begin
         `ifdef DEBUG
-        $display("get_data,%s,_start=%0d,_done=%0d,_ready=%0d,_valid=%0d,addr=%0d,_addr=%0d,_out0=%0d,_i=%0d", _state.name, _start, _done, _ready, _valid, addr, _addr, _out0, _i);
+        $display("get_data,%s,_start=%0d,_done=%0d,_ready=%0d,_valid=%0d,addr=%0d,_addr=%0d,_out0=%0d", _state.name, _start, _done, _ready, _valid, addr, _addr, _out0);
         `endif
         if (_ready) begin
             _valid <= 0;
@@ -45,47 +42,15 @@ module get_data (
             _addr <= addr;
             _state <= _state;
             _state <= _state;
-            _i <= $signed(0);
-            if (($signed(0) < addr)) begin
-                _i <= $signed($signed(0) + $signed(1));
-                _state <= _state3_while;
-            end else begin
-                _out0 <= $signed(0);
-                _valid <= 1;
-                _done <= 1;
-            end
+            _out0 <= $signed(addr + $signed(42069));
+            _valid <= 1;
+            _done <= 1;
         end else begin
             // If ready or not valid, then continue computation
             if ((_ready || !(_valid))) begin
-                case (_state)
-                    _state3_while: begin
-                        if ((_i < _addr)) begin
-                            _i <= $signed(_i + $signed(1));
-                            if (($signed(_i + $signed(1)) < _addr)) begin
-                                _state <= _state3_while0;
-                            end else begin
-                                _out0 <= $signed(_i + $signed(1));
-                                _valid <= 1;
-                                _done <= 1;
-                            end
-                        end else begin
-                            _out0 <= _i;
-                            _valid <= 1;
-                            _done <= 1;
-                        end
-                    end
-                    _state3_while0: begin
-                        _i <= $signed(_i + $signed(1));
-                        if (($signed(_i + $signed(1)) < _addr)) begin
-                            _i <= $signed($signed(_i + $signed(1)) + $signed(1));
-                            _state <= _state3_while;
-                        end else begin
-                            _out0 <= $signed(_i + $signed(1));
-                            _valid <= 1;
-                            _done <= 1;
-                        end
-                    end
-                endcase
+                // case(_state)
+                //Empty case block
+                // endcase
             end
         end
     end
@@ -136,40 +101,19 @@ module read32to8 (
 );
     // State variables
     localparam _state0 = 0;
-    localparam _state2_while03_while = 1;
-    localparam _state2_while03_while0 = 2;
-    localparam _state_done = 3;
-    localparam _state_idle = 4;
+    localparam _state_done = 1;
+    localparam _state_idle = 2;
     reg [31:0] _state;
     // Global variables
     reg signed [31:0] _i;
     reg signed [31:0] _j;
     reg signed [31:0] _base;
     reg signed [31:0] _count;
-    // ================ Function Instance ================
-    reg [31:0] _data_get_data_addr;
-    wire [31:0] _data_get_data_out0;
-    wire _data_get_data__valid;
-    wire _data_get_data__done;
-    reg _data_get_data__start;
-    reg _data_get_data__ready;
-    get_data _data (
-        .addr(_data_get_data_addr),
-        ._out0(_data_get_data_out0),
-        ._valid(_data_get_data__valid),
-        ._done(_data_get_data__done),
-        ._clock(_clock),
-        ._start(_data_get_data__start),
-        ._reset(_reset),
-        ._ready(_data_get_data__ready)
-        );
     // Core
     always @(posedge _clock) begin
         `ifdef DEBUG
         $display("read32to8,%s,_start=%0d,_done=%0d,_ready=%0d,_valid=%0d,base=%0d,count=%0d,_base=%0d,_count=%0d,_out0=%0d,_i=%0d,_j=%0d", _state.name, _start, _done, _ready, _valid, base, count, _base, _count, _out0, _i, _j);
         `endif
-        _data_get_data__ready <= 0;
-        _data_get_data__start <= 0;
         if (_ready) begin
             _valid <= 0;
             _done <= 0;
@@ -188,15 +132,9 @@ module read32to8 (
             if (($signed(0) < count)) begin
                 _state <= _state;
                 _state <= _state;
-                _i <= $signed(0);
-                if (($signed(0) < _addr)) begin
-                    _i <= $signed($signed(0) + $signed(1));
-                    _state <= _state2_while03_while;
-                end else begin
-                    _out0 <= $signed(0);
-                    _valid <= 1;
-                    _done <= 1;
-                end
+                _out0 <= $signed(_data_addr + $signed(42069));
+                _valid <= 1;
+                _done <= 1;
             end else begin
                 _done <= 1;
                 _valid <= 1;
@@ -205,35 +143,9 @@ module read32to8 (
         end else begin
             // If ready or not valid, then continue computation
             if ((_ready || !(_valid))) begin
-                case (_state)
-                    _state2_while03_while: begin
-                        if ((_i < _addr)) begin
-                            _i <= $signed(_i + $signed(1));
-                            if (($signed(_i + $signed(1)) < _addr)) begin
-                                _state <= _state2_while03_while0;
-                            end else begin
-                                _out0 <= $signed(_i + $signed(1));
-                                _valid <= 1;
-                                _done <= 1;
-                            end
-                        end else begin
-                            _out0 <= _i;
-                            _valid <= 1;
-                            _done <= 1;
-                        end
-                    end
-                    _state2_while03_while0: begin
-                        _i <= $signed(_i + $signed(1));
-                        if (($signed(_i + $signed(1)) < _addr)) begin
-                            _i <= $signed($signed(_i + $signed(1)) + $signed(1));
-                            _state <= _state2_while03_while;
-                        end else begin
-                            _out0 <= $signed(_i + $signed(1));
-                            _valid <= 1;
-                            _done <= 1;
-                        end
-                    end
-                endcase
+                // case(_state)
+                //Empty case block
+                // endcase
             end
         end
     end

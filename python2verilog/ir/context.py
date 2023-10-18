@@ -290,7 +290,7 @@ class Context(GenericReprAndStr):
         """
         assert self.output_types and len(self.output_types) > 0
         self._output_vars = [
-            ExclusiveVar(f"out{i}") for i in range(len(self.output_types))
+            ExclusiveVar(f"{self.prefix}out{i}") for i in range(len(self.output_types))
         ]
 
     @property
@@ -378,8 +378,6 @@ class Context(GenericReprAndStr):
         )
 
         signals = ProtocolSignals(prefix=f"{self.prefix}{name}_{self.name}__")
-
-        # warnings.warn(f"{signals} {signals2}")
 
         return Instance(
             self.name,

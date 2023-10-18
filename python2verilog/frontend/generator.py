@@ -309,13 +309,16 @@ class GeneratorFunc:
         target_name: str,
         prefix: str,
     ) -> ParseResult:
-        generator_func = GeneratorFunc(copy.deepcopy(callee_cxt))
+        callee_cxt_copy = copy.deepcopy(callee_cxt)
+        callee_cxt_copy.prefix = f"{target_name}_"
+        callee_cxt_copy.default_output_vars()
+        generator_func = GeneratorFunc(callee_cxt_copy)
 
         breaks: list[ir.Edge] = []
         continues: list[ir.Edge] = []
         body_head, prev_tails = generator_func._parse_stmts(
             generator_func.context.py_ast.body,
-            prefix=prefix,
+            prefix=f"_{target_name}",
             breaks=breaks,
             continues=continues,
         )
@@ -324,8 +327,8 @@ class GeneratorFunc:
         assert len(breaks) == 0
         assert len(continues) == 0
 
-        for tail in prev_tails:
-            tail.child = generator_func._create_done(prefix="_state_done")
+        # for tail in prev_tails:
+        #     tail.child = generator_func._create_done(prefix="_state_done")
 
         return body_head, prev_tails
 
