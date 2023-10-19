@@ -7,7 +7,6 @@ import ast as pyast
 import copy
 import itertools
 import logging
-import warnings
 from typing import Collection, Iterable, Optional, TypeVar, cast
 
 from typing_extensions import TypeAlias
@@ -166,8 +165,9 @@ class GeneratorFunc:
                 # Probably a triple-quote comment
                 assert guard(stmt.value, str)
             else:
-                warnings.warn(
-                    f"Ignored function call {pyast.dump(stmt, include_attributes=True)}"
+                logging.info(
+                    "Ignored function call %s",
+                    pyast.dump(stmt, include_attributes=True),
                 )
             dummy = ir.AssignNode(
                 unique_id=prefix,
