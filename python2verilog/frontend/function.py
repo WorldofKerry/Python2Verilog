@@ -466,12 +466,9 @@ class FromFunction:
         """
         # pylint: disable=too-many-locals
         target = stmt.iter
-        breaks: list[ir.Edge] = []
-        continues: list[ir.Edge] = []
-        if target.id not in self.__context.generator_instances:
-            raise RuntimeError(
-                f"No iterator instance {self.__context.generator_instances}"
-            )
+        assert (
+            target.id in self.__context.generator_instances
+        ), f"No iterator instance {self.__context.generator_instances}"
         inst = self.__context.generator_instances[target.id]
 
         def gen_unique_node():
@@ -572,6 +569,8 @@ class FromFunction:
         assert guard(capture_node, ir.AssignNode)
         to_capture.child = capture_node
 
+        breaks: list[ir.Edge] = []
+        continues: list[ir.Edge] = []
         body_node, ends = self._parse_stmts(
             stmts=stmt.body,
             prefix=f"{prefix}_for_body",
