@@ -16,9 +16,9 @@ from python2verilog.exceptions import StaticTypingError, UnsupportedSyntaxError
 from python2verilog.utils.typed import guard, typed_list, typed_strict
 
 
-class GeneratorFunc:
+class FromFunction:
     """
-    In-order generator function parser
+    Parses python functions and generator functions
     """
 
     ParseResult: TypeAlias = tuple[ir.Node, list[ir.Edge]]
@@ -28,11 +28,6 @@ class GeneratorFunc:
         self.context.prefix = prefix
         self.context.default_output_vars()  # Have output vars use prefix
         self.context.refresh_input_vars()  # Update input vars to use prefix
-
-    def inline(self):
-        """
-        Creates inline function call
-        """
 
     def create_root(self) -> tuple[ir.Node, ir.Context]:
         """
@@ -309,7 +304,7 @@ class GeneratorFunc:
         """
         Parses assignment to function call result
         """
-        generator_func = GeneratorFunc(
+        generator_func = FromFunction(
             callee_cxt, prefix=f"{prefix}_{target_name}_{target_name}_"
         )
 
@@ -718,7 +713,7 @@ class GeneratorFunc:
             prev = node.child
         if not last_edge:
             node._child = None  # pylint: disable=protected-access
-        return cast(GeneratorFunc._BasicNodeType, head), node
+        return cast(FromFunction._BasicNodeType, head), node
 
     def _parse_assign(self, assign: pyast.Assign, prefix: str) -> ParseResult:
         """
