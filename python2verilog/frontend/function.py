@@ -290,7 +290,7 @@ class FromFunction:
 
         if callee_cxt.is_generator:
             return self._parse_assign_to_gen_inst(
-                assign=assign,
+                call_args=assign.value.args,
                 callee_cxt=callee_cxt,
                 target_name=target_name,
                 prefix=prefix,
@@ -358,7 +358,7 @@ class FromFunction:
 
     def _parse_assign_to_gen_inst(
         self,
-        assign: pyast.Assign,
+        call_args: list[pyast.expr],
         callee_cxt: ir.Context,
         target_name: str,
         prefix: str,
@@ -406,9 +406,7 @@ class FromFunction:
         )
         node = node.child
 
-        assert isinstance(assign.value, pyast.Call)
-
-        arguments = list(map(self._parse_expression, assign.value.args))
+        arguments = list(map(self._parse_expression, call_args))
 
         assert len(arguments) == len(inst.inputs)
 
