@@ -296,15 +296,17 @@ class FromFunction:
                 prefix=prefix,
             )
         return self._parse_assign_to_func_result(
-            assign=assign,
+            call_args=assign.value.args,
             callee_cxt=callee_cxt,
+            targets=assign.targets,
             target_name=target_name,
             prefix=prefix,
         )
 
     def _parse_assign_to_func_result(
         self,
-        assign: pyast.Assign,
+        call_args: list[pyast.expr],
+        targets: list[pyast.expr],
         callee_cxt: ir.Context,
         target_name: str,
         prefix: str,
@@ -317,8 +319,8 @@ class FromFunction:
         )
         callee_cxt, body_head, prev_tails = generator_func.parse_inline()
 
-        assert isinstance(assign.value, pyast.Call)
-        arguments = list(map(self._parse_expression, assign.value.args))
+        # assert isinstance(call_args, pyast.Call)
+        arguments = list(map(self._parse_expression, call_args))
 
         inputs_head, tail = self._weave_nonclocked_edges(
             self._create_assign_nodes(
@@ -330,7 +332,7 @@ class FromFunction:
         )
         tail.edge = ir.ClockedEdge(unique_id=f"{prefix}_inputs_last_e", child=body_head)
 
-        results = typed_list(list(map(self._parse_expression, assign.targets)), ir.Var)
+        results = typed_list(list(map(self._parse_expression, targets)), ir.Var)
         head, tail = self._weave_nonclocked_edges(
             self._create_assign_nodes(
                 results,
