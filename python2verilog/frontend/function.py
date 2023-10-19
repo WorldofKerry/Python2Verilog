@@ -438,9 +438,28 @@ class FromFunction:
             return self._parse_for_in_gen_call(stmt, prefix)
         return self._parse_for_in_gen_instance(stmt, prefix)
 
-    def _get_func_call_name(self, call: pyast.Call):
+    def _get_func_call_name(self, call: pyast.Call) -> str:
         assert guard(call.func, pyast.Name)
         return call.func.id
+
+    def _get_single_target_name(self, targets: list[pyast.expr]) -> str:
+        assert len(targets) == 1
+        assert guard(targets[0], pyast.Name)
+        return targets[0].id
+
+    def _get_target_vars(self, target: pyast.expr) -> list[ir.Var]:
+        """
+        Converts a target into variables
+
+        (a, b, c) -> a, b, c
+        a -> a
+        """
+        if not isinstance(target, pyast.Tuple):
+            assert isinstance(target, pyast.Name)
+            outputs = [self.__context.make_var(target.id)]
+        else:
+            outputs = list(map(self._name_to_var, target.elts))
+        return outputs
 
     def _parse_for_in_gen_call(self, stmt: pyast.For, prefix: str) -> ParseResult:
         """
@@ -449,14 +468,27 @@ class FromFunction:
         logging.error(f"{pyast.dump(stmt, include_attributes=True, indent=1)}")
         assert guard(stmt.iter, pyast.Call)
         callee_cxt = self.__context.namespace[self._get_func_call_name(stmt.iter)]
-        head, tails = self._parse_assign_to_gen_inst(
+        call_head, call_tails = self._parse_assign_to_gen_inst(
             call_args=stmt.iter.args,
             target_name=f"{prefix}_offset{stmt.col_offset}",
-            prefix=prefix,
+            prefix=f"{prefix}_pre",
             callee_cxt=callee_cxt,
         )
-        logging.error(list(head.visit_nonclocked()))
+        logging.error(list(call_head.visit_nonclocked()))
+        logging.error(len(call_tails))
+
+        inst = self.__context.generator_instances[f"{prefix}_offset{stmt.col_offset}"]
+        outputs = self._get_target_vars(stmt.target)
+        body_head, body_tails = self._parse_for_impl(
+            inst=inst, prefix=f"{prefix}_post", body=stmt.body, outputs=outputs
+        )
+
+        assert len(call_tails) == 1
+        call_tails[0] = body_head
+
+        logging.error(body_head.view_children())
         raise RuntimeError()
+        return call_head, body_tails
 
     def _parse_for_in_gen_instance(self, stmt: pyast.For, prefix: str) -> ParseResult:
         """

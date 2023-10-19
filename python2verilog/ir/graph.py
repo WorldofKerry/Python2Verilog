@@ -57,6 +57,12 @@ class Element:
         """
         yield from ()
 
+    def view_children(self) -> str:
+        """
+        Views children of node
+        """
+        return str(list(self.visit_nonclocked()))
+
     def children(self) -> Iterator[Element]:
         """
         Gets children of node
@@ -103,6 +109,7 @@ class BasicElement(Element):
         """
         child or optimal_child if no child
         """
+        assert self._child, f"{self} {self.view_children()}"
         return typed_strict(self._child, Element)
 
     @child.setter
