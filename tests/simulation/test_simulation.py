@@ -371,3 +371,48 @@ def func() -> int:
             list(get_actual(read32to8, module, testbench, timeout=1)),
             list(get_expected(read32to8)),
         )
+
+    def test_reg_func2(self):
+        ns = {}
+
+        @verilogify(namespace=ns)
+        def get_data(addr):
+            """
+            Dummy function
+            """
+            print(addr)
+            return addr + 42069
+
+        @verilogify(namespace=ns)
+        def read32to8_2(base, count):
+            i = 0
+            while i < count:
+                data = get_data(base + count * 4)
+                j = 0
+                while j < 4:
+                    yield data
+                    j += 1
+                i += 1
+
+        read32to8_2(256, 2)
+
+        # with open("./cyto.log", mode="w") as f:
+        #     _, _, cy = context_to_verilog_and_dump(get_context(triple_circle))
+        #     f.write(str(cy))
+        module, testbench = namespace_to_verilog(ns)
+        if self.args.write:
+            mod_path = Path(__file__).parent / "read32to8_2.sv"
+            tb_path = Path(__file__).parent / "read32to8_2_tb.sv"
+            with open(mod_path, mode="w") as f:
+                f.write(str(module))
+            with open(tb_path, mode="w") as f:
+                f.write(str(testbench))
+            cmd = iverilog.make_cmd(
+                "read32to8_2_tb",
+                [mod_path, tb_path],
+            )
+            warnings.warn(cmd)
+        self.assertListEqual(
+            list(get_actual(read32to8_2, module, testbench, timeout=1)),
+            list(get_expected(read32to8_2)),
+        )

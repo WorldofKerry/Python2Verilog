@@ -1,11 +1,12 @@
 """
 The freshest in-order generator parser
 """
+from __future__ import annotations
+
 import ast as pyast
 import copy
 import itertools
 import logging
-import warnings
 from typing import Collection, Iterable, Optional, TypeVar, cast
 
 from typing_extensions import TypeAlias
@@ -22,14 +23,22 @@ class GeneratorFunc:
 
     ParseResult: TypeAlias = tuple[ir.Node, list[ir.Edge]]
 
-    def __init__(self, context: ir.Context) -> None:
+    def __init__(self, context: ir.Context, prefix: str = "") -> None:
         self.context = copy.deepcopy(context)
+        self.context.prefix = prefix
+        self.context.default_output_vars()  # Have output vars use prefix
+        self.context.refresh_input_vars()  # Update input vars to use prefix
+
+    def inline(self):
+        """
+        Creates inline function call
+        """
 
     def create_root(self) -> tuple[ir.Node, ir.Context]:
         """
         Returns the root node and context
         """
-        return self._parse_func(), self.context
+        return self.parse_func()[0], self.context
 
     def _create_done(self, prefix: str) -> ir.Node:
         """
@@ -55,14 +64,17 @@ class GeneratorFunc:
         )
         return head
 
-    def _parse_func(self, prefix: str = "_state") -> ir.Node:
+    def parse_func(self) -> tuple[ir.Node, list[ir.Edge]]:
         """
         Parses the function inside the context
         """
         breaks: list[ir.Edge] = []
         continues: list[ir.Edge] = []
         body_head, prev_tails = self._parse_stmts(
-            self.context.py_ast.body, prefix=prefix, breaks=breaks, continues=continues
+            self.context.py_ast.body,
+            prefix=f"_state{self.context.prefix}",
+            breaks=breaks,
+            continues=continues,
         )
         self.context.entry_state = ir.State(body_head.unique_id)
 
@@ -72,7 +84,7 @@ class GeneratorFunc:
         for tail in prev_tails:
             tail.child = self._create_done(prefix="_state_done")
 
-        return body_head
+        return body_head, prev_tails
 
     def _parse_stmt(
         self,
@@ -153,8 +165,9 @@ class GeneratorFunc:
                 # Probably a triple-quote comment
                 assert guard(stmt.value, str)
             else:
-                warnings.warn(
-                    f"Ignored function call {pyast.dump(stmt, include_attributes=True)}"
+                logging.info(
+                    "Ignored function call %s",
+                    pyast.dump(stmt, include_attributes=True),
                 )
             dummy = ir.AssignNode(
                 unique_id=prefix,
@@ -193,24 +206,6 @@ class GeneratorFunc:
         )
         tail.edge = ir.ClockedEdge(unique_id=f"{prefix}_last_e")
         return head, [tail.edge]
-        tail_edge: ir.Edge = tail.edge  # get last nonclocked edge
-        tail_edge.child = ir.AssignNode(
-            unique_id=f"{prefix}_valid",
-            lvalue=self.context.signals.valid,
-            rvalue=ir.UInt(1),
-            child=ir.NonClockedEdge(
-                unique_id=f"{prefix}_e",
-                child=ir.AssignNode(
-                    unique_id=f"{prefix}_done",
-                    lvalue=self.context.signals.done,
-                    rvalue=ir.UInt(1),
-                ),
-            ),
-        )
-        return head, []
-        raise RuntimeError(pyast.dump(ret))
-        raise RuntimeError(self.context)
-        raise UnsupportedSyntaxError.from_pyast(stmt)
 
     def _parse_stmts(
         self,
@@ -311,34 +306,16 @@ class GeneratorFunc:
         target_name: str,
         prefix: str,
     ) -> ParseResult:
-        callee_cxt.prefix = f"_{target_name}_{prefix}_"
-        callee_cxt.default_output_vars()  # Have output vars use prefix
-        callee_cxt.refresh_input_vars()  # Have input vars use prefix
-        generator_func = GeneratorFunc(callee_cxt)
+        """
+        Parses assignment to function call result
+        """
+        generator_func = GeneratorFunc(
+            callee_cxt, prefix=f"{prefix}_{target_name}_{target_name}_"
+        )
+
         callee_cxt = generator_func.context
 
-        logging.error(
-            "before "
-            + str(
-                list(
-                    (
-                        *callee_cxt.input_vars,
-                        *callee_cxt.output_vars,
-                        *callee_cxt.local_vars,
-                    )
-                )
-            )
-        )
-
-        breaks: list[ir.Edge] = []
-        continues: list[ir.Edge] = []
-        body_head, prev_tails = generator_func._parse_stmts(
-            generator_func.context.py_ast.body,
-            prefix=callee_cxt.prefix,
-            breaks=breaks,
-            continues=continues,
-        )
-        generator_func.context.entry_state = ir.State(body_head.unique_id)
+        body_head, prev_tails = generator_func.parse_func()
 
         assert isinstance(assign.value, pyast.Call)
         arguments = list(map(self._parse_expression, assign.value.args))
@@ -353,8 +330,7 @@ class GeneratorFunc:
         )
         tail.edge = ir.ClockedEdge(unique_id=f"{prefix}_inputs_last_e", child=body_head)
 
-        # raise RuntimeError(f"{pyast.dump(assign)}")
-        results = list(map(self._parse_expression, assign.targets))
+        results = typed_list(list(map(self._parse_expression, assign.targets)), ir.Var)
         head, tail = self._weave_nonclocked_edges(
             self._create_assign_nodes(
                 results,
@@ -367,9 +343,6 @@ class GeneratorFunc:
         for prev_tail in prev_tails:
             print(type(prev_tail))
             prev_tail.child = head
-
-        assert len(breaks) == 0
-        assert len(continues) == 0
 
         logging.error(
             list(
@@ -708,9 +681,6 @@ class GeneratorFunc:
         elif isinstance(target, pyast.Name):
             var = self.context.make_var(target.id)
             self.context.add_local_var(var)
-            logging.error(
-                f"{target.id} {var.py_name} {var.ver_name} {self.context.local_vars} {self.context.input_vars} {self.context.output_vars}"
-            )
             yield (var, self._parse_expression(value))
         else:
             raise TypeError(f"{pyast.dump(target)} {pyast.dump(value)}")

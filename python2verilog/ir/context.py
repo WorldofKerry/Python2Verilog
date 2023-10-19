@@ -9,7 +9,6 @@ import ast
 import copy
 import io
 import logging
-import warnings
 from dataclasses import dataclass, field
 from itertools import zip_longest
 from types import FunctionType
@@ -42,7 +41,7 @@ class Context(GenericReprAndStr):
     E.g. variables, I/O, parameters, localparam
     """
 
-    # pylint: disable=too-many-instance-attributes
+    # pylint: disable=too-many-instance-attributes, too-many-public-methods
     name: str = ""
     testbench_suffix: str = "_tb"
     is_generator: bool = False
@@ -62,7 +61,7 @@ class Context(GenericReprAndStr):
     mode: Modes = Modes.NO_WRITE
 
     _local_vars: list[Var] = field(default_factory=list)
-    _input_vars: Optional[list[ExclusiveVar]] = None
+    _input_vars: Optional[list[Var]] = None
     _output_vars: Optional[list[ExclusiveVar]] = None
     _states: set[str] = field(default_factory=set)
 
@@ -89,7 +88,7 @@ class Context(GenericReprAndStr):
         cxt.input_types = []
         cxt.input_vars = []
         cxt.output_types = []
-        cxt.output_vars = []
+        cxt._output_vars = []
         return cxt
 
     @property
@@ -269,8 +268,8 @@ class Context(GenericReprAndStr):
         return copy.deepcopy(self._input_vars)
 
     @input_vars.setter
-    def input_vars(self, other: list[ExclusiveVar]):
-        self._input_vars = typed_list(other, ExclusiveVar)
+    def input_vars(self, other: list[Var]):
+        self._input_vars = typed_list(other, Var)
 
     @property
     def output_vars(self):
@@ -278,17 +277,13 @@ class Context(GenericReprAndStr):
         Output variables
         """
         assert guard(self._output_vars, list), f"Unknown output variables {self}"
-        return copy.deepcopy(self._output_vars)
-
-    @output_vars.setter
-    def output_vars(self, other: list[ExclusiveVar]):
-        self._output_vars = typed_list(other, ExclusiveVar)
+        return self._output_vars
 
     def default_output_vars(self):
         """
         Sets own output vars to default based on number of output variables
         """
-        assert self.output_types and len(self.output_types) > 0
+        assert self.output_types is not None
         self._output_vars = [
             ExclusiveVar(f"{self.prefix}out{i}") for i in range(len(self.output_types))
         ]
@@ -298,7 +293,7 @@ class Context(GenericReprAndStr):
         Update input vars with prefix
         """
         self._input_vars = list(
-            map(lambda x: self.make_var(x.py_name), self._input_vars),
+            map(lambda x: self.make_var(x.py_name), self.input_vars),
         )
 
     @property
@@ -395,7 +390,7 @@ class Context(GenericReprAndStr):
             signals,
         )
 
-    def make_var(self, name: str):
+    def make_var(self, name: str) -> Var:
         """
         Makes a variable with own prefix
         """
