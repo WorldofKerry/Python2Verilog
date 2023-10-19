@@ -19,6 +19,7 @@ import __main__ as main
 from python2verilog import ir
 from python2verilog.api.modes import Modes
 from python2verilog.api.namespace import get_namespace
+from python2verilog.exceptions import StaticTypingError
 from python2verilog.simulation import iverilog
 from python2verilog.simulation.display import parse_stdout, strip_ready, strip_valid
 from python2verilog.utils.decorator import decorator_with_args
@@ -83,14 +84,16 @@ def verilogify(
             warnings.warn(
                 "Keyword arguments not yet supported, use positional arguments only"
             )
-        for arg in args:
-            assert guard(arg, int)
 
         context.test_cases.append(args)
 
         # Input inference
         if not context.input_types:
             context.input_types = [type(arg) for arg in args]
+            for val in context.input_types:
+                assert (
+                    val == int
+                ), f"Unexpected {val} as a input type {list(map(type, args))}"
         else:
             context.check_input_types(args)
 
@@ -100,14 +103,10 @@ def verilogify(
             """
             if isinstance(either, int):
                 ret = (either,)
-            else:
+            elif isinstance(either, tuple):
                 ret = either
-
-            for value in ret:
-                try:
-                    assert guard(value, int)
-                except Exception as e:
-                    raise TypeError("Expected `int` type inputs and outputs") from e
+            else:
+                raise StaticTypingError(f"Unexpected yielded value {either}")
             return ret
 
         # Always get output one-ahead of what func user sees
@@ -123,6 +122,10 @@ def verilogify(
                     func.__name__,
                 )
                 context.output_types = [type(arg) for arg in tupled_result]
+                for val in context.output_types:
+                    assert (
+                        val == int
+                    ), f"Unexpected {val} as a output type {list(map(type, tupled_result))}"
                 context.default_output_vars()
             else:
                 context.check_output_types(tupled_result)
@@ -140,7 +143,9 @@ def verilogify(
                 yield result
                 result = new_result
                 if i > 10000:
-                    raise RuntimeError(f"{func.__name__} yields more than 10000 values")
+                    raise RuntimeError(
+                        f"`{func.__name__}` yields more than 10000 values"
+                    )
             yield result
 
         return inside()
@@ -176,7 +181,9 @@ def verilogify(
                 try:
                     assert guard(value, int)
                 except Exception as e:
-                    raise TypeError("Expected `int` type inputs and outputs") from e
+                    raise StaticTypingError(
+                        "Expected `int` type inputs and outputs"
+                    ) from e
             return ret
 
         result = func(*args)
