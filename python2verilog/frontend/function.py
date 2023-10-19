@@ -509,11 +509,7 @@ class FromFunction:
             target.id in self.__context.generator_instances
         ), f"No iterator instance {self.__context.generator_instances}"
         inst = self.__context.generator_instances[target.id]
-        if not isinstance(stmt.target, pyast.Tuple):
-            assert isinstance(stmt.target, pyast.Name)
-            outputs = [self.__context.make_var(stmt.target.id)]
-        else:
-            outputs = list(map(self._name_to_var, stmt.target.elts))
+        outputs = self._get_target_vars(stmt.target)
         assert len(outputs) == len(inst.outputs), f"{outputs} {inst.outputs}"
         return self._parse_for_target_and_body(
             inst=inst, prefix=prefix, body=stmt.body, outputs=outputs
