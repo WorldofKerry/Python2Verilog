@@ -468,65 +468,71 @@ class FromFunction:
 
     def _parse_for_gen_call(self, stmt: pyast.For, prefix: str) -> ParseResult:
         """
-        Responsible for parsing the gen_call(...) portion of the for
+        For <targets> in <gen_call>:
 
-        For ... in <gen_call(...)>:
+        where gen_call is a function that returns a generator instance
         """
-        logging.error(f"{pyast.dump(stmt, include_attributes=True, indent=1)}")
+
+        # deal with `... in <gen_call>`
         assert guard(stmt.iter, pyast.Call)
-        callee_cxt = self.__context.namespace[self._get_func_call_name(stmt.iter)]
+        gen_cxt = self.__context.namespace[self._get_func_call_name(stmt.iter)]
+
+        mangled_name = f"{prefix}_offset{stmt.col_offset}" # consider nested for loops
+
         call_head, call_tails = self._parse_gen_call(
             call_args=stmt.iter.args,
-            target_name=f"{prefix}_offset{stmt.col_offset}",
-            prefix=f"{prefix}_pre",
-            callee_cxt=callee_cxt,
+            target_name=mangled_name,
+            prefix=f"{prefix}_call",
+            callee_cxt=gen_cxt,
         )
-        logging.error(list(call_head.visit_nonclocked()))
-        logging.error(len(call_tails))
 
-        inst = self.__context.generator_instances[f"{prefix}_offset{stmt.col_offset}"]
-        outputs = self._get_target_vars(stmt.target)
+        # deal with `for <targets>` and body
+        inst = self.__context.generator_instances[mangled_name]
+        targets = self._get_target_vars(stmt.target)
+
         body_head, body_tails = self._parse_for_target_and_body(
-            inst=inst, prefix=f"{prefix}_post", body=stmt.body, outputs=outputs
+            inst=inst,
+            prefix=f"{prefix}_body",
+            body=stmt.body,
+            targets=targets,
         )
 
         assert len(call_tails) == 1
         call_tails[0].child = body_head
 
-        logging.error(call_head.view_children())
-        logging.error(body_head.view_children())
         return call_head, body_tails
 
     def _parse_for_gen_instance(self, stmt: pyast.For, prefix: str) -> ParseResult:
         """
-        For ... in instance:
+        For <targets> in <instance>:
 
         where instance is a generator instance
         """
-        # pylint: disable=too-many-locals
-        target = stmt.iter
-        assert guard(target, pyast.Name)
+        iterable = stmt.iter
+        assert guard(iterable, pyast.Name)
         assert (
-            target.id in self.__context.generator_instances
+            iterable.id in self.__context.generator_instances
         ), f"No iterator instance {self.__context.generator_instances}"
-        inst = self.__context.generator_instances[target.id]
-        outputs = self._get_target_vars(stmt.target)
-        assert len(outputs) == len(inst.outputs), f"{outputs} {inst.outputs}"
+        inst = self.__context.generator_instances[iterable.id]
+
+        targets = self._get_target_vars(stmt.target)
+        assert len(targets) == len(inst.outputs), f"{targets} {inst.outputs}"
+
         return self._parse_for_target_and_body(
-            inst=inst, prefix=prefix, body=stmt.body, outputs=outputs
+            inst=inst, prefix=prefix, body=stmt.body, targets=targets
         )
 
     def _parse_for_target_and_body(
         self,
+        targets: list[ir.Var],
         inst: ir.Instance,
-        prefix: str,
         body: list[pyast.stmt],
-        outputs: list[ir.Var],
+        prefix: str,
     ):
         """
         Responsible for parsing the target and body of the for loop
 
-        for <target> ...:
+        for <target> ... <inst>:
             <body>
         """
 
@@ -600,7 +606,7 @@ class FromFunction:
         def create_capture_output_nodes():
             dummy = ir.NonClockedEdge(next(unique_edge))
             prev_edge: ir.Edge = dummy
-            for caller, callee in zip(outputs, inst.outputs):
+            for caller, callee in zip(targets, inst.outputs):
                 assert guard(prev_edge, ir.Edge)
                 prev_assign = ir.AssignNode(
                     unique_id=next(unique_node),
