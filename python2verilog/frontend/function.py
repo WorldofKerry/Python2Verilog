@@ -24,30 +24,42 @@ class FromFunction:
     ParseResult: TypeAlias = tuple[ir.Node, list[ir.Edge]]
 
     def __init__(self, context: ir.Context, prefix: str = "") -> None:
-        self.context = copy.deepcopy(context)
-        self.context.prefix = prefix
-        self.context.default_output_vars()  # Have output vars use prefix
-        self.context.refresh_input_vars()  # Update input vars to use prefix
+        self.__context = copy.deepcopy(context)
+        self.__context.prefix = prefix
+        self.__context.default_output_vars()  # Have output vars use prefix
+        self.__context.refresh_input_vars()  # Update input vars to use prefix
+        self.__head_and_tails: Optional[tuple[ir.Node, list[ir.Edge]]] = None
 
-    def create_root(self) -> tuple[ir.Context, ir.Node]:
+    def parse_function(self) -> tuple[ir.Context, ir.Node]:
         """
-        Returns the root node and context
-        """
-        return self.parse_func()[:2]
+        Parses function as an independent unit.
 
-    def parse_func(self) -> tuple[ir.Context, ir.Node, list[ir.Edge]]:
+        Cache result if called multiple times.
+
+        :return: context, head
         """
-        Parses function
+        return self.parse_inline()[:2]
+
+    def parse_inline(self) -> tuple[ir.Context, ir.Node, list[ir.Edge]]:
         """
+        Parses function for inlining.
+
+        Caches result if called multiple times.
+
+        :return: context, head, tails
+        """
+        if self.__head_and_tails:
+            return copy.deepcopy(self.__context), *self.__head_and_tails
+
         breaks: list[ir.Edge] = []
         continues: list[ir.Edge] = []
         body_head, prev_tails = self._parse_stmts(
-            self.context.py_ast.body,
-            prefix=f"_state{self.context.prefix}",
+            self.__context.py_ast.body,
+            prefix=f"_state{self.__context.prefix}",
             breaks=breaks,
             continues=continues,
         )
-        self.context.entry_state = ir.State(body_head.unique_id)
+        self.__context.entry_state = ir.State(body_head.unique_id)
 
         assert len(breaks) == 0
         assert len(continues) == 0
@@ -55,7 +67,8 @@ class FromFunction:
         for tail in prev_tails:
             tail.child = self._create_done(prefix="_state_done")
 
-        return self.context, body_head, prev_tails
+        self.__head_and_tails = body_head, prev_tails
+        return copy.deepcopy(self.__context), *self.__head_and_tails
 
     def _create_done(self, prefix: str) -> ir.Node:
         """
@@ -64,11 +77,11 @@ class FromFunction:
         Signals that module is done, happens in one clock cycle
         """
         left_hand_sides = [
-            self.context.signals.done,
-            self.context.signals.valid,
-            self.context.state_var,
+            self.__context.signals.done,
+            self.__context.signals.valid,
+            self.__context.state_var,
         ]
-        right_hand_sides = [ir.UInt(1), ir.UInt(1), self.context.idle_state]
+        right_hand_sides = [ir.UInt(1), ir.UInt(1), self.__context.idle_state]
         head, _tail = self._weave_nonclocked_edges(
             self._create_assign_nodes(left_hand_sides, right_hand_sides, prefix=prefix),
             prefix=f"{prefix}_e",
@@ -104,8 +117,8 @@ class FromFunction:
             nothing = ir.AssignNode(
                 unique_id=prefix,
                 name="break",
-                lvalue=self.context.state_var,
-                rvalue=self.context.state_var,
+                lvalue=self.__context.state_var,
+                rvalue=self.__context.state_var,
                 child=ir.ClockedEdge(
                     unique_id=f"{prefix}_e",
                 ),
@@ -139,8 +152,8 @@ class FromFunction:
             nothing = ir.AssignNode(
                 unique_id=prefix,
                 name="break",
-                lvalue=self.context.state_var,
-                rvalue=self.context.state_var,
+                lvalue=self.__context.state_var,
+                rvalue=self.__context.state_var,
                 child=ir.ClockedEdge(
                     unique_id=f"{prefix}_e",
                 ),
@@ -162,8 +175,8 @@ class FromFunction:
             dummy = ir.AssignNode(
                 unique_id=prefix,
                 name="dummy",
-                lvalue=self.context.state_var,
-                rvalue=self.context.state_var,
+                lvalue=self.__context.state_var,
+                rvalue=self.__context.state_var,
                 child=ir.ClockedEdge(
                     unique_id=f"{prefix}_e",
                 ),
@@ -177,10 +190,10 @@ class FromFunction:
         """
         Parses return
         """
-        if ret.value is None and self.context.is_generator:
+        if ret.value is None and self.__context.is_generator:
             done = self._create_done(prefix=prefix)
             return done, []
-        assert not self.context.is_generator
+        assert not self.__context.is_generator
 
         if isinstance(ret.value, pyast.Tuple):
             stmts = [self._parse_expression(c) for c in ret.value.elts]
@@ -189,9 +202,9 @@ class FromFunction:
         else:
             raise TypeError(f"Expected tuple {type(ret.value)} {pyast.dump(ret)}")
 
-        self.context.validate()
+        self.__context.validate()
         head, tail = self._weave_nonclocked_edges(
-            self._create_assign_nodes(self.context.output_vars, stmts, prefix),
+            self._create_assign_nodes(self.__context.output_vars, stmts, prefix),
             f"{prefix}_e",
         )
         tail.edge = ir.ClockedEdge(unique_id=f"{prefix}_last_e")
@@ -270,10 +283,10 @@ class FromFunction:
 
             return target_name, func_name
 
-        target_name, func_name = get_func_call_names(self.context)
+        target_name, func_name = get_func_call_names(self.__context)
 
         # Get context of generator function being called
-        callee_cxt = self.context.namespace[func_name]
+        callee_cxt = self.__context.namespace[func_name]
 
         if callee_cxt.is_generator:
             return self._parse_assign_to_gen_inst(
@@ -302,7 +315,7 @@ class FromFunction:
         generator_func = FromFunction(
             callee_cxt, prefix=f"{prefix}_{target_name}_{target_name}_"
         )
-        callee_cxt, body_head, prev_tails = generator_func.parse_func()
+        callee_cxt, body_head, prev_tails = generator_func.parse_inline()
 
         assert isinstance(assign.value, pyast.Call)
         arguments = list(map(self._parse_expression, assign.value.args))
@@ -337,7 +350,7 @@ class FromFunction:
             *callee_cxt.local_vars,
             *results,
         ):
-            self.context.add_local_var(var)
+            self.__context.add_local_var(var)
 
         return inputs_head, [tail.edge]
 
@@ -349,7 +362,7 @@ class FromFunction:
         prefix: str,
     ) -> ParseResult:
         inst = callee_cxt.create_generator_instance(target_name)
-        self.context.generator_instances[target_name] = inst
+        self.__context.generator_instances[target_name] = inst
 
         def unique_node_gen():
             counter = 0
@@ -412,7 +425,7 @@ class FromFunction:
         Converts a pyast.Name to a ir.Var using its id
         """
         assert isinstance(name, pyast.Name)
-        return self.context.make_var(name.id)
+        return self.__context.make_var(name.id)
 
     def _parse_for(self, stmt: pyast.For, prefix: str) -> ParseResult:
         """
@@ -424,11 +437,11 @@ class FromFunction:
         assert not stmt.orelse, "for-else statements not supported"
         target = stmt.iter
         assert isinstance(target, pyast.Name)
-        if target.id not in self.context.generator_instances:
+        if target.id not in self.__context.generator_instances:
             raise RuntimeError(
-                f"No iterator instance {self.context.generator_instances}"
+                f"No iterator instance {self.__context.generator_instances}"
             )
-        inst = self.context.generator_instances[target.id]
+        inst = self.__context.generator_instances[target.id]
 
         def gen_unique_node():
             counter = 0
@@ -464,9 +477,9 @@ class FromFunction:
         to_wait.child = ir.IfElseNode(
             unique_id=next(unique_node),
             condition=ir.UBinOp(
-                self.context.signals.ready,
+                self.__context.signals.ready,
                 "||",
-                ir.UnaryOp("!", self.context.signals.valid),
+                ir.UnaryOp("!", self.__context.signals.valid),
             ),
             true_edge=ir.NonClockedEdge(
                 next(unique_edge),
@@ -500,7 +513,7 @@ class FromFunction:
         def create_capture_output_nodes():
             if not isinstance(stmt.target, pyast.Tuple):
                 assert isinstance(stmt.target, pyast.Name)
-                outputs = [self.context.make_var(stmt.target.id)]
+                outputs = [self.__context.make_var(stmt.target.id)]
             else:
                 outputs = list(map(self._name_to_var, stmt.target.elts))
             assert len(outputs) == len(inst.outputs), f"{outputs} {inst.outputs}"
@@ -518,7 +531,7 @@ class FromFunction:
                 prev_edge.child = prev_assign
                 assert guard(prev_assign.child, ir.Edge)
                 prev_edge = prev_assign.child
-                self.context.add_local_var(caller)
+                self.__context.add_local_var(caller)
 
             assert guard(prev_assign, ir.AssignNode)
             prev_assign.child = to_body
@@ -626,15 +639,15 @@ class FromFunction:
         else:
             raise TypeError(f"Expected tuple {type(yiel.value)} {pyast.dump(yiel)}")
 
-        self.context.validate()
+        self.__context.validate()
         head, tail = self._weave_nonclocked_edges(
-            self._create_assign_nodes(self.context.output_vars, stmts, prefix),
+            self._create_assign_nodes(self.__context.output_vars, stmts, prefix),
             f"{prefix}_e",
         )
         tail_edge: ir.Edge = tail.edge  # get last nonclocked edge
         tail_edge.child = ir.AssignNode(
             unique_id=f"{prefix}_valid",
-            lvalue=self.context.signals.valid,
+            lvalue=self.__context.signals.valid,
             rvalue=ir.UInt(1),
             child=ir.ClockedEdge(unique_id=f"{prefix}_e"),
         )
@@ -656,8 +669,8 @@ class FromFunction:
             for t, v in zip(target.elts, value.elts):
                 yield from self._target_value_visitor(t, v)
         elif isinstance(target, pyast.Name):
-            var = self.context.make_var(target.id)
-            self.context.add_local_var(var)
+            var = self.__context.make_var(target.id)
+            self.__context.add_local_var(var)
             yield (var, self._parse_expression(value))
         else:
             raise TypeError(f"{pyast.dump(target)} {pyast.dump(value)}")
@@ -752,7 +765,7 @@ class FromFunction:
             if isinstance(expr, pyast.Constant):
                 return ir.Int(expr.value)
             if isinstance(expr, pyast.Name):
-                return self.context.make_var(expr.id)
+                return self.__context.make_var(expr.id)
             if isinstance(expr, pyast.Subscript):
                 return self._parse_subscript(expr)
             if isinstance(expr, pyast.BinOp):

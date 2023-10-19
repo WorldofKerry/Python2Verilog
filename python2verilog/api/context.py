@@ -22,7 +22,7 @@ def context_to_codegen(context: ir.Context):
     """
     context.validate()
     context = copy.deepcopy(context)
-    context, ir_root = FromFunction(context).create_root()
+    context, ir_root = FromFunction(context).parse_function()
     logging.debug(
         "context to codegen %s %s -O%s with %s",
         ir_root.unique_id,
