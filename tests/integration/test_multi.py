@@ -13,10 +13,10 @@ from .functions import *
 from .utils import name_func
 
 PARAMETERS = [
-    ([fib_product, multiplier_func, fib], [10, 20]),
-    ([quad_multiply, multiplier], [(3, 7), (31, 43)]),
-    ([double_for, hrange], [5, 10, 15, 20]),
-    ([dupe, hrange], [(0, 1, 10), (3, 7, 73)]),
+    ([fib_product, multiplier, fib], [10, 20]),
+    ([quad_multiply, multiplier_generator], [(3, 7), (31, 43)]),
+    ([double_for, p2vrange], [5, 10, 15, 20]),
+    ([dupe, p2vrange], [(0, 10, 1), (3, 73, 7)]),
     ([olympic_logo_naive, circle_lines], [(10, 10, 4), (13, 13, 7)]),
     (
         [olympic_logo, olympic_logo_mids, circle_lines],

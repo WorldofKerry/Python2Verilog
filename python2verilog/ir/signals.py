@@ -17,7 +17,7 @@ class InstanceSignals:
         """
         Creates a Var with prefix
         """
-        return ExclusiveVar(f"{prefix}{name}", f"_{prefix}{name}")
+        return ExclusiveVar(f"{prefix}{name}", f"__{prefix}{name}")
 
     def __init__(self, prefix: str = ""):
         self.prefix = prefix
@@ -36,8 +36,8 @@ class ProtocolSignals(InstanceSignals):
 
     def __init__(self, prefix: str = ""):
         super().__init__(prefix)
-        self.reset = Var("reset")
-        self.clock = Var("clock")
+        self.reset = Var("reset", "__reset")
+        self.clock = Var("clock", "__clock")
 
     def variable_values(self) -> Iterator[Var]:
         """

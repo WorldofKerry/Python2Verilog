@@ -102,7 +102,7 @@ def happy_face(s_x, s_y, height):
         i += 1
 
 
-def multiplier(multiplicand: int, multiplier: int) -> int:
+def multiplier_generator(multiplicand: int, multiplier: int) -> int:
     product = 0
     count = 0
     while count < multiplier:
@@ -244,20 +244,20 @@ def olympic_logo_naive(mid_x, mid_y, radius):
         yield x, y, 300
 
 
-def hrange(base: int, step: int, limit: int) -> int:
+def p2vrange(start: int, stop: int, step: int) -> int:
     """
     Simplified version of Python's built-in range function
     """
-    while base < limit:
-        yield base
-        base += step
+    while start < stop:
+        yield start
+        start += step
 
 
-def dupe(base: int, step: int, limit: int) -> int:
+def dupe(base: int, limit: int, step: int) -> int:
     """
     Dupe hrange
     """
-    inst = hrange(base, step, limit)
+    inst = p2vrange(base, limit, step)
     for out in inst:
         yield out
         yield out
@@ -267,9 +267,9 @@ def double_for(limit: int) -> tuple[int, int]:
     """
     Double for loop
     """
-    x_gen = hrange(0, 1, limit)
+    x_gen = p2vrange(0, limit, 1)
     for x in x_gen:
-        y_gen = hrange(0, 1, limit)
+        y_gen = p2vrange(0, limit, 1)
         for y in y_gen:
             yield x, y
 
@@ -334,20 +334,20 @@ def quad_multiply(left, right):
     -left * right
     -left * -right
     """
-    inst = multiplier(left, right)
+    inst = multiplier_generator(left, right)
     for val in inst:
         yield val
-    inst = multiplier(left, -right)
+    inst = multiplier_generator(left, -right)
     for val in inst:
         yield val
-    inst = multiplier(-left, right)
+    inst = multiplier_generator(-left, right)
     for val in inst:
         yield val
-    for val in multiplier(-left, -right):
+    for val in multiplier_generator(-left, -right):
         yield val
 
 
-def multiplier_func(multiplicand: int, multiplier: int) -> int:
+def multiplier(multiplicand: int, multiplier: int) -> int:
     product = 0
     while multiplier > 0:
         product += multiplicand
@@ -360,5 +360,5 @@ def fib_product(n):
     Yields the product of the first n fibonacci numbers
     """
     for num in fib(n):
-        prod = multiplier_func(num, num)
+        prod = multiplier(num, num)
         yield prod

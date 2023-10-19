@@ -15,23 +15,12 @@ from types import FunctionType
 from typing import Any, Optional
 
 from python2verilog.api.modes import Modes
-from python2verilog.exceptions import (
-    StaticTypingError,
-    TypeInferenceError,
-    UnsupportedSyntaxError,
-)
+from python2verilog.exceptions import StaticTypingError, TypeInferenceError
 from python2verilog.ir.expressions import ExclusiveVar, State, Var
 from python2verilog.ir.instance import Instance
 from python2verilog.ir.signals import ProtocolSignals
-from python2verilog.utils.env import is_debug_mode
 from python2verilog.utils.generics import GenericReprAndStr
-from python2verilog.utils.typed import (
-    guard,
-    guard_dict,
-    typed,
-    typed_list,
-    typed_strict,
-)
+from python2verilog.utils.typed import guard, typed, typed_list, typed_strict
 
 
 @dataclass
@@ -285,7 +274,8 @@ class Context(GenericReprAndStr):
         """
         assert self.output_types is not None
         self._output_vars = [
-            ExclusiveVar(f"{self.prefix}out{i}") for i in range(len(self.output_types))
+            ExclusiveVar(f"_{self.prefix}output_{i}")
+            for i in range(len(self.output_types))
         ]
 
     def refresh_input_vars(self):

@@ -201,27 +201,27 @@ class Module(ImplementsToLines):
                 assert isinstance(input_, str)
                 input_lines += f"input wire signed [31:0] {input_},"
             input_lines.blank()
-            input_lines += "input wire _clock, // clock for sync"
+            input_lines += "input wire __clock, // clock for sync"
             input_lines += (
-                "input wire _reset, // set high to reset, i.e. done will be high"
+                "input wire __reset, // set high to reset, i.e. done will be high"
             )
             input_lines += (
-                "input wire _start, "
+                "input wire __start, "
                 + "// set high to capture inputs (in same cycle) and start generating"
             )
             input_lines.blank()
             input_lines += "// Implements a ready/valid handshake based on"
             input_lines += "// http://www.cjdrake.com/readyvalid-protocol-primer.html"
             input_lines += (
-                "input wire _ready, // set high when caller is ready for output"
+                "input wire __ready, // set high when caller is ready for output"
             )
         self.input = input_lines
 
         output_lines = Lines()
         if is_not_testbench:
-            output_lines += "output reg _valid, // is high if output values are valid"
+            output_lines += "output reg __valid, // is high if output values are valid"
             output_lines.blank()
-            output_lines += "output reg _done, // is high if module done outputting"
+            output_lines += "output reg __done, // is high if module done outputting"
             output_lines.blank()
             output_lines += "// Output values as a tuple with respective index(es)"
             for output in outputs:
