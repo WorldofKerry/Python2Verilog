@@ -323,18 +323,10 @@ class Mod(BinOp):
         """
         Verilog
         """
-        return Ternary(
-            UBinOp(self.left, "<", Int(0)),
-            Ternary(
-                UBinOp(self.right, ">=", Int(0)),
-                UnaryOp("-", _Mod(self.left, self.right)),
-                _Mod(self.left, self.right),
-            ),
-            Ternary(
-                UBinOp(self.right, "<", Int(0)),
-                UnaryOp("-", _Mod(self.left, self.right)),
-                _Mod(self.left, self.right),
-            ),
+        return BinOp(
+            BinOp(BinOp(self.left, "%", self.right), "+", self.right),
+            "%",
+            self.right,
         ).verilog()
 
     def to_string(self):
@@ -362,9 +354,9 @@ class FloorDiv(BinOp):
         """
         return Ternary(
             condition=BinOp(
-                left=BinOp(left=self.left, right=self.right, oper="%"),
-                right=Int(0),
-                oper="===",
+                BinOp(left=self.left, right=self.right, oper="%"),
+                "===",
+                Int(0),
             ),
             left=BinOp(self.left, "/", self.right),
             right=BinOp(

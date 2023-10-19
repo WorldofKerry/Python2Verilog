@@ -111,6 +111,23 @@ class BaseTestWrapper:
                     + ",...]"
                 )
 
+                if self.args.write:
+                    with open(file_stem + "_expected.csv", mode="w") as f:
+                        f.write(
+                            "\n".join(
+                                map(
+                                    lambda x: str(
+                                        int(x)
+                                        if not isinstance(x, tuple)
+                                        else str(tuple(int(y) for y in x))
+                                    ),
+                                    expected,
+                                )
+                            )
+                        )
+                    with open(file_stem + "_actual.csv", mode="w") as f:
+                        f.write("\n".join(map(str, actual)))
+
                 self.assertTrue(len(actual) > 0, f"{actual} {expected}")
                 self.assertListEqual(actual, expected)
 
