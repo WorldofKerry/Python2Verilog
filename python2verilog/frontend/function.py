@@ -289,13 +289,13 @@ class FromFunction:
         callee_cxt = self.__context.namespace[func_name]
 
         if callee_cxt.is_generator:
-            return self._parse_assign_to_gen_inst(
+            return self._parse_gen_call(
                 call_args=assign.value.args,
                 callee_cxt=callee_cxt,
                 target_name=target_name,
                 prefix=prefix,
             )
-        return self._parse_assign_to_func_result(
+        return self._parse_func_call(
             call_args=assign.value.args,
             callee_cxt=callee_cxt,
             targets=assign.targets,
@@ -303,7 +303,7 @@ class FromFunction:
             prefix=prefix,
         )
 
-    def _parse_assign_to_func_result(
+    def _parse_func_call(
         self,
         call_args: list[pyast.expr],
         targets: list[pyast.expr],
@@ -312,7 +312,9 @@ class FromFunction:
         prefix: str,
     ) -> ParseResult:
         """
-        Parses assignment to function call result
+        Responsible for parsing calls to non-generator functions.
+
+        Implemented as an inline (no external unit).
         """
         generator_func = FromFunction(
             callee_cxt, prefix=f"{prefix}_{target_name}_{target_name}_"
@@ -356,13 +358,16 @@ class FromFunction:
 
         return inputs_head, [tail.edge]
 
-    def _parse_assign_to_gen_inst(
+    def _parse_gen_call(
         self,
         call_args: list[ir.Expression],
         callee_cxt: ir.Context,
         target_name: str,
         prefix: str,
     ) -> ParseResult:
+        """
+        Responsible for parsing calls of generator functions
+        """
         inst = callee_cxt.create_generator_instance(target_name)
         self.__context.generator_instances[target_name] = inst
 
@@ -435,8 +440,8 @@ class FromFunction:
         assert not stmt.orelse, "for-else statements not supported"
         target = stmt.iter
         if not isinstance(target, pyast.Name):
-            return self._parse_for_in_gen_call(stmt, prefix)
-        return self._parse_for_in_gen_instance(stmt, prefix)
+            return self._parse_for_gen_call(stmt, prefix)
+        return self._parse_for_gen_instance(stmt, prefix)
 
     def _get_func_call_name(self, call: pyast.Call) -> str:
         assert guard(call.func, pyast.Name)
@@ -461,14 +466,16 @@ class FromFunction:
             outputs = list(map(self._name_to_var, target.elts))
         return outputs
 
-    def _parse_for_in_gen_call(self, stmt: pyast.For, prefix: str) -> ParseResult:
+    def _parse_for_gen_call(self, stmt: pyast.For, prefix: str) -> ParseResult:
         """
-        For ... in func(...):
+        Responsible for parsing the gen_call(...) portion of the for
+
+        For ... in <gen_call(...)>:
         """
         logging.error(f"{pyast.dump(stmt, include_attributes=True, indent=1)}")
         assert guard(stmt.iter, pyast.Call)
         callee_cxt = self.__context.namespace[self._get_func_call_name(stmt.iter)]
-        call_head, call_tails = self._parse_assign_to_gen_inst(
+        call_head, call_tails = self._parse_gen_call(
             call_args=stmt.iter.args,
             target_name=f"{prefix}_offset{stmt.col_offset}",
             prefix=f"{prefix}_pre",
@@ -479,7 +486,7 @@ class FromFunction:
 
         inst = self.__context.generator_instances[f"{prefix}_offset{stmt.col_offset}"]
         outputs = self._get_target_vars(stmt.target)
-        body_head, body_tails = self._parse_for_impl(
+        body_head, body_tails = self._parse_for_target_and_body(
             inst=inst, prefix=f"{prefix}_post", body=stmt.body, outputs=outputs
         )
 
@@ -489,9 +496,8 @@ class FromFunction:
         logging.error(call_head.view_children())
         logging.error(body_head.view_children())
         return call_head, body_tails
-        raise RuntimeError()
 
-    def _parse_for_in_gen_instance(self, stmt: pyast.For, prefix: str) -> ParseResult:
+    def _parse_for_gen_instance(self, stmt: pyast.For, prefix: str) -> ParseResult:
         """
         For ... in instance:
 
@@ -509,17 +515,24 @@ class FromFunction:
         else:
             outputs = list(map(self._name_to_var, stmt.target.elts))
         assert len(outputs) == len(inst.outputs), f"{outputs} {inst.outputs}"
-        return self._parse_for_impl(
+        return self._parse_for_target_and_body(
             inst=inst, prefix=prefix, body=stmt.body, outputs=outputs
         )
 
-    def _parse_for_impl(
+    def _parse_for_target_and_body(
         self,
         inst: ir.Instance,
         prefix: str,
         body: list[pyast.stmt],
         outputs: list[ir.Var],
     ):
+        """
+        Responsible for parsing the target and body of the for loop
+
+        for <target> ...:
+            <body>
+        """
+
         def gen_unique_node():
             counter = 0
             while True:
