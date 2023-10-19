@@ -29,39 +29,15 @@ class FromFunction:
         self.context.default_output_vars()  # Have output vars use prefix
         self.context.refresh_input_vars()  # Update input vars to use prefix
 
-    def create_root(self) -> tuple[ir.Node, ir.Context]:
+    def create_root(self) -> tuple[ir.Context, ir.Node]:
         """
         Returns the root node and context
         """
-        return self.parse_func()[0], self.context
+        return self.parse_func()[:2]
 
-    def _create_done(self, prefix: str) -> ir.Node:
+    def parse_func(self) -> tuple[ir.Context, ir.Node, list[ir.Edge]]:
         """
-        Creates the done nodes
-
-        Signals that module is done, happens in one clock cycle
-
-        Current implementation is as follows:
-
-        done = 1
-        valid = 1
-        """
-        left_hand_sides = [
-            self.context.signals.done,
-            self.context.signals.valid,
-            self.context.state_var,
-        ]
-        right_hand_sides = [ir.UInt(1), ir.UInt(1), self.context.idle_state]
-        head, _tail = self._weave_nonclocked_edges(
-            self._create_assign_nodes(left_hand_sides, right_hand_sides, prefix=prefix),
-            prefix=f"{prefix}_e",
-            last_edge=False,
-        )
-        return head
-
-    def parse_func(self) -> tuple[ir.Node, list[ir.Edge]]:
-        """
-        Parses the function inside the context
+        Parses function
         """
         breaks: list[ir.Edge] = []
         continues: list[ir.Edge] = []
@@ -79,7 +55,26 @@ class FromFunction:
         for tail in prev_tails:
             tail.child = self._create_done(prefix="_state_done")
 
-        return body_head, prev_tails
+        return self.context, body_head, prev_tails
+
+    def _create_done(self, prefix: str) -> ir.Node:
+        """
+        Creates the done nodes
+
+        Signals that module is done, happens in one clock cycle
+        """
+        left_hand_sides = [
+            self.context.signals.done,
+            self.context.signals.valid,
+            self.context.state_var,
+        ]
+        right_hand_sides = [ir.UInt(1), ir.UInt(1), self.context.idle_state]
+        head, _tail = self._weave_nonclocked_edges(
+            self._create_assign_nodes(left_hand_sides, right_hand_sides, prefix=prefix),
+            prefix=f"{prefix}_e",
+            last_edge=False,
+        )
+        return head
 
     def _parse_stmt(
         self,
@@ -307,10 +302,7 @@ class FromFunction:
         generator_func = FromFunction(
             callee_cxt, prefix=f"{prefix}_{target_name}_{target_name}_"
         )
-
-        callee_cxt = generator_func.context
-
-        body_head, prev_tails = generator_func.parse_func()
+        callee_cxt, body_head, prev_tails = generator_func.parse_func()
 
         assert isinstance(assign.value, pyast.Call)
         arguments = list(map(self._parse_expression, assign.value.args))

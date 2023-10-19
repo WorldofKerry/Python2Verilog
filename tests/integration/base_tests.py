@@ -93,7 +93,7 @@ class BaseTestWrapper:
                             verilogified,
                             module,
                             testbench,
-                            timeout=1 + len(expected) // 2000,
+                            timeout=1 + len(expected) // 8000,
                         )
                     )
                 )
