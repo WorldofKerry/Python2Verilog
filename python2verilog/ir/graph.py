@@ -145,6 +145,9 @@ class Node(Element):
     Vertex
     """
 
+    def __repr__(self) -> str:
+        return self.name
+
 
 class IfElseNode(Node, Element):
     """
@@ -214,9 +217,9 @@ class IfElseNode(Node, Element):
 
     def visit_nonclocked(self) -> Iterator[Element]:
         yield self
-        yield Node(unique_id="", name="True")
+        yield Node(unique_id="", name="True Branch")
         yield from self.optimal_true_edge.visit_nonclocked()
-        yield Node(unique_id="", name="False")
+        yield Node(unique_id="", name="False Branch")
         yield from self.optimal_false_edge.visit_nonclocked()
 
 

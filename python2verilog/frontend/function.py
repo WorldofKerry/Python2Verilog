@@ -484,11 +484,12 @@ class FromFunction:
         )
 
         assert len(call_tails) == 1
-        call_tails[0] = body_head
+        call_tails[0].child = body_head
 
+        logging.error(call_head.view_children())
         logging.error(body_head.view_children())
-        raise RuntimeError()
         return call_head, body_tails
+        raise RuntimeError()
 
     def _parse_for_in_gen_instance(self, stmt: pyast.For, prefix: str) -> ParseResult:
         """
