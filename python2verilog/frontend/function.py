@@ -427,13 +427,6 @@ class FromFunction:
         assert isinstance(name, pyast.Name)
         return self.__context.make_var(name.id)
 
-    def _parse_for_in_func_call(self, stmt: pyast.For, prefix: str) -> ParseResult:
-        """
-        For ... in func(...):
-        """
-        logging.error(self._parse_assign_to_call())
-        raise RuntimeError()
-
     def _parse_for(self, stmt: pyast.For, prefix: str) -> ParseResult:
         """
         For ... in ...:
@@ -446,6 +439,13 @@ class FromFunction:
         if not isinstance(target, pyast.Name):
             return self._parse_for_in_func_call(stmt, prefix)
         return self._parse_for_in_instance(stmt, prefix)
+
+    def _parse_for_in_func_call(self, stmt: pyast.For, prefix: str) -> ParseResult:
+        """
+        For ... in func(...):
+        """
+        logging.error(self._parse_assign_to_call())
+        raise RuntimeError()
 
     def _parse_for_in_instance(self, stmt: pyast.For, prefix: str) -> ParseResult:
         """
