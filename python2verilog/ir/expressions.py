@@ -54,7 +54,7 @@ class Int(Expression):
     """
 
     def __init__(self, value: int):
-        self.value = typed_strict(value, int)
+        self.value = int(typed_strict(value, int))  # Cast bool to int
         super().__init__(str(self.__class__))
 
     def verilog(self) -> str:
