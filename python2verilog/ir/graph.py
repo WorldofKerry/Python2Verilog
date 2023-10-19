@@ -57,6 +57,12 @@ class Element:
         """
         yield from ()
 
+    def view_children(self) -> str:
+        """
+        Views children of node
+        """
+        return str(list(self.visit_nonclocked()))
+
     def children(self) -> Iterator[Element]:
         """
         Gets children of node
@@ -103,6 +109,7 @@ class BasicElement(Element):
         """
         child or optimal_child if no child
         """
+        assert self._child, f"{self} {self.view_children()}"
         return typed_strict(self._child, Element)
 
     @child.setter
@@ -137,6 +144,9 @@ class Node(Element):
     """
     Vertex
     """
+
+    def __repr__(self) -> str:
+        return self.name
 
 
 class IfElseNode(Node, Element):
@@ -207,9 +217,9 @@ class IfElseNode(Node, Element):
 
     def visit_nonclocked(self) -> Iterator[Element]:
         yield self
-        yield Node(unique_id="", name="True")
+        yield Node(unique_id="", name="True Branch")
         yield from self.optimal_true_edge.visit_nonclocked()
-        yield Node(unique_id="", name="False")
+        yield Node(unique_id="", name="False Branch")
         yield from self.optimal_false_edge.visit_nonclocked()
 
 

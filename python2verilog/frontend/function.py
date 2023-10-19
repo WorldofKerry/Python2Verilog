@@ -21,6 +21,7 @@ class FromFunction:
     Parses python functions and generator functions
     """
 
+    # (head_node, edge_tails) representing head of a tree and all leaf edges
     ParseResult: TypeAlias = tuple[ir.Node, list[ir.Edge]]
 
     def __init__(self, context: ir.Context, prefix: str = "") -> None:
@@ -289,36 +290,38 @@ class FromFunction:
         callee_cxt = self.__context.namespace[func_name]
 
         if callee_cxt.is_generator:
-            return self._parse_assign_to_gen_inst(
-                assign=assign,
+            return self._parse_gen_call(
+                call_args=assign.value.args,
                 callee_cxt=callee_cxt,
                 target_name=target_name,
                 prefix=prefix,
             )
-        return self._parse_assign_to_func_result(
-            assign=assign,
+        return self._parse_func_call(
+            call_args=assign.value.args,
             callee_cxt=callee_cxt,
+            targets=assign.targets,
             target_name=target_name,
             prefix=prefix,
         )
 
-    def _parse_assign_to_func_result(
+    def _parse_func_call(
         self,
-        assign: pyast.Assign,
+        call_args: list[pyast.expr],
+        targets: list[pyast.expr],
         callee_cxt: ir.Context,
         target_name: str,
         prefix: str,
     ) -> ParseResult:
         """
-        Parses assignment to function call result
-        """
-        generator_func = FromFunction(
-            callee_cxt, prefix=f"{prefix}_{target_name}_{target_name}_"
-        )
-        callee_cxt, body_head, prev_tails = generator_func.parse_inline()
+        Responsible for parsing calls to non-generator functions.
 
-        assert isinstance(assign.value, pyast.Call)
-        arguments = list(map(self._parse_expression, assign.value.args))
+        Implemented as an inline (no external unit).
+        """
+        callee_cxt, body_head, prev_tails = FromFunction(
+            callee_cxt, prefix=f"{prefix}_{target_name}_{target_name}_"
+        ).parse_inline()
+
+        arguments = list(map(self._parse_expression, call_args))
 
         inputs_head, tail = self._weave_nonclocked_edges(
             self._create_assign_nodes(
@@ -330,7 +333,7 @@ class FromFunction:
         )
         tail.edge = ir.ClockedEdge(unique_id=f"{prefix}_inputs_last_e", child=body_head)
 
-        results = typed_list(list(map(self._parse_expression, assign.targets)), ir.Var)
+        results = typed_list(list(map(self._parse_expression, targets)), ir.Var)
         head, tail = self._weave_nonclocked_edges(
             self._create_assign_nodes(
                 results,
@@ -354,13 +357,16 @@ class FromFunction:
 
         return inputs_head, [tail.edge]
 
-    def _parse_assign_to_gen_inst(
+    def _parse_gen_call(
         self,
-        assign: pyast.Assign,
+        call_args: list[pyast.expr],
         callee_cxt: ir.Context,
         target_name: str,
         prefix: str,
     ) -> ParseResult:
+        """
+        Responsible for parsing calls of generator functions
+        """
         inst = callee_cxt.create_generator_instance(target_name)
         self.__context.generator_instances[target_name] = inst
 
@@ -404,9 +410,7 @@ class FromFunction:
         )
         node = node.child
 
-        assert isinstance(assign.value, pyast.Call)
-
-        arguments = list(map(self._parse_expression, assign.value.args))
+        arguments = list(map(self._parse_expression, call_args))
 
         assert len(arguments) == len(inst.inputs)
 
@@ -431,17 +435,106 @@ class FromFunction:
         """
         For ... in ...:
         """
-        # pylint: disable=too-many-locals
-        breaks: list[ir.Edge] = []
-        continues: list[ir.Edge] = []
+
         assert not stmt.orelse, "for-else statements not supported"
         target = stmt.iter
-        assert isinstance(target, pyast.Name)
-        if target.id not in self.__context.generator_instances:
-            raise RuntimeError(
-                f"No iterator instance {self.__context.generator_instances}"
-            )
-        inst = self.__context.generator_instances[target.id]
+        if not isinstance(target, pyast.Name):
+            return self._parse_for_gen_call(stmt, prefix)
+        return self._parse_for_gen_instance(stmt, prefix)
+
+    def _get_func_call_name(self, call: pyast.Call) -> str:
+        assert guard(call.func, pyast.Name)
+        return call.func.id
+
+    def _get_single_target_name(self, targets: list[pyast.expr]) -> str:
+        assert len(targets) == 1
+        assert guard(targets[0], pyast.Name)
+        return targets[0].id
+
+    def _get_target_vars(self, target: pyast.expr) -> list[ir.Var]:
+        """
+        Converts a target into variables
+
+        (a, b, c) -> a, b, c
+        a -> a
+        """
+        if not isinstance(target, pyast.Tuple):
+            assert isinstance(target, pyast.Name)
+            outputs = [self.__context.make_var(target.id)]
+        else:
+            outputs = list(map(self._name_to_var, target.elts))
+        return outputs
+
+    def _parse_for_gen_call(self, stmt: pyast.For, prefix: str) -> ParseResult:
+        """
+        For <targets> in <gen_call>:
+
+        where gen_call is a function that returns a generator instance
+        """
+
+        # deal with `... in <gen_call>`
+        assert guard(stmt.iter, pyast.Call)
+        gen_cxt = self.__context.namespace[self._get_func_call_name(stmt.iter)]
+
+        mangled_name = f"{prefix}_offset{stmt.col_offset}"  # consider nested for loops
+
+        call_head, call_tails = self._parse_gen_call(
+            call_args=stmt.iter.args,
+            target_name=mangled_name,
+            prefix=f"{prefix}_call",
+            callee_cxt=gen_cxt,
+        )
+
+        # deal with `for <targets> ...` and body
+        inst = self.__context.generator_instances[mangled_name]
+        targets = self._get_target_vars(stmt.target)
+
+        body_head, body_tails = self._parse_for_target_and_body(
+            inst=inst,
+            prefix=f"{prefix}_body",
+            body=stmt.body,
+            targets=targets,
+        )
+
+        assert len(call_tails) == 1
+        call_tails[0].child = body_head
+
+        return call_head, body_tails
+
+    def _parse_for_gen_instance(self, stmt: pyast.For, prefix: str) -> ParseResult:
+        """
+        For <targets> in <instance>:
+
+        where instance is a generator instance
+        """
+        iterable = stmt.iter
+        assert guard(iterable, pyast.Name)
+        assert (
+            iterable.id in self.__context.generator_instances
+        ), f"No iterator instance {self.__context.generator_instances}"
+        inst = self.__context.generator_instances[iterable.id]
+
+        targets = self._get_target_vars(stmt.target)
+        assert len(targets) == len(inst.outputs), f"{targets} {inst.outputs}"
+
+        return self._parse_for_target_and_body(
+            inst=inst, prefix=prefix, body=stmt.body, targets=targets
+        )
+
+    def _parse_for_target_and_body(
+        self,
+        targets: list[ir.Var],
+        inst: ir.Instance,
+        body: list[pyast.stmt],
+        prefix: str,
+    ) -> ParseResult:
+        """
+        Responsible for parsing the target and body of the for loop
+
+        for <target> ... <inst>:
+            <body>
+        """
+        # pylint: disable=too-many-locals
 
         def gen_unique_node():
             counter = 0
@@ -511,16 +604,9 @@ class FromFunction:
         )
 
         def create_capture_output_nodes():
-            if not isinstance(stmt.target, pyast.Tuple):
-                assert isinstance(stmt.target, pyast.Name)
-                outputs = [self.__context.make_var(stmt.target.id)]
-            else:
-                outputs = list(map(self._name_to_var, stmt.target.elts))
-            assert len(outputs) == len(inst.outputs), f"{outputs} {inst.outputs}"
-
             dummy = ir.NonClockedEdge(next(unique_edge))
             prev_edge: ir.Edge = dummy
-            for caller, callee in zip(outputs, inst.outputs):
+            for caller, callee in zip(targets, inst.outputs):
                 assert guard(prev_edge, ir.Edge)
                 prev_assign = ir.AssignNode(
                     unique_id=next(unique_node),
@@ -541,8 +627,10 @@ class FromFunction:
         assert guard(capture_node, ir.AssignNode)
         to_capture.child = capture_node
 
+        breaks: list[ir.Edge] = []
+        continues: list[ir.Edge] = []
         body_node, ends = self._parse_stmts(
-            stmts=stmt.body,
+            stmts=body,
             prefix=f"{prefix}_for_body",
             breaks=breaks,
             continues=continues,
@@ -722,7 +810,9 @@ class FromFunction:
 
     def _parse_assign(self, assign: pyast.Assign, prefix: str) -> ParseResult:
         """
-        <target0, target1, ...> = <value>;
+        target0 [= target1] ... = value;
+
+        Example (single target):
         a, b = b, a + b
 
         target value visitor
@@ -757,7 +847,7 @@ class FromFunction:
         )
         return head, [tail.child]
 
-    def _parse_expression(self, expr: pyast.AST) -> ir.Expression:
+    def _parse_expression(self, expr: pyast.expr) -> ir.Expression:
         """
         <expression> (e.g. constant, name, subscript, etc., those that return a value)
         """
