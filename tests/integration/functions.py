@@ -19,12 +19,12 @@ def circle_lines(centre_x: int, centre_y: int, radius: int) -> tuple[int, int]:
             crit = crit + 2 * (offset_y - offset_x) + 1
 
 
-def fib(n: int):
+def fib(n: int) -> int:
     """
     Fibonacci sequence
     """
     a, b = 0, 1
-    count = 1
+    count = 0
     while count < n:
         yield a
         a, b = b, a + b
@@ -343,8 +343,23 @@ def quad_multiply(left, right):
     inst = multiplier(-left, right)
     for val in inst:
         yield val
-    # inst = multiplier(-left, -right)
-    # for val in inst:
-    #     yield val
     for val in multiplier(-left, -right):
         yield val
+
+
+def multiplier_func(multiplicand: int, multiplier: int) -> int:
+    product = 0
+    count = 0
+    while count < multiplier:
+        product += multiplicand
+        count += 1
+    return product
+
+
+def fib_product(n):
+    """
+    Yields the product of the first n fibonacci numbers
+    """
+    for num in fib(n):
+        prod = multiplier_func(num, num)
+        yield prod
