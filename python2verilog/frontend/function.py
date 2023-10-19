@@ -505,6 +505,7 @@ class FromFunction:
         """
         # pylint: disable=too-many-locals
         target = stmt.iter
+        assert guard(target, pyast.Name)
         assert (
             target.id in self.__context.generator_instances
         ), f"No iterator instance {self.__context.generator_instances}"
