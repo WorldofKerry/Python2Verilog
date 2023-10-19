@@ -349,10 +349,9 @@ def quad_multiply(left, right):
 
 def multiplier_func(multiplicand: int, multiplier: int) -> int:
     product = 0
-    count = 0
-    while count < multiplier:
+    while multiplier > 0:
         product += multiplicand
-        count += 1
+        multiplier -= 1
     return product
 
 

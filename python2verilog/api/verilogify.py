@@ -233,17 +233,20 @@ def get_expected(
     """
     Get expected output of testbench
 
-    Limits number of values generator can yield
+    Limits number of values generators can yield
     """
-    generator_func = get_original_func(verilogified)
+    func = get_original_func(verilogified)
     for test in get_context(verilogified).test_cases:
         logging.debug("Test case %s", test)
-        for i, value in enumerate(generator_func(*test)):
-            yield value
-            if i > max_yields_per_test_case:
-                raise RuntimeError(
-                    f"Generator yielded more than {max_yields_per_test_case} values"
-                )
+        if get_context(verilogified).is_generator:
+            for i, value in enumerate(func(*test)):
+                yield value
+                if i > max_yields_per_test_case:
+                    raise RuntimeError(
+                        f"Generator yielded more than {max_yields_per_test_case} values"
+                    )
+        else:
+            yield func(*test)
 
 
 def get_actual_raw(

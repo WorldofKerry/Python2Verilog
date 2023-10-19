@@ -415,38 +415,59 @@ class CodeGen:
             initial_body.append(ver.BlockingSub(self.context.signals.start, ir.UInt(0)))
             initial_body.append(ver.Statement())
 
-            # While loop waitng for ready signal
+            # While loop
             while_body: list[ver.Statement] = []
-            while_body.append(ver.AtPosedgeStatement(self.context.signals.clock))
-            while_body.append(
-                ver.IfElse(
-                    condition=self.context.signals.ready,
-                    then_body=[make_display_stmt()],
-                    else_body=[],
-                )
-            )
-            while_body.append(ver.AtNegedgeStatement(self.context.signals.clock))
-            if config.random_ready:
-                while_body.append(ver.Statement("_ready = $urandom_range(0, 4) === 0;"))
 
-            initial_body.append(
-                ver.While(
-                    condition=ir.UBinOp(
-                        ir.UnaryOp("!", self.context.signals.done),
-                        "||",
-                        ir.UnaryOp("!", self.context.signals.ready),
-                    ),
-                    body=while_body,
+            if self.context.is_generator:
+                while_body.append(ver.AtPosedgeStatement(self.context.signals.clock))
+                while_body.append(
+                    ver.IfElse(
+                        condition=self.context.signals.ready,
+                        then_body=[make_display_stmt()],
+                        else_body=[],
+                    )
                 )
-            )
-            # initial_body.append(
-            #     ver.IfElse(
-            #         condition=self.context.signals.ready,
-            #         then_body=[make_display_stmt()],
-            #         else_body=[],
-            #     )
-            # )
-            initial_body.append(ver.Statement())
+                while_body.append(ver.AtNegedgeStatement(self.context.signals.clock))
+                if config.random_ready:
+                    while_body.append(
+                        ver.Statement("_ready = $urandom_range(0, 4) === 0;")
+                    )
+
+                initial_body.append(
+                    ver.While(
+                        condition=ir.UBinOp(
+                            ir.UnaryOp("!", self.context.signals.done),
+                            "||",
+                            ir.UnaryOp("!", self.context.signals.ready),
+                        ),
+                        body=while_body,
+                    )
+                )
+                initial_body.append(ver.Statement())
+
+            else:
+                while_body.append(ver.AtNegedgeStatement(self.context.signals.clock))
+                if config.random_ready:
+                    while_body.append(
+                        ver.Statement("_ready = $urandom_range(0, 4) === 0;")
+                    )
+                initial_body.append(
+                    ver.While(
+                        condition=ir.UBinOp(
+                            ir.UnaryOp("!", self.context.signals.done),
+                            "||",
+                            ir.UnaryOp("!", self.context.signals.ready),
+                        ),
+                        body=while_body,
+                    )
+                )
+                initial_body.append(
+                    ver.IfElse(
+                        condition=self.context.signals.ready,
+                        then_body=[make_display_stmt()],
+                        else_body=[],
+                    )
+                )
 
         initial_body.append(ver.Statement(literal="$finish;"))
 
