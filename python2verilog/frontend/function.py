@@ -427,16 +427,27 @@ class FromFunction:
         assert isinstance(name, pyast.Name)
         return self.__context.make_var(name.id)
 
+    def _parse_for_on_call(self, stmt: pyast.For, prefix: str) -> ParseResult:
+        """
+        For ... in func(...):
+        """
+        logging.error(self._parse_assign_to_call())
+        raise RuntimeError()
+
     def _parse_for(self, stmt: pyast.For, prefix: str) -> ParseResult:
         """
         For ... in ...:
         """
         # pylint: disable=too-many-locals
-        breaks: list[ir.Edge] = []
-        continues: list[ir.Edge] = []
+        # logging.error(f"{pyast.dump(stmt, include_attributes=True, indent=1)}")
+
         assert not stmt.orelse, "for-else statements not supported"
         target = stmt.iter
-        assert isinstance(target, pyast.Name)
+        if not isinstance(target, pyast.Name):
+            return self._parse_for_on_call(stmt, prefix)
+
+        breaks: list[ir.Edge] = []
+        continues: list[ir.Edge] = []
         if target.id not in self.__context.generator_instances:
             raise RuntimeError(
                 f"No iterator instance {self.__context.generator_instances}"
