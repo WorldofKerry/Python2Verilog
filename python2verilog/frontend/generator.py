@@ -344,16 +344,6 @@ class GeneratorFunc:
             print(type(prev_tail))
             prev_tail.child = head
 
-        logging.error(
-            list(
-                (
-                    *callee_cxt.input_vars,
-                    *callee_cxt.output_vars,
-                    *callee_cxt.local_vars,
-                    *results,
-                )
-            )
-        )
         for var in (
             *callee_cxt.input_vars,
             *callee_cxt.output_vars,

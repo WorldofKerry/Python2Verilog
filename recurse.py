@@ -45,7 +45,7 @@ def find_types(value):
         raise TypeError(f"Unsupported type {type(value)} {value}")
 
     except RecursionError:
-        raise TypeError(f"Sequence returns a sequence {type(value)} {value}")
+        raise TypeError(f"Sequence iters a sequence indefinately {type(value)} {value}")
 
 
 result = find_types(test)

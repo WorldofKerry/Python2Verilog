@@ -2,26 +2,15 @@
 Protocol signals used by the converter
 """
 
-from dataclasses import dataclass, fields
 from typing import Iterator
 
 from python2verilog.ir.expressions import ExclusiveVar, Var
 
 
-@dataclass
 class InstanceSignals:
     """
     Signals that are often named differently for each instance
     """
-
-    # pylint: disable=too-many-instance-attributes
-    start: Var = Var("start")
-    done: ExclusiveVar = ExclusiveVar("done")
-
-    ready: Var = Var("ready")
-    valid: ExclusiveVar = ExclusiveVar("valid")
-
-    prefix: str = ""
 
     @staticmethod
     def apply_prefix(name: str, prefix: str):
@@ -30,14 +19,14 @@ class InstanceSignals:
         """
         return ExclusiveVar(f"{prefix}{name}", f"_{prefix}{name}")
 
-    def __post_init__(self):
+    def __init__(self, prefix: str = ""):
+        self.prefix = prefix
         self.start = self.apply_prefix("start", self.prefix)
         self.done = self.apply_prefix("done", self.prefix)
         self.ready = self.apply_prefix("ready", self.prefix)
         self.valid = self.apply_prefix("valid", self.prefix)
 
 
-@dataclass
 class ProtocolSignals(InstanceSignals):
     """
     Protocol signals
@@ -45,10 +34,10 @@ class ProtocolSignals(InstanceSignals):
     Includes ready, valid, clock, reset, done, etc.
     """
 
-    reset: Var = Var("reset")
-    clock: Var = Var("clock")
-
-    prefix: str = ""
+    def __init__(self, prefix: str = ""):
+        super().__init__(prefix)
+        self.reset = Var("reset")
+        self.clock = Var("clock")
 
     def variable_values(self) -> Iterator[Var]:
         """
@@ -69,7 +58,7 @@ class ProtocolSignals(InstanceSignals):
         """
         Get the instance-specific signals
         """
-        instance_signals = map(lambda field_: field_.name, fields(InstanceSignals))
+        instance_signals = InstanceSignals().__dict__
         for key, value in self.variable_items():
             if key in instance_signals:
                 yield key, value
