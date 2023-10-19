@@ -53,10 +53,10 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">expr</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Var</span><span class="p">):</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">ExclusiveVar</span><span class="p">):</span>
-            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">mapping</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">key</span><span class="o">.</span><span class="n">to_string</span><span class="p">()</span> <span class="o">==</span> <span class="n">expr</span><span class="o">.</span><span class="n">to_string</span><span class="p">():</span>
-                    <span class="k">return</span> <span class="n">mapping</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="c1"># if not isinstance(expr, ir.ExclusiveVar):</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">mapping</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">key</span><span class="o">.</span><span class="n">to_string</span><span class="p">()</span> <span class="o">==</span> <span class="n">expr</span><span class="o">.</span><span class="n">to_string</span><span class="p">():</span>
+                <span class="k">return</span> <span class="n">mapping</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
     <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="p">(</span><span class="n">ir</span><span class="o">.</span><span class="n">UInt</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">Int</span><span class="p">)):</span>
         <span class="k">return</span> <span class="n">expr</span>
     <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expr</span><span class="p">,</span> <span class="p">(</span><span class="n">ir</span><span class="o">.</span><span class="n">BinOp</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">UBinOp</span><span class="p">)):</span>

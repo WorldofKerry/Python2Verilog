@@ -71,9 +71,11 @@
 </li>
       <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.ast.Always">Always (class in python2verilog.backend.verilog.ast)</a>
 </li>
+      <li><a href="python2verilog.optimizer.html#python2verilog.optimizer.increase_work.IncreaseWorkPerClockCycle.apply">apply() (IncreaseWorkPerClockCycle method)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="python2verilog.optimizer.html#python2verilog.optimizer.increase_work.IncreaseWorkPerClockCycle.apply">apply() (IncreaseWorkPerClockCycle method)</a>
+      <li><a href="python2verilog.ir.html#python2verilog.ir.signals.InstanceSignals.apply_prefix">apply_prefix() (InstanceSignals static method)</a>
 </li>
       <li><a href="python2verilog.optimizer.html#python2verilog.optimizer.increase_work.IncreaseWorkPerClockCycle.apply_recursive">apply_recursive() (IncreaseWorkPerClockCycle method)</a>
 </li>
@@ -139,8 +141,6 @@
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="python2verilog.ir.html#python2verilog.ir.signals.ProtocolSignals.clock">clock (ProtocolSignals attribute)</a>
-</li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.graph.ClockedEdge">ClockedEdge (class in python2verilog.ir.graph)</a>
 </li>
       <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.codegen.CodeGen">CodeGen (class in python2verilog.backend.verilog.codegen)</a>
@@ -173,17 +173,15 @@
 </li>
       <li><a href="python2verilog.utils.html#python2verilog.utils.decorator.decorator_with_args">decorator_with_args() (in module python2verilog.utils.decorator)</a>
 </li>
-      <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.default_output_vars">default_output_vars() (Context method)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.default_output_vars">default_output_vars() (Context method)</a>
+</li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.expressions.Div">Div (class in python2verilog.ir.expressions)</a>
 </li>
       <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.codegen.CaseBuilder.do_edge">do_edge() (CaseBuilder method)</a>
 </li>
       <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.codegen.CaseBuilder.do_vertex">do_vertex() (CaseBuilder method)</a>
-</li>
-      <li><a href="python2verilog.ir.html#python2verilog.ir.signals.InstanceSignals.done">done (InstanceSignals attribute)</a>
 </li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.done_state">done_state (Context property)</a>
 </li>
@@ -333,9 +331,9 @@
 </li>
       <li><a href="python2verilog.utils.html#python2verilog.utils.env.is_debug_mode">is_debug_mode() (in module python2verilog.utils.env)</a>
 </li>
-      <li><a href="python2verilog.utils.html#python2verilog.utils.env.Vars.IS_SYSTEM_VERILOG">IS_SYSTEM_VERILOG (Vars attribute)</a>
+      <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.is_generator">is_generator (Context attribute)</a>
 </li>
-      <li><a href="python2verilog.ir.html#python2verilog.ir.signals.ProtocolSignals.items">items() (ProtocolSignals method)</a>
+      <li><a href="python2verilog.utils.html#python2verilog.utils.env.Vars.IS_SYSTEM_VERILOG">IS_SYSTEM_VERILOG (Vars attribute)</a>
 </li>
       <li><a href="python2verilog.utils.html#python2verilog.utils.env.Vars.IVERILOG_PATH">IVERILOG_PATH (Vars attribute)</a>
 </li>
@@ -361,6 +359,8 @@
 <h2 id="M">M</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.make_var">make_var() (Context method)</a>
+</li>
       <li><a href="python2verilog.optimizer.html#python2verilog.optimizer.increase_work.IncreaseWorkPerClockCycle.map_to_ver_name">map_to_ver_name() (IncreaseWorkPerClockCycle static method)</a>
 </li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.expressions.Mod">Mod (class in python2verilog.ir.expressions)</a>
@@ -505,6 +505,8 @@
       <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.ast.PosedgeSyncAlways">PosedgeSyncAlways (class in python2verilog.backend.verilog.ast)</a>
 </li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.expressions.Pow">Pow (class in python2verilog.ir.expressions)</a>
+</li>
+      <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.prefix">prefix (Context attribute)</a>
 </li>
       <li><a href="python2verilog.utils.html#python2verilog.utils.generics.pretty_dict">pretty_dict() (in module python2verilog.utils.generics)</a>
 </li>
@@ -710,9 +712,7 @@
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="python2verilog.ir.html#python2verilog.ir.signals.InstanceSignals.ready">ready (InstanceSignals attribute)</a>
-</li>
-      <li><a href="python2verilog.ir.html#python2verilog.ir.signals.ProtocolSignals.reset">reset (ProtocolSignals attribute)</a>
+      <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.refresh_input_vars">refresh_input_vars() (Context method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -730,8 +730,6 @@
         <li><a href="python2verilog.ir.html#python2verilog.ir.instance.Instance.signals">(Instance attribute)</a>
 </li>
       </ul></li>
-      <li><a href="python2verilog.ir.html#python2verilog.ir.signals.InstanceSignals.start">start (InstanceSignals attribute)</a>
-</li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.expressions.State">State (class in python2verilog.ir.expressions)</a>
 </li>
   </ul></td>
@@ -852,15 +850,15 @@
 <h2 id="V">V</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="python2verilog.ir.html#python2verilog.ir.signals.InstanceSignals.valid">valid (InstanceSignals attribute)</a>
-</li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.validate">validate() (Context method)</a>
-</li>
-      <li><a href="python2verilog.ir.html#python2verilog.ir.signals.ProtocolSignals.values">values() (ProtocolSignals method)</a>
 </li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.expressions.Var">Var (class in python2verilog.ir.expressions)</a>
 </li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.instance.Instance.var">var (Instance attribute)</a>
+</li>
+      <li><a href="python2verilog.ir.html#python2verilog.ir.signals.ProtocolSignals.variable_items">variable_items() (ProtocolSignals method)</a>
+</li>
+      <li><a href="python2verilog.ir.html#python2verilog.ir.signals.ProtocolSignals.variable_values">variable_values() (ProtocolSignals method)</a>
 </li>
       <li><a href="python2verilog.utils.html#python2verilog.utils.env.Vars">Vars (class in python2verilog.utils.env)</a>
 </li>

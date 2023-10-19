@@ -96,7 +96,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">typed_strict</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">typed_strict</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">int</span><span class="p">))</span>  <span class="c1"># Cast bool to int</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">))</span>
 
 <div class="viewcode-block" id="Int.verilog">
@@ -442,18 +442,10 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Verilog</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">Ternary</span><span class="p">(</span>
-            <span class="n">UBinOp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">left</span><span class="p">,</span> <span class="s2">&quot;&lt;&quot;</span><span class="p">,</span> <span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">)),</span>
-            <span class="n">Ternary</span><span class="p">(</span>
-                <span class="n">UBinOp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">right</span><span class="p">,</span> <span class="s2">&quot;&gt;=&quot;</span><span class="p">,</span> <span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">)),</span>
-                <span class="n">UnaryOp</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">,</span> <span class="n">_Mod</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">left</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">right</span><span class="p">)),</span>
-                <span class="n">_Mod</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">left</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">right</span><span class="p">),</span>
-            <span class="p">),</span>
-            <span class="n">Ternary</span><span class="p">(</span>
-                <span class="n">UBinOp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">right</span><span class="p">,</span> <span class="s2">&quot;&lt;&quot;</span><span class="p">,</span> <span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">)),</span>
-                <span class="n">UnaryOp</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">,</span> <span class="n">_Mod</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">left</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">right</span><span class="p">)),</span>
-                <span class="n">_Mod</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">left</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">right</span><span class="p">),</span>
-            <span class="p">),</span>
+        <span class="k">return</span> <span class="n">BinOp</span><span class="p">(</span>
+            <span class="n">BinOp</span><span class="p">(</span><span class="n">BinOp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">left</span><span class="p">,</span> <span class="s2">&quot;%&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">right</span><span class="p">),</span> <span class="s2">&quot;+&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">right</span><span class="p">),</span>
+            <span class="s2">&quot;%&quot;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">right</span><span class="p">,</span>
         <span class="p">)</span><span class="o">.</span><span class="n">verilog</span><span class="p">()</span></div>
 
 
@@ -490,9 +482,9 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">Ternary</span><span class="p">(</span>
             <span class="n">condition</span><span class="o">=</span><span class="n">BinOp</span><span class="p">(</span>
-                <span class="n">left</span><span class="o">=</span><span class="n">BinOp</span><span class="p">(</span><span class="n">left</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">right</span><span class="p">,</span> <span class="n">oper</span><span class="o">=</span><span class="s2">&quot;%&quot;</span><span class="p">),</span>
-                <span class="n">right</span><span class="o">=</span><span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
-                <span class="n">oper</span><span class="o">=</span><span class="s2">&quot;===&quot;</span><span class="p">,</span>
+                <span class="n">BinOp</span><span class="p">(</span><span class="n">left</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">right</span><span class="p">,</span> <span class="n">oper</span><span class="o">=</span><span class="s2">&quot;%&quot;</span><span class="p">),</span>
+                <span class="s2">&quot;===&quot;</span><span class="p">,</span>
+                <span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
             <span class="p">),</span>
             <span class="n">left</span><span class="o">=</span><span class="n">BinOp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">left</span><span class="p">,</span> <span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">right</span><span class="p">),</span>
             <span class="n">right</span><span class="o">=</span><span class="n">BinOp</span><span class="p">(</span>

@@ -4,10 +4,10 @@ python2verilog.frontend package
 Submodules
 ----------
 
-python2verilog.frontend.generator module
-----------------------------------------
+python2verilog.frontend.function module
+---------------------------------------
 
-.. automodule:: python2verilog.frontend.generator
+.. automodule:: python2verilog.frontend.function
    :members:
    :undoc-members:
    :show-inheritance:
