@@ -158,7 +158,7 @@ def verilogify(
                 "Keyword arguments not yet supported, use positional arguments only"
             )
         for arg in args:
-            assert guard(arg, int), f"Only int arguments are supported"
+            assert guard(arg, int), "Only `int` type arguments are supported"
 
         context.test_cases.append(args)
 

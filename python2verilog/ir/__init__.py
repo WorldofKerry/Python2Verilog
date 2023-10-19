@@ -6,7 +6,6 @@ A Control Flow Graph represented as a Directed Graph
 """
 
 from .context import Context
-from .instance import Instance
 from .expressions import (
     Add,
     BinOp,
@@ -41,3 +40,4 @@ from .graph import (
     create_cytoscape_elements,
     create_networkx_adjacency_list,
 )
+from .instance import Instance

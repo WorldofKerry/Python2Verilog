@@ -21,6 +21,7 @@ class FromFunction:
     Parses python functions and generator functions
     """
 
+    # (head_node, edge_tails) representing head of a tree and all leaf edges
     ParseResult: TypeAlias = tuple[ir.Node, list[ir.Edge]]
 
     def __init__(self, context: ir.Context, prefix: str = "") -> None:
@@ -316,12 +317,10 @@ class FromFunction:
 
         Implemented as an inline (no external unit).
         """
-        generator_func = FromFunction(
+        callee_cxt, body_head, prev_tails = FromFunction(
             callee_cxt, prefix=f"{prefix}_{target_name}_{target_name}_"
-        )
-        callee_cxt, body_head, prev_tails = generator_func.parse_inline()
+        ).parse_inline()
 
-        # assert isinstance(call_args, pyast.Call)
         arguments = list(map(self._parse_expression, call_args))
 
         inputs_head, tail = self._weave_nonclocked_edges(
@@ -360,7 +359,7 @@ class FromFunction:
 
     def _parse_gen_call(
         self,
-        call_args: list[ir.Expression],
+        call_args: list[pyast.expr],
         callee_cxt: ir.Context,
         target_name: str,
         prefix: str,
@@ -477,7 +476,7 @@ class FromFunction:
         assert guard(stmt.iter, pyast.Call)
         gen_cxt = self.__context.namespace[self._get_func_call_name(stmt.iter)]
 
-        mangled_name = f"{prefix}_offset{stmt.col_offset}" # consider nested for loops
+        mangled_name = f"{prefix}_offset{stmt.col_offset}"  # consider nested for loops
 
         call_head, call_tails = self._parse_gen_call(
             call_args=stmt.iter.args,
@@ -486,7 +485,7 @@ class FromFunction:
             callee_cxt=gen_cxt,
         )
 
-        # deal with `for <targets>` and body
+        # deal with `for <targets> ...` and body
         inst = self.__context.generator_instances[mangled_name]
         targets = self._get_target_vars(stmt.target)
 
@@ -528,13 +527,14 @@ class FromFunction:
         inst: ir.Instance,
         body: list[pyast.stmt],
         prefix: str,
-    ):
+    ) -> ParseResult:
         """
         Responsible for parsing the target and body of the for loop
 
         for <target> ... <inst>:
             <body>
         """
+        # pylint: disable=too-many-locals
 
         def gen_unique_node():
             counter = 0
@@ -847,7 +847,7 @@ class FromFunction:
         )
         return head, [tail.child]
 
-    def _parse_expression(self, expr: pyast.AST) -> ir.Expression:
+    def _parse_expression(self, expr: pyast.expr) -> ir.Expression:
         """
         <expression> (e.g. constant, name, subscript, etc., those that return a value)
         """
