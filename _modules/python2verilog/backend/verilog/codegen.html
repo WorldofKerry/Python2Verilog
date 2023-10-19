@@ -456,38 +456,59 @@
             <span class="n">initial_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ver</span><span class="o">.</span><span class="n">BlockingSub</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">start</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">UInt</span><span class="p">(</span><span class="mi">0</span><span class="p">)))</span>
             <span class="n">initial_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ver</span><span class="o">.</span><span class="n">Statement</span><span class="p">())</span>
 
-            <span class="c1"># While loop waitng for ready signal</span>
+            <span class="c1"># While loop</span>
             <span class="n">while_body</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ver</span><span class="o">.</span><span class="n">Statement</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="n">while_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ver</span><span class="o">.</span><span class="n">AtPosedgeStatement</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">clock</span><span class="p">))</span>
-            <span class="n">while_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="n">ver</span><span class="o">.</span><span class="n">IfElse</span><span class="p">(</span>
-                    <span class="n">condition</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">ready</span><span class="p">,</span>
-                    <span class="n">then_body</span><span class="o">=</span><span class="p">[</span><span class="n">make_display_stmt</span><span class="p">()],</span>
-                    <span class="n">else_body</span><span class="o">=</span><span class="p">[],</span>
-                <span class="p">)</span>
-            <span class="p">)</span>
-            <span class="n">while_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ver</span><span class="o">.</span><span class="n">AtNegedgeStatement</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">clock</span><span class="p">))</span>
-            <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">random_ready</span><span class="p">:</span>
-                <span class="n">while_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ver</span><span class="o">.</span><span class="n">Statement</span><span class="p">(</span><span class="s2">&quot;_ready = $urandom_range(0, 4) === 0;&quot;</span><span class="p">))</span>
 
-            <span class="n">initial_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="n">ver</span><span class="o">.</span><span class="n">While</span><span class="p">(</span>
-                    <span class="n">condition</span><span class="o">=</span><span class="n">ir</span><span class="o">.</span><span class="n">UBinOp</span><span class="p">(</span>
-                        <span class="n">ir</span><span class="o">.</span><span class="n">UnaryOp</span><span class="p">(</span><span class="s2">&quot;!&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">done</span><span class="p">),</span>
-                        <span class="s2">&quot;||&quot;</span><span class="p">,</span>
-                        <span class="n">ir</span><span class="o">.</span><span class="n">UnaryOp</span><span class="p">(</span><span class="s2">&quot;!&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">ready</span><span class="p">),</span>
-                    <span class="p">),</span>
-                    <span class="n">body</span><span class="o">=</span><span class="n">while_body</span><span class="p">,</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">is_generator</span><span class="p">:</span>
+                <span class="n">while_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ver</span><span class="o">.</span><span class="n">AtPosedgeStatement</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">clock</span><span class="p">))</span>
+                <span class="n">while_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">ver</span><span class="o">.</span><span class="n">IfElse</span><span class="p">(</span>
+                        <span class="n">condition</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">ready</span><span class="p">,</span>
+                        <span class="n">then_body</span><span class="o">=</span><span class="p">[</span><span class="n">make_display_stmt</span><span class="p">()],</span>
+                        <span class="n">else_body</span><span class="o">=</span><span class="p">[],</span>
+                    <span class="p">)</span>
                 <span class="p">)</span>
-            <span class="p">)</span>
-            <span class="c1"># initial_body.append(</span>
-            <span class="c1">#     ver.IfElse(</span>
-            <span class="c1">#         condition=self.context.signals.ready,</span>
-            <span class="c1">#         then_body=[make_display_stmt()],</span>
-            <span class="c1">#         else_body=[],</span>
-            <span class="c1">#     )</span>
-            <span class="c1"># )</span>
-            <span class="n">initial_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ver</span><span class="o">.</span><span class="n">Statement</span><span class="p">())</span>
+                <span class="n">while_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ver</span><span class="o">.</span><span class="n">AtNegedgeStatement</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">clock</span><span class="p">))</span>
+                <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">random_ready</span><span class="p">:</span>
+                    <span class="n">while_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="n">ver</span><span class="o">.</span><span class="n">Statement</span><span class="p">(</span><span class="s2">&quot;_ready = $urandom_range(0, 4) === 0;&quot;</span><span class="p">)</span>
+                    <span class="p">)</span>
+
+                <span class="n">initial_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">ver</span><span class="o">.</span><span class="n">While</span><span class="p">(</span>
+                        <span class="n">condition</span><span class="o">=</span><span class="n">ir</span><span class="o">.</span><span class="n">UBinOp</span><span class="p">(</span>
+                            <span class="n">ir</span><span class="o">.</span><span class="n">UnaryOp</span><span class="p">(</span><span class="s2">&quot;!&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">done</span><span class="p">),</span>
+                            <span class="s2">&quot;||&quot;</span><span class="p">,</span>
+                            <span class="n">ir</span><span class="o">.</span><span class="n">UnaryOp</span><span class="p">(</span><span class="s2">&quot;!&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">ready</span><span class="p">),</span>
+                        <span class="p">),</span>
+                        <span class="n">body</span><span class="o">=</span><span class="n">while_body</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+                <span class="n">initial_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ver</span><span class="o">.</span><span class="n">Statement</span><span class="p">())</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">while_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ver</span><span class="o">.</span><span class="n">AtNegedgeStatement</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">clock</span><span class="p">))</span>
+                <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">random_ready</span><span class="p">:</span>
+                    <span class="n">while_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="n">ver</span><span class="o">.</span><span class="n">Statement</span><span class="p">(</span><span class="s2">&quot;_ready = $urandom_range(0, 4) === 0;&quot;</span><span class="p">)</span>
+                    <span class="p">)</span>
+                <span class="n">initial_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">ver</span><span class="o">.</span><span class="n">While</span><span class="p">(</span>
+                        <span class="n">condition</span><span class="o">=</span><span class="n">ir</span><span class="o">.</span><span class="n">UBinOp</span><span class="p">(</span>
+                            <span class="n">ir</span><span class="o">.</span><span class="n">UnaryOp</span><span class="p">(</span><span class="s2">&quot;!&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">done</span><span class="p">),</span>
+                            <span class="s2">&quot;||&quot;</span><span class="p">,</span>
+                            <span class="n">ir</span><span class="o">.</span><span class="n">UnaryOp</span><span class="p">(</span><span class="s2">&quot;!&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">ready</span><span class="p">),</span>
+                        <span class="p">),</span>
+                        <span class="n">body</span><span class="o">=</span><span class="n">while_body</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+                <span class="n">initial_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">ver</span><span class="o">.</span><span class="n">IfElse</span><span class="p">(</span>
+                        <span class="n">condition</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">ready</span><span class="p">,</span>
+                        <span class="n">then_body</span><span class="o">=</span><span class="p">[</span><span class="n">make_display_stmt</span><span class="p">()],</span>
+                        <span class="n">else_body</span><span class="o">=</span><span class="p">[],</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
 
         <span class="n">initial_body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ver</span><span class="o">.</span><span class="n">Statement</span><span class="p">(</span><span class="n">literal</span><span class="o">=</span><span class="s2">&quot;$finish;&quot;</span><span class="p">))</span>
 

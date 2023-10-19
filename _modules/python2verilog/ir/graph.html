@@ -96,6 +96,15 @@
         <span class="k">yield from</span> <span class="p">()</span></div>
 
 
+<div class="viewcode-block" id="Element.view_children">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.graph.Element.view_children">[docs]</a>
+    <span class="k">def</span> <span class="nf">view_children</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Views children of node</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">visit_nonclocked</span><span class="p">()))</span></div>
+
+
 <div class="viewcode-block" id="Element.children">
 <a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.graph.Element.children">[docs]</a>
     <span class="k">def</span> <span class="nf">children</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Element</span><span class="p">]:</span>
@@ -154,6 +163,7 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        child or optimal_child if no child</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_child</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">view_children</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span>
         <span class="k">return</span> <span class="n">typed_strict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_child</span><span class="p">,</span> <span class="n">Element</span><span class="p">)</span>
 
     <span class="nd">@child</span><span class="o">.</span><span class="n">setter</span>
@@ -196,7 +206,10 @@
 <span class="k">class</span> <span class="nc">Node</span><span class="p">(</span><span class="n">Element</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Vertex</span>
-<span class="sd">    &quot;&quot;&quot;</span></div>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span></div>
 
 
 
@@ -278,9 +291,9 @@
 <a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.graph.IfElseNode.visit_nonclocked">[docs]</a>
     <span class="k">def</span> <span class="nf">visit_nonclocked</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Element</span><span class="p">]:</span>
         <span class="k">yield</span> <span class="bp">self</span>
-        <span class="k">yield</span> <span class="n">Node</span><span class="p">(</span><span class="n">unique_id</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;True&quot;</span><span class="p">)</span>
+        <span class="k">yield</span> <span class="n">Node</span><span class="p">(</span><span class="n">unique_id</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;True Branch&quot;</span><span class="p">)</span>
         <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimal_true_edge</span><span class="o">.</span><span class="n">visit_nonclocked</span><span class="p">()</span>
-        <span class="k">yield</span> <span class="n">Node</span><span class="p">(</span><span class="n">unique_id</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;False&quot;</span><span class="p">)</span>
+        <span class="k">yield</span> <span class="n">Node</span><span class="p">(</span><span class="n">unique_id</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;False Branch&quot;</span><span class="p">)</span>
         <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimal_false_edge</span><span class="o">.</span><span class="n">visit_nonclocked</span><span class="p">()</span></div>
 </div>
 
