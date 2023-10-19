@@ -6,6 +6,7 @@ A Control Flow Graph represented as a Directed Graph
 """
 
 from .context import Context
+from .instance import Instance
 from .expressions import (
     Add,
     BinOp,

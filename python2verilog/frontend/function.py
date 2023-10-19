@@ -470,7 +470,23 @@ class FromFunction:
             target.id in self.__context.generator_instances
         ), f"No iterator instance {self.__context.generator_instances}"
         inst = self.__context.generator_instances[target.id]
+        if not isinstance(stmt.target, pyast.Tuple):
+            assert isinstance(stmt.target, pyast.Name)
+            outputs = [self.__context.make_var(stmt.target.id)]
+        else:
+            outputs = list(map(self._name_to_var, stmt.target.elts))
+        assert len(outputs) == len(inst.outputs), f"{outputs} {inst.outputs}"
+        return self._parse_for_impl(
+            inst=inst, prefix=prefix, body=stmt.body, outputs=outputs
+        )
 
+    def _parse_for_impl(
+        self,
+        inst: ir.Instance,
+        prefix: str,
+        body: list[pyast.stmt],
+        outputs: list[ir.Var],
+    ):
         def gen_unique_node():
             counter = 0
             while True:
@@ -539,13 +555,6 @@ class FromFunction:
         )
 
         def create_capture_output_nodes():
-            if not isinstance(stmt.target, pyast.Tuple):
-                assert isinstance(stmt.target, pyast.Name)
-                outputs = [self.__context.make_var(stmt.target.id)]
-            else:
-                outputs = list(map(self._name_to_var, stmt.target.elts))
-            assert len(outputs) == len(inst.outputs), f"{outputs} {inst.outputs}"
-
             dummy = ir.NonClockedEdge(next(unique_edge))
             prev_edge: ir.Edge = dummy
             for caller, callee in zip(outputs, inst.outputs):
@@ -572,7 +581,7 @@ class FromFunction:
         breaks: list[ir.Edge] = []
         continues: list[ir.Edge] = []
         body_node, ends = self._parse_stmts(
-            stmts=stmt.body,
+            stmts=body,
             prefix=f"{prefix}_for_body",
             breaks=breaks,
             continues=continues,
