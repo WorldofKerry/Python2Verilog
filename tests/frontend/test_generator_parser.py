@@ -16,7 +16,7 @@ from python2verilog import (
 )
 from python2verilog.backend import verilog
 from python2verilog.backend.verilog.codegen import CaseBuilder
-from python2verilog.frontend.generator import GeneratorFunc
+from python2verilog.frontend.function import FromFunction
 from python2verilog.ir import Context, create_networkx_adjacency_list
 
 
@@ -48,7 +48,7 @@ class TestGenerator2Graph(unittest.TestCase):
         target: ast.Tuple = assign.targets[0]
         value: ast.Tuple = assign.value
 
-        result = GeneratorFunc(ir.Context.empty_valid())._target_value_visitor(
+        result = FromFunction(ir.Context.empty_valid())._target_value_visitor(
             target, value
         )
 
@@ -64,7 +64,7 @@ class TestGenerator2Graph(unittest.TestCase):
         value: ast.Tuple = assign.value
 
         with self.assertRaises(TypeError):
-            result = GeneratorFunc(ir.Context.empty_valid())._target_value_visitor(
+            result = FromFunction(ir.Context.empty_valid())._target_value_visitor(
                 target, value
             )
             list(result)
@@ -90,13 +90,13 @@ class TestGenerator2Graph(unittest.TestCase):
 
         my_func()
 
-        root, cxt = GeneratorFunc(get_context(my_func)).create_root()
+        cxt, root = FromFunction(get_context(my_func)).parse_function()
         case = CaseBuilder(root, cxt).get_case()
         sv = verilog.CodeGen(root, cxt).get_module_str()
         # with open("./new.sv", mode="w") as f:
         #     f.write(str(sv))
 
-        root, cxt = GeneratorFunc(get_context(my_func)).create_root()
+        cxt, root = FromFunction(get_context(my_func)).parse_function()
         case = CaseBuilder(root, cxt).get_case()
         sv = verilog.CodeGen(root, cxt).get_module_str()
         # with open("./old.sv", mode="w") as f:

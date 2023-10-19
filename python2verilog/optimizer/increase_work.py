@@ -118,7 +118,7 @@ class IncreaseWorkPerClockCycle:
             self.apply(node)
             return edge
 
-        # if "_state3_while" in node.unique_id:
+        # if "_data = _data__state2_while0_out0" == str(node):
         #     breakpoint()
 
         # Exclusive vars can only be visited once

@@ -19,6 +19,7 @@ import __main__ as main
 from python2verilog import ir
 from python2verilog.api.modes import Modes
 from python2verilog.api.namespace import get_namespace
+from python2verilog.exceptions import StaticTypingError
 from python2verilog.simulation import iverilog
 from python2verilog.simulation.display import parse_stdout, strip_ready, strip_valid
 from python2verilog.utils.decorator import decorator_with_args
@@ -69,7 +70,7 @@ def verilogify(
     context.py_func = func
     context.py_string = inspect.getsource(func)
 
-    context.input_vars = [ir.ExclusiveVar(name.arg) for name in func_ast.args.args]
+    context.input_vars = [ir.Var(name.arg) for name in func_ast.args.args]
 
     context.mode = mode
     context.optimization_level = optimization_level
@@ -78,6 +79,79 @@ def verilogify(
 
     @wraps(func)
     def generator_wrapper(*args, **kwargs):
+        nonlocal context
+        if kwargs:
+            warnings.warn(
+                "Keyword arguments not yet supported, use positional arguments only"
+            )
+
+        context.test_cases.append(args)
+
+        # Input inference
+        if not context.input_types:
+            context.input_types = [type(arg) for arg in args]
+            for val in context.input_types:
+                assert (
+                    val == int
+                ), f"Unexpected {val} as a input type {list(map(type, args))}"
+        else:
+            context.check_input_types(args)
+
+        def tuplefy(either: Union[int, tuple[int]]) -> tuple[int]:
+            """
+            Converts int to tuple, otherwise returns input
+            """
+            if isinstance(either, int):
+                ret = (either,)
+            elif isinstance(either, tuple):
+                ret = either
+            else:
+                raise StaticTypingError(f"Unexpected yielded value {either}")
+            return ret
+
+        # Always get output one-ahead of what func user sees
+        # For output type inference even if user doesn't use generator
+        instance = func(*args)
+        try:
+            result = cast(Union[int, tuple[int]], next(instance))
+            tupled_result = tuplefy(result)
+            if not context.output_types:
+                logging.info(
+                    "Using input `%s` as reference for %s's I/O types",
+                    tupled_result,
+                    func.__name__,
+                )
+                context.output_types = [type(arg) for arg in tupled_result]
+                for val in context.output_types:
+                    assert (
+                        val == int
+                    ), f"Unexpected {val} as a output type {list(map(type, tupled_result))}"
+                context.default_output_vars()
+            else:
+                context.check_output_types(tupled_result)
+        except StopIteration:
+            pass
+        except Exception as e:
+            raise e
+
+        @wraps(func)
+        def inside():
+            nonlocal result
+            for i, new_result in enumerate(instance):
+                tupled_new_result = tuplefy(new_result)
+                context.check_output_types(tupled_new_result)
+                yield result
+                result = new_result
+                if i > 10000:
+                    raise RuntimeError(
+                        f"`{func.__name__}` yields more than 10000 values"
+                    )
+            yield result
+
+        return inside()
+
+    @wraps(func)
+    def function_wrapper(*args, **kwargs):
         nonlocal context
         if kwargs:
             warnings.warn(
@@ -107,54 +181,32 @@ def verilogify(
                 try:
                     assert guard(value, int)
                 except Exception as e:
-                    raise TypeError("Expected `int` type inputs and outputs") from e
+                    raise StaticTypingError(
+                        "Expected `int` type inputs and outputs"
+                    ) from e
             return ret
 
-        # Always get output one-ahead of what func user sees
-        # For output type inference even if user doesn't use generator
-        instance = func(*args)
-        try:
-            result = cast(Union[int, tuple[int]], next(instance))
-            tupled_result = tuplefy(result)
-            if not context.output_types:
-                logging.info(
-                    "Using input `%s` as reference for %s's I/O types",
-                    tupled_result,
-                    func.__name__,
-                )
-                context.output_types = [type(arg) for arg in tupled_result]
-                context.default_output_vars()
-            else:
-                context.check_output_types(tupled_result)
-        except StopIteration:
-            pass
-        except Exception as e:
-            raise e
+        result = func(*args)
+        tupled_result = tuplefy(result)
+        if not context.output_types:
+            logging.info(
+                "Using input `%s` as reference for %s's I/O types",
+                tupled_result,
+                func.__name__,
+            )
+            context.output_types = [type(arg) for arg in tupled_result]
+            context.default_output_vars()
+        else:
+            context.check_output_types(tupled_result)
 
-        @wraps(func)
-        def inside():
-            nonlocal result
-            for i, new_result in enumerate(instance):
-                tupled_new_result = tuplefy(new_result)
-                context.check_output_types(tupled_new_result)
-                yield result
-                result = new_result
-                if i > 10000:
-                    raise RuntimeError(f"{func.__name__} yields more than 10000 values")
-            yield result
+        return result
 
-        return inside()
-
-    @wraps(func)
-    def function_wrapper(*_0, **_1):
-        raise TypeError(
-            "Non-generator functions currently not supported, "
-            "make sure your function has at least one `yield` statement"
-        )
-
-    wrapper = (
-        generator_wrapper if inspect.isgeneratorfunction(func) else function_wrapper
-    )
+    if inspect.isgeneratorfunction(func):
+        wrapper = generator_wrapper
+        context.is_generator = True
+    else:
+        wrapper = function_wrapper
+        context.is_generator = False
     wrapper._python2verilog_context = context  # type: ignore # pylint: disable=protected-access
     wrapper._python2verilog_original_func = func  # type: ignore # pylint: disable=protected-access
     namespace[wrapper.__name__] = context

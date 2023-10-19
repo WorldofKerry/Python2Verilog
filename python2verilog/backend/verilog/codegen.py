@@ -150,7 +150,7 @@ class CodeGen:
         body: list[ver.Statement] = []
 
         body += [
-            ver.Statement(comment="Global variables"),
+            ver.Statement(comment="Local variables"),
         ]
         context.local_vars.sort(key=lambda x: x.ver_name)
         body += [

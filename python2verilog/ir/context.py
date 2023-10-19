@@ -41,9 +41,11 @@ class Context(GenericReprAndStr):
     E.g. variables, I/O, parameters, localparam
     """
 
-    # pylint: disable=too-many-instance-attributes
+    # pylint: disable=too-many-instance-attributes, too-many-public-methods
     name: str = ""
     testbench_suffix: str = "_tb"
+    is_generator: bool = False
+    prefix: str = ""
 
     test_cases: list[tuple[int, ...]] = field(default_factory=list)
 
@@ -59,7 +61,7 @@ class Context(GenericReprAndStr):
     mode: Modes = Modes.NO_WRITE
 
     _local_vars: list[Var] = field(default_factory=list)
-    _input_vars: Optional[list[ExclusiveVar]] = None
+    _input_vars: Optional[list[Var]] = None
     _output_vars: Optional[list[ExclusiveVar]] = None
     _states: set[str] = field(default_factory=set)
 
@@ -86,7 +88,7 @@ class Context(GenericReprAndStr):
         cxt.input_types = []
         cxt.input_vars = []
         cxt.output_types = []
-        cxt.output_vars = []
+        cxt._output_vars = []
         return cxt
 
     @property
@@ -155,7 +157,7 @@ class Context(GenericReprAndStr):
         try:
             self.output_types = list(map(output_mapper, output_args))
         except Exception as e:
-            raise TypeInferenceError() from e
+            raise TypeInferenceError(f"in function `{self.name}`") from e
         self.default_output_vars()
 
     def validate(self):
@@ -187,7 +189,7 @@ class Context(GenericReprAndStr):
         if self._entry_state:
             assert str(self.entry_state) in self.states, self
 
-        for value in self.signals.values():
+        for value in self.signals.variable_values():
             assert typed(value, Var)
 
         return self
@@ -266,8 +268,8 @@ class Context(GenericReprAndStr):
         return copy.deepcopy(self._input_vars)
 
     @input_vars.setter
-    def input_vars(self, other: list[ExclusiveVar]):
-        self._input_vars = typed_list(other, ExclusiveVar)
+    def input_vars(self, other: list[Var]):
+        self._input_vars = typed_list(other, Var)
 
     @property
     def output_vars(self):
@@ -275,20 +277,24 @@ class Context(GenericReprAndStr):
         Output variables
         """
         assert guard(self._output_vars, list), f"Unknown output variables {self}"
-        return copy.deepcopy(self._output_vars)
-
-    @output_vars.setter
-    def output_vars(self, other: list[ExclusiveVar]):
-        self._output_vars = typed_list(other, ExclusiveVar)
+        return self._output_vars
 
     def default_output_vars(self):
         """
         Sets own output vars to default based on number of output variables
         """
-        assert self.output_types and len(self.output_types) > 0
+        assert self.output_types is not None
         self._output_vars = [
-            ExclusiveVar(f"out{i}") for i in range(len(self.output_types))
+            ExclusiveVar(f"{self.prefix}out{i}") for i in range(len(self.output_types))
         ]
+
+    def refresh_input_vars(self):
+        """
+        Update input vars with prefix
+        """
+        self._input_vars = list(
+            map(lambda x: self.make_var(x.py_name), self.input_vars),
+        )
 
     @property
     def local_vars(self) -> list[Var]:
@@ -373,12 +379,8 @@ class Context(GenericReprAndStr):
                 self.output_vars,
             )
         )
-        args: dict[str, Var] = {
-            key: ExclusiveVar(f"{name}_{self.name}__{value.py_name}")
-            for key, value in self.signals.instance_specific_items()
-        }
 
-        signals = ProtocolSignals(**args)  # type: ignore[arg-type]
+        signals = ProtocolSignals(prefix=f"{self.prefix}{name}_{self.name}__")
 
         return Instance(
             self.name,
@@ -387,3 +389,9 @@ class Context(GenericReprAndStr):
             inst_output_vars,
             signals,
         )
+
+    def make_var(self, name: str) -> Var:
+        """
+        Makes a variable with own prefix
+        """
+        return Var(py_name=f"{self.prefix}{name}", ver_name=f"_{self.prefix}{name}")
