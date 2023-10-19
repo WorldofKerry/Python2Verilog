@@ -358,7 +358,7 @@ class FromFunction:
 
     def _parse_assign_to_gen_inst(
         self,
-        call_args: list[pyast.expr],
+        call_args: list[ir.Expression],
         callee_cxt: ir.Context,
         target_name: str,
         prefix: str,
@@ -431,25 +431,38 @@ class FromFunction:
         """
         For ... in ...:
         """
-        # pylint: disable=too-many-locals
-        # logging.error(f"{pyast.dump(stmt, include_attributes=True, indent=1)}")
 
         assert not stmt.orelse, "for-else statements not supported"
         target = stmt.iter
         if not isinstance(target, pyast.Name):
-            return self._parse_for_in_func_call(stmt, prefix)
-        return self._parse_for_in_instance(stmt, prefix)
+            return self._parse_for_in_gen_call(stmt, prefix)
+        return self._parse_for_in_gen_instance(stmt, prefix)
 
-    def _parse_for_in_func_call(self, stmt: pyast.For, prefix: str) -> ParseResult:
+    def _get_func_call_name(self, call: pyast.Call):
+        assert guard(call.func, pyast.Name)
+        return call.func.id
+
+    def _parse_for_in_gen_call(self, stmt: pyast.For, prefix: str) -> ParseResult:
         """
         For ... in func(...):
         """
-        logging.error(self._parse_assign_to_call())
+        logging.error(f"{pyast.dump(stmt, include_attributes=True, indent=1)}")
+        assert guard(stmt.iter, pyast.Call)
+        callee_cxt = self.__context.namespace[self._get_func_call_name(stmt.iter)]
+        head, tails = self._parse_assign_to_gen_inst(
+            call_args=stmt.iter.args,
+            target_name=f"{prefix}_offset{stmt.col_offset}",
+            prefix=prefix,
+            callee_cxt=callee_cxt,
+        )
+        logging.error(list(head.visit_nonclocked()))
         raise RuntimeError()
 
-    def _parse_for_in_instance(self, stmt: pyast.For, prefix: str) -> ParseResult:
+    def _parse_for_in_gen_instance(self, stmt: pyast.For, prefix: str) -> ParseResult:
         """
-        For ... in ...:
+        For ... in instance:
+
+        where instance is a generator instance
         """
         # pylint: disable=too-many-locals
         target = stmt.iter

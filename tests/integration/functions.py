@@ -343,7 +343,8 @@ def quad_multiply(left, right):
     inst = multiplier(-left, right)
     for val in inst:
         yield val
-    inst = multiplier(-left, -right)
-    for val in inst:
-        # for val in multiplier(-left, -right):
+    # inst = multiplier(-left, -right)
+    # for val in inst:
+    #     yield val
+    for val in multiplier(-left, -right):
         yield val
