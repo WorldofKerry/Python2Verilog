@@ -51,8 +51,8 @@ class TypeInferenceError(Exception):
 
     def __init__(self, *args: object) -> None:
         msg = (
-            "Input/output type inferrence failed, \
-                either use the function in Python code or provide type hints",
+            "Input/output type inferrence failed, "
+            "either use the function in Python code or provide type hints",
         )
 
         super().__init__(" ".join(map(str, (*msg, *args))))
