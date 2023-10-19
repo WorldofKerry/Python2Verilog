@@ -733,7 +733,9 @@ class FromFunction:
 
     def _parse_assign(self, assign: pyast.Assign, prefix: str) -> ParseResult:
         """
-        <target0, target1, ...> = <value>;
+        target0 [= target1] ... = value;
+
+        Example (single target):
         a, b = b, a + b
 
         target value visitor
