@@ -274,7 +274,7 @@ class Context(GenericReprAndStr):
         """
         assert self.output_types is not None
         self._output_vars = [
-            ExclusiveVar(f"_{self.prefix}output_{i}")
+            ExclusiveVar(f"{self.prefix}_output_{i}")
             for i in range(len(self.output_types))
         ]
 
