@@ -13,7 +13,8 @@ from .functions import *
 from .utils import name_func
 
 PARAMETERS = [
-    ([fib_product, multiplier, fib], [10, 20]),
+    ([fib_product, multiplier, fib, p2vrange], [10, 20]),
+    ([fib, p2vrange], range(10, 31, 10)),
     ([quad_multiply, multiplier_generator], [(3, 7), (31, 43)]),
     ([double_for, p2vrange], [5, 10, 15, 20]),
     ([dupe, p2vrange], [(0, 10, 1), (3, 73, 7)]),

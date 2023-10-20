@@ -14,7 +14,6 @@ from .utils import name_func
 
 PARAMETERS = [
     (keyword_test, [()]),
-    (fib, range(10, 31, 10)),
     (floor_div, [13, 23]),
     (operators, [(31, 13), (-31, 13), (31, -13), (-31, -13)]),
     (multiplier_generator, [(13, 17), (78, 67)]),
