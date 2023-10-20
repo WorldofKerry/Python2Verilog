@@ -344,7 +344,6 @@ class FromFunction:
         )
         tail.edge = ir.ClockedEdge(unique_id=f"{prefix}_outputs_last_e")
         for prev_tail in prev_tails:
-            print(type(prev_tail))
             prev_tail.child = head
 
         for var in (
