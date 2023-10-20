@@ -309,7 +309,7 @@ class Context(GenericReprAndStr):
         """
         Appends to local vars without restrictions.
 
-        Good for appending Vars created internally
+        Good for appending Vars created internally (e.g. inline function calls)
         """
         if var.py_name in self.generator_instances:
             raise StaticTypingError(

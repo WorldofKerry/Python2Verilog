@@ -353,7 +353,7 @@ class FromFunction:
             *callee_cxt.local_vars,
             *results,
         ):
-            self.__context.add_local_var(var)
+            self.__context.add_special_local_var(var)
 
         return inputs_head, [tail.edge]
 
