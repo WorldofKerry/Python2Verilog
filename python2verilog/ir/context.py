@@ -295,7 +295,21 @@ class Context(GenericReprAndStr):
 
     def add_local_var(self, var: Var):
         """
-        Appends global var
+        Appends to global vars with restrictions.
+
+        Good for appending Vars created from Python source
+        """
+        assert var.py_name.startswith(self.prefix)
+        assert not var.py_name[len(self.prefix) :].startswith(
+            "_"
+        ), f'Local variables beginning with "_" are reserved {var.py_name}'
+        return self.add_special_local_var(var)
+
+    def add_special_local_var(self, var: Var):
+        """
+        Appends to local vars without restrictions.
+
+        Good for appending Vars created internally
         """
         if var.py_name in self.generator_instances:
             raise StaticTypingError(
