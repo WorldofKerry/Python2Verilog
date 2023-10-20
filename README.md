@@ -6,7 +6,7 @@
 
 # python2verilog
 
-- This tool facilitates the conversion of select Python generator functions into synthesizable sequential SystemVerilog
+- This tool facilitates the conversion of select Python functions (including generators!) into synthesizable sequential SystemVerilog
 - Ideal for quickly translating higher-level "CPU code" into hardware descriptions for use on FPGAs, without needing to interface with or including a CPU in the design
 - Testbenches can be automatically generated if the user uses the function within their Python code or provides explicit test cases
 
@@ -21,23 +21,19 @@ def hrange(base, limit, step):
         i += step
 print(list(hrange(0, 10, 3)))
 ```
+A live transpile demo can be found [here](https://python2verilog-live.vercel.app/).
 
 ## Specifications
 
-Constrains on Python functions include:
+Some constrains on Python functions include:
 
-- Supports only `if` and `while` blocks
 - Supports only signed integral input/output and operations
-- Must be a [generator function](https://wiki.python.org/moin/Generators)
 - Must be a [pure function](https://en.wikipedia.org/wiki/Pure_function)
 
 Unsupported Python paradigms include but are not limited to the following:
 
-- Regular functions that use the `return` keyword, instead `yield` once
-- `for` loops, instead rewrite as a `while` loop
 - Global (nonlocal) variables, instead declare them within the function with minimal overhead
-- Keyword arguments, instead use positional arguments
-- Function calls, instead use the decorator on each of the subfunctions and manually connect together
+- Keyword parameters and default arguments, instead use explicit positional arguments
 
 ## Usage and Installation
 
