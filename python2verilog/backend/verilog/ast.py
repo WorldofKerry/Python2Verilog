@@ -10,7 +10,6 @@ from python2verilog import ir
 from python2verilog.utils import env
 from python2verilog.utils.generics import GenericRepr
 from python2verilog.utils.lines import ImplementsToLines, Indent, Lines
-from python2verilog.utils.mit_license import get_mit_license
 from python2verilog.utils.typed import guard, typed, typed_list, typed_strict
 
 
@@ -274,9 +273,6 @@ class Module(ImplementsToLines):
             lines.concat(stmt.to_lines(), 1)
         lines += "endmodule"
         lines.blank()
-        lines += "/*"
-        lines.concat(get_mit_license())
-        lines += "*/"
         return lines
 
 

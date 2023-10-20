@@ -487,9 +487,7 @@ class CodeGen:
                 header=Lines(
                     f"/*\n\n# Python Function\n{self.context.py_string}\n\n"
                     f"# Test Cases\n{python_test_code}\n*/\n\n"
-                )
-                if self.config.add_debug_comments
-                else None,
+                ),
             )
             return module
         raise RuntimeError("Needs the context")
