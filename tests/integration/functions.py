@@ -24,7 +24,7 @@ def fib(n: int) -> int:
     Fibonacci sequence
     """
     a, b = 0, 1
-    for count in p2vrange(0, n, 1):
+    for _ in p2vrange(0, n, 1):
         yield a
         a, b = b, a + b
 

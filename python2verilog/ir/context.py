@@ -300,9 +300,13 @@ class Context(GenericReprAndStr):
         Good for appending Vars created from Python source
         """
         assert var.py_name.startswith(self.prefix)
-        assert not var.py_name[len(self.prefix) :].startswith(
-            "_"
-        ), f'Local variables beginning with "_" are reserved {var.py_name}'
+        prefixless = var.py_name[len(self.prefix) :]
+        if len(prefixless) != 1:
+            # A local var named "_" with no additional characters is ok
+            assert not prefixless.startswith("_"), (
+                'Local variables beginning with "_" '
+                f"with more than one character are reserved {var.py_name}"
+            )
         return self.add_special_local_var(var)
 
     def add_special_local_var(self, var: Var):
