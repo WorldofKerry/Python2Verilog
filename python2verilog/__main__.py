@@ -103,7 +103,7 @@ if __name__ == "__main__":
 
         test_cases = ast.literal_eval(args.test_cases) if args.test_cases else []
 
-        logging.info(f"Extra test cases: {test_cases}")
+        logging.info("Extra test cases: %s", test_cases)
         module_str, testbench_str = py_to_verilog(
             code=python,
             function_name=args.name,

@@ -2,3 +2,4 @@ python2verilog
 matplotlib
 numpy
 jupyter
+typing-extensions

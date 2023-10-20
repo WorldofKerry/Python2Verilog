@@ -1,5 +1,5 @@
 [BASIC]
-good-names=i, j, k, ir, e, tb
+good-names=i, j, k, ir, e, tb, rv, t, v
 
 [FORMAT]
 # variable-rgx="[a-z_][a-z0-9_]{0,30}$"
@@ -14,4 +14,3 @@ disable =
     cyclic-import,
     unused-import,
     exec-used,
-    logging-fstring-interpolation

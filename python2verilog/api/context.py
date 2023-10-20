@@ -8,9 +8,10 @@ import logging
 
 from python2verilog import ir
 from python2verilog.backend import verilog
-from python2verilog.frontend.generator2ir import Generator2Graph
-from python2verilog.optimizer.optimizer import OptimizeGraph
-from python2verilog.utils.assertions import get_typed
+from python2verilog.backend.verilog.config import CodegenConfig, TestbenchConfig
+from python2verilog.frontend.function import FromFunction
+from python2verilog.optimizer import IncreaseWorkPerClockCycle
+from python2verilog.utils.typed import typed
 
 
 def context_to_codegen(context: ir.Context):
@@ -19,27 +20,34 @@ def context_to_codegen(context: ir.Context):
 
     :return: (codegen, ir)
     """
-    context = copy.copy(context)
-    ir_root, context = Generator2Graph(context).results
+    context.validate()
+    context = copy.deepcopy(context)
+    context, ir_root = FromFunction(context).parse_function()
     logging.debug(
-        f"context to codegen {ir_root.unique_id} {context.name} -O{context.optimization_level}"
+        "context to codegen %s %s -O%s with %s",
+        ir_root.unique_id,
+        context.name,
+        context.optimization_level,
+        context,
     )
     if context.optimization_level > 0:
-        OptimizeGraph(ir_root, threshold=context.optimization_level - 1)
+        logging.info("Running %s", IncreaseWorkPerClockCycle.__name__)
+        IncreaseWorkPerClockCycle(ir_root, threshold=context.optimization_level - 1)
+    logging.info("Running %s", verilog.CodeGen.__name__)
     return verilog.CodeGen(ir_root, context), ir_root
 
 
-def context_to_verilog(context: ir.Context) -> tuple[str, str]:
+def context_to_verilog(context: ir.Context, config: CodegenConfig) -> tuple[str, str]:
     """
     Converts a context to a verilog module and testbench
 
     :return: (module, testbench)
     """
-    get_typed(context, ir.Context)
+    typed(context, ir.Context)
     ver_code_gen, _ = context_to_codegen(context)
 
     module_str = ver_code_gen.get_module_str()
-    tb_str = ver_code_gen.get_testbench_str()
+    tb_str = ver_code_gen.get_testbench_str(config)
 
     return module_str, tb_str
 
@@ -50,10 +58,10 @@ def context_to_verilog_and_dump(context: ir.Context) -> tuple[str, str, str]:
 
     :return: (module, testbench, cytoscape_dump) pair
     """
-    get_typed(context, ir.Context)
+    typed(context, ir.Context)
     ver_code_gen, ir_root = context_to_codegen(context)
 
     module_str = ver_code_gen.get_module_str()
-    tb_str = ver_code_gen.get_testbench_str()
+    tb_str = ver_code_gen.get_testbench_str(TestbenchConfig())
 
     return module_str, tb_str, ir.create_cytoscape_elements(ir_root)

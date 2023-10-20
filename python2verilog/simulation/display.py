@@ -2,11 +2,12 @@
 Parses Verilog display statements
 """
 
-import logging
-from typing import Generator, Iterable, Union
+from typing import Iterable, Iterator, Union
+
+from python2verilog.exceptions import UnknownValueError
 
 
-def parse_stdout(stdout: str) -> Generator[tuple[str, ...], None, None]:
+def parse_stdout(stdout: str) -> Iterator[tuple[str, ...]]:
     """
     Implementation-specific (based on testbench output)
     Yields the signals and outputs for a display statement
@@ -16,36 +17,66 @@ def parse_stdout(stdout: str) -> Generator[tuple[str, ...], None, None]:
         yield tuple(elem.strip() for elem in line.split(","))
 
 
-def strip_signals(
-    actual_raw: Iterable[tuple[str, ...]],
-) -> Generator[Union[tuple[int, ...], int], None, None]:
+def __strip_and_filter_first_signal(
+    actual: Iterable[Union[tuple[str, ...], str]],
+    length_check: int,
+) -> Iterator[Union[tuple[str, ...], str]]:
     """
-    Implementation-specific (based on testbench output)
-    Assumes assumes first two signals to be valid and wait
-    [valid, ready, output0, output1, ...]
-    Only yields a row if both valid and ready
-    Throws if both valid and ready, but an output is 'x'
-    :return: [output0, output1, ...]
+    Filters based on row[0]
+
+    Removes tailing messages, e.g. `$finish`.
+
+    :return: row[1:]
     """
-    for row in actual_raw:
-        if len(row) >= 2:  # [valid, ready, ...]
-            if row[0] == "1" and row[1] == "1":
-                try:
-                    outputs = row[2:]
-                    if len(outputs) == 1:
-                        yield int(outputs[0])
-                    else:
-                        yield tuple(int(elem) for elem in outputs)
-                except ValueError as e:
-                    raise UnknownValue(f"Unknown logic value in outputs {row}") from e
+    for row in actual:
+        if len(row) > length_check:
+            if row[0] == "1":
+                outputs = row[1:]
+                if len(outputs) == 1:
+                    yield outputs[0]
+                else:
+                    yield tuple(elem for elem in outputs)
         else:
             if "$finish" in " ".join(row):
                 pass
             else:
-                raise ValueError(f"Skipped parsing {row}")
+                raise ValueError(f"Unexpected row {row}")
 
 
-class UnknownValue(Exception):
+def strip_ready(
+    actual: Iterable[Union[tuple[str, ...], str]]
+) -> Iterator[Union[tuple[str, ...], str]]:
     """
-    An unexpected 'x' or 'z' was encountered
+    Assumes first two signals to be ready and valid,
+    such that a row is [ready, valid, output0, output1, ...]
+
+    Removes tailing messages, e.g. `$finish`.
+
+    :return: [valid, output0, output1, ...]
     """
+    yield from __strip_and_filter_first_signal(actual, 2)
+
+
+def strip_valid(
+    actual: Iterable[Union[tuple[str, ...], str]]
+) -> Iterator[Union[tuple[int, ...], int]]:
+    """
+    Assumes first signal to be valid,
+    such that a row is [valid, output0, output1, ...]
+
+    Throws if ready, but an output is 'x'.
+
+    Removes tailing messages, e.g. `$finish`.
+
+    :return: [output0, output1, ...]
+    """
+    for row in __strip_and_filter_first_signal(actual, 1):
+        try:
+            if isinstance(row, tuple) and len(row) > 1:
+                yield tuple(int(e) for e in row)
+            elif isinstance(row, str):
+                yield int(row)  # otherwise take first char of string
+            else:
+                yield int(row[0])
+        except ValueError as e:
+            raise UnknownValueError(f"Unknown logic value in outputs {row}") from e

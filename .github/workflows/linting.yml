@@ -14,17 +14,13 @@ on:
       - synchronize
       - ready_for_review
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
-  cancel-in-progress: true
-
 jobs:
   linting:
     runs-on: ubuntu-latest
     if: ${{ !github.event.pull_request.draft }}
     strategy:
       matrix:
-        python-version: ["3.11"]
+        python-version: ["3.x"]
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }}

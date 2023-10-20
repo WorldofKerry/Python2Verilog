@@ -5,24 +5,26 @@ Decorators
 from __future__ import annotations
 
 import ast
+import copy
 import inspect
 import logging
 import textwrap
 import warnings
 from functools import wraps
 from types import FunctionType
-from typing import Generator, Optional, Protocol, Union, cast
+from typing import Iterator, Optional, Union, cast
 
 import __main__ as main
 
 from python2verilog import ir
 from python2verilog.api.modes import Modes
 from python2verilog.api.namespace import get_namespace
+from python2verilog.exceptions import StaticTypingError
 from python2verilog.simulation import iverilog
-from python2verilog.simulation.display import parse_stdout, strip_signals
-from python2verilog.utils.assertions import assert_typed, assert_typed_dict, get_typed
+from python2verilog.simulation.display import parse_stdout, strip_ready, strip_valid
 from python2verilog.utils.decorator import decorator_with_args
 from python2verilog.utils.fifo import temp_fifo
+from python2verilog.utils.typed import guard, guard_dict, typed
 
 
 # pylint: disable=too-many-locals
@@ -37,8 +39,8 @@ def verilogify(
     :param namespace: the namespace to put this function, for linking purposes
     :param mode: if WRITE or OVERWRITE, files will be written to the specified paths
     """
-    get_typed(func, FunctionType)
-    assert_typed(mode, Modes)
+    typed(func, FunctionType)
+    guard(mode, Modes)
 
     if not hasattr(main, "__file__") and namespace is None:
         # No way to query caller filename in IPython / Jupyter notebook
@@ -54,7 +56,7 @@ def verilogify(
 
     if namespace is None:
         namespace = get_namespace(filename)
-    assert_typed_dict(namespace, str, ir.Context)  # type: ignore[misc]
+    guard_dict(namespace, str, ir.Context)  # type: ignore[misc]
 
     tree = ast.parse(textwrap.dedent(inspect.getsource(func)))
     assert len(tree.body) == 1
@@ -68,6 +70,10 @@ def verilogify(
     context.py_func = func
     context.py_string = inspect.getsource(func)
 
+    for name in func_ast.args.args:
+        assert not name.arg.startswith(
+            "_"
+        ), f'Parameter beginning with "_" are reserved {name.arg}'
     context.input_vars = [ir.Var(name.arg) for name in func_ast.args.args]
 
     context.mode = mode
@@ -79,38 +85,132 @@ def verilogify(
     def generator_wrapper(*args, **kwargs):
         nonlocal context
         if kwargs:
-            raise RuntimeError(
+            warnings.warn(
                 "Keyword arguments not yet supported, use positional arguments only"
             )
+
         context.test_cases.append(args)
+
+        # Input inference
+        if not context.input_types:
+            context.input_types = [type(arg) for arg in args]
+            for val in context.input_types:
+                assert (
+                    val == int
+                ), f"Unexpected {val} as a input type {list(map(type, args))}"
+        else:
+            context.check_input_types(args)
+
+        def tuplefy(either: Union[int, tuple[int]]) -> tuple[int]:
+            """
+            Converts int to tuple, otherwise returns input
+            """
+            if isinstance(either, int):
+                ret = (either,)
+            elif isinstance(either, tuple):
+                ret = either
+            else:
+                raise StaticTypingError(f"Unexpected yielded value {either}")
+            return ret
+
+        # Always get output one-ahead of what func user sees
+        # For output type inference even if user doesn't use generator
+        instance = func(*args)
+        try:
+            result = cast(Union[int, tuple[int]], next(instance))
+            tupled_result = tuplefy(result)
+            if not context.output_types:
+                logging.info(
+                    "Using input `%s` as reference for %s's I/O types",
+                    tupled_result,
+                    func.__name__,
+                )
+                context.output_types = [type(arg) for arg in tupled_result]
+                for val in context.output_types:
+                    assert (
+                        val == int
+                    ), f"Unexpected {val} as a output type {list(map(type, tupled_result))}"
+                context.default_output_vars()
+            else:
+                context.check_output_types(tupled_result)
+        except StopIteration:
+            pass
+        except Exception as e:
+            raise e
+
+        @wraps(func)
+        def inside():
+            nonlocal result
+            for i, new_result in enumerate(instance):
+                tupled_new_result = tuplefy(new_result)
+                context.check_output_types(tupled_new_result)
+                yield result
+                result = new_result
+                if i > 10000:
+                    raise RuntimeError(
+                        f"`{func.__name__}` yields more than 10000 values"
+                    )
+            yield result
+
+        return inside()
+
+    @wraps(func)
+    def function_wrapper(*args, **kwargs):
+        nonlocal context
+        if kwargs:
+            warnings.warn(
+                "Keyword arguments not yet supported, use positional arguments only"
+            )
+        for arg in args:
+            assert guard(arg, int), "Only `int` type arguments are supported"
+
+        context.test_cases.append(args)
+
+        # Input inference
         if not context.input_types:
             context.input_types = [type(arg) for arg in args]
         else:
             context.check_input_types(args)
 
-        for result in func(*args, **kwargs):
-            if not isinstance(result, tuple):
-                result = (result,)
-
-            if not context.output_types:
-                logging.info(f"Using {result} as reference")
-                context.output_types = [type(arg) for arg in result]
-                context.default_output_vars()
+        def tuplefy(either: Union[int, tuple[int]]) -> tuple[int]:
+            """
+            Converts int to tuple, otherwise returns input
+            """
+            if isinstance(either, int):
+                ret = (either,)
             else:
-                context.check_output_types(result)
+                ret = either
 
-        return func(*args, **kwargs)
+            for value in ret:
+                try:
+                    assert guard(value, int)
+                except Exception as e:
+                    raise StaticTypingError(
+                        "Expected `int` type inputs and outputs"
+                    ) from e
+            return ret
 
-    @wraps(func)
-    def function_wrapper(*_0, **_1):
-        raise TypeError(
-            "Non-generator functions currently not supported, "
-            "make sure your function has at least one `yield` statement"
-        )
+        result = func(*args)
+        tupled_result = tuplefy(result)
+        if not context.output_types:
+            logging.info(
+                "Using input `%s` as reference for %s's I/O types",
+                tupled_result,
+                func.__name__,
+            )
+            context.output_types = [type(arg) for arg in tupled_result]
+            context.default_output_vars()
+        else:
+            context.check_output_types(tupled_result)
 
-    wrapper = (
-        generator_wrapper if inspect.isgeneratorfunction(func) else function_wrapper
-    )
+        return result
+
+    if inspect.isgeneratorfunction(func):
+        wrapper = generator_wrapper
+        context.is_generator = True
+    else:
+        wrapper = function_wrapper
+        context.is_generator = False
     wrapper._python2verilog_context = context  # type: ignore # pylint: disable=protected-access
     wrapper._python2verilog_original_func = func  # type: ignore # pylint: disable=protected-access
     namespace[wrapper.__name__] = context
@@ -119,9 +219,9 @@ def verilogify(
 
 def get_context(verilogified: FunctionType) -> ir.Context:
     """
-    Gets context from verilogified function
+    Gets a copy of the context from a verilogified function
     """
-    return verilogified._python2verilog_context  # type: ignore # pylint: disable=protected-access
+    return copy.deepcopy(verilogified._python2verilog_context)  # type: ignore # pylint: disable=protected-access
 
 
 def get_original_func(verilogified: FunctionType) -> FunctionType:
@@ -131,23 +231,38 @@ def get_original_func(verilogified: FunctionType) -> FunctionType:
     return verilogified._python2verilog_original_func  # type: ignore # pylint: disable=protected-access
 
 
-def get_expected(verilogified: FunctionType) -> Generator[tuple[int, ...], None, None]:
+def get_expected(
+    verilogified: FunctionType, max_yields_per_test_case: int = 10000
+) -> Iterator[tuple[int, ...]]:
     """
     Get expected output of testbench
+
+    Limits number of values generators can yield
     """
-    generator_func = get_original_func(verilogified)
+    func = get_original_func(verilogified)
     for test in get_context(verilogified).test_cases:
-        yield from generator_func(*test)
+        logging.debug("Test case %s", test)
+        if get_context(verilogified).is_generator:
+            for i, value in enumerate(func(*test)):
+                yield value
+                if i > max_yields_per_test_case:
+                    raise RuntimeError(
+                        f"Generator yielded more than {max_yields_per_test_case} values"
+                    )
+        else:
+            yield func(*test)
 
 
-def get_actual(
+def get_actual_raw(
     verilogified: FunctionType,
     module: str,
     testbench: str,
     timeout: Optional[int] = None,
-) -> Generator[Union[tuple[int, ...], int], None, None]:
+) -> Iterator[Union[tuple[str, ...], str]]:
     """
-    Get expected output of testbench
+    Get actual output of the testbench
+
+    Includes protocol signals, e.g. ready, valid
     """
     context = get_context(verilogified)
     with temp_fifo() as module_fifo, temp_fifo() as tb_fifo:
@@ -157,4 +272,22 @@ def get_actual(
             timeout=timeout,
         )
         assert not err, f"{stdout} {err}"
-        yield from strip_signals(parse_stdout(stdout))
+        yield from parse_stdout(stdout)
+
+
+def get_actual(
+    verilogified: FunctionType,
+    module: str,
+    testbench: str,
+    timeout: Optional[int] = None,
+) -> Iterator[Union[tuple[int, ...], int]]:
+    """
+    Get actual output of the testbench with rows
+
+    filtered by ready and valid signals,
+
+    and the signals themselves removed.
+    """
+    yield from strip_valid(
+        strip_ready(get_actual_raw(verilogified, module, testbench, timeout))
+    )

@@ -9,8 +9,8 @@ python3 tools/cytoscape.py tests/integration/data/integration/testing/cytoscape.
 import argparse
 import ast
 
-import dash_cytoscape as cyto  # type: ignore
-from dash import Dash, html  # type: ignore
+import dash_cytoscape as cyto  # type: ignore # pylint: disable=import-error
+from dash import Dash, html  # type: ignore # pylint: disable=import-error
 
 
 def main():

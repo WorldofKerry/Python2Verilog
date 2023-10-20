@@ -14,7 +14,7 @@ from .namespace import (
 )
 from .python import py_to_codegen, py_to_context, py_to_verilog
 from .verilogify import (
-    get_actual,
+    get_actual_raw,
     get_context,
     get_expected,
     get_original_func,

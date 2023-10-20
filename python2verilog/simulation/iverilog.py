@@ -7,10 +7,11 @@ import os
 import signal
 import subprocess
 import tempfile
+import time
 from typing import Iterable, Optional, Union
 
 from python2verilog.utils import env
-from python2verilog.utils.assertions import assert_typed_dict
+from python2verilog.utils.typed import guard_dict
 
 
 def make_cmd(top_level_module: str, files: Iterable[Union[str, os.PathLike[str]]]):
@@ -37,7 +38,7 @@ def _write_data_to_paths(path_to_data: dict[str, str]):
     logging.debug("Writing data to paths start")
     for path, data in path_to_data.items():
         with open(path, mode="w", encoding="utf8") as file:
-            logging.debug(f"Writing {len(data)} to {file.name}")
+            logging.debug("Writing %s to %s", len(data), file.name)
             file.write(data)
     logging.debug("Writing data to paths done")
 
@@ -52,7 +53,7 @@ def _run_cmd_with_fifos(
 
     :return: (stdout, stderr/exception)
     """
-    assert_typed_dict(input_fifos, str, str)  # type: ignore
+    guard_dict(input_fifos, str, str)  # type: ignore
     # pylint: disable=subprocess-popen-preexec-fn
     with subprocess.Popen(
         command,
@@ -65,18 +66,20 @@ def _run_cmd_with_fifos(
         _write_data_to_paths(input_fifos)
 
         try:
-            logging.debug(f"Waiting on process for {timeout}s")
+            logging.debug("Waiting on process for %ss", timeout)
+            start_time = time.time()
             process.wait(timeout=timeout)
+            logging.debug("Took %ss", time.time() - start_time)
             assert process.stdout
             assert process.stderr
             return process.stdout.read(), process.stderr.read()
         except subprocess.TimeoutExpired as e:
-            os.killpg(os.getpgid(process.pid), signal.SIGTERM)
             assert process.stdout
             assert process.stderr
             stdout = process.stdout.read()
             stderr = process.stderr.read()
-            logging.error(f"{e}, {stdout}, {stderr}")
+            logging.debug("%s, %s, %s", e, stdout, stderr)
+            os.killpg(os.getpgid(process.pid), signal.SIGTERM)
             return stdout, stderr
 
 
@@ -90,7 +93,7 @@ def _run_cmd_with_files(
 
     :return: (stdout, stderr/exception)
     """
-    assert_typed_dict(input_files, str, str)  # type: ignore
+    guard_dict(input_files, str, str)  # type: ignore
     # _write_data_to_paths(input_files)
     # pylint: disable=subprocess-popen-preexec-fn
     with subprocess.Popen(
@@ -102,18 +105,20 @@ def _run_cmd_with_files(
         preexec_fn=os.setsid,
     ) as process:
         try:
-            logging.debug(f"Waiting on process for {timeout}s")
+            logging.debug("Waiting on process for %ss", timeout)
+            start_time = time.time()
             process.wait(timeout=timeout)
+            logging.debug("Took %ss", time.time() - start_time)
             assert process.stdout
             assert process.stderr
             return process.stdout.read(), process.stderr.read()
         except subprocess.TimeoutExpired as e:
-            os.killpg(os.getpgid(process.pid), signal.SIGTERM)
             assert process.stdout
             assert process.stderr
             stdout = process.stdout.read()
             stderr = process.stderr.read()
-            logging.error(f"{e}, {stdout}, {stderr}")
+            logging.debug("%s, %s, %s", e, stdout, stderr)
+            os.killpg(os.getpgid(process.pid), signal.SIGTERM)
             return stdout, stderr
 
 
@@ -131,7 +136,7 @@ def run_with_fifos(
         top_level_module=top_level_module,
         files=input_fifos.keys(),
     )
-    logging.info(f"{iverilog_cmd}")
+    logging.debug("Simulation with command:\n%s", iverilog_cmd)
     return _run_cmd_with_fifos(
         command=iverilog_cmd, input_fifos=input_fifos, timeout=timeout
     )
@@ -151,7 +156,7 @@ def run_with_files(
         top_level_module=top_level_module,
         files=input_files.keys(),
     )
-    logging.info(f"Made command `{iverilog_cmd}`")
+    logging.info("Made command `%s`", iverilog_cmd)
     return _run_cmd_with_files(
         command=iverilog_cmd, input_files=input_files, timeout=timeout
     )

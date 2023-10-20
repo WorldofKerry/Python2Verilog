@@ -2,4 +2,5 @@
 Optimizer Functions
 """
 
-from .optimizer import OptimizeGraph, backwards_replace, graph_apply_mapping
+from .helpers import backwards_replace
+from .increase_work import IncreaseWorkPerClockCycle

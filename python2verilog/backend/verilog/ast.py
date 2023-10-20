@@ -4,13 +4,13 @@ Verilog Abstract Syntax Tree Components
 
 from __future__ import annotations
 
-from typing import Iterable, Optional
+from typing import Optional
 
+from python2verilog import ir
 from python2verilog.utils import env
-
-from ... import ir
-from ...utils.assertions import assert_typed_dict, get_typed, get_typed_list
-from ...utils.lines import ImplementsToLines, Indent, Lines
+from python2verilog.utils.generics import GenericRepr
+from python2verilog.utils.lines import ImplementsToLines, Indent, Lines
+from python2verilog.utils.typed import guard, typed, typed_list, typed_strict
 
 
 class AtPosedge(ir.Expression):
@@ -35,15 +35,15 @@ class AtNegedge(ir.Expression):
         super().__init__(f"@(negedge {condition.to_string()})")
 
 
-class Statement(ImplementsToLines):
+class Statement(ImplementsToLines, GenericRepr):
     """
     Represents a statement in verilog (i.e. a line or a block)
     If used directly, it is treated as a string literal
     """
 
     def __init__(self, literal: str = "", comment: str = ""):
-        self.literal = get_typed(literal, str)
-        self.comment = get_typed(comment, str)
+        self.literal = typed(literal, str)
+        self.comment = typed(comment, str)
 
     def to_lines(self):
         """
@@ -68,6 +68,7 @@ class Statement(ImplementsToLines):
         // <comment>
         Separated by newlines
         """
+        assert guard(self.comment, str)
         actual_lines = self.comment.split("\n")
         lines = Lines()
         for line in actual_lines:
@@ -94,8 +95,8 @@ class TypeDef(Statement):
     """
 
     def __init__(self, name: str, values: list[str]):
-        self.name = get_typed(name, str)
-        self.values = get_typed_list(values, str)
+        self.name = typed(name, str)
+        self.values = typed_list(values, str)
         super().__init__()
 
     def to_lines(self):
@@ -199,27 +200,27 @@ class Module(ImplementsToLines):
                 assert isinstance(input_, str)
                 input_lines += f"input wire signed [31:0] {input_},"
             input_lines.blank()
-            input_lines += "input wire _clock, // clock for sync"
+            input_lines += "input wire __clock, // clock for sync"
             input_lines += (
-                "input wire _reset, // set high to reset, i.e. done will be high"
+                "input wire __reset, // set high to reset, i.e. done will be high"
             )
             input_lines += (
-                "input wire _start, "
+                "input wire __start, "
                 + "// set high to capture inputs (in same cycle) and start generating"
             )
             input_lines.blank()
             input_lines += "// Implements a ready/valid handshake based on"
             input_lines += "// http://www.cjdrake.com/readyvalid-protocol-primer.html"
             input_lines += (
-                "input wire _ready, // set high when caller is ready for output"
+                "input wire __ready, // set high when caller is ready for output"
             )
         self.input = input_lines
 
         output_lines = Lines()
         if is_not_testbench:
-            output_lines += "output reg _valid, // is high if output values are valid"
+            output_lines += "output reg __valid, // is high if output values are valid"
             output_lines.blank()
-            output_lines += "output reg _done, // is high if module done outputting"
+            output_lines += "output reg __done, // is high if module done outputting"
             output_lines.blank()
             output_lines += "// Output values as a tuple with respective index(es)"
             for output in outputs:
@@ -263,7 +264,7 @@ class Module(ImplementsToLines):
         lines.concat(self.input, indent=1)
         lines.concat(self.output, indent=1)
 
-        if len(lines) > 2:  # This means there are ports
+        if self.input or self.output:  # This means there are ports
             lines[-1] = lines[-1][0:-1]  # removes last comma
 
         lines += ");"
@@ -271,6 +272,7 @@ class Module(ImplementsToLines):
         for stmt in self.body:
             lines.concat(stmt.to_lines(), 1)
         lines += "endmodule"
+        lines.blank()
         return lines
 
 
@@ -283,14 +285,15 @@ class Initial(Statement):
 
     def __init__(self, *args, body: Optional[list[Statement]] = None, **kwargs):
         if body:
-            get_typed_list(body, Statement)
+            typed_list(body, Statement)
         self.body = body
         super().__init__(*args, **kwargs)
 
     def to_lines(self):
         lines = Lines("initial begin")
-        for stmt in self.body:
-            lines.concat(stmt.to_lines(), 1)
+        if self.body:
+            for stmt in self.body:
+                lines.concat(stmt.to_lines(), 1)
         lines += "end"
         return lines
 
@@ -351,14 +354,14 @@ class Subsitution(Statement):
 
     def __init__(
         self,
-        lvalue: ir.Expression,
+        lvalue: ir.Var,
         rvalue: ir.Expression,
         oper: str,
         *args,
         **kwargs,
     ):
         assert isinstance(rvalue, (ir.Expression)), f"got {type(rvalue)} instead"
-        assert isinstance(lvalue, (ir.Expression))
+        assert isinstance(lvalue, (ir.Expression)), f"{lvalue}"
         self.lvalue = lvalue
         self.rvalue = rvalue
         self.oper = oper
@@ -379,7 +382,7 @@ class NonBlockingSubsitution(Subsitution):
     <lvalue> <= <rvalue>
     """
 
-    def __init__(self, lvalue: ir.Expression, rvalue: ir.Expression, *args, **kwargs):
+    def __init__(self, lvalue: ir.Var, rvalue: ir.Expression, *args, **kwargs):
         super().__init__(lvalue, rvalue, "<=", *args, **kwargs)
 
 
@@ -388,7 +391,7 @@ class BlockingSub(Subsitution):
     <lvalue> = <rvalue>
     """
 
-    def __init__(self, lvalue: ir.Expression, rvalue: ir.Expression, *args, **kwargs):
+    def __init__(self, lvalue: ir.Var, rvalue: ir.Expression, *args, **kwargs):
         super().__init__(lvalue, rvalue, "=", *args, **kwargs)
 
 
@@ -406,10 +409,10 @@ class Declaration(Statement):
         signed: bool = False,
         **kwargs,
     ):
-        self.size = get_typed(size, int)
-        self.reg = get_typed(reg, bool)
-        self.signed = get_typed(signed, bool)
-        self.name = get_typed(name, str)
+        self.size = typed_strict(size, int)
+        self.reg = typed_strict(reg, bool)
+        self.signed = typed_strict(signed, bool)
+        self.name = typed_strict(name, str)
         super().__init__(*args, **kwargs)
 
     def to_lines(self):
@@ -487,6 +490,8 @@ class Case(Statement):
         """
         To Verilog Lines
         """
+        if len(self.case_items) == 0:
+            return Lines(f"// case({self.condition})\n//Empty case block\n// endcase")
         lines = Lines()
         lines += f"case ({self.condition.to_string()})"
         for item in self.case_items:
@@ -509,13 +514,15 @@ class IfElse(Statement):
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        self.condition = get_typed(condition, ir.Expression)
-        self.then_body = get_typed_list(then_body, Statement)
-        self.else_body = get_typed_list(else_body, Statement)
+        self.condition = typed_strict(condition, ir.Expression)
+        self.then_body = typed_list(then_body, Statement)
+        self.else_body = typed_list(else_body, Statement)
 
     def to_lines(self):
         lines = Lines()
-        lines += f"if ({self.condition.verilog()}) begin"
+        lines += f"if ({self.condition.verilog()}) begin" + (
+            f" // {self.comment}" if self.comment else ""
+        )
         for stmt in self.then_body:
             lines.concat(stmt.to_lines(), indent=1)
         if self.else_body:
@@ -544,13 +551,14 @@ class While(Statement):
         assert isinstance(condition, ir.Expression)
         self.condition = condition
         if body:
-            get_typed_list(body, Statement)
+            typed_list(body, Statement)
         self.body = body
         super().__init__(*args, **kwargs)
 
     def to_lines(self):
         lines = Lines(f"while ({self.condition.to_string()}) begin")
-        for stmt in self.body:
-            lines.concat(stmt.to_lines(), 1)
+        if self.body:
+            for stmt in self.body:
+                lines.concat(stmt.to_lines(), 1)
         lines += "end"
         return lines
