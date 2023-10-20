@@ -46,23 +46,12 @@
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">from</span> <span class="nn">python2verilog.api.modes</span> <span class="kn">import</span> <span class="n">Modes</span>
-<span class="kn">from</span> <span class="nn">python2verilog.exceptions</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">StaticTypingError</span><span class="p">,</span>
-    <span class="n">TypeInferenceError</span><span class="p">,</span>
-    <span class="n">UnsupportedSyntaxError</span><span class="p">,</span>
-<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">python2verilog.exceptions</span> <span class="kn">import</span> <span class="n">StaticTypingError</span><span class="p">,</span> <span class="n">TypeInferenceError</span>
 <span class="kn">from</span> <span class="nn">python2verilog.ir.expressions</span> <span class="kn">import</span> <span class="n">ExclusiveVar</span><span class="p">,</span> <span class="n">State</span><span class="p">,</span> <span class="n">Var</span>
 <span class="kn">from</span> <span class="nn">python2verilog.ir.instance</span> <span class="kn">import</span> <span class="n">Instance</span>
 <span class="kn">from</span> <span class="nn">python2verilog.ir.signals</span> <span class="kn">import</span> <span class="n">ProtocolSignals</span>
-<span class="kn">from</span> <span class="nn">python2verilog.utils.env</span> <span class="kn">import</span> <span class="n">is_debug_mode</span>
 <span class="kn">from</span> <span class="nn">python2verilog.utils.generics</span> <span class="kn">import</span> <span class="n">GenericReprAndStr</span>
-<span class="kn">from</span> <span class="nn">python2verilog.utils.typed</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">guard</span><span class="p">,</span>
-    <span class="n">guard_dict</span><span class="p">,</span>
-    <span class="n">typed</span><span class="p">,</span>
-    <span class="n">typed_list</span><span class="p">,</span>
-    <span class="n">typed_strict</span><span class="p">,</span>
-<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">python2verilog.utils.typed</span> <span class="kn">import</span> <span class="n">guard</span><span class="p">,</span> <span class="n">typed</span><span class="p">,</span> <span class="n">typed_list</span><span class="p">,</span> <span class="n">typed_strict</span>
 
 
 <div class="viewcode-block" id="Context">
@@ -326,7 +315,8 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_types</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_output_vars</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">ExclusiveVar</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="si">}</span><span class="s2">out</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_types</span><span class="p">))</span>
+            <span class="n">ExclusiveVar</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="si">}</span><span class="s2">_output_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_types</span><span class="p">))</span>
         <span class="p">]</span></div>
 
 
@@ -352,7 +342,28 @@
 <a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.Context.add_local_var">[docs]</a>
     <span class="k">def</span> <span class="nf">add_local_var</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var</span><span class="p">:</span> <span class="n">Var</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Appends global var</span>
+<span class="sd">        Appends to global vars with restrictions.</span>
+
+<span class="sd">        Good for appending Vars created from Python source</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="n">var</span><span class="o">.</span><span class="n">py_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="p">)</span>
+        <span class="n">prefixless</span> <span class="o">=</span> <span class="n">var</span><span class="o">.</span><span class="n">py_name</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="p">)</span> <span class="p">:]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">prefixless</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="c1"># A local var named &quot;_&quot; with no additional characters is ok</span>
+            <span class="k">assert</span> <span class="ow">not</span> <span class="n">prefixless</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">),</span> <span class="p">(</span>
+                <span class="s1">&#39;Local variables beginning with &quot;_&quot; &#39;</span>
+                <span class="sa">f</span><span class="s2">&quot;with more than one character are reserved </span><span class="si">{</span><span class="n">var</span><span class="o">.</span><span class="n">py_name</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_special_local_var</span><span class="p">(</span><span class="n">var</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Context.add_special_local_var">
+<a class="viewcode-back" href="../../../python2verilog.ir.html#python2verilog.ir.context.Context.add_special_local_var">[docs]</a>
+    <span class="k">def</span> <span class="nf">add_special_local_var</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var</span><span class="p">:</span> <span class="n">Var</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Appends to local vars without restrictions.</span>
+
+<span class="sd">        Good for appending Vars created internally (e.g. inline function calls)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">var</span><span class="o">.</span><span class="n">py_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">generator_instances</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">StaticTypingError</span><span class="p">(</span>

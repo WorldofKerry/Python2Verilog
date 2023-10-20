@@ -41,7 +41,6 @@
 <span class="kn">from</span> <span class="nn">python2verilog.utils</span> <span class="kn">import</span> <span class="n">env</span>
 <span class="kn">from</span> <span class="nn">python2verilog.utils.generics</span> <span class="kn">import</span> <span class="n">GenericRepr</span>
 <span class="kn">from</span> <span class="nn">python2verilog.utils.lines</span> <span class="kn">import</span> <span class="n">ImplementsToLines</span><span class="p">,</span> <span class="n">Indent</span><span class="p">,</span> <span class="n">Lines</span>
-<span class="kn">from</span> <span class="nn">python2verilog.utils.mit_license</span> <span class="kn">import</span> <span class="n">get_mit_license</span>
 <span class="kn">from</span> <span class="nn">python2verilog.utils.typed</span> <span class="kn">import</span> <span class="n">guard</span><span class="p">,</span> <span class="n">typed</span><span class="p">,</span> <span class="n">typed_list</span><span class="p">,</span> <span class="n">typed_strict</span>
 
 
@@ -273,27 +272,27 @@
                 <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">input_</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
                 <span class="n">input_lines</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;input wire signed [31:0] </span><span class="si">{</span><span class="n">input_</span><span class="si">}</span><span class="s2">,&quot;</span>
             <span class="n">input_lines</span><span class="o">.</span><span class="n">blank</span><span class="p">()</span>
-            <span class="n">input_lines</span> <span class="o">+=</span> <span class="s2">&quot;input wire _clock, // clock for sync&quot;</span>
+            <span class="n">input_lines</span> <span class="o">+=</span> <span class="s2">&quot;input wire __clock, // clock for sync&quot;</span>
             <span class="n">input_lines</span> <span class="o">+=</span> <span class="p">(</span>
-                <span class="s2">&quot;input wire _reset, // set high to reset, i.e. done will be high&quot;</span>
+                <span class="s2">&quot;input wire __reset, // set high to reset, i.e. done will be high&quot;</span>
             <span class="p">)</span>
             <span class="n">input_lines</span> <span class="o">+=</span> <span class="p">(</span>
-                <span class="s2">&quot;input wire _start, &quot;</span>
+                <span class="s2">&quot;input wire __start, &quot;</span>
                 <span class="o">+</span> <span class="s2">&quot;// set high to capture inputs (in same cycle) and start generating&quot;</span>
             <span class="p">)</span>
             <span class="n">input_lines</span><span class="o">.</span><span class="n">blank</span><span class="p">()</span>
             <span class="n">input_lines</span> <span class="o">+=</span> <span class="s2">&quot;// Implements a ready/valid handshake based on&quot;</span>
             <span class="n">input_lines</span> <span class="o">+=</span> <span class="s2">&quot;// http://www.cjdrake.com/readyvalid-protocol-primer.html&quot;</span>
             <span class="n">input_lines</span> <span class="o">+=</span> <span class="p">(</span>
-                <span class="s2">&quot;input wire _ready, // set high when caller is ready for output&quot;</span>
+                <span class="s2">&quot;input wire __ready, // set high when caller is ready for output&quot;</span>
             <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">input</span> <span class="o">=</span> <span class="n">input_lines</span>
 
         <span class="n">output_lines</span> <span class="o">=</span> <span class="n">Lines</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">is_not_testbench</span><span class="p">:</span>
-            <span class="n">output_lines</span> <span class="o">+=</span> <span class="s2">&quot;output reg _valid, // is high if output values are valid&quot;</span>
+            <span class="n">output_lines</span> <span class="o">+=</span> <span class="s2">&quot;output reg __valid, // is high if output values are valid&quot;</span>
             <span class="n">output_lines</span><span class="o">.</span><span class="n">blank</span><span class="p">()</span>
-            <span class="n">output_lines</span> <span class="o">+=</span> <span class="s2">&quot;output reg _done, // is high if module done outputting&quot;</span>
+            <span class="n">output_lines</span> <span class="o">+=</span> <span class="s2">&quot;output reg __done, // is high if module done outputting&quot;</span>
             <span class="n">output_lines</span><span class="o">.</span><span class="n">blank</span><span class="p">()</span>
             <span class="n">output_lines</span> <span class="o">+=</span> <span class="s2">&quot;// Output values as a tuple with respective index(es)&quot;</span>
             <span class="k">for</span> <span class="n">output</span> <span class="ow">in</span> <span class="n">outputs</span><span class="p">:</span>
@@ -348,9 +347,6 @@
             <span class="n">lines</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">stmt</span><span class="o">.</span><span class="n">to_lines</span><span class="p">(),</span> <span class="mi">1</span><span class="p">)</span>
         <span class="n">lines</span> <span class="o">+=</span> <span class="s2">&quot;endmodule&quot;</span>
         <span class="n">lines</span><span class="o">.</span><span class="n">blank</span><span class="p">()</span>
-        <span class="n">lines</span> <span class="o">+=</span> <span class="s2">&quot;/*&quot;</span>
-        <span class="n">lines</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">get_mit_license</span><span class="p">())</span>
-        <span class="n">lines</span> <span class="o">+=</span> <span class="s2">&quot;*/&quot;</span>
         <span class="k">return</span> <span class="n">lines</span></div>
 </div>
 
