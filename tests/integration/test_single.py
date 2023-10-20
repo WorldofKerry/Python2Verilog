@@ -14,12 +14,11 @@ from .utils import name_func
 
 PARAMETERS = [
     (keyword_test, [()]),
-    (fib, range(10, 31, 10)),
     (floor_div, [13, 23]),
     (operators, [(31, 13), (-31, 13), (31, -13), (-31, -13)]),
+    (multiplier_generator, [(13, 17), (78, 67)]),
     (multiplier, [(13, 17), (78, 67)]),
-    (multiplier_func, [(13, 17), (78, 67)]),
-    (hrange, [(0, 1, 10), (0, 1, 1000)]),
+    (p2vrange, [(0, 10, 1), (0, 1000, 1)]),
     (division, [(6, 7, 10), (2, 3, 30), (13, 17, 5)]),
     (circle_lines, [(21, 37, 7), (79, 45, 43)]),
     (happy_face, [(50, 51, 7), (76, 97, 43)]),

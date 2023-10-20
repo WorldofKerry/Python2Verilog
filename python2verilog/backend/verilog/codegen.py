@@ -342,7 +342,7 @@ class CodeGen:
             """
             string = '$display("%0d, %0d, '
             string += "%0d, " * (len(self.context.output_vars) - 1)
-            string += '%0d", _ready, _valid'
+            string += '%0d", __ready, __valid'
             for var in self.context.output_vars:
                 string += f", {var.ver_name}"
             string += ");"
@@ -350,16 +350,16 @@ class CodeGen:
 
         assert isinstance(self.context, ir.Context)
         decl: list[ver.Declaration] = []
-        decl.append(ver.Declaration("_clock", size=1, reg=True))
-        decl.append(ver.Declaration("_start", size=1, reg=True))
-        decl.append(ver.Declaration("_reset", size=1, reg=True))
-        decl.append(ver.Declaration("_ready", size=1, reg=True))
+        decl.append(ver.Declaration("__clock", size=1, reg=True))
+        decl.append(ver.Declaration("__start", size=1, reg=True))
+        decl.append(ver.Declaration("__reset", size=1, reg=True))
+        decl.append(ver.Declaration("__ready", size=1, reg=True))
         decl += [
             ver.Declaration(var.py_name, signed=True, reg=True)
             for var in self.context.input_vars
         ]
-        decl.append(ver.Declaration("_done", size=1))
-        decl.append(ver.Declaration("_valid", size=1))
+        decl.append(ver.Declaration("__done", size=1))
+        decl.append(ver.Declaration("__valid", size=1))
         decl += [
             ver.Declaration(var.ver_name, signed=True)
             for var in self.context.output_vars
@@ -371,7 +371,7 @@ class CodeGen:
         setups: list[ver.Statement] = list(decl)
         setups.append(ver.Instantiation(self.context.name, "DUT", ports))
 
-        setups.append(ver.Statement(literal="always #5 _clock = !_clock;"))
+        setups.append(ver.Statement(literal="always #5 __clock = !__clock;"))
 
         initial_body: list[ver.Statement | ver.While] = []
         initial_body.append(ver.BlockingSub(self.context.signals.clock, ir.UInt(0)))
@@ -430,7 +430,7 @@ class CodeGen:
                 while_body.append(ver.AtNegedgeStatement(self.context.signals.clock))
                 if config.random_ready:
                     while_body.append(
-                        ver.Statement("_ready = $urandom_range(0, 4) === 0;")
+                        ver.Statement("__ready = $urandom_range(0, 4) === 0;")
                     )
 
                 initial_body.append(
@@ -449,7 +449,7 @@ class CodeGen:
                 while_body.append(ver.AtNegedgeStatement(self.context.signals.clock))
                 if config.random_ready:
                     while_body.append(
-                        ver.Statement("_ready = $urandom_range(0, 4) === 0;")
+                        ver.Statement("__ready = $urandom_range(0, 4) === 0;")
                     )
                 initial_body.append(
                     ver.While(
@@ -487,9 +487,7 @@ class CodeGen:
                 header=Lines(
                     f"/*\n\n# Python Function\n{self.context.py_string}\n\n"
                     f"# Test Cases\n{python_test_code}\n*/\n\n"
-                )
-                if self.config.add_debug_comments
-                else None,
+                ),
             )
             return module
         raise RuntimeError("Needs the context")

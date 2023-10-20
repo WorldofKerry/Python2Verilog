@@ -70,6 +70,10 @@ def verilogify(
     context.py_func = func
     context.py_string = inspect.getsource(func)
 
+    for name in func_ast.args.args:
+        assert not name.arg.startswith(
+            "_"
+        ), f'Parameter beginning with "_" are reserved {name.arg}'
     context.input_vars = [ir.Var(name.arg) for name in func_ast.args.args]
 
     context.mode = mode

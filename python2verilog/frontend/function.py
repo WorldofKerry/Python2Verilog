@@ -318,7 +318,7 @@ class FromFunction:
         Implemented as an inline (no external unit).
         """
         callee_cxt, body_head, prev_tails = FromFunction(
-            callee_cxt, prefix=f"{prefix}_{target_name}_{target_name}_"
+            callee_cxt, prefix=f"{prefix}_{target_name}_"
         ).parse_inline()
 
         arguments = list(map(self._parse_expression, call_args))
@@ -344,7 +344,6 @@ class FromFunction:
         )
         tail.edge = ir.ClockedEdge(unique_id=f"{prefix}_outputs_last_e")
         for prev_tail in prev_tails:
-            print(type(prev_tail))
             prev_tail.child = head
 
         for var in (
@@ -353,7 +352,7 @@ class FromFunction:
             *callee_cxt.local_vars,
             *results,
         ):
-            self.__context.add_local_var(var)
+            self.__context.add_special_local_var(var)
 
         return inputs_head, [tail.edge]
 
@@ -481,7 +480,7 @@ class FromFunction:
         call_head, call_tails = self._parse_gen_call(
             call_args=stmt.iter.args,
             target_name=mangled_name,
-            prefix=f"{prefix}_call",
+            prefix=prefix,
             callee_cxt=gen_cxt,
         )
 
@@ -491,7 +490,7 @@ class FromFunction:
 
         body_head, body_tails = self._parse_for_target_and_body(
             inst=inst,
-            prefix=f"{prefix}_body",
+            prefix=prefix,
             body=stmt.body,
             targets=targets,
         )

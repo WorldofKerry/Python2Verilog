@@ -15,23 +15,12 @@ from types import FunctionType
 from typing import Any, Optional
 
 from python2verilog.api.modes import Modes
-from python2verilog.exceptions import (
-    StaticTypingError,
-    TypeInferenceError,
-    UnsupportedSyntaxError,
-)
+from python2verilog.exceptions import StaticTypingError, TypeInferenceError
 from python2verilog.ir.expressions import ExclusiveVar, State, Var
 from python2verilog.ir.instance import Instance
 from python2verilog.ir.signals import ProtocolSignals
-from python2verilog.utils.env import is_debug_mode
 from python2verilog.utils.generics import GenericReprAndStr
-from python2verilog.utils.typed import (
-    guard,
-    guard_dict,
-    typed,
-    typed_list,
-    typed_strict,
-)
+from python2verilog.utils.typed import guard, typed, typed_list, typed_strict
 
 
 @dataclass
@@ -285,7 +274,8 @@ class Context(GenericReprAndStr):
         """
         assert self.output_types is not None
         self._output_vars = [
-            ExclusiveVar(f"{self.prefix}out{i}") for i in range(len(self.output_types))
+            ExclusiveVar(f"{self.prefix}_output_{i}")
+            for i in range(len(self.output_types))
         ]
 
     def refresh_input_vars(self):
@@ -305,7 +295,25 @@ class Context(GenericReprAndStr):
 
     def add_local_var(self, var: Var):
         """
-        Appends global var
+        Appends to global vars with restrictions.
+
+        Good for appending Vars created from Python source
+        """
+        assert var.py_name.startswith(self.prefix)
+        prefixless = var.py_name[len(self.prefix) :]
+        if len(prefixless) != 1:
+            # A local var named "_" with no additional characters is ok
+            assert not prefixless.startswith("_"), (
+                'Local variables beginning with "_" '
+                f"with more than one character are reserved {var.py_name}"
+            )
+        return self.add_special_local_var(var)
+
+    def add_special_local_var(self, var: Var):
+        """
+        Appends to local vars without restrictions.
+
+        Good for appending Vars created internally (e.g. inline function calls)
         """
         if var.py_name in self.generator_instances:
             raise StaticTypingError(
