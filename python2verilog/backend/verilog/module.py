@@ -193,8 +193,6 @@ class Module(ver.Module):
             key: ir.UInt(index) for index, key in enumerate(sorted(context.states))
         }
 
-        self.inputs = self.input_lines(inputs=inputs, context=context)
-
         super().__init__(
             name=context.name,
             inputs=inputs,
@@ -203,8 +201,11 @@ class Module(ver.Module):
             localparams=state_vars,
         )
 
+        self.inputs = self._input_lines(inputs=inputs, context=context)
+        self.outputs = self._output_lines(outputs=outputs, context=context)
+
     @staticmethod
-    def input_lines(inputs: list[str], context: ir.Context):
+    def _input_lines(inputs: list[str], context: ir.Context):
         """
         Module inputs
         """
@@ -235,6 +236,28 @@ class Module(ver.Module):
         )
         return input_lines
 
+    @staticmethod
+    def _output_lines(outputs: list[str], context: ir.Context):
+        """
+        Get outputs
+        """
+        output_lines = Lines()
+        output_lines += (
+            f"output reg {context.signals.valid}, "
+            "// is high if output values are valid"
+        )
+        output_lines.blank()
+        output_lines += (
+            f"output reg {context.signals.done}, "
+            "// is high if module done outputting"
+        )
+        output_lines.blank()
+        output_lines += "// Output values as a tuple with respective index(es)"
+        for output in outputs:
+            assert isinstance(output, str)
+            output_lines += f"output reg signed [31:0] {output},"
+        return output_lines
+
     def to_lines(self):
         """
         To Verilog
@@ -244,9 +267,9 @@ class Module(ver.Module):
             lines.concat(Lines(self.header_comment.lines))
         lines += f"module {self.name} ("
         lines.concat(self.inputs, indent=1)
-        lines.concat(self.output, indent=1)
+        lines.concat(self.outputs, indent=1)
 
-        if self.inputs or self.output:  # This means there are ports
+        if self.inputs or self.outputs:  # This means there are ports
             lines[-1] = lines[-1][0:-1]  # removes last comma
 
         lines += ");"
