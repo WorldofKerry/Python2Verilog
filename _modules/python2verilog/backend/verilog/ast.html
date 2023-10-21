@@ -254,51 +254,14 @@
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="n">inputs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
-        <span class="n">outputs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
         <span class="n">body</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Statement</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">is_not_testbench</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">localparams</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ir</span><span class="o">.</span><span class="n">UInt</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">header</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Lines</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
 
-        <span class="n">input_lines</span> <span class="o">=</span> <span class="n">Lines</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">is_not_testbench</span><span class="p">:</span>
-            <span class="n">input_lines</span> <span class="o">+=</span> <span class="p">(</span>
-                <span class="s2">&quot;// Function parameters (only need to be set when start is high):&quot;</span>
-            <span class="p">)</span>
-            <span class="k">for</span> <span class="n">input_</span> <span class="ow">in</span> <span class="n">inputs</span><span class="p">:</span>
-                <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">input_</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
-                <span class="n">input_lines</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;input wire signed [31:0] </span><span class="si">{</span><span class="n">input_</span><span class="si">}</span><span class="s2">,&quot;</span>
-            <span class="n">input_lines</span><span class="o">.</span><span class="n">blank</span><span class="p">()</span>
-            <span class="n">input_lines</span> <span class="o">+=</span> <span class="s2">&quot;input wire __clock, // clock for sync&quot;</span>
-            <span class="n">input_lines</span> <span class="o">+=</span> <span class="p">(</span>
-                <span class="s2">&quot;input wire __reset, // set high to reset, i.e. done will be high&quot;</span>
-            <span class="p">)</span>
-            <span class="n">input_lines</span> <span class="o">+=</span> <span class="p">(</span>
-                <span class="s2">&quot;input wire __start, &quot;</span>
-                <span class="o">+</span> <span class="s2">&quot;// set high to capture inputs (in same cycle) and start generating&quot;</span>
-            <span class="p">)</span>
-            <span class="n">input_lines</span><span class="o">.</span><span class="n">blank</span><span class="p">()</span>
-            <span class="n">input_lines</span> <span class="o">+=</span> <span class="s2">&quot;// Implements a ready/valid handshake based on&quot;</span>
-            <span class="n">input_lines</span> <span class="o">+=</span> <span class="s2">&quot;// http://www.cjdrake.com/readyvalid-protocol-primer.html&quot;</span>
-            <span class="n">input_lines</span> <span class="o">+=</span> <span class="p">(</span>
-                <span class="s2">&quot;input wire __ready, // set high when caller is ready for output&quot;</span>
-            <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">input</span> <span class="o">=</span> <span class="n">input_lines</span>
-
-        <span class="n">output_lines</span> <span class="o">=</span> <span class="n">Lines</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">is_not_testbench</span><span class="p">:</span>
-            <span class="n">output_lines</span> <span class="o">+=</span> <span class="s2">&quot;output reg __valid, // is high if output values are valid&quot;</span>
-            <span class="n">output_lines</span><span class="o">.</span><span class="n">blank</span><span class="p">()</span>
-            <span class="n">output_lines</span> <span class="o">+=</span> <span class="s2">&quot;output reg __done, // is high if module done outputting&quot;</span>
-            <span class="n">output_lines</span><span class="o">.</span><span class="n">blank</span><span class="p">()</span>
-            <span class="n">output_lines</span> <span class="o">+=</span> <span class="s2">&quot;// Output values as a tuple with respective index(es)&quot;</span>
-            <span class="k">for</span> <span class="n">output</span> <span class="ow">in</span> <span class="n">outputs</span><span class="p">:</span>
-                <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
-                <span class="n">output_lines</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;output reg signed [31:0] </span><span class="si">{</span><span class="n">output</span><span class="si">}</span><span class="s2">,&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">output</span> <span class="o">=</span> <span class="n">output_lines</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span> <span class="o">=</span> <span class="n">Lines</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span> <span class="o">=</span> <span class="n">Lines</span><span class="p">()</span>
 
         <span class="k">if</span> <span class="n">body</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">stmt</span> <span class="ow">in</span> <span class="n">body</span><span class="p">:</span>
@@ -335,10 +298,10 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">lines</span> <span class="o">=</span> <span class="n">Lines</span><span class="p">()</span>
         <span class="n">lines</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;module </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> (&quot;</span>
-        <span class="n">lines</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">lines</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">input</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="p">:</span>  <span class="c1"># This means there are ports</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="p">:</span>  <span class="c1"># This means there are ports</span>
             <span class="n">lines</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">lines</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># removes last comma</span>
 
         <span class="n">lines</span> <span class="o">+=</span> <span class="s2">&quot;);&quot;</span>

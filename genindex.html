@@ -121,8 +121,6 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.ast.Case">Case (class in python2verilog.backend.verilog.ast)</a>
 </li>
-      <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.codegen.CaseBuilder">CaseBuilder (class in python2verilog.backend.verilog.codegen)</a>
-</li>
       <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.ast.CaseItem">CaseItem (class in python2verilog.backend.verilog.ast)</a>
 </li>
       <li><a href="python2verilog.optimizer.html#python2verilog.optimizer.increase_work.IncreaseWorkPerClockCycle.chain_generators">chain_generators() (IncreaseWorkPerClockCycle static method)</a>
@@ -159,7 +157,7 @@
 </li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.graph.create_networkx_adjacency_list">create_networkx_adjacency_list() (in module python2verilog.ir.graph)</a>
 </li>
-      <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.codegen.CaseBuilder.create_quick_done">create_quick_done() (CaseBuilder static method)</a>
+      <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.fsm.FsmBuilder.create_quick_done">create_quick_done() (FsmBuilder static method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -181,9 +179,9 @@
 </li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.expressions.Div">Div (class in python2verilog.ir.expressions)</a>
 </li>
-      <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.codegen.CaseBuilder.do_edge">do_edge() (CaseBuilder method)</a>
+      <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.fsm.FsmBuilder.do_edge">do_edge() (FsmBuilder method)</a>
 </li>
-      <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.codegen.CaseBuilder.do_vertex">do_vertex() (CaseBuilder method)</a>
+      <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.fsm.FsmBuilder.do_vertex">do_vertex() (FsmBuilder method)</a>
 </li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.done_state">done_state (Context property)</a>
 </li>
@@ -231,9 +229,13 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="python2verilog.ir.html#python2verilog.ir.expressions.FloorDiv">FloorDiv (class in python2verilog.ir.expressions)</a>
 </li>
+      <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.freeze">freeze() (Context method)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="python2verilog.exceptions.html#python2verilog.exceptions.UnsupportedSyntaxError.from_pyast">from_pyast() (UnsupportedSyntaxError class method)</a>
+</li>
+      <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.fsm.FsmBuilder">FsmBuilder (class in python2verilog.backend.verilog.fsm)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -249,11 +251,13 @@
 </li>
       <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.ast.Statement.get_blocked_comment">get_blocked_comment() (Statement method)</a>
 </li>
-      <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.codegen.CaseBuilder.get_case">get_case() (CaseBuilder method)</a>
+      <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.fsm.FsmBuilder.get_case">get_case() (FsmBuilder method)</a>
 </li>
       <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.ast.Statement.get_inline_comment">get_inline_comment() (Statement method)</a>
 </li>
       <li><a href="python2verilog.utils.html#python2verilog.utils.mit_license.get_mit_license">get_mit_license() (in module python2verilog.utils.mit_license)</a>
+</li>
+      <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.codegen.CodeGen.get_module">get_module() (CodeGen method)</a>
 </li>
       <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.codegen.CodeGen.get_module_lines">get_module_lines() (CodeGen method)</a>
 </li>
@@ -361,6 +365,8 @@
 <h2 id="M">M</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.module.Module.make_start_ifelse">make_start_ifelse() (Module static method)</a>
+</li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.make_var">make_var() (Context method)</a>
 </li>
       <li><a href="python2verilog.optimizer.html#python2verilog.optimizer.increase_work.IncreaseWorkPerClockCycle.map_to_ver_name">map_to_ver_name() (IncreaseWorkPerClockCycle static method)</a>
@@ -388,6 +394,12 @@
         <li><a href="python2verilog.backend.verilog.html#module-python2verilog.backend.verilog.codegen">python2verilog.backend.verilog.codegen</a>
 </li>
         <li><a href="python2verilog.backend.verilog.html#module-python2verilog.backend.verilog.config">python2verilog.backend.verilog.config</a>
+</li>
+        <li><a href="python2verilog.backend.verilog.html#module-python2verilog.backend.verilog.fsm">python2verilog.backend.verilog.fsm</a>
+</li>
+        <li><a href="python2verilog.backend.verilog.html#module-python2verilog.backend.verilog.module">python2verilog.backend.verilog.module</a>
+</li>
+        <li><a href="python2verilog.backend.verilog.html#module-python2verilog.backend.verilog.testbench">python2verilog.backend.verilog.testbench</a>
 </li>
         <li><a href="python2verilog.exceptions.html#module-python2verilog.exceptions">python2verilog.exceptions</a>
 </li>
@@ -431,11 +443,11 @@
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.ast.Module">Module (class in python2verilog.backend.verilog.ast)</a>
+
+      <ul>
+        <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.module.Module">(class in python2verilog.backend.verilog.module)</a>
 </li>
-      <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.codegen.CodeGen.module">module (CodeGen property)</a>
-</li>
-      <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.module_file">module_file (Context property)</a>
-</li>
+      </ul></li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.instance.Instance.module_name">module_name (Instance attribute)</a>
 </li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.expressions.Mul">Mul (class in python2verilog.ir.expressions)</a>
@@ -452,7 +464,7 @@
 </li>
       <li><a href="python2verilog.utils.html#python2verilog.utils.lines.Lines.nestify">nestify() (Lines static method)</a>
 </li>
-      <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.codegen.CaseBuilder.new_caseitem">new_caseitem() (CaseBuilder method)</a>
+      <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.fsm.FsmBuilder.new_caseitem">new_caseitem() (FsmBuilder method)</a>
 </li>
       <li><a href="python2verilog.utils.html#python2verilog.utils.peek_counter.PeekCounter.next">next() (PeekCounter method)</a>
 </li>
@@ -570,6 +582,27 @@
 </li>
       </ul></li>
       <li>
+    python2verilog.backend.verilog.fsm
+
+      <ul>
+        <li><a href="python2verilog.backend.verilog.html#module-python2verilog.backend.verilog.fsm">module</a>
+</li>
+      </ul></li>
+      <li>
+    python2verilog.backend.verilog.module
+
+      <ul>
+        <li><a href="python2verilog.backend.verilog.html#module-python2verilog.backend.verilog.module">module</a>
+</li>
+      </ul></li>
+      <li>
+    python2verilog.backend.verilog.testbench
+
+      <ul>
+        <li><a href="python2verilog.backend.verilog.html#module-python2verilog.backend.verilog.testbench">module</a>
+</li>
+      </ul></li>
+      <li>
     python2verilog.exceptions
 
       <ul>
@@ -583,6 +616,8 @@
         <li><a href="python2verilog.ir.html#module-python2verilog.ir">module</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     python2verilog.ir.context
 
@@ -597,8 +632,6 @@
         <li><a href="python2verilog.ir.html#module-python2verilog.ir.expressions">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     python2verilog.ir.graph
 
@@ -714,7 +747,7 @@
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.refresh_input_vars">refresh_input_vars() (Context method)</a>
+      <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.refresh_input_output_vars">refresh_input_output_vars() (Context method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -760,7 +793,7 @@
 </li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.test_cases">test_cases (Context attribute)</a>
 </li>
-      <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.testbench_file">testbench_file (Context property)</a>
+      <li><a href="python2verilog.backend.verilog.html#python2verilog.backend.verilog.testbench.Testbench">Testbench (class in python2verilog.backend.verilog.testbench)</a>
 </li>
       <li><a href="python2verilog.ir.html#python2verilog.ir.context.Context.testbench_name">testbench_name (Context property)</a>
 </li>

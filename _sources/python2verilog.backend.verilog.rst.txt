@@ -28,6 +28,30 @@ python2verilog.backend.verilog.config module
    :undoc-members:
    :show-inheritance:
 
+python2verilog.backend.verilog.fsm module
+-----------------------------------------
+
+.. automodule:: python2verilog.backend.verilog.fsm
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+python2verilog.backend.verilog.module module
+--------------------------------------------
+
+.. automodule:: python2verilog.backend.verilog.module
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+python2verilog.backend.verilog.testbench module
+-----------------------------------------------
+
+.. automodule:: python2verilog.backend.verilog.testbench
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Module contents
 ---------------
 
