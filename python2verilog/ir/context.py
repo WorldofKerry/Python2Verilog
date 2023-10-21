@@ -270,7 +270,7 @@ class Context(GenericReprAndStr):
         """
         Gets local variables
         """
-        return self._local_vars
+        return copy.deepcopy(self._local_vars)
 
     def add_local_var(self, var: Var):
         """
@@ -323,7 +323,7 @@ class Context(GenericReprAndStr):
         assert isinstance(name, str)
         self._states.add(name)
 
-    def __check_types(
+    def _check_types(
         self, expected_types: list[type[Any]], actual_values: list[type[Any]]
     ):
         for expected, actual in zip_longest(
@@ -339,14 +339,14 @@ class Context(GenericReprAndStr):
         Checks if input to functions' types matches previous inputs
         """
         assert guard(self.input_types, list)
-        self.__check_types(self.input_types, input_)
+        self._check_types(self.input_types, input_)
 
     def check_output_types(self, output):
         """
         Checks if outputs to functions' types matches previous outputs
         """
         assert guard(self.output_types, list)
-        self.__check_types(self.output_types, output)
+        self._check_types(self.output_types, output)
 
     def create_generator_instance(self, name: str) -> Instance:
         """
