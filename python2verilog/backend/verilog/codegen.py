@@ -9,6 +9,7 @@ from typing import Iterator, Optional, cast
 from python2verilog import ir
 from python2verilog.backend.verilog import ast as ver
 from python2verilog.backend.verilog.config import CodegenConfig, TestbenchConfig
+from python2verilog.backend.verilog.lowering import Module
 from python2verilog.optimizer import backwards_replace
 from python2verilog.utils.lines import Lines
 from python2verilog.utils.typed import (
@@ -55,6 +56,7 @@ class CodeGen:
 
         Requires context for I/O and declarations
         """
+        return Module(context, root)
         assert isinstance(root, ver.Case)
         assert isinstance(context, ir.Context)
 
@@ -144,7 +146,7 @@ class CodeGen:
                 ),
                 ver.Statement(),
             ]
-            + CodeGen.__make_start_if_else(root, context)
+            + CodeGen.make_start_ifelse(root, context)
         )
 
         always = ver.PosedgeSyncAlways(clock=context.signals.clock, body=always_body)
@@ -236,9 +238,7 @@ class CodeGen:
         )
 
     @staticmethod
-    def __make_start_if_else(
-        root: ver.Case, context: ir.Context
-    ) -> list[ver.Statement]:
+    def make_start_ifelse(root: ver.Case, context: ir.Context) -> list[ver.Statement]:
         """
         if (_start) begin
             ...
