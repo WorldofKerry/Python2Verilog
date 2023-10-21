@@ -1,5 +1,5 @@
 """
-A module that implements the python2verilog module interface
+Lowers the IR to high level module abstractions
 """
 
 from typing import Iterator, cast
@@ -111,7 +111,7 @@ class Module(ver.Module):
                 ),
                 ver.Statement(),
             ]
-            + self.make_start_ifelse(root, context)
+            + Module.make_start_ifelse(root, context)
         )
 
         always = ver.PosedgeSyncAlways(clock=context.signals.clock, body=always_body)
@@ -274,3 +274,9 @@ class Module(ver.Module):
             ],
         )
         return [if_else]
+
+
+class Testbench(ver.Module):
+    """
+    Testbench
+    """
