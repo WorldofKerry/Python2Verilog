@@ -42,12 +42,18 @@ class CodeGen:
         self.context.add_state_weak(str(context.done_state))
         self.context.add_state_weak(str(context.idle_state))
         self.case = typed_strict(root_case, ver.Case)
+        self._module: Optional[ver.Module] = None
+        self._testbench: Optional[ver.Module] = None
 
     def get_module(self):
         """
         Get Verilog module
         """
-        return Module(context=self.context, root=self.case)
+        return (
+            Module(context=self.context, root=self.case)
+            if self._module is None
+            else self._module
+        )
 
     def get_module_lines(self):
         """
@@ -69,7 +75,11 @@ class CodeGen:
 
         :param random_ready: whether or not to have random ready signal in the while loop
         """
-        return Testbench(context=self.context, config=config)
+        return (
+            Testbench(context=self.context, config=config)
+            if self._testbench is None
+            else self._testbench
+        )
 
     def get_testbench_lines(self, config: TestbenchConfig):
         """
