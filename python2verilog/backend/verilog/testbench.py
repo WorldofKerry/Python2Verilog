@@ -142,6 +142,14 @@ class Testbench(ver.Module):
                 initial_body.append(ver.Statement())
 
             else:
+                while_body.append(ver.AtPosedgeStatement(self.context.signals.clock))
+                while_body.append(
+                    ver.IfElse(
+                        condition=self.context.signals.ready,
+                        then_body=[make_display_stmt()],
+                        else_body=[],
+                    )
+                )
                 while_body.append(ver.AtNegedgeStatement(self.context.signals.clock))
                 if config.random_ready:
                     while_body.append(
