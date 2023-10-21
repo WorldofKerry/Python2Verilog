@@ -15,7 +15,7 @@ from python2verilog import (
     verilogify,
 )
 from python2verilog.backend import verilog
-from python2verilog.backend.verilog.codegen import CaseBuilder
+from python2verilog.backend.verilog.codegen import FsmBuilder
 from python2verilog.frontend.function import FromFunction
 from python2verilog.ir import Context, create_networkx_adjacency_list
 
@@ -91,13 +91,13 @@ class TestGenerator2Graph(unittest.TestCase):
         my_func()
 
         cxt, root = FromFunction(get_context(my_func)).parse_function()
-        case = CaseBuilder(root, cxt).get_case()
+        case = FsmBuilder(root, cxt).get_case()
         sv = verilog.CodeGen(root, cxt).get_module_str()
         # with open("./new.sv", mode="w") as f:
         #     f.write(str(sv))
 
         cxt, root = FromFunction(get_context(my_func)).parse_function()
-        case = CaseBuilder(root, cxt).get_case()
+        case = FsmBuilder(root, cxt).get_case()
         sv = verilog.CodeGen(root, cxt).get_module_str()
         # with open("./old.sv", mode="w") as f:
         #     f.write(str(sv))

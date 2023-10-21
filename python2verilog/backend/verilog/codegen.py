@@ -35,7 +35,7 @@ class CodeGen:
             config = CodegenConfig()
         self.context = typed_strict(context, ir.Context)
         self.config = typed_strict(config, CodegenConfig)
-        root_case = CaseBuilder(root, context, config).get_case()
+        root_case = FsmBuilder(root, context, config).get_case()
 
         for item in root_case.case_items:
             self.context.add_state_weak(
@@ -76,8 +76,8 @@ class CodeGen:
             vars_ += map(
                 lambda x: x.ver_name, context.signals.instance_specific_values()
             )
-            vars_ += map(lambda x: x.py_name, context.input_vars)
-            vars_ += map(lambda x: x.ver_name, context.input_vars)
+            vars_ += map(lambda x: x.py_name, context.input_vars)  # module inputs
+            vars_ += map(lambda x: x.ver_name, context.input_vars)  # cache
             vars_ += map(lambda x: x.ver_name, context.output_vars)
             vars_ += map(lambda x: x.ver_name, context.local_vars)
             str_ = f'$display("{context.name},%s,'
@@ -95,9 +95,8 @@ class CodeGen:
                 yield ver.NonBlockingSubsitution(instance.signals.ready, ir.UInt(0))
                 yield ver.NonBlockingSubsitution(instance.signals.start, ir.UInt(0))
 
-        always = ver.PosedgeSyncAlways(
-            context.signals.clock,
-            body=[
+        always_body = (
+            [
                 ver.Statement("`ifdef DEBUG"),
                 ver.Statement(make_debug_display(context)),
                 ver.Statement("`endif"),
@@ -145,26 +144,29 @@ class CodeGen:
                 ),
                 ver.Statement(),
             ]
-            + CodeGen.__make_start_if_else(root, context),
+            + CodeGen.__make_start_if_else(root, context)
         )
-        body: list[ver.Statement] = []
 
-        body += [
+        always = ver.PosedgeSyncAlways(clock=context.signals.clock, body=always_body)
+
+        module_body: list[ver.Statement] = []
+
+        module_body += [
             ver.Statement(comment="Local variables"),
         ]
         context.local_vars.sort(key=lambda x: x.ver_name)
-        body += [
+        module_body += [
             ver.Declaration(v.ver_name, reg=True, signed=True)
             for v in context.local_vars
         ]
 
-        body += [
+        module_body += [
             ver.Declaration(var.ver_name, reg=True, signed=True)
             for var in context.input_vars
         ]
 
         for instance in context.generator_instances.values():
-            body.append(
+            module_body.append(
                 ver.Statement(
                     comment="================ Function Instance ================"
                 )
@@ -180,18 +182,22 @@ class CodeGen:
             }
             # defaults = dict(zip(module.signals.values(), instance.signals.values()))
             for var in instance.inputs:
-                body.append(ver.Declaration(name=var.ver_name, reg=True))
+                module_body.append(ver.Declaration(name=var.ver_name, reg=True))
             for var in instance.outputs:
-                body.append(ver.Declaration(name=var.ver_name))
-            body.append(ver.Declaration(name=instance.signals.valid.ver_name, size=1))
-            body.append(ver.Declaration(name=instance.signals.done.ver_name, size=1))
-            body.append(
+                module_body.append(ver.Declaration(name=var.ver_name))
+            module_body.append(
+                ver.Declaration(name=instance.signals.valid.ver_name, size=1)
+            )
+            module_body.append(
+                ver.Declaration(name=instance.signals.done.ver_name, size=1)
+            )
+            module_body.append(
                 ver.Declaration(name=instance.signals.start.ver_name, size=1, reg=True)
             )
-            body.append(
+            module_body.append(
                 ver.Declaration(name=instance.signals.ready.ver_name, size=1, reg=True)
             )
-            body.append(
+            module_body.append(
                 ver.Instantiation(
                     instance.module_name,
                     instance.var.ver_name,
@@ -213,9 +219,10 @@ class CodeGen:
                 )
             )
 
-        body.append(ver.Statement(comment="Core"))
-        body.append(always)
+        module_body.append(ver.Statement(comment="Core"))
+        module_body.append(always)
 
+        # Consistent state var ordering in transpile
         state_vars = {
             key: ir.UInt(index) for index, key in enumerate(sorted(context.states))
         }
@@ -224,7 +231,7 @@ class CodeGen:
             name=context.name,
             inputs=inputs,
             outputs=outputs,
-            body=body,
+            body=module_body,
             localparams=state_vars,
         )
 
@@ -505,9 +512,9 @@ class CodeGen:
         return self.get_testbench_lines(config=config).to_string()
 
 
-class CaseBuilder:
+class FsmBuilder:
     """
-    Creates a case statement for the IR Graph
+    Creates a FSM using a case block from a IR Graph
     """
 
     def __init__(

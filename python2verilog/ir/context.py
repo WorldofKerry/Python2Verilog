@@ -249,7 +249,7 @@ class Context(GenericReprAndStr):
         self._done_state = other
 
     @property
-    def input_vars(self):
+    def input_vars(self) -> list[Var]:
         """
         Input variables
         """
@@ -261,7 +261,7 @@ class Context(GenericReprAndStr):
         self._input_vars = typed_list(other, Var)
 
     @property
-    def output_vars(self):
+    def output_vars(self) -> list[Var]:
         """
         Output variables
         """

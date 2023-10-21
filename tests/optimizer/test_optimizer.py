@@ -3,7 +3,7 @@ import unittest
 
 from python2verilog import ir
 from python2verilog.backend.verilog import CodeGen
-from python2verilog.backend.verilog.codegen import CaseBuilder
+from python2verilog.backend.verilog.codegen import FsmBuilder
 from python2verilog.optimizer import IncreaseWorkPerClockCycle, backwards_replace
 
 
@@ -54,7 +54,7 @@ class TestGraphApplyMapping(unittest.TestCase):
         node.child = ir.AssignNode(ui(), lvalue=a, rvalue=c)
 
         IncreaseWorkPerClockCycle(head.child)
-        case = CaseBuilder(head.child, ir.Context()).get_case()
+        case = FsmBuilder(head.child, ir.Context()).get_case()
         # logging.error(case.to_string())
         self.assertEqual(len(case.case_items), 1)
 
@@ -75,7 +75,7 @@ class TestGraphApplyMapping(unittest.TestCase):
         node.child = ir.AssignNode(ui(), lvalue=a, rvalue=c)
 
         IncreaseWorkPerClockCycle(head.child)
-        case = CaseBuilder(head.child, ir.Context()).get_case()
+        case = FsmBuilder(head.child, ir.Context()).get_case()
         # logging.error(case.to_string())
         self.assertEqual(len(case.case_items), 2)
 
@@ -102,6 +102,6 @@ class TestGraphApplyMapping(unittest.TestCase):
         node.child = ir.AssignNode(ui(), lvalue=b, rvalue=a)
 
         IncreaseWorkPerClockCycle(head.child)
-        case = CaseBuilder(head.child, ir.Context()).get_case()
+        case = FsmBuilder(head.child, ir.Context()).get_case()
         # logging.error("%s", case)
         self.assertTrue("_b <= _a" in str(case))
