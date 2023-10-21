@@ -180,7 +180,7 @@ class Testbench(ver.Module):
             self.context.testbench_name,
             body=setups + [initial_loop],
             header=Lines(
-                f"/*\n\n# Python Function\n{self.context.py_string}\n\n"
-                f"# Test Cases\n{python_test_code}\n*/\n\n"
+                f"/*\n# Python Function\n{self.context.py_string}\n"
+                f"# Test Cases\n{python_test_code}*/\n"
             ),
         )
