@@ -1,5 +1,5 @@
 """
-Lowers the IR to high level module abstractions
+Creates module from context and FSM
 """
 
 from typing import Iterator, cast
@@ -274,9 +274,3 @@ class Module(ver.Module):
             ],
         )
         return [if_else]
-
-
-class Testbench(ver.Module):
-    """
-    Testbench
-    """

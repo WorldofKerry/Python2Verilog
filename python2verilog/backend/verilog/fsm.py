@@ -9,7 +9,8 @@ from typing import Optional
 from python2verilog import ir
 from python2verilog.backend.verilog import ast as ver
 from python2verilog.backend.verilog.config import CodegenConfig, TestbenchConfig
-from python2verilog.backend.verilog.lowering import Module
+from python2verilog.backend.verilog.module import Module
+from python2verilog.backend.verilog.testbench import Testbench
 from python2verilog.optimizer import backwards_replace
 from python2verilog.utils.lines import Lines
 from python2verilog.utils.typed import (
