@@ -27,9 +27,3 @@ class CodegenConfig(TestbenchConfig):
     add_debug_comments: bool = field(
         default_factory=lambda: bool(env.get_var(env.Vars.DEBUG_COMMENTS))
     )
-
-    # def __post_init__(self):
-    #     self.add_debug_comments |= bool(env.get_var(env.Vars.DEBUG_COMMENTS))
-
-    # def __hash__(self):
-    #     return hash(self.__dict__)
