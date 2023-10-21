@@ -2,4 +2,4 @@
 Python to IR Parsers
 """
 
-from .function import FromFunction
+from .function import Function

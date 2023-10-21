@@ -15,8 +15,8 @@ from python2verilog import (
     verilogify,
 )
 from python2verilog.backend import verilog
-from python2verilog.backend.verilog.codegen import CaseBuilder
-from python2verilog.frontend.function import FromFunction
+from python2verilog.backend.verilog.codegen import FsmBuilder
+from python2verilog.frontend.function import Function
 from python2verilog.ir import Context, create_networkx_adjacency_list
 
 
@@ -48,9 +48,7 @@ class TestGenerator2Graph(unittest.TestCase):
         target: ast.Tuple = assign.targets[0]
         value: ast.Tuple = assign.value
 
-        result = FromFunction(ir.Context.empty_valid())._target_value_visitor(
-            target, value
-        )
+        result = Function(ir.Context.empty_valid())._target_value_visitor(target, value)
 
         self.assertEqual(
             str(list(result)), "[(_d, 10), (_e, _c), (_x, _a), (_y, _b), (_g, 20)]"
@@ -64,7 +62,7 @@ class TestGenerator2Graph(unittest.TestCase):
         value: ast.Tuple = assign.value
 
         with self.assertRaises(TypeError):
-            result = FromFunction(ir.Context.empty_valid())._target_value_visitor(
+            result = Function(ir.Context.empty_valid())._target_value_visitor(
                 target, value
             )
             list(result)
@@ -90,14 +88,14 @@ class TestGenerator2Graph(unittest.TestCase):
 
         my_func()
 
-        cxt, root = FromFunction(get_context(my_func)).parse_function()
-        case = CaseBuilder(root, cxt).get_case()
+        cxt, root = Function(get_context(my_func)).parse_function()
+        case = FsmBuilder(root, cxt).get_case()
         sv = verilog.CodeGen(root, cxt).get_module_str()
         # with open("./new.sv", mode="w") as f:
         #     f.write(str(sv))
 
-        cxt, root = FromFunction(get_context(my_func)).parse_function()
-        case = CaseBuilder(root, cxt).get_case()
+        cxt, root = Function(get_context(my_func)).parse_function()
+        case = FsmBuilder(root, cxt).get_case()
         sv = verilog.CodeGen(root, cxt).get_module_str()
         # with open("./old.sv", mode="w") as f:
         #     f.write(str(sv))
