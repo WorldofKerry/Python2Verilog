@@ -87,14 +87,6 @@ class Context(GenericReprAndStr):
         """
         return f"{self.name}{self.testbench_suffix}"
 
-    def _repr(self):
-        """
-        Avoids recursion on itself
-        """
-        dic = copy.deepcopy(self.__dict__)
-        del dic["namespace"]
-        return dic
-
     def _use_input_type_hints(self):
         """
         Uses input type hints

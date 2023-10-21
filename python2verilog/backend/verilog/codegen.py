@@ -2,7 +2,6 @@
 Verilog Codegen
 """
 
-import itertools
 from typing import Optional
 
 from python2verilog import ir
@@ -11,8 +10,6 @@ from python2verilog.backend.verilog.config import CodegenConfig, TestbenchConfig
 from python2verilog.backend.verilog.fsm import FsmBuilder
 from python2verilog.backend.verilog.module import Module
 from python2verilog.backend.verilog.testbench import Testbench
-from python2verilog.optimizer import backwards_replace
-from python2verilog.utils.lines import Lines
 from python2verilog.utils.typed import (
     guard,
     guard_dict,
@@ -24,15 +21,12 @@ from python2verilog.utils.typed import (
 
 class CodeGen:
     """
-    Code Generator for Verilog
+    Builds the Verilog ast from the context and IR
     """
 
     def __init__(
         self, root: ir.Node, context: ir.Context, config: Optional[CodegenConfig] = None
     ):
-        """ "
-        Builds tree from Graph IR
-        """
         if not config:
             config = CodegenConfig()
         self.context = typed_strict(context, ir.Context)
@@ -47,31 +41,19 @@ class CodeGen:
         assert isinstance(context.done_state, ir.State)
         self.context.add_state_weak(str(context.done_state))
         self.context.add_state_weak(str(context.idle_state))
+        self.case = typed_strict(root_case, ver.Case)
 
-        self._module = CodeGen.__new_module(root_case, self.context)
-
-    @staticmethod
-    def __new_module(root: ver.Case, context: ir.Context):
-        """
-        Creates a module wrapper from the context
-
-        Requires context for I/O and declarations
-        """
-        return Module(context=context, root=root)
-
-    @property
-    def module(self):
+    def get_module(self):
         """
         Get Verilog module
         """
-        assert isinstance(self._module, ver.Module)
-        return self._module
+        return Module(context=self.context, root=self.case)
 
     def get_module_lines(self):
         """
         Get Verilog module as Lines
         """
-        return self.module.to_lines()
+        return self.get_module().to_lines()
 
     def get_module_str(self):
         """
