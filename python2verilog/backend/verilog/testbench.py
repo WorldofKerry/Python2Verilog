@@ -31,7 +31,7 @@ class Testbench(ver.Module):
             """
             string = '$display("%0d, %0d, '
             string += "%0d, " * (len(self.context.output_vars) - 1)
-            string += '%0d", __ready, __valid'
+            string += f'%0d", {context.signals.ready.ver_name}, {context.signals.valid.ver_name}'
             for var in self.context.output_vars:
                 string += f", {var.ver_name}"
             string += ");"
@@ -39,16 +39,16 @@ class Testbench(ver.Module):
 
         assert isinstance(self.context, ir.Context)
         decl: list[ver.Declaration] = []
-        decl.append(ver.Declaration("__clock", size=1, reg=True))
-        decl.append(ver.Declaration("__start", size=1, reg=True))
-        decl.append(ver.Declaration("__reset", size=1, reg=True))
-        decl.append(ver.Declaration("__ready", size=1, reg=True))
+        decl.append(ver.Declaration(context.signals.clock.ver_name, size=1, reg=True))
+        decl.append(ver.Declaration(context.signals.start.ver_name, size=1, reg=True))
+        decl.append(ver.Declaration(context.signals.reset.ver_name, size=1, reg=True))
+        decl.append(ver.Declaration(context.signals.ready.ver_name, size=1, reg=True))
         decl += [
             ver.Declaration(var.py_name, signed=True, reg=True)
             for var in self.context.input_vars
         ]
-        decl.append(ver.Declaration("__done", size=1))
-        decl.append(ver.Declaration("__valid", size=1))
+        decl.append(ver.Declaration(context.signals.done.ver_name, size=1))
+        decl.append(ver.Declaration(context.signals.valid.ver_name, size=1))
         decl += [
             ver.Declaration(var.ver_name, signed=True)
             for var in self.context.output_vars
@@ -60,7 +60,12 @@ class Testbench(ver.Module):
         setups: list[ver.Statement] = list(decl)
         setups.append(ver.Instantiation(self.context.name, "DUT", ports))
 
-        setups.append(ver.Statement(literal="always #5 __clock = !__clock;"))
+        setups.append(
+            ver.Statement(
+                literal=f"always #5 {context.signals.clock.ver_name} = "
+                f"!{context.signals.clock.ver_name};"
+            )
+        )
 
         initial_body: list[ver.Statement | ver.While] = []
         initial_body.append(ver.BlockingSub(self.context.signals.clock, ir.UInt(0)))
@@ -119,7 +124,9 @@ class Testbench(ver.Module):
                 while_body.append(ver.AtNegedgeStatement(self.context.signals.clock))
                 if config.random_ready:
                     while_body.append(
-                        ver.Statement("__ready = $urandom_range(0, 4) === 0;")
+                        ver.Statement(
+                            f"{context.signals.ready.ver_name} = $urandom_range(0, 4) === 0;"
+                        )
                     )
 
                 initial_body.append(
@@ -138,7 +145,9 @@ class Testbench(ver.Module):
                 while_body.append(ver.AtNegedgeStatement(self.context.signals.clock))
                 if config.random_ready:
                     while_body.append(
-                        ver.Statement("__ready = $urandom_range(0, 4) === 0;")
+                        ver.Statement(
+                            f"{context.signals.ready.ver_name} = $urandom_range(0, 4) === 0;"
+                        )
                     )
                 initial_body.append(
                     ver.While(
