@@ -193,7 +193,7 @@ class Module(ver.Module):
             key: ir.UInt(index) for index, key in enumerate(sorted(context.states))
         }
 
-        self.inputs = self.input_lines(inputs=inputs)
+        self.inputs = self.input_lines(inputs=inputs, context=context)
 
         super().__init__(
             name=context.name,
@@ -204,7 +204,7 @@ class Module(ver.Module):
         )
 
     @staticmethod
-    def input_lines(inputs: list[str]):
+    def input_lines(inputs: list[str], context: ir.Context):
         """
         Module inputs
         """
@@ -216,18 +216,23 @@ class Module(ver.Module):
             assert isinstance(input_, str)
             input_lines += f"input wire signed [31:0] {input_},"
         input_lines.blank()
-        input_lines += "input wire __clock, // clock for sync"
         input_lines += (
-            "input wire __reset, // set high to reset, i.e. done will be high"
+            f"input wire {context.signals.clock.ver_name}, " "// clock for sync"
         )
         input_lines += (
-            "input wire __start, "
+            f"input wire {context.signals.reset.ver_name}, "
+            "// set high to reset, i.e. done will be high"
+        )
+        input_lines += (
+            f"input wire {context.signals.start}, "
             + "// set high to capture inputs (in same cycle) and start generating"
         )
         input_lines.blank()
-        input_lines += "// Implements a ready/valid handshake based on"
-        input_lines += "// http://www.cjdrake.com/readyvalid-protocol-primer.html"
-        input_lines += "input wire __ready, // set high when caller is ready for output"
+        input_lines += "// Implements the ready/valid handshake"
+        input_lines += (
+            f"input wire {context.signals.ready}, "
+            "// set high when caller is ready for output"
+        )
         return input_lines
 
     def to_lines(self):
