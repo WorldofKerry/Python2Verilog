@@ -25,7 +25,7 @@ class Module(ver.Module):
         assert isinstance(root, ver.Case)
         assert isinstance(context, ir.Context)
 
-        inputs = []
+        inputs: list[str] = []
         for var in context.input_vars:
             inputs.append(var.py_name)
 
@@ -193,6 +193,8 @@ class Module(ver.Module):
             key: ir.UInt(index) for index, key in enumerate(sorted(context.states))
         }
 
+        self.inputs = self.input_lines(inputs=inputs)
+
         super().__init__(
             name=context.name,
             inputs=inputs,
@@ -200,6 +202,55 @@ class Module(ver.Module):
             body=module_body,
             localparams=state_vars,
         )
+
+    @staticmethod
+    def input_lines(inputs: list[str]):
+        """
+        Module inputs
+        """
+        input_lines = Lines()
+        input_lines += (
+            "// Function parameters (only need to be set when start is high):"
+        )
+        for input_ in inputs:
+            assert isinstance(input_, str)
+            input_lines += f"input wire signed [31:0] {input_},"
+        input_lines.blank()
+        input_lines += "input wire __clock, // clock for sync"
+        input_lines += (
+            "input wire __reset, // set high to reset, i.e. done will be high"
+        )
+        input_lines += (
+            "input wire __start, "
+            + "// set high to capture inputs (in same cycle) and start generating"
+        )
+        input_lines.blank()
+        input_lines += "// Implements a ready/valid handshake based on"
+        input_lines += "// http://www.cjdrake.com/readyvalid-protocol-primer.html"
+        input_lines += "input wire __ready, // set high when caller is ready for output"
+        return input_lines
+
+    def to_lines(self):
+        """
+        To Verilog
+        """
+        lines = Lines()
+        if self.header_comment:
+            lines.concat(Lines(self.header_comment.lines))
+        lines += f"module {self.name} ("
+        lines.concat(self.inputs, indent=1)
+        lines.concat(self.output, indent=1)
+
+        if self.inputs or self.output:  # This means there are ports
+            lines[-1] = lines[-1][0:-1]  # removes last comma
+
+        lines += ");"
+        lines.concat(self.local_params, 1)
+        for stmt in self.body:
+            lines.concat(stmt.to_lines(), 1)
+        lines += "endmodule"
+        lines.blank()
+        return lines
 
     @staticmethod
     def make_start_ifelse(root: ver.Case, context: ir.Context) -> list[ver.Statement]:
