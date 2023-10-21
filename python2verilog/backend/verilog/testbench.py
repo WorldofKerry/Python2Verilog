@@ -111,69 +111,42 @@ class Testbench(ver.Module):
 
             # While loop
             while_body: list[ver.Statement] = []
-
-            if self.context.is_generator:
-                while_body.append(ver.AtPosedgeStatement(self.context.signals.clock))
+            while_body.append(ver.AtPosedgeStatement(self.context.signals.clock))
+            while_body.append(
+                ver.IfElse(
+                    condition=self.context.signals.ready,
+                    then_body=[make_display_stmt()],
+                    else_body=[],
+                )
+            )
+            while_body.append(ver.AtNegedgeStatement(self.context.signals.clock))
+            if config.random_ready:
                 while_body.append(
-                    ver.IfElse(
-                        condition=self.context.signals.ready,
-                        then_body=[make_display_stmt()],
-                        else_body=[],
+                    ver.Statement(
+                        f"{context.signals.ready.ver_name} = $urandom_range(0, 4) === 0;"
                     )
                 )
-                while_body.append(ver.AtNegedgeStatement(self.context.signals.clock))
-                if config.random_ready:
-                    while_body.append(
-                        ver.Statement(
-                            f"{context.signals.ready.ver_name} = $urandom_range(0, 4) === 0;"
-                        )
-                    )
+            initial_body.append(
+                ver.While(
+                    condition=ir.UBinOp(
+                        ir.UnaryOp("!", self.context.signals.done),
+                        "||",
+                        ir.UnaryOp("!", self.context.signals.ready),
+                    ),
+                    body=while_body,
+                )
+            )
 
+            if not self.context.is_generator:
                 initial_body.append(
-                    ver.While(
-                        condition=ir.UBinOp(
-                            ir.UnaryOp("!", self.context.signals.done),
-                            "||",
-                            ir.UnaryOp("!", self.context.signals.ready),
-                        ),
-                        body=while_body,
+                    ver.IfElse(
+                        condition=self.context.signals.ready,
+                        then_body=[make_display_stmt()],
+                        else_body=[],
                     )
                 )
-                initial_body.append(ver.Statement())
 
-            else:
-                while_body.append(ver.AtPosedgeStatement(self.context.signals.clock))
-                while_body.append(
-                    ver.IfElse(
-                        condition=self.context.signals.ready,
-                        then_body=[make_display_stmt()],
-                        else_body=[],
-                    )
-                )
-                while_body.append(ver.AtNegedgeStatement(self.context.signals.clock))
-                if config.random_ready:
-                    while_body.append(
-                        ver.Statement(
-                            f"{context.signals.ready.ver_name} = $urandom_range(0, 4) === 0;"
-                        )
-                    )
-                initial_body.append(
-                    ver.While(
-                        condition=ir.UBinOp(
-                            ir.UnaryOp("!", self.context.signals.done),
-                            "||",
-                            ir.UnaryOp("!", self.context.signals.ready),
-                        ),
-                        body=while_body,
-                    )
-                )
-                initial_body.append(
-                    ver.IfElse(
-                        condition=self.context.signals.ready,
-                        then_body=[make_display_stmt()],
-                        else_body=[],
-                    )
-                )
+            initial_body.append(ver.Statement())
 
         initial_body.append(ver.Statement(literal="$finish;"))
 
