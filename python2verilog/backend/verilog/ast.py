@@ -182,10 +182,7 @@ class Module(ImplementsToLines):
     def __init__(
         self,
         name: str,
-        inputs: list[str],
-        outputs: list[str],
         body: Optional[list[Statement]] = None,
-        is_not_testbench=True,
         localparams: Optional[dict[str, ir.UInt]] = None,
         header: Optional[Lines] = None,
     ):

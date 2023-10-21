@@ -195,8 +195,6 @@ class Module(ver.Module):
 
         super().__init__(
             name=context.name,
-            inputs=inputs,
-            outputs=outputs,
             body=module_body,
             localparams=state_vars,
         )
@@ -257,28 +255,6 @@ class Module(ver.Module):
             assert isinstance(output, str)
             output_lines += f"output reg signed [31:0] {output},"
         return output_lines
-
-    def to_lines(self):
-        """
-        To Verilog
-        """
-        lines = Lines()
-        if self.header_comment:
-            lines.concat(Lines(self.header_comment.lines))
-        lines += f"module {self.name} ("
-        lines.concat(self.inputs, indent=1)
-        lines.concat(self.outputs, indent=1)
-
-        if self.inputs or self.outputs:  # This means there are ports
-            lines[-1] = lines[-1][0:-1]  # removes last comma
-
-        lines += ");"
-        lines.concat(self.local_params, 1)
-        for stmt in self.body:
-            lines.concat(stmt.to_lines(), 1)
-        lines += "endmodule"
-        lines.blank()
-        return lines
 
     @staticmethod
     def make_start_ifelse(root: ver.Case, context: ir.Context) -> list[ver.Statement]:

@@ -178,10 +178,7 @@ class Testbench(ver.Module):
 
         super().__init__(
             self.context.testbench_name,
-            [],
-            [],
             body=setups + [initial_loop],
-            is_not_testbench=False,
             header=Lines(
                 f"/*\n\n# Python Function\n{self.context.py_string}\n\n"
                 f"# Test Cases\n{python_test_code}\n*/\n\n"
