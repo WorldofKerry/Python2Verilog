@@ -3,13 +3,12 @@ Functions that take text as input
 """
 
 
-import copy
 import logging
 
 from python2verilog import ir
 from python2verilog.backend import verilog
 from python2verilog.backend.verilog.config import CodegenConfig, TestbenchConfig
-from python2verilog.frontend.function import FromFunction
+from python2verilog.frontend.function import Function
 from python2verilog.optimizer import IncreaseWorkPerClockCycle
 from python2verilog.utils.typed import typed
 
@@ -21,8 +20,8 @@ def context_to_codegen(context: ir.Context):
     :return: (codegen, ir)
     """
     context.validate()
-    context = copy.deepcopy(context)
-    context, ir_root = FromFunction(context).parse_function()
+    context, ir_root = Function(context).parse_function()
+    context.freeze()
     logging.debug(
         "context to codegen %s %s -O%s with %s",
         ir_root.unique_id,

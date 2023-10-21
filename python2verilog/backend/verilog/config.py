@@ -2,12 +2,12 @@
 Configurations
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from python2verilog.utils import env
 
 
-@dataclass
+@dataclass(frozen=True)
 class TestbenchConfig:
     """
     Configurations for test bench code generator
@@ -17,14 +17,13 @@ class TestbenchConfig:
     random_ready: bool = False
 
 
-@dataclass
+@dataclass(frozen=True)
 class CodegenConfig(TestbenchConfig):
     """
     Configurations for code generator
     """
 
     # Enable debug comments graph elements as comment
-    add_debug_comments: bool = False
-
-    def __post_init__(self):
-        self.add_debug_comments |= bool(env.get_var(env.Vars.DEBUG_COMMENTS))
+    add_debug_comments: bool = field(
+        default_factory=lambda: bool(env.get_var(env.Vars.DEBUG_COMMENTS))
+    )

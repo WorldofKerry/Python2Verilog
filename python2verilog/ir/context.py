@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import ast
 import copy
-import io
 import logging
 from dataclasses import dataclass, field
 from itertools import zip_longest
@@ -31,6 +30,8 @@ class Context(GenericReprAndStr):
     """
 
     # pylint: disable=too-many-instance-attributes, too-many-public-methods
+    _frozen: bool = False  # Make immutable
+
     name: str = ""
     testbench_suffix: str = "_tb"
     is_generator: bool = False
@@ -68,6 +69,17 @@ class Context(GenericReprAndStr):
         default_factory=dict
     )  # generator instances
 
+    def freeze(self):
+        """
+        Freeze this context to be immutable
+        """
+        self._frozen = True
+
+    def __setattr__(self, attr, value):
+        if self._frozen:
+            raise AttributeError("Frozen")
+        return super().__setattr__(attr, value)
+
     @classmethod
     def empty_valid(cls):
         """
@@ -86,14 +98,6 @@ class Context(GenericReprAndStr):
         Returns test bench module name in the generated verilog
         """
         return f"{self.name}{self.testbench_suffix}"
-
-    def _repr(self):
-        """
-        Avoids recursion on itself
-        """
-        dic = copy.deepcopy(self.__dict__)
-        del dic["namespace"]
-        return dic
 
     def _use_input_type_hints(self):
         """
@@ -189,7 +193,7 @@ class Context(GenericReprAndStr):
         Python ast node rooted at function
         """
         assert isinstance(self._py_ast, ast.FunctionDef)
-        return self._py_ast
+        return copy.deepcopy(self._py_ast)
 
     @py_ast.setter
     def py_ast(self, other: ast.FunctionDef):
@@ -197,38 +201,12 @@ class Context(GenericReprAndStr):
         self._py_ast = other
 
     @property
-    def testbench_file(self):
-        """
-        Testbench stream
-        """
-        assert isinstance(self._testbench_file, io.IOBase)
-        return self._testbench_file
-
-    @testbench_file.setter
-    def testbench_file(self, other: io.IOBase):
-        assert isinstance(other, io.IOBase)
-        self._testbench_file = other
-
-    @property
-    def module_file(self):
-        """
-        Module stream
-        """
-        assert isinstance(self._module_file, io.IOBase), type(self._module_file)
-        return self._module_file
-
-    @module_file.setter
-    def module_file(self, other: io.IOBase):
-        assert isinstance(other, io.IOBase)
-        self._module_file = other
-
-    @property
     def entry_state(self):
         """
         The first state that does work in the graph representation
         """
         assert isinstance(self._entry_state, State), self
-        return self._entry_state
+        return copy.deepcopy(self._entry_state)
 
     @entry_state.setter
     def entry_state(self, other: State):
@@ -241,7 +219,7 @@ class Context(GenericReprAndStr):
         The ready state
         """
         assert isinstance(self._done_state, State), self
-        return self._done_state
+        return copy.deepcopy(self._done_state)
 
     @done_state.setter
     def done_state(self, other: State):
@@ -249,7 +227,7 @@ class Context(GenericReprAndStr):
         self._done_state = other
 
     @property
-    def input_vars(self):
+    def input_vars(self) -> list[Var]:
         """
         Input variables
         """
@@ -261,12 +239,12 @@ class Context(GenericReprAndStr):
         self._input_vars = typed_list(other, Var)
 
     @property
-    def output_vars(self):
+    def output_vars(self) -> list[Var]:
         """
         Output variables
         """
         assert guard(self._output_vars, list), f"Unknown output variables {self}"
-        return self._output_vars
+        return copy.deepcopy(self._output_vars)
 
     def default_output_vars(self):
         """
@@ -278,20 +256,21 @@ class Context(GenericReprAndStr):
             for i in range(len(self.output_types))
         ]
 
-    def refresh_input_vars(self):
+    def refresh_input_output_vars(self):
         """
         Update input vars with prefix
         """
         self._input_vars = list(
             map(lambda x: self.make_var(x.py_name), self.input_vars),
         )
+        self.default_output_vars()
 
     @property
     def local_vars(self) -> list[Var]:
         """
         Gets local variables
         """
-        return self._local_vars
+        return copy.deepcopy(self._local_vars)
 
     def add_local_var(self, var: Var):
         """
@@ -344,7 +323,7 @@ class Context(GenericReprAndStr):
         assert isinstance(name, str)
         self._states.add(name)
 
-    def __check_types(
+    def _check_types(
         self, expected_types: list[type[Any]], actual_values: list[type[Any]]
     ):
         for expected, actual in zip_longest(
@@ -360,14 +339,14 @@ class Context(GenericReprAndStr):
         Checks if input to functions' types matches previous inputs
         """
         assert guard(self.input_types, list)
-        self.__check_types(self.input_types, input_)
+        self._check_types(self.input_types, input_)
 
     def check_output_types(self, output):
         """
         Checks if outputs to functions' types matches previous outputs
         """
         assert guard(self.output_types, list)
-        self.__check_types(self.output_types, output)
+        self._check_types(self.output_types, output)
 
     def create_generator_instance(self, name: str) -> Instance:
         """

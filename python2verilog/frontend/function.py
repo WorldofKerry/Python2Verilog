@@ -16,7 +16,7 @@ from python2verilog.exceptions import StaticTypingError, UnsupportedSyntaxError
 from python2verilog.utils.typed import guard, typed_list, typed_strict
 
 
-class FromFunction:
+class Function:
     """
     Parses python functions and generator functions
     """
@@ -27,8 +27,7 @@ class FromFunction:
     def __init__(self, context: ir.Context, prefix: str = "") -> None:
         self.__context = copy.deepcopy(context)
         self.__context.prefix = prefix
-        self.__context.default_output_vars()  # Have output vars use prefix
-        self.__context.refresh_input_vars()  # Update input vars to use prefix
+        self.__context.refresh_input_output_vars()  # Update to use prefix
         self.__head_and_tails: Optional[tuple[ir.Node, list[ir.Edge]]] = None
 
     def parse_function(self) -> tuple[ir.Context, ir.Node]:
@@ -317,7 +316,7 @@ class FromFunction:
 
         Implemented as an inline (no external unit).
         """
-        callee_cxt, body_head, prev_tails = FromFunction(
+        callee_cxt, body_head, prev_tails = Function(
             callee_cxt, prefix=f"{prefix}_{target_name}_"
         ).parse_inline()
 
@@ -805,7 +804,7 @@ class FromFunction:
             prev = node.child
         if not last_edge:
             node._child = None  # pylint: disable=protected-access
-        return cast(FromFunction._BasicNodeType, head), node
+        return cast(Function._BasicNodeType, head), node
 
     def _parse_assign(self, assign: pyast.Assign, prefix: str) -> ParseResult:
         """
