@@ -49,10 +49,13 @@ class TypeInferenceError(Exception):
     Type inferrence failed, either use the function in code or provide type hints
     """
 
-    def __init__(self, *args: object) -> None:
+    def __init__(self, name: str) -> None:
+        """
+        :param name: function name
+        """
         msg = (
-            "Input/output type inferrence failed, "
+            f"Input/output type inferrence failed for `{name}`, "
             "either use the function in Python code or provide type hints",
         )
 
-        super().__init__(" ".join(map(str, (*msg, *args))))
+        super().__init__(msg)

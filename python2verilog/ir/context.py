@@ -120,7 +120,7 @@ class Context(GenericReprAndStr):
         try:
             self.input_types = list(map(input_mapper, input_args))
         except Exception as e:
-            raise TypeInferenceError(f"in function `{self.name}`") from e
+            raise TypeInferenceError(self.name) from e
 
     def _use_output_type_hints(self):
         """
@@ -150,7 +150,7 @@ class Context(GenericReprAndStr):
         try:
             self.output_types = list(map(output_mapper, output_args))
         except Exception as e:
-            raise TypeInferenceError(f"in function `{self.name}`") from e
+            raise TypeInferenceError(self.name) from e
         self.default_output_vars()
 
     def validate(self):
