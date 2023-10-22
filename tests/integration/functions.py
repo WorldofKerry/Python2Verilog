@@ -360,3 +360,13 @@ def fib_product(n):
     for num in fib(n):
         prod = multiplier(num, num)
         yield prod
+
+
+def multi_funcs(a, b):
+    """
+    Testing multiple function calls and tested function calls
+    """
+    temp = multiplier(a, b)
+    yield temp
+    temp = multiplier(a + 10, b)
+    yield temp

@@ -20,7 +20,6 @@ def backwards_replace(
     """
     expr = copy.deepcopy(expr)
     if isinstance(expr, ir.Var):
-        # if not isinstance(expr, ir.ExclusiveVar):
         for key in mapping:
             if key.to_string() == expr.to_string():
                 return mapping[key]

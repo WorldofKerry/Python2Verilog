@@ -269,17 +269,20 @@ class Function:
             assert guard(func, pyast.Name)
             func_name = func.id
 
-            if target_name in map(
-                lambda x: x.py_name,
-                (
+            used_names = [
+                x.py_name
+                for x in (
                     *caller_cxt.local_vars,
                     *caller_cxt.input_vars,
                     *caller_cxt.output_vars,
-                ),
-            ):
-                raise StaticTypingError(
-                    f"{target_name} changed type from another type to generator instance"
                 )
+            ]
+
+            # if target_name in used_names:
+            #     raise StaticTypingError(
+            #         f"{target_name} changed type from another type to generator instance"
+            #         f" {type(target_name)} {list(used_names)} {target_name in used_names}"
+            #     )
 
             return target_name, func_name
 
