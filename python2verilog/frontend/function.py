@@ -184,7 +184,7 @@ class Function:
             assert guard(dummy.child, ir.Edge)
             return dummy, [dummy.child]
 
-        raise TypeError(f"Unexpected statement {pyast.dump(stmt)}")
+        raise UnsupportedSyntaxError.from_pyast(stmt, self.__context.name)
 
     def _parse_return(self, ret: pyast.Return, prefix: str) -> ParseResult:
         """

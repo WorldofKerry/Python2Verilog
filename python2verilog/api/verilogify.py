@@ -95,9 +95,7 @@ def verilogify(
         if not context.input_types:
             context.input_types = [type(arg) for arg in args]
             for val in context.input_types:
-                assert (
-                    val == int
-                ), f"Unexpected {val} as a input type {list(map(type, args))}"
+                assert val == int, f"Unexpected {val} as a input type"
         else:
             context.check_input_types(args)
 
@@ -111,7 +109,7 @@ def verilogify(
                 ret = either
             else:
                 raise StaticTypingError(
-                    f"Unexpected yielded value {either} from `{func.__name__}`"
+                    f"Unexpected yielded value `{either}` from `{func.__name__}`"
                 )
             return ret
 

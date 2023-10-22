@@ -17,10 +17,9 @@ class UnsupportedSyntaxError(Exception):
     Python syntax was not within the supported subset
     """
 
-    def __init__(self, *args: object) -> None:
+    def __init__(self, msg: object) -> None:
         super().__init__(
-            "Python syntax was not within the supported subset",
-            *args,
+            msg,
         )
 
     @classmethod
