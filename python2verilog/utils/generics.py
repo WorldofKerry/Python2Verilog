@@ -37,5 +37,6 @@ class GenericReprAndStr(GenericRepr):
     Implements a generic __repr__ and __str__ based on self.__dict__
     """
 
+    @reprlib.recursive_repr()
     def __str__(self):
         return f"{self.__class__.__name__}\n{pretty_dict(self.__dict__)}"

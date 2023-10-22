@@ -320,7 +320,7 @@ class Function:
         Implemented as an inline (no external unit).
         """
         callee_cxt, body_head, prev_tails = Function(
-            callee_cxt, prefix=f"{prefix}_{target_name}_"
+            callee_cxt, prefix=f"{prefix}_"
         ).parse_inline()
 
         arguments = list(map(self._parse_expression, call_args))
