@@ -54,7 +54,7 @@ class TypeInferenceError(Exception):
         :param name: function name
         """
         msg = (
-            f"Input/output type inferrence failed for `{name}`, "
+            f"Input/output type inferrence failed for function `{name}`, "
             "either use the function in Python code or provide type hints",
         )
 
