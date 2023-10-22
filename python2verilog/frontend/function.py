@@ -859,8 +859,8 @@ class Function:
                         self._parse_expression(expr.values[1]),
                     )
         except Exception as e:
-            raise UnsupportedSyntaxError.from_pyast(expr) from e
-        raise UnsupportedSyntaxError.from_pyast(expr)
+            raise UnsupportedSyntaxError.from_pyast(expr, self.__context.name) from e
+        raise UnsupportedSyntaxError.from_pyast(expr, self.__context.name)
 
     def _parse_subscript(self, node: pyast.Subscript) -> ir.Expression:
         """

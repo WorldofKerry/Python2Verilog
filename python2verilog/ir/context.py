@@ -296,7 +296,8 @@ class Context(GenericReprAndStr):
         """
         if var.py_name in self.generator_instances:
             raise StaticTypingError(
-                f"{var.py_name} changed type from generator instance to another type"
+                f"Variable `{var.py_name}` changed type from generator"
+                f" instance to another type in {self.name}"
             )
         if var not in (*self._local_vars, *self.input_vars, *self.output_vars):
             self._local_vars.append(typed_strict(var, Var))

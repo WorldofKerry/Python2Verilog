@@ -110,7 +110,9 @@ def verilogify(
             elif isinstance(either, tuple):
                 ret = either
             else:
-                raise StaticTypingError(f"Unexpected yielded value {either}")
+                raise StaticTypingError(
+                    f"Unexpected yielded value {either} from `{func.__name__}`"
+                )
             return ret
 
         # Always get output one-ahead of what func user sees
@@ -186,7 +188,7 @@ def verilogify(
                     assert guard(value, int)
                 except Exception as e:
                     raise StaticTypingError(
-                        "Expected `int` type inputs and outputs"
+                        f"Expected `int` type inputs and outputs for `{func.__name__}`"
                     ) from e
             return ret
 

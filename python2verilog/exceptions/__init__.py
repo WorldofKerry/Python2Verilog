@@ -24,11 +24,13 @@ class UnsupportedSyntaxError(Exception):
         )
 
     @classmethod
-    def from_pyast(cls, node: ast.AST):
+    def from_pyast(cls, node: ast.AST, name: str):
         """
         Based on AST error
         """
-        inst = cls(f"Unsupported Python syntax {ast.dump(node)}")
+        inst = cls(
+            f"Unsupported Python syntax {ast.dump(node)} found in function `{name}`"
+        )
         return inst
 
 
