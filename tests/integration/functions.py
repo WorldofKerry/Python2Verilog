@@ -370,3 +370,11 @@ def multi_funcs(a, b):
     yield temp
     temp = multiplier(a + 10, b)
     yield temp
+    for i in p2vrange(0, 2, 1):
+        yield i
+    for i in p2vrange(0, 2, 1):
+        yield i
+    for i in p2vrange(0, 2, 1):
+        yield i
+        for i in p2vrange(0, 2, 1):
+            yield i
