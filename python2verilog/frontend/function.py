@@ -477,7 +477,7 @@ class Function:
         assert guard(stmt.iter, pyast.Call)
         gen_cxt = self.__context.namespace[self._get_func_call_name(stmt.iter)]
 
-        mangled_name = f"{prefix}_offset{stmt.col_offset}"  # consider nested for loops
+        mangled_name = f"nested{stmt.col_offset}"  # consider nested for loops
 
         call_head, call_tails = self._parse_gen_call(
             call_args=stmt.iter.args,
