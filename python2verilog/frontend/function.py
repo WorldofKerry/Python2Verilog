@@ -195,12 +195,15 @@ class Function:
             return done, []
         assert not self.__context.is_generator
 
-        if isinstance(ret.value, pyast.Tuple):
-            stmts = [self._parse_expression(c) for c in ret.value.elts]
-        elif isinstance(ret.value, pyast.expr):
-            stmts = [self._parse_expression(ret.value)]
-        else:
-            raise TypeError(f"Expected tuple {type(ret.value)} {pyast.dump(ret)}")
+        try:
+            if isinstance(ret.value, pyast.Tuple):
+                stmts = [self._parse_expression(c) for c in ret.value.elts]
+            elif isinstance(ret.value, pyast.expr):
+                stmts = [self._parse_expression(ret.value)]
+            else:
+                raise UnsupportedSyntaxError.from_pyast(ret, self.__context.name)
+        except Exception as e:
+            raise UnsupportedSyntaxError.from_pyast(ret, self.__context.name) from e
 
         self.__context.validate()
         head, tail = self._weave_nonclocked_edges(
