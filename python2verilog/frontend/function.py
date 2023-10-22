@@ -256,7 +256,7 @@ class Function:
         target = assign.targets[0]
         assert isinstance(target, pyast.Name)
 
-        def get_func_call_names(caller_cxt: ir.Context):
+        def get_func_call_names():
             """
             :return: target_name, func_name
             """
@@ -269,24 +269,9 @@ class Function:
             assert guard(func, pyast.Name)
             func_name = func.id
 
-            used_names = [
-                x.py_name
-                for x in (
-                    *caller_cxt.local_vars,
-                    *caller_cxt.input_vars,
-                    *caller_cxt.output_vars,
-                )
-            ]
-
-            # if target_name in used_names:
-            #     raise StaticTypingError(
-            #         f"{target_name} changed type from another type to generator instance"
-            #         f" {type(target_name)} {list(used_names)} {target_name in used_names}"
-            #     )
-
             return target_name, func_name
 
-        target_name, func_name = get_func_call_names(self.__context)
+        target_name, func_name = get_func_call_names()
 
         # Get context of generator function being called
         callee_cxt = self.__context.namespace[func_name]
@@ -302,7 +287,7 @@ class Function:
             call_args=assign.value.args,
             callee_cxt=callee_cxt,
             targets=assign.targets,
-            target_name=target_name,
+            _target_name=target_name,
             prefix=prefix,
         )
 
@@ -311,7 +296,7 @@ class Function:
         call_args: list[pyast.expr],
         targets: list[pyast.expr],
         callee_cxt: ir.Context,
-        target_name: str,
+        _target_name: str,
         prefix: str,
     ) -> ParseResult:
         """
