@@ -840,29 +840,26 @@ class Function:
         """
         <expression> (e.g. constant, name, subscript, etc., those that return a value)
         """
-        try:
-            if isinstance(expr, pyast.Constant):
-                return ir.Int(expr.value)
-            if isinstance(expr, pyast.Name):
-                return self.__context.make_var(expr.id)
-            if isinstance(expr, pyast.Subscript):
-                return self._parse_subscript(expr)
-            if isinstance(expr, pyast.BinOp):
-                return self._parse_binop(expr)
-            if isinstance(expr, pyast.UnaryOp):
-                if isinstance(expr.op, pyast.USub):
-                    return ir.UnaryOp("-", self._parse_expression(expr.operand))
-            if isinstance(expr, pyast.Compare):
-                return self._parse_compare(expr)
-            if isinstance(expr, pyast.BoolOp):
-                if isinstance(expr.op, pyast.And):
-                    return ir.UBinOp(
-                        self._parse_expression(expr.values[0]),
-                        "&&",
-                        self._parse_expression(expr.values[1]),
-                    )
-        except Exception as e:
-            raise UnsupportedSyntaxError.from_pyast(expr, self.__context.name) from e
+        if isinstance(expr, pyast.Constant):
+            return ir.Int(expr.value)
+        if isinstance(expr, pyast.Name):
+            return self.__context.make_var(expr.id)
+        if isinstance(expr, pyast.Subscript):
+            return self._parse_subscript(expr)
+        if isinstance(expr, pyast.BinOp):
+            return self._parse_binop(expr)
+        if isinstance(expr, pyast.UnaryOp):
+            if isinstance(expr.op, pyast.USub):
+                return ir.UnaryOp("-", self._parse_expression(expr.operand))
+        if isinstance(expr, pyast.Compare):
+            return self._parse_compare(expr)
+        if isinstance(expr, pyast.BoolOp):
+            if isinstance(expr.op, pyast.And):
+                return ir.UBinOp(
+                    self._parse_expression(expr.values[0]),
+                    "&&",
+                    self._parse_expression(expr.values[1]),
+                )
         raise UnsupportedSyntaxError.from_pyast(expr, self.__context.name)
 
     def _parse_subscript(self, node: pyast.Subscript) -> ir.Expression:
@@ -898,7 +895,9 @@ class Function:
         elif isinstance(node.ops[0], pyast.Eq):
             operator = "==="
         else:
-            raise UnsupportedSyntaxError(f"Unknown operator {pyast.dump(node.ops[0])}")
+            raise UnsupportedSyntaxError(
+                f"Unsupported operator {pyast.dump(node.ops[0])}"
+            )
         return ir.UBinOp(
             left=self._parse_expression(node.left),
             oper=operator,
@@ -933,4 +932,4 @@ class Function:
             left = self._parse_expression(expr.left)
             right = self._parse_expression(expr.right)
             return ir.Mod(left, right)
-        raise UnsupportedSyntaxError(f"Unexpected binop type {pyast.dump(expr.op)}")
+        raise UnsupportedSyntaxError(f"Unsupported binop `{pyast.dump(expr.op)}")

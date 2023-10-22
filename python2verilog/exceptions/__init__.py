@@ -28,7 +28,8 @@ class UnsupportedSyntaxError(Exception):
         Based on AST error
         """
         inst = cls(
-            f"Unsupported Python syntax `{ast.unparse(node)}` found in function `{name}`"
+            f"Unsupported Python syntax `{ast.unparse(node)}` found in function "
+            f"`{name}` as {ast.dump(node)}"
         )
         return inst
 
