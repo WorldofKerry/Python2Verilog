@@ -367,7 +367,7 @@ class Context(GenericReprAndStr):
             )
         )
 
-        signals = ProtocolSignals(prefix=f"{self.prefix}{name}_{self.name}__")
+        signals = ProtocolSignals(prefix=f"{self.prefix}{self.name}_{name}__")
 
         return Instance(
             self.name,
