@@ -4,7 +4,7 @@ Graph v2
 
 from __future__ import annotations
 
-from typing import Collection, Optional
+from typing import Collection, Optional, Union
 
 from python2verilog.ir import expressions as expr
 from python2verilog.utils.lines import Lines
@@ -75,6 +75,15 @@ class Graph:
         """
         assert all(target not in self.adj_list[source] for target in targets)
         self.adj_list[source].union(targets)
+
+    def __getitem__(self, key: Union[Element, str]):
+        if isinstance(key, Element):
+            return self.adj_list[key]
+        if isinstance(key, str):
+            for elem in self.adj_list:
+                if elem.unique_id == key:
+                    return elem
+        raise TypeError()
 
     def _next_unique(self):
         """

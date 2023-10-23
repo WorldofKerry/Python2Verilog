@@ -5,7 +5,8 @@ import networkx as nx
 from matplotlib import pyplot as plt
 
 from python2verilog.ir.expressions import *  # nopycln: import
-from python2verilog.ir.graph2 import *  # nopycln: import
+from python2verilog.ir.graph2 import *
+from python2verilog.optimizer.graph2optimizer import visit_nonclocked  # nopycln: import
 
 
 class TestGraph(unittest.TestCase):
@@ -26,10 +27,10 @@ class TestGraph(unittest.TestCase):
             root = graph.add_node(AssignNode(i, Int(0)))
             prev = root
 
-            prev = graph.add_node(ClockNode(), prev)
-            if_i_lt_n = graph.add_node(BranchNode(BinOp(i, "<", n)), prev)
+            if_i_lt_n_prev = graph.add_node(ClockNode(), prev)
+            prev = graph.add_node(BranchNode(BinOp(i, "<", n)), if_i_lt_n_prev)
 
-            prev = graph.add_node(TrueNode(), if_i_lt_n)
+            prev = graph.add_node(TrueNode(), prev)
             if_a_mod_2 = graph.add_node(BranchNode(Mod(a, Int(2))), prev)
             prev = graph.add_node(TrueNode(), if_a_mod_2)
             prev = graph.add_node(AssignNode(out, a), prev)
@@ -39,13 +40,19 @@ class TestGraph(unittest.TestCase):
             b_assign_a_plus_b = graph.add_node(AssignNode(b, BinOp(a, "+", b)), prev)
             prev = graph.add_node(ClockNode(), a_assign_b, b_assign_a_plus_b)
             prev = graph.add_node(
-                AssignNode(i, BinOp(i, "+", Int(1))), prev, children=[if_i_lt_n]
+                AssignNode(i, BinOp(i, "+", Int(1))), prev, children=[if_i_lt_n_prev]
             )
             return graph, root
 
         graph, root = make_graph()
         logging.error(graph)
         logging.error(root)
+
+        nonclocked = list(visit_nonclocked(graph, graph["7"]))
+        logging.error(nonclocked)
+
+        nonclocked = list(visit_nonclocked(graph, graph["11"]))
+        logging.error(nonclocked)
 
         with open("graph2_cytoscape.log", mode="w") as f:
             f.write(str(graph.to_cytoscape(id_in_label=True)))
