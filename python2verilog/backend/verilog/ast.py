@@ -182,51 +182,14 @@ class Module(ImplementsToLines):
     def __init__(
         self,
         name: str,
-        inputs: list[str],
-        outputs: list[str],
         body: Optional[list[Statement]] = None,
-        is_not_testbench=True,
         localparams: Optional[dict[str, ir.UInt]] = None,
         header: Optional[Lines] = None,
     ):
         self.name = name
 
-        input_lines = Lines()
-        if is_not_testbench:
-            input_lines += (
-                "// Function parameters (only need to be set when start is high):"
-            )
-            for input_ in inputs:
-                assert isinstance(input_, str)
-                input_lines += f"input wire signed [31:0] {input_},"
-            input_lines.blank()
-            input_lines += "input wire __clock, // clock for sync"
-            input_lines += (
-                "input wire __reset, // set high to reset, i.e. done will be high"
-            )
-            input_lines += (
-                "input wire __start, "
-                + "// set high to capture inputs (in same cycle) and start generating"
-            )
-            input_lines.blank()
-            input_lines += "// Implements a ready/valid handshake based on"
-            input_lines += "// http://www.cjdrake.com/readyvalid-protocol-primer.html"
-            input_lines += (
-                "input wire __ready, // set high when caller is ready for output"
-            )
-        self.input = input_lines
-
-        output_lines = Lines()
-        if is_not_testbench:
-            output_lines += "output reg __valid, // is high if output values are valid"
-            output_lines.blank()
-            output_lines += "output reg __done, // is high if module done outputting"
-            output_lines.blank()
-            output_lines += "// Output values as a tuple with respective index(es)"
-            for output in outputs:
-                assert isinstance(output, str)
-                output_lines += f"output reg signed [31:0] {output},"
-        self.output = output_lines
+        self.inputs = Lines()
+        self.outputs = Lines()
 
         if body:
             for stmt in body:
@@ -261,10 +224,10 @@ class Module(ImplementsToLines):
         else:
             lines = Lines()
         lines += f"module {self.name} ("
-        lines.concat(self.input, indent=1)
-        lines.concat(self.output, indent=1)
+        lines.concat(self.inputs, indent=1)
+        lines.concat(self.outputs, indent=1)
 
-        if self.input or self.output:  # This means there are ports
+        if self.inputs or self.outputs:  # This means there are ports
             lines[-1] = lines[-1][0:-1]  # removes last comma
 
         lines += ");"

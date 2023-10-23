@@ -16,7 +16,7 @@ from python2verilog.exceptions import StaticTypingError, UnsupportedSyntaxError
 from python2verilog.utils.typed import guard, typed_list, typed_strict
 
 
-class FromFunction:
+class Function:
     """
     Parses python functions and generator functions
     """
@@ -27,8 +27,7 @@ class FromFunction:
     def __init__(self, context: ir.Context, prefix: str = "") -> None:
         self.__context = copy.deepcopy(context)
         self.__context.prefix = prefix
-        self.__context.default_output_vars()  # Have output vars use prefix
-        self.__context.refresh_input_vars()  # Update input vars to use prefix
+        self.__context.refresh_input_output_vars()  # Update to use prefix
         self.__head_and_tails: Optional[tuple[ir.Node, list[ir.Edge]]] = None
 
     def parse_function(self) -> tuple[ir.Context, ir.Node]:
@@ -185,7 +184,7 @@ class FromFunction:
             assert guard(dummy.child, ir.Edge)
             return dummy, [dummy.child]
 
-        raise TypeError(f"Unexpected statement {pyast.dump(stmt)}")
+        raise UnsupportedSyntaxError.from_pyast(stmt, self.__context.name)
 
     def _parse_return(self, ret: pyast.Return, prefix: str) -> ParseResult:
         """
@@ -196,12 +195,15 @@ class FromFunction:
             return done, []
         assert not self.__context.is_generator
 
-        if isinstance(ret.value, pyast.Tuple):
-            stmts = [self._parse_expression(c) for c in ret.value.elts]
-        elif isinstance(ret.value, pyast.expr):
-            stmts = [self._parse_expression(ret.value)]
-        else:
-            raise TypeError(f"Expected tuple {type(ret.value)} {pyast.dump(ret)}")
+        try:
+            if isinstance(ret.value, pyast.Tuple):
+                stmts = [self._parse_expression(c) for c in ret.value.elts]
+            elif isinstance(ret.value, pyast.expr):
+                stmts = [self._parse_expression(ret.value)]
+            else:
+                raise UnsupportedSyntaxError.from_pyast(ret, self.__context.name)
+        except Exception as e:
+            raise UnsupportedSyntaxError.from_pyast(ret, self.__context.name) from e
 
         self.__context.validate()
         head, tail = self._weave_nonclocked_edges(
@@ -257,7 +259,7 @@ class FromFunction:
         target = assign.targets[0]
         assert isinstance(target, pyast.Name)
 
-        def get_func_call_names(caller_cxt: ir.Context):
+        def get_func_call_names():
             """
             :return: target_name, func_name
             """
@@ -270,21 +272,9 @@ class FromFunction:
             assert guard(func, pyast.Name)
             func_name = func.id
 
-            if target_name in map(
-                lambda x: x.py_name,
-                (
-                    *caller_cxt.local_vars,
-                    *caller_cxt.input_vars,
-                    *caller_cxt.output_vars,
-                ),
-            ):
-                raise StaticTypingError(
-                    f"{target_name} changed type from another type to generator instance"
-                )
-
             return target_name, func_name
 
-        target_name, func_name = get_func_call_names(self.__context)
+        target_name, func_name = get_func_call_names()
 
         # Get context of generator function being called
         callee_cxt = self.__context.namespace[func_name]
@@ -300,7 +290,7 @@ class FromFunction:
             call_args=assign.value.args,
             callee_cxt=callee_cxt,
             targets=assign.targets,
-            target_name=target_name,
+            _target_name=target_name,
             prefix=prefix,
         )
 
@@ -309,7 +299,7 @@ class FromFunction:
         call_args: list[pyast.expr],
         targets: list[pyast.expr],
         callee_cxt: ir.Context,
-        target_name: str,
+        _target_name: str,
         prefix: str,
     ) -> ParseResult:
         """
@@ -317,8 +307,8 @@ class FromFunction:
 
         Implemented as an inline (no external unit).
         """
-        callee_cxt, body_head, prev_tails = FromFunction(
-            callee_cxt, prefix=f"{prefix}_{target_name}_"
+        callee_cxt, body_head, prev_tails = Function(
+            callee_cxt, prefix=f"{prefix}_"
         ).parse_inline()
 
         arguments = list(map(self._parse_expression, call_args))
@@ -475,7 +465,7 @@ class FromFunction:
         assert guard(stmt.iter, pyast.Call)
         gen_cxt = self.__context.namespace[self._get_func_call_name(stmt.iter)]
 
-        mangled_name = f"{prefix}_offset{stmt.col_offset}"  # consider nested for loops
+        mangled_name = f"nested{stmt.col_offset}"  # consider nested for loops
 
         call_head, call_tails = self._parse_gen_call(
             call_args=stmt.iter.args,
@@ -805,7 +795,7 @@ class FromFunction:
             prev = node.child
         if not last_edge:
             node._child = None  # pylint: disable=protected-access
-        return cast(FromFunction._BasicNodeType, head), node
+        return cast(Function._BasicNodeType, head), node
 
     def _parse_assign(self, assign: pyast.Assign, prefix: str) -> ParseResult:
         """
@@ -850,30 +840,27 @@ class FromFunction:
         """
         <expression> (e.g. constant, name, subscript, etc., those that return a value)
         """
-        try:
-            if isinstance(expr, pyast.Constant):
-                return ir.Int(expr.value)
-            if isinstance(expr, pyast.Name):
-                return self.__context.make_var(expr.id)
-            if isinstance(expr, pyast.Subscript):
-                return self._parse_subscript(expr)
-            if isinstance(expr, pyast.BinOp):
-                return self._parse_binop(expr)
-            if isinstance(expr, pyast.UnaryOp):
-                if isinstance(expr.op, pyast.USub):
-                    return ir.UnaryOp("-", self._parse_expression(expr.operand))
-            if isinstance(expr, pyast.Compare):
-                return self._parse_compare(expr)
-            if isinstance(expr, pyast.BoolOp):
-                if isinstance(expr.op, pyast.And):
-                    return ir.UBinOp(
-                        self._parse_expression(expr.values[0]),
-                        "&&",
-                        self._parse_expression(expr.values[1]),
-                    )
-        except Exception as e:
-            raise UnsupportedSyntaxError.from_pyast(expr) from e
-        raise UnsupportedSyntaxError.from_pyast(expr)
+        if isinstance(expr, pyast.Constant):
+            return ir.Int(expr.value)
+        if isinstance(expr, pyast.Name):
+            return self.__context.make_var(expr.id)
+        if isinstance(expr, pyast.Subscript):
+            return self._parse_subscript(expr)
+        if isinstance(expr, pyast.BinOp):
+            return self._parse_binop(expr)
+        if isinstance(expr, pyast.UnaryOp):
+            if isinstance(expr.op, pyast.USub):
+                return ir.UnaryOp("-", self._parse_expression(expr.operand))
+        if isinstance(expr, pyast.Compare):
+            return self._parse_compare(expr)
+        if isinstance(expr, pyast.BoolOp):
+            if isinstance(expr.op, pyast.And):
+                return ir.UBinOp(
+                    self._parse_expression(expr.values[0]),
+                    "&&",
+                    self._parse_expression(expr.values[1]),
+                )
+        raise UnsupportedSyntaxError.from_pyast(expr, self.__context.name)
 
     def _parse_subscript(self, node: pyast.Subscript) -> ir.Expression:
         """
@@ -908,7 +895,9 @@ class FromFunction:
         elif isinstance(node.ops[0], pyast.Eq):
             operator = "==="
         else:
-            raise UnsupportedSyntaxError(f"Unknown operator {pyast.dump(node.ops[0])}")
+            raise UnsupportedSyntaxError(
+                f"Unsupported operator {pyast.dump(node.ops[0])}"
+            )
         return ir.UBinOp(
             left=self._parse_expression(node.left),
             oper=operator,
@@ -943,4 +932,4 @@ class FromFunction:
             left = self._parse_expression(expr.left)
             right = self._parse_expression(expr.right)
             return ir.Mod(left, right)
-        raise UnsupportedSyntaxError(f"Unexpected binop type {pyast.dump(expr.op)}")
+        raise UnsupportedSyntaxError(f"Unsupported binop `{pyast.dump(expr.op)}")

@@ -93,4 +93,4 @@ def namespace_to_verilog(
         mod, tb = context_to_verilog(context=context, config=config)
         module.append(mod)
         testbench.append(tb)
-    return "\n".join(module), "\n".join(testbench)
+    return "".join(module), "".join(testbench)
