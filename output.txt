@@ -1,0 +1,36 @@
+---------------------SSA IR DUMP: reallyreallycoolfunction----------------------
+label 0:
+    n = arg(0, name=n)                       ['n']
+    alphaa = const(int, 0)                   ['alphaa']
+    betaa = const(int, 1)                    ['betaa']
+    catt = const(int, 0)                     ['catt']
+    countt = const(int, 1)                   ['countt']
+    $24compare_op.6 = countt < n             ['$24compare_op.6', 'countt', 'n']
+    bool26 = global(bool: <class 'bool'>)    ['bool26']
+    $26pred = call bool26($24compare_op.6, func=bool26, args=(Var($24compare_op.6, python.py:10),), kws=(), vararg=None, varkwarg=None, target=None) ['$24compare_op.6', '$26pred', 'bool26']
+    branch $26pred, 28, 72                   ['$26pred']
+label 28:
+    countt.2 = phi(incoming_values=[Var(countt, python.py:9), Var(countt.1, python.py:11)], incoming_blocks=[0, 28]) ['countt', 'countt.1', 'countt.2']
+    catt.2 = phi(incoming_values=[Var(catt, python.py:8), Var(catt.1, python.py:14)], incoming_blocks=[0, 28]) ['catt', 'catt.1', 'catt.2']
+    betaa.2 = phi(incoming_values=[Var(betaa, python.py:7), Var(betaa.1, python.py:13)], incoming_blocks=[0, 28]) ['betaa', 'betaa.1', 'betaa.2']
+    $const30.1 = const(int, 1)               ['$const30.1']
+    $32inplace_add.2 = inplace_binop(fn=<built-in function iadd>, immutable_fn=<built-in function add>, lhs=countt.2, rhs=$const30.1, static_lhs=Undefined, static_rhs=Undefined) ['$32inplace_add.2', '$const30.1', 'countt.2']
+    countt.1 = $32inplace_add.2              ['$32inplace_add.2', 'countt.1']
+    alphaa.1 = betaa.2                       ['alphaa.1', 'betaa.2']
+    betaa.1 = catt.2                         ['betaa.1', 'catt.2']
+    catt.1 = alphaa.1 + betaa.1              ['alphaa.1', 'betaa.1', 'catt.1']
+    $54build_tuple.9 = build_tuple(items=[Var(catt.1, python.py:14)]) ['$54build_tuple.9', 'catt.1']
+    $56yield_value.10 = yield $54build_tuple.9 ['$54build_tuple.9', '$56yield_value.10']
+    $64compare_op.13 = countt.1 < n          ['$64compare_op.13', 'countt.1', 'n']
+    bool66 = global(bool: <class 'bool'>)    ['bool66']
+    $66pred = call bool66($64compare_op.13, func=bool66, args=(Var($64compare_op.13, python.py:10),), kws=(), vararg=None, varkwarg=None, target=None) ['$64compare_op.13', '$66pred', 'bool66']
+    branch $66pred, 28, 68                   ['$66pred']
+label 68:
+    $const68.0 = const(NoneType, None)       ['$const68.0']
+    $70return_value.1 = cast(value=$const68.0) ['$70return_value.1', '$const68.0']
+    return $70return_value.1                 ['$70return_value.1']
+label 72:
+    $const72.0 = const(NoneType, None)       ['$const72.0']
+    $74return_value.1 = cast(value=$const72.0) ['$74return_value.1', '$const72.0']
+    return $74return_value.1                 ['$74return_value.1']
+5
