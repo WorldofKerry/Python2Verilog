@@ -49,6 +49,13 @@ params = [
         action="store",
         help="Path to iverilog",
     ),
+    Argument(
+        "E",
+        "env_debug",
+        default=False,
+        action="store_true",
+        help="Set env variables for debugging",
+    ),
 ]
 """
 Other useful flags
@@ -79,13 +86,16 @@ def argparse(request):
     args["optimization_levels"] = (
         set(args["optimization_levels"]) if args["optimization_levels"] else {1}
     )
-    if max(args["optimization_levels"]) > 8:
-        sys.setrecursionlimit(2000)
+    sys.setrecursionlimit(
+        sys.getrecursionlimit() + max(args["optimization_levels"]) * 250
+    )
     env.set_var(env.Vars.IVERILOG_PATH, args["iverilog_path"])
     if args["synthesis"]:
         # Synthesis tool yosys does not support SystemVerilog features
         env.set_var(env.Vars.IS_SYSTEM_VERILOG, None)
     else:
         env.set_var(env.Vars.IS_SYSTEM_VERILOG, "")
+    if args["env_debug"]:
+        env.set_var(env.Vars.DEBUG_COMMENTS, "1")
 
     setattr(request.cls, "args", type("Args", (object,), args))

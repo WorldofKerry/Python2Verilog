@@ -57,15 +57,25 @@ class Element:
         """
         yield from ()
 
+    def view_children(self) -> str:
+        """
+        Views children of node
+        """
+        return str(list(self.visit_nonclocked()))
+
     def children(self) -> Iterator[Element]:
         """
         Gets children of node
         """
         yield from ()
 
-    def variables(self) -> Iterator[expr.Var]:
+    def exclusions(self) -> Iterator[str]:
         """
-        Yields all variables and their nonclocked children
+        Yields all exclusion groups that will be read or written to
+        within this group of nonclocked nodes.
+
+        The reason reads are also included is because checking a callee's
+        ready signal more than once in a clock cycle is usually incorrect.
         """
         yield from ()
 
@@ -99,11 +109,18 @@ class BasicElement(Element):
         """
         child or optimal_child if no child
         """
+        assert self._child, f"{self} {self.view_children()}"
         return typed_strict(self._child, Element)
 
     @child.setter
     def child(self, other: Element):
         self._child = typed_strict(other, Element)
+
+    def has_child(self) -> bool:
+        """
+        Returns True if has child
+        """
+        return self._child is not None
 
     def children(self):
         if self._child:
@@ -127,6 +144,9 @@ class Node(Element):
     """
     Vertex
     """
+
+    def __repr__(self) -> str:
+        return self.name
 
 
 class IfElseNode(Node, Element):
@@ -185,17 +205,21 @@ class IfElseNode(Node, Element):
         if self._optimal_false_edge:
             yield self._optimal_false_edge
 
-    def variables(self):
-        yield from get_variables(self.condition)
-        yield from self.optimal_true_edge.variables()
-        yield from self.optimal_false_edge.variables()
+    def exclusions(self):
+        for var in get_variables(self.condition):
+            if isinstance(var, expr.ExclusiveVar):
+                yield var.exclusive_group
+        yield from self.optimal_true_edge.exclusions()
+        yield from self.optimal_false_edge.exclusions()
 
     def __repr__(self):
         return f"If{self.condition}"
 
     def visit_nonclocked(self) -> Iterator[Element]:
         yield self
+        yield Node(unique_id="", name="True Branch")
         yield from self.optimal_true_edge.visit_nonclocked()
+        yield Node(unique_id="", name="False Branch")
         yield from self.optimal_false_edge.visit_nonclocked()
 
 
@@ -247,19 +271,13 @@ class AssignNode(BasicNode):
     def __repr__(self):
         return f"{self.lvalue} = {self.rvalue}"
 
-    def variables(self):
-        yield from get_variables(self.lvalue)
+    def exclusions(self):
+        for var in get_variables(self.lvalue):
+            if isinstance(var, expr.ExclusiveVar):
+                yield var.exclusive_group
         yield from get_variables(self.rvalue)
-        yield from self.child.variables()
-
-
-class DoneNode(Node, Element):
-    """
-    Signals done
-    """
-
-    def __repr__(self) -> str:
-        return "Done"
+        if self._child:
+            yield from self.child.exclusions()
 
 
 class Edge(BasicElement):
@@ -284,8 +302,8 @@ class NonClockedEdge(Edge):
     i.e. no clock cycle has to pass for the next node to be executed
     """
 
-    def variables(self):
-        yield from self.child.variables()
+    def exclusions(self):
+        yield from self.child.exclusions()
 
     def __repr__(self) -> str:
         return "=>"
@@ -297,7 +315,7 @@ class ClockedEdge(Edge):
     i.e. a clock cycle has to pass for the next node to be executed
     """
 
-    def variables(self):
+    def exclusions(self):
         yield from ()
 
     def __repr__(self):

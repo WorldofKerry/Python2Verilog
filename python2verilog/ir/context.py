@@ -7,27 +7,19 @@ from __future__ import annotations
 
 import ast
 import copy
-import io
 import logging
 from dataclasses import dataclass, field
+from itertools import zip_longest
 from types import FunctionType
-from typing import Any, Optional, Sequence
+from typing import Any, Optional
 
 from python2verilog.api.modes import Modes
-from python2verilog.exceptions import TypeInferenceError
+from python2verilog.exceptions import StaticTypingError, TypeInferenceError
 from python2verilog.ir.expressions import ExclusiveVar, State, Var
-from python2verilog.ir.graph import DoneNode
 from python2verilog.ir.instance import Instance
 from python2verilog.ir.signals import ProtocolSignals
-from python2verilog.utils.env import is_debug_mode
 from python2verilog.utils.generics import GenericReprAndStr
-from python2verilog.utils.typed import (
-    guard,
-    guard_dict,
-    typed,
-    typed_list,
-    typed_strict,
-)
+from python2verilog.utils.typed import guard, typed, typed_list, typed_strict
 
 
 @dataclass
@@ -37,9 +29,13 @@ class Context(GenericReprAndStr):
     E.g. variables, I/O, parameters, localparam
     """
 
-    # pylint: disable=too-many-instance-attributes
+    # pylint: disable=too-many-instance-attributes, too-many-public-methods
+    _frozen: bool = False  # Make immutable
+
     name: str = ""
     testbench_suffix: str = "_tb"
+    is_generator: bool = False
+    prefix: str = ""
 
     test_cases: list[tuple[int, ...]] = field(default_factory=list)
 
@@ -54,17 +50,12 @@ class Context(GenericReprAndStr):
 
     mode: Modes = Modes.NO_WRITE
 
-    _global_vars: list[Var] = field(default_factory=list)
+    _local_vars: list[Var] = field(default_factory=list)
     _input_vars: Optional[list[Var]] = None
     _output_vars: Optional[list[ExclusiveVar]] = None
     _states: set[str] = field(default_factory=set)
 
-    signals: ProtocolSignals = ProtocolSignals(
-        start=Var("start"),
-        done=Var("done"),
-        ready=Var("ready"),
-        valid=Var("valid"),
-    )
+    signals: ProtocolSignals = ProtocolSignals()
 
     state_var: Var = Var("state")
 
@@ -74,7 +65,20 @@ class Context(GenericReprAndStr):
 
     # Function calls
     namespace: dict[str, Context] = field(default_factory=dict)  # callable functions
-    instances: dict[str, Instance] = field(default_factory=dict)  # generator instances
+    generator_instances: dict[str, Instance] = field(
+        default_factory=dict
+    )  # generator instances
+
+    def freeze(self):
+        """
+        Freeze this context to be immutable
+        """
+        self._frozen = True
+
+    def __setattr__(self, attr, value):
+        if self._frozen:
+            raise AttributeError("Frozen")
+        return super().__setattr__(attr, value)
 
     @classmethod
     def empty_valid(cls):
@@ -85,7 +89,7 @@ class Context(GenericReprAndStr):
         cxt.input_types = []
         cxt.input_vars = []
         cxt.output_types = []
-        cxt.output_vars = []
+        cxt._output_vars = []
         return cxt
 
     @property
@@ -94,14 +98,6 @@ class Context(GenericReprAndStr):
         Returns test bench module name in the generated verilog
         """
         return f"{self.name}{self.testbench_suffix}"
-
-    def _repr(self):
-        """
-        Avoids recursion on itself
-        """
-        dic = copy.deepcopy(self.__dict__)
-        del dic["namespace"]
-        return dic
 
     def _use_input_type_hints(self):
         """
@@ -124,7 +120,7 @@ class Context(GenericReprAndStr):
         try:
             self.input_types = list(map(input_mapper, input_args))
         except Exception as e:
-            raise TypeInferenceError() from e
+            raise TypeInferenceError(self.name) from e
 
     def _use_output_type_hints(self):
         """
@@ -154,7 +150,7 @@ class Context(GenericReprAndStr):
         try:
             self.output_types = list(map(output_mapper, output_args))
         except Exception as e:
-            raise TypeInferenceError() from e
+            raise TypeInferenceError(self.name) from e
         self.default_output_vars()
 
     def validate(self):
@@ -186,7 +182,7 @@ class Context(GenericReprAndStr):
         if self._entry_state:
             assert str(self.entry_state) in self.states, self
 
-        for value in self.signals.values():
+        for value in self.signals.variable_values():
             assert typed(value, Var)
 
         return self
@@ -197,7 +193,7 @@ class Context(GenericReprAndStr):
         Python ast node rooted at function
         """
         assert isinstance(self._py_ast, ast.FunctionDef)
-        return self._py_ast
+        return copy.deepcopy(self._py_ast)
 
     @py_ast.setter
     def py_ast(self, other: ast.FunctionDef):
@@ -205,38 +201,12 @@ class Context(GenericReprAndStr):
         self._py_ast = other
 
     @property
-    def testbench_file(self):
-        """
-        Testbench stream
-        """
-        assert isinstance(self._testbench_file, io.IOBase)
-        return self._testbench_file
-
-    @testbench_file.setter
-    def testbench_file(self, other: io.IOBase):
-        assert isinstance(other, io.IOBase)
-        self._testbench_file = other
-
-    @property
-    def module_file(self):
-        """
-        Module stream
-        """
-        assert isinstance(self._module_file, io.IOBase), type(self._module_file)
-        return self._module_file
-
-    @module_file.setter
-    def module_file(self, other: io.IOBase):
-        assert isinstance(other, io.IOBase)
-        self._module_file = other
-
-    @property
     def entry_state(self):
         """
         The first state that does work in the graph representation
         """
         assert isinstance(self._entry_state, State), self
-        return self._entry_state
+        return copy.deepcopy(self._entry_state)
 
     @entry_state.setter
     def entry_state(self, other: State):
@@ -249,7 +219,7 @@ class Context(GenericReprAndStr):
         The ready state
         """
         assert isinstance(self._done_state, State), self
-        return self._done_state
+        return copy.deepcopy(self._done_state)
 
     @done_state.setter
     def done_state(self, other: State):
@@ -257,7 +227,7 @@ class Context(GenericReprAndStr):
         self._done_state = other
 
     @property
-    def input_vars(self):
+    def input_vars(self) -> list[Var]:
         """
         Input variables
         """
@@ -269,49 +239,68 @@ class Context(GenericReprAndStr):
         self._input_vars = typed_list(other, Var)
 
     @property
-    def output_vars(self):
+    def output_vars(self) -> list[Var]:
         """
         Output variables
         """
         assert guard(self._output_vars, list), f"Unknown output variables {self}"
         return copy.deepcopy(self._output_vars)
 
-    @output_vars.setter
-    def output_vars(self, other: list[ExclusiveVar]):
-        self._output_vars = typed_list(other, ExclusiveVar)
-
     def default_output_vars(self):
         """
         Sets own output vars to default based on number of output variables
         """
-        assert self.output_types and len(self.output_types) > 0
+        assert self.output_types is not None
         self._output_vars = [
-            ExclusiveVar(f"out{i}") for i in range(len(self.output_types))
+            ExclusiveVar(f"{self.prefix}_output_{i}")
+            for i in range(len(self.output_types))
         ]
 
+    def refresh_input_output_vars(self):
+        """
+        Update input vars with prefix
+        """
+        self._input_vars = list(
+            map(lambda x: self.make_var(x.py_name), self.input_vars),
+        )
+        self.default_output_vars()
+
     @property
-    def global_vars(self):
+    def local_vars(self) -> list[Var]:
         """
-        Global variables
+        Gets local variables
         """
-        return tuple(self._global_vars)
+        return copy.deepcopy(self._local_vars)
 
-    @global_vars.setter
-    def global_vars(self, other: list[Var]):
-        self._global_vars = typed_list(other, Var)
+    def add_local_var(self, var: Var):
+        """
+        Appends to global vars with restrictions.
 
-    def add_global_var(self, var: Var):
+        Good for appending Vars created from Python source
         """
-        Appends global var
+        assert var.py_name.startswith(self.prefix)
+        prefixless = var.py_name[len(self.prefix) :]
+        if len(prefixless) != 1:
+            # A local var named "_" with no additional characters is ok
+            assert not prefixless.startswith("_"), (
+                'Local variables beginning with "_" '
+                f"with more than one character are reserved {var.py_name}"
+            )
+        return self.add_special_local_var(var)
+
+    def add_special_local_var(self, var: Var):
         """
-        var = typed_strict(var, Var)
-        if (
-            var in self._global_vars
-            or var in self.input_vars
-            or var in self.output_vars
-        ):
-            return
-        self._global_vars.append(typed_strict(var, Var))
+        Appends to local vars without restrictions.
+
+        Good for appending Vars created internally (e.g. inline function calls)
+        """
+        if var.py_name in self.generator_instances:
+            raise StaticTypingError(
+                f"Variable `{var.py_name}` changed type from generator"
+                f" instance to another type in {self.name}"
+            )
+        if var not in (*self._local_vars, *self.input_vars, *self.output_vars):
+            self._local_vars.append(typed_strict(var, Var))
 
     @property
     def states(self):
@@ -319,26 +308,6 @@ class Context(GenericReprAndStr):
         State variables
         """
         return copy.deepcopy(self._states)
-
-    def is_declared(self, name: str):
-        """
-        Checks if a Python variable has been already declared or not
-        """
-
-        def get_strs(variables: Sequence[Var]):
-            """
-            Maps vars to str
-            """
-            for var in variables:
-                yield var.py_name
-
-        assert isinstance(name, str)
-        variables = [
-            *list(get_strs(self.global_vars)),
-            *list(get_strs(self.input_vars)),
-            *list(get_strs(self.output_vars)),
-        ]
-        return name in variables
 
     def add_state(self, name: str):
         """
@@ -355,11 +324,12 @@ class Context(GenericReprAndStr):
         assert isinstance(name, str)
         self._states.add(name)
 
-    def __check_types(
+    def _check_types(
         self, expected_types: list[type[Any]], actual_values: list[type[Any]]
     ):
-        assert len(expected_types) == len(actual_values)
-        for expected, actual in zip(expected_types, actual_values):
+        for expected, actual in zip_longest(
+            expected_types, actual_values, fillvalue=type(None)
+        ):
             assert isinstance(
                 actual, expected
             ), f"Expected {expected}, got {type(actual)}, with value {actual}, \
@@ -370,20 +340,21 @@ class Context(GenericReprAndStr):
         Checks if input to functions' types matches previous inputs
         """
         assert guard(self.input_types, list)
-        self.__check_types(self.input_types, input_)
+        self._check_types(self.input_types, input_)
 
     def check_output_types(self, output):
         """
         Checks if outputs to functions' types matches previous outputs
         """
         assert guard(self.output_types, list)
-        self.__check_types(self.output_types, output)
+        self._check_types(self.output_types, output)
 
-    def create_instance(self, name: str) -> Instance:
+    def create_generator_instance(self, name: str) -> Instance:
         """
         Create generator instance
         """
         self.validate()
+
         inst_input_vars: list[Var] = list(
             map(
                 lambda var: ExclusiveVar(f"{name}_{self.name}_{var.py_name}"),
@@ -396,12 +367,8 @@ class Context(GenericReprAndStr):
                 self.output_vars,
             )
         )
-        args: dict[str, Var] = {
-            key: ExclusiveVar(f"{name}_{self.name}__{value.py_name}")
-            for key, value in self.signals.instance_specific_items()
-        }
 
-        signals = ProtocolSignals(**args)
+        signals = ProtocolSignals(prefix=f"{self.prefix}{self.name}_{name}__")
 
         return Instance(
             self.name,
@@ -410,3 +377,9 @@ class Context(GenericReprAndStr):
             inst_output_vars,
             signals,
         )
+
+    def make_var(self, name: str) -> Var:
+        """
+        Makes a variable with own prefix
+        """
+        return Var(py_name=f"{self.prefix}{name}", ver_name=f"_{self.prefix}{name}")

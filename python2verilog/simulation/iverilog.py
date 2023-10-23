@@ -7,6 +7,7 @@ import os
 import signal
 import subprocess
 import tempfile
+import time
 from typing import Iterable, Optional, Union
 
 from python2verilog.utils import env
@@ -66,17 +67,19 @@ def _run_cmd_with_fifos(
 
         try:
             logging.debug("Waiting on process for %ss", timeout)
+            start_time = time.time()
             process.wait(timeout=timeout)
+            logging.debug("Took %ss", time.time() - start_time)
             assert process.stdout
             assert process.stderr
             return process.stdout.read(), process.stderr.read()
         except subprocess.TimeoutExpired as e:
-            os.killpg(os.getpgid(process.pid), signal.SIGTERM)
             assert process.stdout
             assert process.stderr
             stdout = process.stdout.read()
             stderr = process.stderr.read()
             logging.debug("%s, %s, %s", e, stdout, stderr)
+            os.killpg(os.getpgid(process.pid), signal.SIGTERM)
             return stdout, stderr
 
 
@@ -103,17 +106,19 @@ def _run_cmd_with_files(
     ) as process:
         try:
             logging.debug("Waiting on process for %ss", timeout)
+            start_time = time.time()
             process.wait(timeout=timeout)
+            logging.debug("Took %ss", time.time() - start_time)
             assert process.stdout
             assert process.stderr
             return process.stdout.read(), process.stderr.read()
         except subprocess.TimeoutExpired as e:
-            os.killpg(os.getpgid(process.pid), signal.SIGTERM)
             assert process.stdout
             assert process.stderr
             stdout = process.stdout.read()
             stderr = process.stderr.read()
             logging.debug("%s, %s, %s", e, stdout, stderr)
+            os.killpg(os.getpgid(process.pid), signal.SIGTERM)
             return stdout, stderr
 
 

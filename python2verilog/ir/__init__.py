@@ -32,7 +32,6 @@ from .graph import (
     BasicElement,
     BasicNode,
     ClockedEdge,
-    DoneNode,
     Edge,
     Element,
     IfElseNode,
@@ -41,3 +40,4 @@ from .graph import (
     create_cytoscape_elements,
     create_networkx_adjacency_list,
 )
+from .instance import Instance

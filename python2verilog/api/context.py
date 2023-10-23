@@ -8,7 +8,7 @@ import logging
 from python2verilog import ir
 from python2verilog.backend import verilog
 from python2verilog.backend.verilog.config import CodegenConfig, TestbenchConfig
-from python2verilog.frontend.generator import GeneratorFunc
+from python2verilog.frontend.function import Function
 from python2verilog.optimizer import IncreaseWorkPerClockCycle
 from python2verilog.utils.typed import typed
 
@@ -20,12 +20,14 @@ def context_to_codegen(context: ir.Context):
     :return: (codegen, ir)
     """
     context.validate()
-    ir_root, context = GeneratorFunc(context).create_root()
+    context, ir_root = Function(context).parse_function()
+    context.freeze()
     logging.debug(
-        "context to codegen %s %s -O%s",
+        "context to codegen %s %s -O%s with %s",
         ir_root.unique_id,
         context.name,
         context.optimization_level,
+        context,
     )
     if context.optimization_level > 0:
         logging.info("Running %s", IncreaseWorkPerClockCycle.__name__)

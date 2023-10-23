@@ -2,27 +2,31 @@
 Protocol signals used by the converter
 """
 
-from dataclasses import dataclass, fields
 from typing import Iterator
 
-from python2verilog.ir.expressions import Var
+from python2verilog.ir.expressions import ExclusiveVar, Var
 
 
-@dataclass(frozen=True)
 class InstanceSignals:
     """
     Signals that are often named differently for each instance
     """
 
-    # pylint: disable=too-many-instance-attributes
-    start: Var
-    done: Var
+    @staticmethod
+    def apply_prefix(name: str, prefix: str):
+        """
+        Creates a Var with prefix
+        """
+        return ExclusiveVar(f"{prefix}{name}", f"__{prefix}{name}")
 
-    ready: Var
-    valid: Var
+    def __init__(self, prefix: str = ""):
+        self.prefix = prefix
+        self.start = self.apply_prefix("start", self.prefix)
+        self.done = self.apply_prefix("done", self.prefix)
+        self.ready = self.apply_prefix("ready", self.prefix)
+        self.valid = self.apply_prefix("valid", self.prefix)
 
 
-@dataclass(frozen=True)
 class ProtocolSignals(InstanceSignals):
     """
     Protocol signals
@@ -30,33 +34,32 @@ class ProtocolSignals(InstanceSignals):
     Includes ready, valid, clock, reset, done, etc.
     """
 
-    reset: Var = Var("reset")
-    clock: Var = Var("clock")
+    def __init__(self, prefix: str = ""):
+        super().__init__(prefix)
+        self.reset = Var("reset", "__reset")
+        self.clock = Var("clock", "__clock")
 
-    def __iter__(self):
-        for key in self.__dict__:
-            yield key
-
-    def values(self) -> Iterator[Var]:
+    def variable_values(self) -> Iterator[Var]:
         """
         Values
         """
-        for value in self.__dict__.values():
+        for _, value in self.variable_items():
             yield value
 
-    def items(self) -> Iterator[tuple[str, Var]]:
+    def variable_items(self) -> Iterator[tuple[str, Var]]:
         """
         Key, Value pairs
         """
         for key, value in self.__dict__.items():
-            yield key, value
+            if isinstance(value, Var):
+                yield key, value
 
     def instance_specific_items(self) -> Iterator[tuple[str, Var]]:
         """
         Get the instance-specific signals
         """
-        instance_signals = map(lambda field_: field_.name, fields(InstanceSignals))
-        for key, value in self.items():
+        instance_signals = InstanceSignals().__dict__
+        for key, value in self.variable_items():
             if key in instance_signals:
                 yield key, value
 

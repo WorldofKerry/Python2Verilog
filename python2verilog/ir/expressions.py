@@ -7,6 +7,8 @@ that are synthesizable
 """
 from __future__ import annotations
 
+from typing import Optional
+
 from python2verilog.utils.generics import GenericRepr
 from python2verilog.utils.typed import guard, typed, typed_list, typed_strict
 
@@ -52,7 +54,7 @@ class Int(Expression):
     """
 
     def __init__(self, value: int):
-        self.value = typed_strict(value, int)
+        self.value = int(typed_strict(value, int))  # Cast bool to int
         super().__init__(str(self.__class__))
 
     def verilog(self) -> str:
@@ -79,6 +81,9 @@ class UInt(Expression):
     def __init__(self, value: int):
         assert isinstance(value, int)
         super().__init__(str(value))
+
+    def __repr__(self):
+        return str(self)
 
 
 class Unknown(Expression):
@@ -140,6 +145,23 @@ class ExclusiveVar(Var):
     used by the optimizer to determine if it needs to make
     a edge clocked or not
     """
+
+    def __init__(
+        self,
+        py_name: str,
+        ver_name: str = "",
+        width: int = 32,
+        is_signed: bool = True,
+        initial_value: str = "0",
+        exclusive_group: Optional[str] = None,
+        **_,
+    ):
+        super().__init__(py_name, ver_name, width, is_signed, initial_value, **_)
+
+        # Default exclusive group is it's Verilog variable name
+        if exclusive_group is None:
+            exclusive_group = self.ver_name
+        self.exclusive_group = exclusive_group
 
 
 class Ternary(Expression):
@@ -301,18 +323,10 @@ class Mod(BinOp):
         """
         Verilog
         """
-        return Ternary(
-            UBinOp(self.left, "<", Int(0)),
-            Ternary(
-                UBinOp(self.right, ">=", Int(0)),
-                UnaryOp("-", _Mod(self.left, self.right)),
-                _Mod(self.left, self.right),
-            ),
-            Ternary(
-                UBinOp(self.right, "<", Int(0)),
-                UnaryOp("-", _Mod(self.left, self.right)),
-                _Mod(self.left, self.right),
-            ),
+        return BinOp(
+            BinOp(BinOp(self.left, "%", self.right), "+", self.right),
+            "%",
+            self.right,
         ).verilog()
 
     def to_string(self):
@@ -340,9 +354,9 @@ class FloorDiv(BinOp):
         """
         return Ternary(
             condition=BinOp(
-                left=BinOp(left=self.left, right=self.right, oper="%"),
-                right=Int(0),
-                oper="===",
+                BinOp(left=self.left, right=self.right, oper="%"),
+                "===",
+                Int(0),
             ),
             left=BinOp(self.left, "/", self.right),
             right=BinOp(
