@@ -89,7 +89,9 @@ class Graph:
             lines += f"{repr(elem)}: {str(children)[1:-1] if children else 'none'}"
         return str(lines)
 
-    def to_cytoscape(self) -> dict[str, list[dict[str, dict[str, str]]]]:
+    def to_cytoscape(
+        self, id_in_label: bool = False
+    ) -> dict[str, list[dict[str, dict[str, str]]]]:
         """
         To cytoscape visualizer
         """
@@ -101,7 +103,7 @@ class Graph:
                 {
                     "data": {
                         "id": elem.unique_id,
-                        "label": str(elem),
+                        "label": repr(elem) if id_in_label else str(elem),
                     }
                 }
             )
