@@ -1,3 +1,4 @@
+import copy
 import logging
 import unittest
 
@@ -11,7 +12,7 @@ from python2verilog.optimizer.graph2optimizer import visit_nonclocked  # nopycln
 
 class TestGraph(unittest.TestCase):
     def test_graph2(self):
-        def make_graph() -> Graph:
+        def make_graph():
             """
             Even fib numbers
             """
@@ -53,6 +54,10 @@ class TestGraph(unittest.TestCase):
 
         nonclocked = list(visit_nonclocked(graph, graph["11"]))
         logging.error(nonclocked)
+
+        a_copy = copy.deepcopy(graph)
+        a_copy.adj_list[root] = {}
+        logging.error(a_copy)
 
         with open("graph2_cytoscape.log", mode="w") as f:
             f.write(str(graph.to_cytoscape(id_in_label=True)))
