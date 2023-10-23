@@ -19,20 +19,14 @@ def circle_lines(centre_x: int, centre_y: int, radius: int) -> tuple[int, int]:
             crit = crit + 2 * (offset_y - offset_x) + 1
 
 
-def fib(n: int):
+def fib(n: int) -> int:
     """
     Fibonacci sequence
     """
-    a = 0
-    b = 1
-    c = 0
-    count = 1
-    while count < n:
-        count += 1
-        a = b
-        b = c
-        c = a + b
-        yield c
+    a, b = 0, 1
+    for _ in p2vrange(0, n, 1):
+        yield a
+        a, b = b, a + b
 
 
 def floor_div(n) -> tuple[int]:
@@ -84,8 +78,7 @@ def happy_face(s_x, s_y, height):
     y = s_y + 5
 
     # Rectangle
-    i = 0
-    j = 0
+    i, j = 0, 0
     while i < rectangle_width:
         while j < rectangle_height:
             yield (x + i, y + j)
@@ -98,8 +91,7 @@ def happy_face(s_x, s_y, height):
     y = s_y + 5
 
     # Rectangle
-    i = 0
-    j = 0
+    i, j = 0, 0
     while i < rectangle_width:
         while j < rectangle_height:
             yield (x + i, y + j)
@@ -108,7 +100,7 @@ def happy_face(s_x, s_y, height):
         i += 1
 
 
-def multiplier(multiplicand, multiplier):
+def multiplier_generator(multiplicand: int, multiplier: int) -> int:
     product = 0
     count = 0
     while count < multiplier:
@@ -118,72 +110,78 @@ def multiplier(multiplicand, multiplier):
 
 
 def operators(x, y):
-    # yield 0, 0, 0
+    yield 0, x
+    yield 1, y
 
     # Arithmetic operators
-    yield x, y, x + y
-    yield x, y, x - y
-    yield x, y, x * y
-    # yield x, y, x / y
+    yield 2, x + y
+    yield 3, x - y
+    yield 4, x * y
+    # yield x / y
+
     if y != 0:
-        yield (x, y, x // y)
-        yield (x, y, x % y)
-    # yield x, y, x**y  #
+        yield 5, x // y
+        yield 6, x % y
+    # yield x**y
 
     # Comparison operators
-    # yield x, y, x == y
-    # yield x, y, x != y
-    # yield x, y, x < y
-    # yield x, y, x > y
-    # yield x, y, x <= y
-    # yield x, y, x >= y
+    yield 7, x == x
+    yield 8, x == -x
+    yield 9, x == y
+    yield 10, x != y
+    yield 11, x < y
+    yield 12, x > y
+    yield 13, x <= y
+    yield 14, x >= y
+
+    yield 88888888, 88888888  # delimiter
 
     # # Logical operators
-    # yield x, y, x and y
-    # yield x, y, x or y
-    # yield x, y, not x
+    # yield x and y
+    # yield x or y
+    # yield not x
 
     # # Bitwise operators
-    # yield x, y, x & y
-    # yield x, y, x | y
-    # yield x, y, x ^ y
-    # yield x, y, ~x
-    # yield x, y, x << y
-    # yield x, y, x >> y
+    # yield x & y
+    # yield x | y
+    # yield x ^ y
+    # yield ~x
+    # yield x << y
+    # yield x >> y
 
     # # Assignment operators
     # z = x
-    # yield x, y, z
+    # yield z
     # z += y
-    # yield x, y, z
+    # yield z
     # z -= y
-    # yield x, y, z
+    # yield z
     # z *= y
-    # yield x, y, z
+    # yield z
     # z /= y
-    # yield x, y, z
+    # yield z
     # z //= y
-    # yield x, y, z
+    # yield z
     # z %= y
-    # yield x, y, z
+    # yield z
     # z **= y
-    # yield x, y, z
+    # yield z
     # z &= y
-    # yield x, y, z
+    # yield z
     # z |= y
-    # yield x, y, z
+    # yield z
     # z ^= y
-    # yield x, y, z
+    # yield z
     # z <<= y
-    # yield x, y, z
+    # yield z
     # z >>= y
-    # yield x, y, z
+    # yield z
 
     # # Identity and membership operators
-    # yield x, y, x is y
-    # yield x, y, x is not y
-    # yield x, y, x in [y, z]
-    # yield x, y, x not in [y, z]
+    # yield x is y
+    # yield x is not y
+    # yield x in [y, z]
+    # yield x not in [y, z]
 
 
 def rectangle_filled(s_x, s_y, height, width):
@@ -244,20 +242,20 @@ def olympic_logo_naive(mid_x, mid_y, radius):
         yield x, y, 300
 
 
-def hrange(base: int, step: int, limit: int) -> int:
+def p2vrange(start: int, stop: int, step: int) -> int:
     """
     Simplified version of Python's built-in range function
     """
-    while base < limit:
-        yield base
-        base += step
+    while start < stop:
+        yield start
+        start += step
 
 
-def dupe(base: int, step: int, limit: int) -> int:
+def dupe(base: int, limit: int, step: int) -> int:
     """
     Dupe hrange
     """
-    inst = hrange(base, step, limit)
+    inst = p2vrange(base, limit, step)
     for out in inst:
         yield out
         yield out
@@ -267,9 +265,9 @@ def double_for(limit: int) -> tuple[int, int]:
     """
     Double for loop
     """
-    x_gen = hrange(0, 1, limit)
+    x_gen = p2vrange(0, limit, 1)
     for x in x_gen:
-        y_gen = hrange(0, 1, limit)
+        y_gen = p2vrange(0, limit, 1)
         for y in y_gen:
             yield x, y
 
@@ -296,3 +294,87 @@ def olympic_logo(mid_x, mid_y, radius):
         coords = circle_lines(x, y, radius)
         for x, y in coords:
             yield x, y, color
+
+
+def keyword_test():
+    """
+    Testing for break, continue, return
+    """
+    i = 0
+    while i < 10:
+        if i % 2 == 0:
+            i += 1
+            continue
+        yield i
+        i += 3
+
+    i = 0
+    while i < 10:
+        if i == 7:
+            break
+        yield i
+        i += 1
+
+    i = 0
+    while i < 10:
+        if i == 5:
+            return
+        yield i
+        i += 1
+
+
+def quad_multiply(left, right):
+    """
+    Given left and right,
+    yields
+    left * right
+    left * -right
+    -left * right
+    -left * -right
+    """
+    inst = multiplier_generator(left, right)
+    for val in inst:
+        yield val
+    inst = multiplier_generator(left, -right)
+    for val in inst:
+        yield val
+    inst = multiplier_generator(-left, right)
+    for val in inst:
+        yield val
+    for val in multiplier_generator(-left, -right):
+        yield val
+
+
+def multiplier(multiplicand: int, multiplier: int) -> int:
+    product = 0
+    while multiplier > 0:
+        product += multiplicand
+        multiplier -= 1
+    return product
+
+
+def fib_product(n):
+    """
+    Yields the product of the first n fibonacci numbers
+    """
+    for num in fib(n):
+        prod = multiplier(num, num)
+        yield prod
+
+
+def multi_funcs(a, b):
+    """
+    Testing multiple function calls and tested function calls
+    """
+    temp = multiplier(a, b)
+    yield temp
+    temp = multiplier(a + 10, b)
+    yield temp
+    for i in p2vrange(0, 2, 1):
+        yield i
+    for i in p2vrange(0, 2, 1):
+        yield i
+    for i in p2vrange(0, 2, 1):
+        yield i
+        for i in p2vrange(0, 2, 1):
+            yield i

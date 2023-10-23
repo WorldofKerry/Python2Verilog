@@ -4,6 +4,8 @@ import unittest
 from functools import wraps
 from pathlib import Path
 
+import pytest
+
 from python2verilog.api import Modes, new_namespace, verilogify
 from python2verilog.api.context import context_to_verilog, context_to_verilog_and_dump
 from python2verilog.api.python import py_to_context
@@ -74,6 +76,7 @@ inst = deeznuts(420)
         )
 
 
+@pytest.mark.usefixtures("argparse")
 class TestVerilogify(unittest.TestCase):
     def writes(func):
         """

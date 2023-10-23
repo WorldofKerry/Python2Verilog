@@ -5,17 +5,14 @@ Functions that take text as input
 import ast
 import logging
 from types import FunctionType
-from typing import Any, Optional, Union
+from typing import Any, Optional
 
 from python2verilog import ir
 from python2verilog.api.context import context_to_codegen
 from python2verilog.api.modes import Modes
 from python2verilog.api.namespace import get_namespace
-from python2verilog.backend import verilog
 from python2verilog.backend.verilog.config import CodegenConfig, TestbenchConfig
-from python2verilog.frontend.generator2ir import Generator2Graph
-from python2verilog.optimizer.optimizer import OptimizeGraph
-from python2verilog.utils.assertions import get_typed, get_typed_list
+from python2verilog.utils.typed import guard, typed, typed_list
 
 
 def py_to_codegen(
@@ -59,11 +56,11 @@ def py_to_verilog(
 
     :return: (module, testbench)
     """
-    get_typed(code, str)
-    get_typed(function_name, str)
+    typed(code, str)
+    typed(function_name, str)
     assert function_name in code
-    get_typed_list(extra_test_cases, tuple)  # type: ignore[misc]
-    get_typed(file_path, str)
+    typed_list(extra_test_cases, tuple)  # type: ignore[misc]
+    typed(file_path, str)
 
     code_gen, _ = py_to_codegen(
         code=code,
@@ -90,8 +87,8 @@ def py_to_context(
     :return: context
     """
     # pylint: disable=too-many-locals
-    get_typed(code, str)
-    get_typed(function_name, str)
+    typed(code, str)
+    typed(function_name, str)
 
     def get_file_and_line_num(node: ast.AST):
         """
@@ -111,7 +108,7 @@ def py_to_context(
     for node in ast.walk(tree):
         # logging.debug(f"Walking through {ast.dump(node)}")
         if isinstance(node, ast.FunctionDef) and node.name == function_name:
-            logging.info(f"Found function at {get_file_and_line_num(node)}")
+            logging.info("Found function at %s", get_file_and_line_num(node))
             generator_ast = node
         elif (
             isinstance(node, ast.Call)
@@ -130,7 +127,7 @@ def py_to_context(
                 test_cases.append(output)
 
                 logging.info(
-                    f"Found test case at {get_file_and_line_num(node)} with {output}"
+                    "Found test case at %s with %s", get_file_and_line_num(node), output
                 )
             except ValueError as e:
                 raise ValueError(
@@ -138,35 +135,34 @@ def py_to_context(
                     f"{file_path}:{node.lineno}, but got non-literals"
                 ) from e
 
-    logging.info(f"Test cases: {test_cases}")
+    logging.info("Test cases: %s", test_cases)
 
     try:
         input_names = [var.arg for var in generator_ast.args.args]
     except UnboundLocalError as e:
         raise RuntimeError(f"Didn't find `{function_name}` in file") from e
 
-    logging.info(f"Input param names: {input_names}")
+    logging.info("Input param names %s", input_names)
 
     initialized = False
-    input_types: list[type[Any]]
+    input_types: Optional[list[type[Any]]] = None
     for output in test_cases:
         if not initialized:
             input_types = [type(val) for val in output]
             initialized = True
-
+        assert guard(input_types, list)
         for i, (expected_type, actual_value) in enumerate(zip(input_types, output)):
             assert expected_type == type(
                 actual_value
             ), f"Expected parameter `{input_names[i]}` to be \
                 {expected_type} but got {type(actual_value)} instead"
 
-    logging.info(f"Input param types: {input_types}")
+    logging.info("Input param types %s", input_types)
 
     locals_: dict[str, FunctionType] = {}
     lines = code.splitlines()
     func_lines = lines[generator_ast.lineno - 1 : generator_ast.end_lineno]
     func_str = "\n".join(func_lines)
-    # logging.debug(func_str)
     exec(func_str, None, locals_)
     try:
         generator_func = locals_[function_name]
@@ -208,12 +204,13 @@ def py_to_context(
         context.output_types = output_types
         context.default_output_vars()
 
-    logging.info(f"Output param types: {context.output_types}")
-    logging.info(f"Output param names: {context.output_vars}")
+        logging.info("Output param types %s", context.output_types)
+        logging.info("Output param names %s", context.output_vars)
 
     context.input_vars = [ir.Var(name) for name in input_names]
-    assert isinstance(input_types, list)
-    context.input_types = input_types
+    if input_types is not None:
+        assert isinstance(input_types, list)
+        context.input_types = input_types
     context.test_cases = test_cases
     context.py_ast = generator_ast
     context.py_func = generator_func

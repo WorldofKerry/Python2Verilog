@@ -2,7 +2,6 @@
 Special env variable functions
 """
 
-import logging
 import os
 from enum import Enum
 from typing import Optional
@@ -26,6 +25,9 @@ class Vars(Enum):
 
     # Set if no write to filesystem at system exit
     NO_WRITE_TO_FS = PREFIX + "NO_WRITE_TO_FS"
+
+    # Add debug comments
+    DEBUG_COMMENTS = PREFIX + "DEBUG_COMMENTS"
 
 
 def set_debug_mode(mode: bool):

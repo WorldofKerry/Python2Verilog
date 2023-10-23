@@ -7,10 +7,10 @@ that are synthesizable
 """
 from __future__ import annotations
 
-import copy
+from typing import Optional
 
-from python2verilog.utils.assertions import assert_typed, get_typed, get_typed_list
 from python2verilog.utils.generics import GenericRepr
+from python2verilog.utils.typed import guard, typed, typed_list, typed_strict
 
 
 class Expression(GenericRepr):
@@ -54,7 +54,7 @@ class Int(Expression):
     """
 
     def __init__(self, value: int):
-        self.value = get_typed(value, int)
+        self.value = int(typed_strict(value, int))  # Cast bool to int
         super().__init__(str(self.__class__))
 
     def verilog(self) -> str:
@@ -81,6 +81,9 @@ class UInt(Expression):
     def __init__(self, value: int):
         assert isinstance(value, int)
         super().__init__(str(value))
+
+    def __repr__(self):
+        return str(self)
 
 
 class Unknown(Expression):
@@ -109,10 +112,10 @@ class Var(Expression):
         if ver_name == "":
             ver_name = "_" + py_name
 
-        self.ver_name = get_typed(ver_name, str)
-        self.py_name = get_typed(py_name, str)  # Matches I/O of Verilog
-        self.width = get_typed(width, int)
-        self.is_signed = get_typed(is_signed, bool)
+        self.ver_name = typed_strict(ver_name, str)
+        self.py_name = typed_strict(py_name, str)
+        self.width = typed_strict(width, int)
+        self.is_signed = typed_strict(is_signed, bool)
         self.initial_value = initial_value
 
         super().__init__(ver_name)
@@ -143,6 +146,23 @@ class ExclusiveVar(Var):
     a edge clocked or not
     """
 
+    def __init__(
+        self,
+        py_name: str,
+        ver_name: str = "",
+        width: int = 32,
+        is_signed: bool = True,
+        initial_value: str = "0",
+        exclusive_group: Optional[str] = None,
+        **_,
+    ):
+        super().__init__(py_name, ver_name, width, is_signed, initial_value, **_)
+
+        # Default exclusive group is it's Verilog variable name
+        if exclusive_group is None:
+            exclusive_group = self.ver_name
+        self.exclusive_group = exclusive_group
+
 
 class Ternary(Expression):
     """
@@ -172,41 +192,19 @@ class UBinOp(Expression):
     """
 
     def __init__(self, left: Expression, oper: str, right: Expression):
-        self._left = get_typed(left, Expression)
-        self._right = get_typed(right, Expression)
-        self._oper = get_typed(oper, str)
+        self.left = typed_strict(left, Expression)
+        self.right = typed_strict(right, Expression)
+        self.oper = typed_strict(oper, str)
         super().__init__(self.__class__.__name__)
 
-    @property
-    def left(self):
-        """
-        lvalue
-        """
-        return copy.deepcopy(self._left)
-
-    @left.setter
-    def left(self, other: Expression):
-        self._left = get_typed(other, Expression)
-
-    @property
-    def right(self):
-        """
-        rvalue
-        """
-        return copy.deepcopy(self._right)
-
-    @right.setter
-    def right(self, other: Expression):
-        self._right = get_typed(other, Expression)
-
     def to_string(self):
-        return f"({self._left.to_string()} {self._oper} {self._right.to_string()})"
+        return f"({self.left.to_string()} {self.oper} {self.right.to_string()})"
 
     def verilog(self):
         """
         To Verilog
         """
-        return f"({self._left.verilog()} {self._oper} {self._right.verilog()})"
+        return f"({self.left.verilog()} {self.oper} {self.right.verilog()})"
 
 
 class BinOp(UBinOp):
@@ -222,7 +220,7 @@ class BinOp(UBinOp):
         return "$signed" + super().verilog()
 
     def __repr__(self):
-        return f"{self._left} {self._oper} {self._right}"
+        return f"{self.left} {self.oper} {self.right}"
 
 
 class Add(BinOp):
@@ -294,8 +292,8 @@ class UnaryOp(Expression):
     """
 
     def __init__(self, oper: str, expr: Expression):
-        self.oper = get_typed(oper, str)
-        self.expr = get_typed(expr, Expression)
+        self.oper = typed_strict(oper, str)
+        self.expr = typed_strict(expr, Expression)
         super().__init__(self.__class__.__name__)
 
     def to_string(self):
@@ -317,26 +315,18 @@ class Mod(BinOp):
     """
 
     def __init__(self, left: Expression, right: Expression):
-        self.left = get_typed(left, Expression)
-        self.right = get_typed(right, Expression)
+        self.left = typed_strict(left, Expression)
+        self.right = typed_strict(right, Expression)
         super().__init__(left, "%", right)
 
     def verilog(self):
         """
         Verilog
         """
-        return Ternary(
-            UBinOp(self.left, "<", Int(0)),
-            Ternary(
-                UBinOp(self.right, ">=", Int(0)),
-                UnaryOp("-", _Mod(self.left, self.right)),
-                _Mod(self.left, self.right),
-            ),
-            Ternary(
-                UBinOp(self.right, "<", Int(0)),
-                UnaryOp("-", _Mod(self.left, self.right)),
-                _Mod(self.left, self.right),
-            ),
+        return BinOp(
+            BinOp(BinOp(self.left, "%", self.right), "+", self.right),
+            "%",
+            self.right,
         ).verilog()
 
     def to_string(self):
@@ -354,8 +344,8 @@ class FloorDiv(BinOp):
     """
 
     def __init__(self, left: Expression, right: Expression):
-        self.left = get_typed(left, Expression)
-        self.right = get_typed(right, Expression)
+        self.left = typed_strict(left, Expression)
+        self.right = typed_strict(right, Expression)
         super().__init__(left, "//", right)
 
     def verilog(self):
@@ -364,9 +354,9 @@ class FloorDiv(BinOp):
         """
         return Ternary(
             condition=BinOp(
-                left=BinOp(left=self.left, right=self.right, oper="%"),
-                right=Int(0),
-                oper="===",
+                BinOp(left=self.left, right=self.right, oper="%"),
+                "===",
+                Int(0),
             ),
             left=BinOp(self.left, "/", self.right),
             right=BinOp(

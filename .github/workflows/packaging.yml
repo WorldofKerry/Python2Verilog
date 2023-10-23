@@ -8,17 +8,13 @@ on:
   pull_request:
     branches: ["main"]
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
-  cancel-in-progress: true
-
 jobs:
   packaging:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.11"]
+        python-version: ["3.x"]
 
     steps:
       - uses: actions/checkout@v3
@@ -35,7 +31,7 @@ jobs:
 
       - name: Install package
         run: |
-          mkdir build -p && cd build && python3 -m pip install .. && cd ..
+          bash ./build.sh
 
       - name: Install requirements for examples
         working-directory: examples

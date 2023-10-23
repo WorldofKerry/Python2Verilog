@@ -1,17 +1,63 @@
+import logging
+import tempfile
 import unittest
+import warnings
+from importlib import util
 from pathlib import Path
 
 import pytest
 
 from python2verilog.api import verilogify
 from python2verilog.api.modes import Modes
-from python2verilog.api.namespace import namespace_to_verilog, new_namespace
+from python2verilog.api.namespace import (
+    get_namespace,
+    namespace_to_verilog,
+    new_namespace,
+)
 from python2verilog.api.verilogify import get_actual, get_actual_raw, get_expected
 from python2verilog.simulation import iverilog
 
 
 @pytest.mark.usefixtures("argparse")
 class TestSimulation(unittest.TestCase):
+    def test_type_hint(self):
+        ns = {}
+
+        @verilogify(namespace=ns)
+        def func() -> int:
+            yield 123
+
+        module, testbench = namespace_to_verilog(ns)
+        logging.debug(module)
+
+    def test_type_hint_text(self):
+        raw = """
+@verilogify
+def func() -> int:
+    yield 123
+        """
+        raw = "from python2verilog import verilogify\n" + raw
+
+        # Create a temporary source code file
+        with tempfile.NamedTemporaryFile(suffix=".py") as tmp:
+            tmp.write(raw.encode())
+            tmp.flush()
+
+            # Now load that file as a module
+            try:
+                spec = util.spec_from_file_location("tmp", tmp.name)
+                module = util.module_from_spec(spec)
+                spec.loader.exec_module(module)
+
+                # ...or, while the tmp file exists, you can query it externally
+                ns = get_namespace(tmp.name)
+                logging.debug(ns)
+                module, _ = namespace_to_verilog(ns)
+                logging.debug(module)
+
+            except Exception as e:
+                logging.error(e)
+
     def test_o0(self):
         ns = {}
 
@@ -243,7 +289,7 @@ class TestSimulation(unittest.TestCase):
             list(get_expected(olympic_logo)),
         )
 
-    def test_bell(self):
+    def test_hrange(self):
         ns = {}
 
         @verilogify(namespace=ns)
@@ -253,33 +299,120 @@ class TestSimulation(unittest.TestCase):
                 yield i
                 i += 1
 
-        @verilogify(namespace=ns)
-        def bell(a, b):
-            res = 0
-            gen = hrange(a, b)
-            for i in gen:
-                res += i
-            yield res
-
-        bell(7, 13)
+        hrange(0, 10)
 
         # with open("./cyto.log", mode="w") as f:
         #     _, _, cy = context_to_verilog_and_dump(get_context(triple_circle))
         #     f.write(str(cy))
         module, testbench = namespace_to_verilog(ns)
         if self.args.write:
-            mod_path = Path(__file__).parent / "bell.sv"
-            tb_path = Path(__file__).parent / "bell_tb.sv"
+            mod_path = Path(__file__).parent / "hrange.sv"
+            tb_path = Path(__file__).parent / "hrange_tb.sv"
             with open(mod_path, mode="w") as f:
                 f.write(str(module))
             with open(tb_path, mode="w") as f:
                 f.write(str(testbench))
             cmd = iverilog.make_cmd(
-                "bell_tb",
+                "hrange_tb",
                 [mod_path, tb_path],
             )
             # warnings.warn(cmd)
         self.assertListEqual(
-            list(get_actual(bell, module, testbench, timeout=1)),
-            list(get_expected(bell)),
+            list(get_actual(hrange, module, testbench, timeout=1)),
+            list(get_expected(hrange)),
+        )
+
+    def test_reg_func(self):
+        ns = {}
+
+        @verilogify(namespace=ns)
+        def get_data(addr):
+            """
+            Dummy function
+            """
+            print(addr)
+            # # Testing reg func that takes more than one clock cycle
+            iii = 0
+            while iii < addr:
+                iii += 1
+            return iii
+            # return addr + 42069
+
+        @verilogify(namespace=ns)
+        def read32to8(base, count):
+            i = 0
+            while i < count:
+                data = get_data(base + count * 4)
+                j = 0
+                while j < 4:
+                    yield data
+                    j += 1
+                i += 1
+
+        read32to8(256, 2)
+
+        # with open("./cyto.log", mode="w") as f:
+        #     _, _, cy = context_to_verilog_and_dump(get_context(triple_circle))
+        #     f.write(str(cy))
+        module, testbench = namespace_to_verilog(ns)
+        if self.args.write:
+            mod_path = Path(__file__).parent / "read32to8.sv"
+            tb_path = Path(__file__).parent / "read32to8_tb.sv"
+            with open(mod_path, mode="w") as f:
+                f.write(str(module))
+            with open(tb_path, mode="w") as f:
+                f.write(str(testbench))
+            cmd = iverilog.make_cmd(
+                "read32to8_tb",
+                [mod_path, tb_path],
+            )
+            warnings.warn(cmd)
+        self.assertListEqual(
+            list(get_actual(read32to8, module, testbench, timeout=1)),
+            list(get_expected(read32to8)),
+        )
+
+    def test_reg_func2(self):
+        ns = {}
+
+        @verilogify(namespace=ns)
+        def get_data(addr):
+            """
+            Dummy function
+            """
+            print(addr)
+            return addr + 42069
+
+        @verilogify(namespace=ns)
+        def read32to8_2(base, count):
+            i = 0
+            while i < count:
+                data = get_data(base + count * 4)
+                j = 0
+                while j < 4:
+                    yield data
+                    j += 1
+                i += 1
+
+        read32to8_2(256, 2)
+
+        # with open("./cyto.log", mode="w") as f:
+        #     _, _, cy = context_to_verilog_and_dump(get_context(triple_circle))
+        #     f.write(str(cy))
+        module, testbench = namespace_to_verilog(ns)
+        if self.args.write:
+            mod_path = Path(__file__).parent / "read32to8_2.sv"
+            tb_path = Path(__file__).parent / "read32to8_2_tb.sv"
+            with open(mod_path, mode="w") as f:
+                f.write(str(module))
+            with open(tb_path, mode="w") as f:
+                f.write(str(testbench))
+            cmd = iverilog.make_cmd(
+                "read32to8_2_tb",
+                [mod_path, tb_path],
+            )
+            warnings.warn(cmd)
+        self.assertListEqual(
+            list(get_actual(read32to8_2, module, testbench, timeout=1)),
+            list(get_expected(read32to8_2)),
         )

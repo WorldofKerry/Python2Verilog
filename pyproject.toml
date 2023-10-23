@@ -1,6 +1,6 @@
 [project]
 name = "python2verilog"
-version = "0.2.3"
+version = "0.4.2"
 authors = [{ name = "Kerry Wang", email = "kerrywang369@gmail.com" }]
 description = "Converts a subset of python generator functions into synthesizable sequential SystemVerilog"
 readme = "README.md"
@@ -13,6 +13,9 @@ classifiers = [
 [project.urls]
 "Homepage" = "https://github.com/WorldofKerry/Python2Verilog/"
 "Bug Tracker" = "https://github.com/WorldofKerry/Python2Verilog/issues"
+
+[build-system]
+requires = ["setuptools", "typing-extensions"]
 
 [project.optional-dependencies]
 full = ["matplotlib", "numpy", "dash_cytoscape", "dash"]

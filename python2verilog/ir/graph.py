@@ -9,14 +9,10 @@ Element := Vertex | Edge
 
 from __future__ import annotations
 
-import logging
-from abc import abstractmethod
-from typing import Generator, Iterator, Optional
+from typing import Iterator, Optional
 
-from python2verilog.utils.generics import GenericRepr, GenericReprAndStr
-
-from ..utils.assertions import get_typed, get_typed_list, get_typed_optional
-from . import expressions as expr
+from python2verilog.ir import expressions as expr
+from python2verilog.utils.typed import guard, typed, typed_strict
 
 
 def get_variables(exp: expr.Expression) -> Iterator[expr.Var]:
@@ -42,66 +38,44 @@ class Element:
     """
 
     def __init__(self, unique_id: str, name: str = ""):
-        self._name = get_typed(name, str)
-        self._id = get_typed(unique_id, str)
-
-    def to_string(self):
-        """
-        To string
-        """
-        return self._name
+        self.name = typed_strict(name, str)
+        self.unique_id = typed_strict(unique_id, str)
 
     def __hash__(self) -> int:
-        return hash(self._id)
+        return hash(self.unique_id)
 
     def __eq__(self, __value: object):
         if isinstance(__value, Element):
-            return self._id == __value._id
+            return self.unique_id == __value.unique_id
         return False
 
-    @property
-    def unique_id(self):
+    def visit_nonclocked(self) -> Iterator[Element]:
         """
-        Gets node id
-        """
-        return self._id
+        Yields self and recursively yields optimal nonclocked children of element
 
-    @unique_id.setter
-    def unique_id(self, value):
+        :return: [children_branch_0, children_branch_1, ...]
         """
-        Sets node id
-        """
-        self._id = get_typed(value, str)
+        yield from ()
 
-    def get_all_children(self):
+    def view_children(self) -> str:
         """
-        Gets children
+        Views children of node
         """
-        return []
+        return str(list(self.visit_nonclocked()))
 
-    def get_optimal_children(self):
+    def children(self) -> Iterator[Element]:
         """
-        Gets optimal children
+        Gets children of node
         """
-        return []
+        yield from ()
 
-    @property
-    def children(self):
+    def exclusions(self) -> Iterator[str]:
         """
-        Gets children
-        """
-        return self.get_all_children()
+        Yields all exclusion groups that will be read or written to
+        within this group of nonclocked nodes.
 
-    @property
-    def name(self):
-        """
-        Gets name
-        """
-        return self._name
-
-    def variables(self) -> Iterator[expr.Var]:
-        """
-        Yields all variables and their nonclcoked children
+        The reason reads are also included is because checking a callee's
+        ready signal more than once in a clock cycle is usually incorrect.
         """
         yield from ()
 
@@ -119,42 +93,40 @@ class BasicElement(Element):
         **kwargs,
     ):
         super().__init__(unique_id, *args, **kwargs)
-        self._child = get_typed(child, Element)
-        self._optimal_child = None
+        self._child = typed(child, Element)
+        self._optimal_child: Optional[Element] = None
+
+    def visit_nonclocked(self) -> Iterator[Element]:
+        if isinstance(self, ClockedEdge):
+            yield self
+            yield self.optimal_child
+        elif self.optimal_child:
+            yield self
+            yield from self.optimal_child.visit_nonclocked()
 
     @property
-    def child(self):
+    def child(self) -> Element:
         """
         child or optimal_child if no child
         """
-        return self._child
+        assert self._child, f"{self} {self.view_children()}"
+        return typed_strict(self._child, Element)
 
     @child.setter
     def child(self, other: Element):
-        self._child = get_typed(other, Element)
+        self._child = typed_strict(other, Element)
 
-    def get_all_children(self):
+    def has_child(self) -> bool:
         """
-        Gets edges
+        Returns True if has child
         """
-        # if self.optimal_child:
-        #     return [self.optimal_child]
-        # print(f"getting children basicnode {self._optimal_child}")
-        # return [self.child]
+        return self._child is not None
 
-        children = []
+    def children(self):
         if self._child:
-            children.append(self._child)
+            yield self._child
         if self._optimal_child:
-            children.append(self._optimal_child)
-        return children
-
-    def get_optimal_children(self):
-        """
-        Gets optimal children
-        """
-        assert self._optimal_child
-        return [self._optimal_child]
+            yield self._optimal_child
 
     @property
     def optimal_child(self):
@@ -165,13 +137,16 @@ class BasicElement(Element):
 
     @optimal_child.setter
     def optimal_child(self, other: Element):
-        self._optimal_child = get_typed(other, Element)
+        self._optimal_child = typed_strict(other, Element)
 
 
 class Node(Element):
     """
     Vertex
     """
+
+    def __repr__(self) -> str:
+        return self.name
 
 
 class IfElseNode(Node, Element):
@@ -183,107 +158,96 @@ class IfElseNode(Node, Element):
         self,
         unique_id: str,
         *args,
-        true_edge: Optional[Edge] = None,
-        false_edge: Optional[Edge] = None,
-        condition: Optional[expr.Expression],
+        true_edge: Edge,
+        false_edge: Edge,
+        condition: expr.Expression,
         **kwargs,
     ):
         super().__init__(unique_id, *args, **kwargs)
-        self._true_edge = get_typed(true_edge, Edge)
-        self._false_edge = get_typed(false_edge, Edge)
-        self._condition = get_typed(condition, expr.Expression)
-        self._optimal_true_edge = None
-        self._optimal_false_edge = None
-
-    def to_string(self):
-        """
-        To string
-        """
-        return f"if ({self._condition.to_string()})"
-
-    @property
-    def condition(self):
-        """
-        conditional
-        """
-        return self._condition
-
-    @property
-    def true_edge(self):
-        """
-        true edge or optimal if no edge
-        """
-        return self._true_edge
-
-    @true_edge.setter
-    def true_edge(self, other: Element):
-        self._true_edge = get_typed(other, Element)
-
-    @property
-    def false_edge(self):
-        """
-        false edge or optimal false edge if no false edge
-        """
-        return self._false_edge
-
-    @false_edge.setter
-    def false_edge(self, other: Element):
-        self._false_edge = get_typed(other, Element)
+        self.true_edge = typed_strict(true_edge, Edge)
+        self.false_edge = typed_strict(false_edge, Edge)
+        self.condition = typed_strict(condition, expr.Expression)
+        self._optimal_true_edge: Optional[Edge] = None
+        self._optimal_false_edge: Optional[Edge] = None
 
     @property
     def optimal_true_edge(self):
         """
         optimal true edge or edge otherwise
         """
-        return self._optimal_true_edge if self._optimal_true_edge else self._true_edge
+        return self._optimal_true_edge if self._optimal_true_edge else self.true_edge
 
     @optimal_true_edge.setter
-    def optimal_true_edge(self, other: Element):
-        self._optimal_true_edge = get_typed(other, Element)
+    def optimal_true_edge(self, other: Edge):
+        self._optimal_true_edge = typed_strict(other, Edge)
 
     @property
     def optimal_false_edge(self):
         """
         optimal false edge
         """
-        return (
-            self._optimal_false_edge if self._optimal_false_edge else self._false_edge
-        )
+        return self._optimal_false_edge if self._optimal_false_edge else self.false_edge
 
     @optimal_false_edge.setter
-    def optimal_false_edge(self, other: Element):
-        self._optimal_false_edge = get_typed(other, Element)
+    def optimal_false_edge(self, other: Edge):
+        self._optimal_false_edge = typed_strict(other, Edge)
 
-    def get_all_children(self) -> Iterator[Edge]:
+    def children(self) -> Iterator[Edge]:
         """
         Gets edges
         """
-        if self._true_edge:
-            yield self._true_edge
-        if self._false_edge:
-            yield self._false_edge
+        if self.true_edge:
+            yield self.true_edge
+        if self.false_edge:
+            yield self.false_edge
         if self._optimal_true_edge:
             yield self._optimal_true_edge
         if self._optimal_false_edge:
             yield self._optimal_false_edge
 
-    def get_optimal_children(self):
-        """
-        Gets optimal children
-        """
-        assert self._optimal_true_edge and self._optimal_false_edge
-        return [self._optimal_true_edge, self._optimal_false_edge]
-
-    def variables(self):
-        yield from get_variables(self.condition)
-        yield from self.optimal_true_edge.variables()
-        yield from self.optimal_false_edge.variables()
+    def exclusions(self):
+        for var in get_variables(self.condition):
+            if isinstance(var, expr.ExclusiveVar):
+                yield var.exclusive_group
+        yield from self.optimal_true_edge.exclusions()
+        yield from self.optimal_false_edge.exclusions()
 
     def __repr__(self):
-        return f"If({self.condition}) {self.unique_id}"
+        return f"If{self.condition}"
+
+    def visit_nonclocked(self) -> Iterator[Element]:
+        yield self
+        yield Node(unique_id="", name="True Branch")
+        yield from self.optimal_true_edge.visit_nonclocked()
+        yield Node(unique_id="", name="False Branch")
+        yield from self.optimal_false_edge.visit_nonclocked()
 
 
-class AssignNode(Node, BasicElement):
+class BasicNode(Node, BasicElement):
+    """
+    Basic node.
+    Has one child.
+    """
+
+    def __init__(self, unique_id: str, *args, child: Edge | None = None, **kwargs):
+        super().__init__(unique_id, *args, **kwargs)
+        self._child = child
+
+    @property
+    def edge(self) -> Edge:
+        """
+        Gets edge
+        """
+        assert guard(self._child, Edge)
+        return self._child
+
+    @edge.setter
+    def edge(self, other: Edge):
+        assert guard(other, Edge)
+        self._child = other
+
+
+class AssignNode(BasicNode):
     """
     Represents a non-blocking assignment,
     i.e. assignments that do not block the execution of
@@ -294,99 +258,26 @@ class AssignNode(Node, BasicElement):
         self,
         unique_id: str,
         *args,
-        lvalue: expr.Expression,
+        lvalue: expr.Var,
         rvalue: expr.Expression,
         child: Optional[Edge] = None,
         **kwargs,
     ):
         super().__init__(unique_id, *args, child=child, **kwargs)
-        self._lvalue = get_typed(lvalue, expr.Expression)
-        self._rvalue = get_typed(rvalue, expr.Expression)
-
-    @property
-    def lvalue(self):
-        """
-        lvalue
-        """
-        return self._lvalue
-
-    @property
-    def rvalue(self):
-        """
-        rvalue
-        """
-        return self._rvalue
-
-    @rvalue.setter
-    def rvalue(self, rvalue: expr.Expression):
-        self._rvalue = get_typed(rvalue, expr.Expression)
-
-    def to_string(self):
-        """
-        To string
-        """
-        return f"{self._lvalue.to_string()} <= {self._rvalue.to_string()}"
-
-    def verilog(self):
-        """
-        To string
-        """
-        return f"{self._lvalue.verilog()} <= {self._rvalue.verilog()}"
+        self.lvalue = typed_strict(lvalue, expr.Var)
+        self.rvalue = typed_strict(rvalue, expr.Expression)
+        self._child = typed(child, Edge)
 
     def __repr__(self):
-        return f"{self.lvalue} = {self.rvalue}; {self.unique_id}"
+        return f"{self.lvalue} = {self.rvalue}"
 
-    def variables(self):
-        # logging.debug(f"{self.variables.__name__} {self}")
-        yield from get_variables(self.lvalue)
+    def exclusions(self):
+        for var in get_variables(self.lvalue):
+            if isinstance(var, expr.ExclusiveVar):
+                yield var.exclusive_group
         yield from get_variables(self.rvalue)
-        yield from self.child.variables()
-
-
-class YieldNode(Node, BasicElement):
-    """
-    Yield statement, represents output
-    """
-
-    def __init__(
-        self,
-        unique_id: str,
-        name: str = "",
-        stmts: Optional[list[expr.Expression]] = None,
-        edge: Optional[Edge] = None,
-    ):
-        super().__init__(unique_id, name=name, child=edge)
-        self._stmts = get_typed_list(stmts, expr.Expression)
-
-    @property
-    def stmts(self):
-        """
-        Yield statements
-        """
-        return self._stmts
-
-    def to_string(self):
-        """
-        To string
-        """
-        string = "yield ["
-        for stmt in self._stmts:
-            string += stmt.to_string() + ", "
-        string = string[:-2] + "]"
-        return string
-
-    def variables(self) -> Iterator[expr.Var]:
-        for exp in self.stmts:
-            yield from get_variables(exp)
-
-
-class DoneNode(Node, Element):
-    """
-    Signals done
-    """
-
-    def __repr__(self) -> str:
-        return "Done"
+        if self._child:
+            yield from self.child.exclusions()
 
 
 class Edge(BasicElement):
@@ -395,28 +286,14 @@ class Edge(BasicElement):
     """
 
     def __init__(self, unique_id: str, *args, child: Element | None = None, **kwargs):
-        assert not isinstance(child, Edge)
         super().__init__(unique_id, *args, child=child, **kwargs)
-
-    def to_string(self):
-        """
-        To string
-        """
-        if self._name:
-            return f"{self._name}"
-        return "Next"
-
-    def __str__(self):
-        return self.to_string()
+        self._child = child
 
     def get_name(self):
         """
         Gets edge name
         """
-        return self._name
-
-    def __repr__(self):
-        return f"=> {self.optimal_child} {self.unique_id}"
+        return self.name
 
 
 class NonClockedEdge(Edge):
@@ -425,8 +302,11 @@ class NonClockedEdge(Edge):
     i.e. no clock cycle has to pass for the next node to be executed
     """
 
-    def variables(self):
-        yield from self.child.variables()
+    def exclusions(self):
+        yield from self.child.exclusions()
+
+    def __repr__(self) -> str:
+        return "=>"
 
 
 class ClockedEdge(Edge):
@@ -435,8 +315,11 @@ class ClockedEdge(Edge):
     i.e. a clock cycle has to pass for the next node to be executed
     """
 
-    def variables(self):
+    def exclusions(self):
         yield from ()
+
+    def __repr__(self):
+        return "=/>"
 
 
 def create_networkx_adjacency_list(node: Element):
@@ -456,7 +339,7 @@ def create_networkx_adjacency_list(node: Element):
             return
 
         visited.add(curr_node)
-        children = curr_node.get_all_children()
+        children = curr_node.children()
         adjacency_list[curr_node] = children
 
         for child in children:
@@ -484,8 +367,7 @@ def create_cytoscape_elements(node: Element):
             return
 
         visited.add(curr_node.unique_id)
-        children = curr_node.get_all_children()
-        # optimal_children = curr_node.get_optimal_children()
+        children = curr_node.children()
 
         if not isinstance(curr_node, Edge):
             nodes.append(
@@ -497,7 +379,8 @@ def create_cytoscape_elements(node: Element):
                     }
                 }
             )
-            for child in curr_node.children:
+            for child in curr_node.children():
+                assert guard(child, BasicElement)
                 edges.append(
                     {
                         "data": {
@@ -510,6 +393,7 @@ def create_cytoscape_elements(node: Element):
                 )
 
             for child in children:
+                assert guard(child, BasicElement)
                 traverse_graph(child.child, visited)
 
     traverse_graph(node, set())
