@@ -70,7 +70,7 @@ class Lines:
         self.lines = [self.__indent(indent_amount, line) for line in self.lines]
         return self
 
-    def to_string(self, indent: int = 0):
+    def to_string(self, indent: int = 0) -> str:
         """
         Converts all lines into a string with lines
         """
