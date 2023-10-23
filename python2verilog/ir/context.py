@@ -120,7 +120,7 @@ class Context(GenericReprAndStr):
         try:
             self.input_types = list(map(input_mapper, input_args))
         except Exception as e:
-            raise TypeInferenceError() from e
+            raise TypeInferenceError(self.name) from e
 
     def _use_output_type_hints(self):
         """
@@ -150,7 +150,7 @@ class Context(GenericReprAndStr):
         try:
             self.output_types = list(map(output_mapper, output_args))
         except Exception as e:
-            raise TypeInferenceError(f"in function `{self.name}`") from e
+            raise TypeInferenceError(self.name) from e
         self.default_output_vars()
 
     def validate(self):
@@ -296,7 +296,8 @@ class Context(GenericReprAndStr):
         """
         if var.py_name in self.generator_instances:
             raise StaticTypingError(
-                f"{var.py_name} changed type from generator instance to another type"
+                f"Variable `{var.py_name}` changed type from generator"
+                f" instance to another type in {self.name}"
             )
         if var not in (*self._local_vars, *self.input_vars, *self.output_vars):
             self._local_vars.append(typed_strict(var, Var))
@@ -367,7 +368,7 @@ class Context(GenericReprAndStr):
             )
         )
 
-        signals = ProtocolSignals(prefix=f"{self.prefix}{name}_{self.name}__")
+        signals = ProtocolSignals(prefix=f"{self.prefix}{self.name}_{name}__")
 
         return Instance(
             self.name,

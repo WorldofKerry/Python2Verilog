@@ -17,18 +17,20 @@ class UnsupportedSyntaxError(Exception):
     Python syntax was not within the supported subset
     """
 
-    def __init__(self, *args: object) -> None:
+    def __init__(self, msg: object) -> None:
         super().__init__(
-            "Python syntax was not within the supported subset",
-            *args,
+            msg,
         )
 
     @classmethod
-    def from_pyast(cls, node: ast.AST):
+    def from_pyast(cls, node: ast.AST, name: str):
         """
         Based on AST error
         """
-        inst = cls(f"Unsupported Python syntax {ast.dump(node)}")
+        inst = cls(
+            f"Unsupported Python syntax `{ast.unparse(node)}` found in function "
+            f"`{name}` as {ast.dump(node)}"
+        )
         return inst
 
 
@@ -49,10 +51,13 @@ class TypeInferenceError(Exception):
     Type inferrence failed, either use the function in code or provide type hints
     """
 
-    def __init__(self, *args: object) -> None:
+    def __init__(self, name: str) -> None:
+        """
+        :param name: function name
+        """
         msg = (
-            "Input/output type inferrence failed, "
+            f"Input/output type inferrence failed for function `{name}`, "
             "either use the function in Python code or provide type hints",
         )
 
-        super().__init__(" ".join(map(str, (*msg, *args))))
+        super().__init__(msg)
