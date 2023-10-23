@@ -76,6 +76,7 @@
 <span class="sd">    Implements a generic __repr__ and __str__ based on self.__dict__</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+    <span class="nd">@reprlib</span><span class="o">.</span><span class="n">recursive_repr</span><span class="p">()</span>
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="se">\n</span><span class="si">{</span><span class="n">pretty_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span></div>
 
