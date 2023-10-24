@@ -109,7 +109,7 @@ class SSA:
         if variable in self.current_def:
             if block in self.current_def[variable]:
                 return variable
-                return self.current_def[variable][block]
+                # return self.current_def[variable][block]
         return variable
 
     def _parse_expression(self, expr: pyast.expr) -> Expression:

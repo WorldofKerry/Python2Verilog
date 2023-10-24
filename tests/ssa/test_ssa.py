@@ -10,13 +10,13 @@ from python2verilog.ir.ssa import SSA
 
 class TestSSA(unittest.TestCase):
     def test_main(self):
-        def basic_func(d):
-            a = 42
+        def basic_func(d, z):
+            a = z
             b = a
             c = a + b
 
             a = c + 23
-            c = a + d
+            c = a + d + 15
 
         source = textwrap.dedent(inspect.getsource(basic_func))
         tree = ast.parse(source)
