@@ -27,7 +27,7 @@ def get_variables(exp: expr.Expression) -> Iterator[expr.Var]:
         raise RuntimeError(f"{type(exp)}")
 
 
-def visit_nonclocked(graph: ir.Graph, node: ir.Element) -> Iterator[ir.Element]:
+def visit_nonclocked(graph: ir.CFG, node: ir.Element) -> Iterator[ir.Element]:
     """
     Recursively visit childrens of node,
 
@@ -40,9 +40,9 @@ def visit_nonclocked(graph: ir.Graph, node: ir.Element) -> Iterator[ir.Element]:
         yield from visit_nonclocked(graph, child)
 
 
-def dominator_tree(graph: ir.Graph, source: ir.Element) -> Iterator[ir.Element]:
+def dominance(graph: ir.CFG, source: ir.Element):
     """
-    Yields nodes that source dominates
+    Returns dict representing dominator tree of source
     """
     vertices = set(dfs(graph, source))
     dom_tree = {}
@@ -50,27 +50,23 @@ def dominator_tree(graph: ir.Graph, source: ir.Element) -> Iterator[ir.Element]:
     for vertex in vertices:
         temp_graph = copy.deepcopy(graph)
         del temp_graph[vertex]
-        # logging.error(f"deleted {repr(vertex)}")
-
-        # new_vertices = set(dfs(temp_graph, source)).intersection(graph[vertex])
         new_vertices = set(dfs(temp_graph, source))
-        # logging.error(f"confused {graph[vertex]=} {new_vertices & graph[vertex]=}")
-        # for v in graph[vertex]:
-        #     logging.error(repr(v))
-        # logging.error("next")
-        # for v in new_vertices:
-        #     logging.error(repr(v))
-
-        # logging.error(f"{new_vertices=}")
         delta = vertices - new_vertices
-        delta = delta
-        # logging.error(f"{delta=}")
         dom_tree[vertex] = delta
-        logging.error(f"{repr(vertex)} dominates {dom_tree[vertex]}")
-
+        # logging.error(f"{repr(vertex)} dominates {dom_tree[vertex]}")
     logging.error(f"\n{print_tree(dom_tree, source)}")
+    return dom_tree
 
-    return graph
+
+def dominance_frontier(graph: ir.CFG, source: ir.Element, entry: ir.Element):
+    """
+    Gets dominator frontier of source with respect to entry
+    """
+    source_dominates = dominance(graph, entry)[source]
+    source_frontier = set()
+    for dominator in source_dominates:
+        source_frontier |= graph[dominator] - source_dominates
+    return source_frontier
 
 
 def print_tree(
@@ -91,7 +87,7 @@ def print_tree(
 
 
 def dfs(
-    graph: ir.Graph, source: ir.Element, visited: Optional[set[ir.Element]] = None
+    graph: ir.CFG, source: ir.Element, visited: Optional[set[ir.Element]] = None
 ) -> Iterator[ir.Element]:
     """
     Depth-first search

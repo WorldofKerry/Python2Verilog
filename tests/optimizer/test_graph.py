@@ -9,7 +9,8 @@ from python2verilog.ir.expressions import *  # nopycln: import
 from python2verilog.ir.graph2 import *
 from python2verilog.optimizer.graph2optimizer import (  # nopycln: import
     dfs,
-    dominator_tree,
+    dominance,
+    dominance_frontier,
     visit_nonclocked,
 )
 
@@ -27,9 +28,10 @@ class TestGraph(unittest.TestCase):
             a = Var("a")
             b = Var("b")
 
-            graph = Graph()
+            graph = CFG()
 
             root = graph.add_node(AssignNode(i, Int(0)))
+            graph.entry = root
             prev = root
 
             if_i_lt_n_prev = graph.add_node(ClockNode(), prev)
@@ -63,7 +65,8 @@ class TestGraph(unittest.TestCase):
         a_copy.adj_list[root] = {}
         logging.error(a_copy)
 
-        new_graph = dominator_tree(graph, root)
+        result = dominance_frontier(graph, graph["1"], graph.entry)
+        print(result)
 
         with open("graph2_cytoscape.log", mode="w") as f:
-            f.write(str(new_graph.to_cytoscape(id_in_label=True)))
+            f.write(str(graph.to_cytoscape(id_in_label=True)))

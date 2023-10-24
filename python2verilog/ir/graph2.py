@@ -4,14 +4,14 @@ Graph v2
 
 from __future__ import annotations
 
-from typing import Collection, Optional, Union
+from typing import Collection, Iterator, Optional, Union
 
 from python2verilog.ir import expressions as expr
 from python2verilog.utils.lines import Lines
 from python2verilog.utils.typed import guard, typed, typed_list, typed_set, typed_strict
 
 
-class Graph:
+class CFG:
     """
     Graph
     """
@@ -20,6 +20,7 @@ class Graph:
         self.adj_list: dict[Element, set[Element]] = {}
         self.unique_counter = -1
         self.prefix = typed_strict(prefix, str)
+        self.entry = Element()
 
     def add_node(
         self,
@@ -94,6 +95,14 @@ class Graph:
             return
         raise TypeError()
 
+    def immediate_successors(self, element: Element) -> Iterator[Element]:
+        """
+        Get immediate successors/parents of a element
+        """
+        for parent, children in self.adj_list.items():
+            if element in children:
+                yield parent
+
     def _next_unique(self):
         """
         Get next unique name
@@ -145,7 +154,7 @@ class Element:
 
     def __init__(self, unique_id: str = ""):
         self._unique_id = typed_strict(unique_id, str)
-        self.graph: Optional[Graph] = None
+        self.graph: Optional[CFG] = None
 
     def __hash__(self) -> int:
         assert len(self.unique_id) > 0, f'"{self.unique_id}"'
