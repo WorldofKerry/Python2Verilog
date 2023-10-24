@@ -42,17 +42,24 @@ def visit_nonclocked(graph: ir.CFG, node: ir.Element) -> Iterator[ir.Element]:
         yield from visit_nonclocked(graph, child)
 
 
-def visit_clocked(graph: ir.CFG, node: ir.Element):
+def visit_clocked(
+    graph: ir.CFG, node: ir.Element, visited: Optional[set[ir.Element]] = None
+):
     """
     Recursively visit children of node that are clock nodes
 
     Excludes node if it is a clock node
     """
+    if visited is None:
+        visited = set()
+    if node in visited:
+        return
+    visited.add(node)
     for child in graph[node]:
         if isinstance(child, ir.ClockNode):
             yield child
         else:
-            yield from visit_clocked(graph, child)
+            yield from visit_clocked(graph, child, visited)
 
 
 def dominance(graph: ir.CFG, source: ir.Element):
@@ -164,7 +171,13 @@ class parallelize(ir.CFG):
         """
         for first, second in self.get_pairs():
             # print(f"{first=} {second=}")
-            self.can_optimize(first, second)
+            if (
+                first in self.adj_list
+                and second in self.adj_list
+                and first is not self.entry
+                and second is not self.entry
+            ):
+                self.can_optimize(first, second)
 
     def get_pairs(self):
         """
@@ -180,8 +193,8 @@ class parallelize(ir.CFG):
 
     def can_optimize(self, first: ir.ClockNode, second: ir.ClockNode):
         """ """
-        if "2" not in first.unique_id or "8" not in second.unique_id:
-            return
+        # if "2" not in first.unique_id or "8" not in second.unique_id:
+        #     return
         print(f"{first=} {second=}")
 
         first_vars = set(assigned_variables(visit_nonclocked(self, first)))
