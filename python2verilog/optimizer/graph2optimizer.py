@@ -2,12 +2,12 @@
 Graph 2 optimizers
 """
 import copy
+import itertools
 import logging
 from typing import Any, Iterator, Optional
 
 import python2verilog.ir.expressions as expr
 import python2verilog.ir.graph2 as ir
-from python2verilog.ir.graph2 import Element  # nopycln: import
 from python2verilog.utils.generics import pretty_dict
 from python2verilog.utils.typed import guard  # nopycln: import
 
@@ -40,6 +40,19 @@ def visit_nonclocked(graph: ir.CFG, node: ir.Element) -> Iterator[ir.Element]:
         return
     for child in graph[node]:
         yield from visit_nonclocked(graph, child)
+
+
+def visit_clocked(graph: ir.CFG, node: ir.Element):
+    """
+    Recursively visit children of node that are clock nodes
+
+    Excludes node if it is a clock node
+    """
+    for child in graph[node]:
+        if isinstance(child, ir.ClockNode):
+            yield child
+        else:
+            yield from visit_clocked(graph, child)
 
 
 def dominance(graph: ir.CFG, source: ir.Element):
@@ -126,15 +139,87 @@ def dfs(
     yield source
 
 
+def assigned_variables(elements: Iterator[ir.Element]):
+    """
+    Yields variables assigned in elements
+    """
+    for elem in elements:
+        if isinstance(elem, ir.AssignNode):
+            yield elem.lvalue
+
+
 class parallelize(ir.CFG):
     """
     parallelize nodes without branches
     """
 
-    def __init__(self, graph: ir.CFG) -> None:
-        assert guard(graph, ir.CFG)
-        super().__init__()
-        logging.error(f"Calling CFG.copy")
-        ir.CFG.copy(self, graph)
-        logging.error(f"Done calling CFG.copy")
-        print(self.adj_list)
+    def __init__(self, graph: ir.CFG):
+        self.mimic(graph)
+        self.parallelize()
+        pass
+
+    def parallelize(self):
+        """
+        Parallelize
+        """
+        for first, second in self.get_pairs():
+            # print(f"{first=} {second=}")
+            self.can_optimize(first, second)
+
+    def get_pairs(self):
+        """
+        Get pairs of clock nodes where first dominates second
+        """
+        clock_nodes = filter(
+            lambda x: isinstance(x, ir.ClockNode), self.adj_list.keys()
+        )
+        dominance_ = dominance(self, self.entry)
+        for first, second in itertools.permutations(clock_nodes, 2):
+            if second in dominance_[first]:
+                yield first, second
+
+    def can_optimize(self, first: ir.ClockNode, second: ir.ClockNode):
+        """ """
+        if "2" not in first.unique_id or "8" not in second.unique_id:
+            return
+        print(f"{first=} {second=}")
+
+        first_vars = set(assigned_variables(visit_nonclocked(self, first)))
+        second_vars = set(assigned_variables(visit_nonclocked(self, second)))
+
+        # print(f"{first_vars.isdisjoint(second_vars)=}")
+
+        result = self.reattach_to_valid_parent(first, second)
+
+    def reattach_to_valid_parent(self, first: ir.ClockNode, second: ir.ClockNode):
+        """
+        Attaches the children of first to second, while considering branching nodes
+        """
+
+        parents = list(self.find_valid_parent(second))
+
+        print(f"{parents=}")
+
+        for parent in parents:
+            print(f"set one {parent=}")
+            self.adj_list[parent] |= self.adj_list[second]
+
+        next_clock_nodes = set(visit_clocked(self, second))
+        print(next_clock_nodes)
+
+        for parent in self.immediate_successors(second):
+            print(f"set two {parent=}")
+            if not isinstance(parent, (ir.ClockNode, ir.FalseNode, ir.TrueNode)):
+                self.adj_list[parent] |= next_clock_nodes
+
+        del self[second]
+
+    def find_valid_parent(self, node: ir.ClockNode):
+        """
+        Yields valid parents
+        """
+        for parent in self.immediate_successors(node):
+            if isinstance(parent, (ir.ClockNode, ir.FalseNode, ir.TrueNode)):
+                yield parent
+            else:
+                yield from self.find_valid_parent(parent)

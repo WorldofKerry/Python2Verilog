@@ -29,9 +29,10 @@ def make_even_fib_graph():
 
     graph = CFG()
 
-    root = graph.add_node(AssignNode(i, Int(0)))
+    root = graph.add_node(ClockNode())
     graph.entry = root
-    prev = root
+
+    prev = graph.add_node(AssignNode(i, Int(0)), root)
 
     if_i_lt_n_prev = graph.add_node(ClockNode(), prev)
     prev = graph.add_node(BranchNode(BinOp(i, "<", n)), if_i_lt_n_prev)
@@ -95,3 +96,6 @@ class TestGraph(unittest.TestCase):
         graph = make_even_fib_graph()
 
         graph = parallelize(graph)
+
+        with open("graph2_cytoscape.log", mode="w") as f:
+            f.write(str(graph.to_cytoscape(id_in_label=True)))

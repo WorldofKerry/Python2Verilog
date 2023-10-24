@@ -24,12 +24,11 @@ class CFG:
         self.prefix = typed_strict(prefix, str)
         self.entry = Element()
 
-    def copy(self, graph: CFG):
+    def mimic(self, graph: CFG):
         """
-        Makes self a copy of another graph
+        In-place copy
         """
-        assert guard(graph, CFG)
-        self.adj_list = copy.deepcopy(graph.adj_list)
+        self.adj_list = graph.adj_list
         self.unique_counter = graph.unique_counter
         self.prefix = graph.prefix
         self.entry = graph.entry
