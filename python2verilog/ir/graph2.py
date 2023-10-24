@@ -83,6 +83,15 @@ class Graph:
             for elem in self.adj_list:
                 if elem.unique_id == key:
                     return elem
+        raise TypeError(f"{key} {type(key)}")
+
+    def __delitem__(self, key: Union[Element, str]):
+        if isinstance(key, Element):
+            del self.adj_list[key]
+            for children in self.adj_list.values():
+                if key in children:
+                    children.remove(key)
+            return
         raise TypeError()
 
     def _next_unique(self):

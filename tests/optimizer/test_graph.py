@@ -7,7 +7,11 @@ from matplotlib import pyplot as plt
 
 from python2verilog.ir.expressions import *  # nopycln: import
 from python2verilog.ir.graph2 import *
-from python2verilog.optimizer.graph2optimizer import visit_nonclocked  # nopycln: import
+from python2verilog.optimizer.graph2optimizer import (  # nopycln: import
+    dfs,
+    dominator_tree,
+    visit_nonclocked,
+)
 
 
 class TestGraph(unittest.TestCase):
@@ -59,5 +63,7 @@ class TestGraph(unittest.TestCase):
         a_copy.adj_list[root] = {}
         logging.error(a_copy)
 
+        new_graph = dominator_tree(graph, root)
+
         with open("graph2_cytoscape.log", mode="w") as f:
-            f.write(str(graph.to_cytoscape(id_in_label=True)))
+            f.write(str(new_graph.to_cytoscape(id_in_label=True)))
