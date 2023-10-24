@@ -11,18 +11,20 @@ from python2verilog.ir.ssa import SSA
 class TestSSA(unittest.TestCase):
     def test_main(self):
         def basic_func(d, z):
-            a = z
-            b = a
-            c = a + b
+            # a = 42
+            # b = a
+            # c = a + b
 
-            a = c + 23
-            c = a + d + 15
+            # a = c + 23
+            # c = a + d + 15
+            a = d + 15
+            b = d + 15 + z
 
         source = textwrap.dedent(inspect.getsource(basic_func))
         tree = ast.parse(source)
         func = tree.body[0]
 
-        # logging.error(ast.dump(func, indent=1))
+        logging.error(ast.dump(func, indent=1))
 
         ssa = SSA()
         result = ssa.parse_stmts("block1", func.body)

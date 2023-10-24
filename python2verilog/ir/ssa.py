@@ -58,6 +58,9 @@ class BinOp:
     def __repr__(self) -> str:
         return f"{self.left} {self.oper} {self.right}"
 
+    def __hash__(self) -> int:
+        return hash(self.oper)  # improve
+
 
 class Int:
     """
@@ -75,55 +78,60 @@ class Int:
     def __repr__(self) -> str:
         return f"{self.value}"
 
+    def __hash__(self) -> int:
+        return hash(self.value)
+
 
 class SSA:
     def __init__(self) -> None:
-        self.current_def: dict[str, dict[str, Expression]] = {}
-        self.var_mapping = {}
-        self.block = "bruvlamo"
+        self.current_def: dict[Expression, Var] = {}
+        self.var_mapping: dict[str, Var] = {}
+
+        self.block = "bruv_lmao"
+        self.counter = 0
+
+    def next_var(self) -> Var:
+        """
+        Next var
+        """
+        self.counter += 1
+        return Var(f"v{self.counter}")
 
     def parse_stmts(self, block: str, stmts: list[pyast.stmt]):
         """
         Parse statements
         """
-        number = 0
-        ssa = []
         for stmt in stmts:
             assert guard(stmt, pyast.Assign)
-            var_name = Var(f"v{number}")
-            var_value = self._parse_expression(stmt.value)
-            self.var_mapping[stmt.targets[0].id] = var_name
-            ssa.append(f"{var_name}: {var_value}")
-            self.write_variable(var_name, self.block, var_value)
-            number += 1
-        return "\n" + "\n".join(ssa)
+            self._parse_stmt(stmt)
+        return self.current_def
 
-    def write_variable(self, variable: str, block: str, value: Expression):
-        assert guard(variable, Var)
-        if variable not in self.current_def:
-            self.current_def[variable] = {}
-        self.current_def[variable][block] = value
-
-    def read_variable(self, variable: str, block: str):
-        assert guard(variable, Var)
-        if variable in self.current_def:
-            if block in self.current_def[variable]:
-                return variable
-                # return self.current_def[variable][block]
-        return variable
+    def _parse_stmt(self, stmt: pyast.Assign):
+        """
+        Parse statement
+        """
+        expr = self._parse_expression(stmt.value)
+        self.var_mapping[stmt.targets[0].id] = expr
+        print(self.var_mapping)
+        print(self.current_def)
 
     def _parse_expression(self, expr: pyast.expr) -> Expression:
         """
         <expression> (e.g. constant, name, subscript, etc., those that return a value)
         """
         if isinstance(expr, pyast.Constant):
-            return Int(expr.value)
+            temp = Int(expr.value)
+            if temp in self.current_def:
+                return self.current_def[temp]
+            self.current_def[temp] = self.next_var()
+            return self.current_def[temp]
+
         if isinstance(expr, pyast.Name):
-            return self.read_variable(
-                self.var_mapping.get(expr.id, Var(expr.id)), self.block
-            )
+            return self.read_variable(expr.id)
+
         if isinstance(expr, pyast.BinOp):
             return self._parse_binop(expr)
+
         raise RuntimeError()
 
     def _parse_binop(self, expr: pyast.BinOp) -> Expression:
@@ -133,9 +141,23 @@ class SSA:
         With special case for floor division
         """
         if isinstance(expr.op, pyast.Add):
-            return BinOp(
+            temp = BinOp(
                 self._parse_expression(expr.left),
                 "+",
                 self._parse_expression(expr.right),
             )
+            if temp in self.current_def:
+                return self.current_def[temp]
+            self.current_def[temp] = self.next_var()
+            return self.current_def[temp]
         raise RuntimeError()
+
+    def read_variable(self, name: str):
+        """
+        Read variable
+        """
+        if name in self.var_mapping:
+            return self.var_mapping[name]
+        print(f"External {name}")
+        self.var_mapping[name] = self.next_var()
+        return self.var_mapping[name]
