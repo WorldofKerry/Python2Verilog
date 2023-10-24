@@ -70,3 +70,21 @@ class TestGraph(unittest.TestCase):
 
         with open("graph2_cytoscape.log", mode="w") as f:
             f.write(str(graph.to_cytoscape(id_in_label=True)))
+
+    def test_dominator_algorithms(self):
+        def make_graph():
+            graph = CFG()
+            prev = graph.add_node(ClockNode("A"))
+            graph.entry = prev
+
+            prev = graph.add_node(ClockNode("B"), prev)
+            prev = graph.add_node(ClockNode("C"), prev)
+
+            graph.add_edge(graph["B"], graph["A"])
+
+            return graph
+
+        graph = make_graph()
+
+        with open("graph2_cytoscape.log", mode="w") as f:
+            f.write(str(graph.to_cytoscape(id_in_label=True)))

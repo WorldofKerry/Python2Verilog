@@ -53,7 +53,6 @@ def dominance(graph: ir.CFG, source: ir.Element):
         new_vertices = set(dfs(temp_graph, source))
         delta = vertices - new_vertices
         dom_tree[vertex] = delta
-        # logging.error(f"{repr(vertex)} dominates {dom_tree[vertex]}")
     logging.error(f"\n{print_tree(dom_tree, source)}")
     return dom_tree
 
