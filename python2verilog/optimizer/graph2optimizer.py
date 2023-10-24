@@ -6,8 +6,10 @@ import logging
 from typing import Any, Iterator, Optional
 
 import python2verilog.ir.expressions as expr
-import python2verilog.ir.graph2 as ir  # nopycln: import
-from python2verilog.utils.generics import pretty_dict  # nopycln: import
+import python2verilog.ir.graph2 as ir
+from python2verilog.ir.graph2 import Element  # nopycln: import
+from python2verilog.utils.generics import pretty_dict
+from python2verilog.utils.typed import guard  # nopycln: import
 
 
 def get_variables(exp: expr.Expression) -> Iterator[expr.Var]:
@@ -84,7 +86,9 @@ def dominance_frontier(graph: ir.CFG, n: ir.Element, entry: ir.Element):
             if m_to_z and n_dom_m and not n_sdom_z:
                 yield z
             else:
-                print(f"{z=} {m=} {m_to_z=} {n_dom_m=} {n_sdom_z=}")
+                logging.debug(
+                    f"{dominance_frontier.__name__} {z=} {m=} {m_to_z=} {n_dom_m=} {n_sdom_z=}"
+                )
 
 
 def print_tree(
@@ -120,3 +124,17 @@ def dfs(
     for child in graph[source]:
         yield from dfs(graph, child, visited)
     yield source
+
+
+class parallelize(ir.CFG):
+    """
+    parallelize nodes without branches
+    """
+
+    def __init__(self, graph: ir.CFG) -> None:
+        assert guard(graph, ir.CFG)
+        super().__init__()
+        logging.error(f"Calling CFG.copy")
+        ir.CFG.copy(self, graph)
+        logging.error(f"Done calling CFG.copy")
+        print(self.adj_list)

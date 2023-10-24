@@ -3,6 +3,8 @@ Graph v2
 """
 
 from __future__ import annotations
+import copy
+import logging
 
 from typing import Collection, Iterator, Optional, Union
 
@@ -16,11 +18,22 @@ class CFG:
     Graph
     """
 
-    def __init__(self, prefix: str = "") -> None:
+    def __init__(self, prefix: str = ""):
         self.adj_list: dict[Element, set[Element]] = {}
         self.unique_counter = -1
         self.prefix = typed_strict(prefix, str)
         self.entry = Element()
+
+    def copy(self, graph: CFG):
+        """
+        Makes self a copy of another graph
+        """
+        assert guard(graph, CFG)
+        self.adj_list = copy.deepcopy(graph.adj_list)
+        self.unique_counter = graph.unique_counter
+        self.prefix = graph.prefix
+        self.entry = graph.entry
+        return self
 
     def add_node(
         self,
