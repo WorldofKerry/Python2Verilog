@@ -174,8 +174,8 @@ class parallelize(ir.CFG):
             if (
                 first in self.adj_list
                 and second in self.adj_list
-                and first is not self.entry
-                and second is not self.entry
+                # and first is not self.entry
+                # and second is not self.entry
             ):
                 self.can_optimize(first, second)
 
