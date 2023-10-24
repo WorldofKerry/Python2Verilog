@@ -65,7 +65,7 @@ class TestGraph(unittest.TestCase):
         a_copy.adj_list[root] = {}
         logging.error(a_copy)
 
-        result = dominance_frontier(graph, graph["1"], graph.entry)
+        result = list(dominance_frontier(graph, graph["5"], graph.entry))
         print(result)
 
         with open("graph2_cytoscape.log", mode="w") as f:

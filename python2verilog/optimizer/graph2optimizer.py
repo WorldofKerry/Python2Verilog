@@ -59,30 +59,32 @@ def dominance(graph: ir.CFG, source: ir.Element):
 
 def dominance_frontier(graph: ir.CFG, n: ir.Element, entry: ir.Element):
     """
-    Gets dominator frontier of source with respect to entry
+    Gets dominator frontier of n with respect to graph entry
 
     DF(N) = {Z | M→Z & (N dom M) & ¬(N sdom Z)}
 
     for Z, M, N in set of Nodes
     """
     dominance_ = dominance(graph, entry)
-    for z_candidate in graph.adj_list.keys():
-        # Look for canidates for Z
 
-        # Check for N dom M
-        for m_candidate in dominance_[n]:
-            # Check for M -> Z
-            if z_candidate in graph.adj_list[m_candidate]:
-                # Check for N sdom Z
-                n_sdom_Z = z_candidate in dominance_[n] and z_candidate != n
-                if not n_sdom_Z:
-                    yield z_candidate
+    zs = graph.adj_list.keys()
+    ms = graph.adj_list.keys()
 
-    # set_of_M = dominance(graph, entry)[source]
-    # source_frontier = set()
-    # for M in set_of_M:
-    #     source_frontier |= graph[M] & set_of_M
-    # return source_frontier
+    for z in zs:
+        for m in ms:
+            # M -> Z
+            m_to_z = z in graph.adj_list[m]
+
+            # N dom M
+            n_dom_m = m in dominance_[n]
+
+            # ~(N sdom Z)
+            n_sdom_z = z in dominance_[n] and n != z
+
+            if m_to_z and n_dom_m and not n_sdom_z:
+                yield z
+            else:
+                print(f"{z=} {m=} {m_to_z=} {n_dom_m=} {n_sdom_z=}")
 
 
 def print_tree(
