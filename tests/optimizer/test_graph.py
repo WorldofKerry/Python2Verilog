@@ -29,14 +29,16 @@ def make_even_fib_graph():
 
     graph = CFG()
 
-    # root = graph.add_node(ClockNode())
-    # graph.entry = root
+    # clock node vs first node as root
+    if True:
+        root = graph.add_node(ClockNode())
+        graph.entry = root
 
-    # prev = graph.add_node(AssignNode(i, Int(0)), root)
-
-    root = graph.add_node(AssignNode(i, Int(0)))
-    graph.entry = root
-    prev = root
+        prev = graph.add_node(AssignNode(i, Int(0)), root)
+    else:
+        root = graph.add_node(AssignNode(i, Int(0)))
+        graph.entry = root
+        prev = root
 
     if_i_lt_n_prev = graph.add_node(ClockNode(), prev)
     prev = graph.add_node(BranchNode(BinOp(i, "<", n)), if_i_lt_n_prev)
@@ -100,6 +102,12 @@ class TestGraph(unittest.TestCase):
         graph = make_even_fib_graph()
 
         graph = parallelize(graph)
+
+        dom_frontier = list(dominance_frontier(graph, graph["10"], graph.entry))
+        print(f"{dom_frontier=}")
+
+        dom_frontier = list(dominance_frontier(graph, graph["13"], graph.entry))
+        print(f"{dom_frontier=}")
 
         with open("graph2_cytoscape.log", mode="w") as f:
             f.write(str(graph.to_cytoscape(id_in_label=True)))

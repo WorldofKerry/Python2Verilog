@@ -75,7 +75,7 @@ def dominance(graph: ir.CFG, source: ir.Element):
         new_vertices = set(dfs(temp_graph, source))
         delta = vertices - new_vertices
         dom_tree[vertex] = delta
-    logging.error(f"\n{print_tree(dom_tree, source)}")
+    logging.debug(f"\n{print_tree(dom_tree, source)}")
     return dom_tree
 
 
@@ -174,10 +174,13 @@ class parallelize(ir.CFG):
             if (
                 first in self.adj_list
                 and second in self.adj_list
-                # and first is not self.entry
-                # and second is not self.entry
+                and first is not self.entry
+                and second is not self.entry
             ):
                 self.can_optimize(first, second)
+
+        # print(f"FRESSSSH")
+        # self.can_optimize(self.entry, self["2"])
 
     def get_pairs(self):
         """
