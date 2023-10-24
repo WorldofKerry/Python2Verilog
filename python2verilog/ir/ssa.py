@@ -5,7 +5,7 @@ https://link.springer.com/chapter/10.1007/978-3-642-37051-9_6
 """
 
 import ast as pyast
-from typing import Any
+
 from python2verilog.exceptions import UnsupportedSyntaxError
 from python2verilog.utils.typed import guard
 
@@ -108,8 +108,9 @@ class SSA:
         assert guard(variable, Var)
         if variable in self.current_def:
             if block in self.current_def[variable]:
+                return variable
                 return self.current_def[variable][block]
-        raise RuntimeError(f"{self.current_def} {variable} {type(variable)}")
+        return variable
 
     def _parse_expression(self, expr: pyast.expr) -> Expression:
         """
@@ -118,7 +119,9 @@ class SSA:
         if isinstance(expr, pyast.Constant):
             return Int(expr.value)
         if isinstance(expr, pyast.Name):
-            return self.read_variable(self.var_mapping[expr.id], self.block)
+            return self.read_variable(
+                self.var_mapping.get(expr.id, Var(expr.id)), self.block
+            )
         if isinstance(expr, pyast.BinOp):
             return self._parse_binop(expr)
         raise RuntimeError()

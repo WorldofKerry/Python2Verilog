@@ -1,8 +1,9 @@
 import ast
+import inspect
 import logging
 import textwrap
 import unittest
-import inspect
+
 from python2verilog.ir import expressions as expr
 from python2verilog.ir.ssa import SSA
 
@@ -15,7 +16,7 @@ class TestSSA(unittest.TestCase):
             c = a + b
 
             a = c + 23
-            # c = a + d
+            c = a + d
 
         source = textwrap.dedent(inspect.getsource(basic_func))
         tree = ast.parse(source)
