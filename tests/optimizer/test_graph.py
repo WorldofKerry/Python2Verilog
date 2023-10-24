@@ -32,13 +32,9 @@ def make_even_fib_graph():
     # clock node vs first node as root
     if True:
         root = graph.add_node(ClockNode())
-        graph.entry = root
-
         prev = graph.add_node(AssignNode(i, Int(0)), root)
     else:
-        root = graph.add_node(AssignNode(i, Int(0)))
-        graph.entry = root
-        prev = root
+        root = prev = graph.add_node(AssignNode(i, Int(0)))
 
     if_i_lt_n_prev = graph.add_node(ClockNode(), prev)
     prev = graph.add_node(BranchNode(BinOp(i, "<", n)), if_i_lt_n_prev)
@@ -59,14 +55,30 @@ def make_even_fib_graph():
 
 
 def make_basic_graph():
+    out = Var("out")
+    i = Var("i")
+    n = Var("n")
+    a = Var("a")
+    b = Var("b")
+
     graph = CFG()
-    prev = graph.add_node(ClockNode("A"))
-    graph.entry = prev
+    prev = graph.add_node(ClockNode())
+    prev = graph.add_node(AssignNode(out, Int(10)), prev)
 
-    prev = graph.add_node(ClockNode("B"), prev)
-    prev = graph.add_node(ClockNode("C"), prev)
+    prev = graph.add_node(ClockNode(), prev)
+    prev = ifelse = graph.add_node(BranchNode(BinOp(a, "<", b)), prev)
 
-    graph.add_edge(graph["B"], graph["A"])
+    prev = graph.add_node(ClockNode(), prev)
+    prev = graph.add_node(AssignNode(out, Int(11)), prev)
+
+    prev = graph.add_node(ClockNode(), prev)
+    tail1 = graph.add_node(AssignNode(out, Int(12)), prev)
+
+    prev = ifelse
+    prev = graph.add_node(ClockNode(), prev)
+    tail2 = graph.add_node(AssignNode(out, Int(13)), prev)
+
+    graph.add_node(AssignNode(n, Int(789)), tail1, tail2)
 
     return graph
 
@@ -92,8 +104,10 @@ class TestGraph(unittest.TestCase):
     def test_dominator_algorithms(self):
         graph = make_basic_graph()
 
-        result = list(dominance_frontier(graph, graph["A"], graph.entry))
-        print(result)
+        # result = list(dominance_frontier(graph, graph["A"], graph.entry))
+        # print(result)
+
+        graph = parallelize(graph)
 
         with open("graph2_cytoscape.log", mode="w") as f:
             f.write(str(graph.to_cytoscape(id_in_label=True)))
