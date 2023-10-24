@@ -75,7 +75,7 @@ class CFG:
         Add directed edge
         """
         assert all(target not in self.adj_list[source] for target in targets)
-        self.adj_list[source].union(targets)
+        self.adj_list[source] = self.adj_list[source].union(targets)
 
     def __getitem__(self, key: Union[Element, str]):
         if isinstance(key, Element):

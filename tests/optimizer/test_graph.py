@@ -86,5 +86,9 @@ class TestGraph(unittest.TestCase):
 
         graph = make_graph()
 
+        result = list(dominance_frontier(graph, graph["A"], graph.entry))
+        # result = dominance(graph, graph.entry)
+        print(result)
+
         with open("graph2_cytoscape.log", mode="w") as f:
             f.write(str(graph.to_cytoscape(id_in_label=True)))

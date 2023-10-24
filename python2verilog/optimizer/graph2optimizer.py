@@ -57,15 +57,32 @@ def dominance(graph: ir.CFG, source: ir.Element):
     return dom_tree
 
 
-def dominance_frontier(graph: ir.CFG, source: ir.Element, entry: ir.Element):
+def dominance_frontier(graph: ir.CFG, n: ir.Element, entry: ir.Element):
     """
     Gets dominator frontier of source with respect to entry
+
+    DF(N) = {Z | M→Z & (N dom M) & ¬(N sdom Z)}
+
+    for Z, M, N in set of Nodes
     """
-    source_dominates = dominance(graph, entry)[source]
-    source_frontier = set()
-    for dominator in source_dominates:
-        source_frontier |= graph[dominator] - source_dominates
-    return source_frontier
+    dominance_ = dominance(graph, entry)
+    for z_candidate in graph.adj_list.keys():
+        # Look for canidates for Z
+
+        # Check for N dom M
+        for m_candidate in dominance_[n]:
+            # Check for M -> Z
+            if z_candidate in graph.adj_list[m_candidate]:
+                # Check for N sdom Z
+                n_sdom_Z = z_candidate in dominance_[n] and z_candidate != n
+                if not n_sdom_Z:
+                    yield z_candidate
+
+    # set_of_M = dominance(graph, entry)[source]
+    # source_frontier = set()
+    # for M in set_of_M:
+    #     source_frontier |= graph[M] & set_of_M
+    # return source_frontier
 
 
 def print_tree(
