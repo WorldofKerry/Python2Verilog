@@ -317,6 +317,7 @@ class newrename(Transformer):
         self.counter = 0
         self.var_numberer = {}
         self.visited = set()
+        self.phied = set()
 
     def apply(self):
         return self
@@ -345,8 +346,7 @@ class newrename(Transformer):
         if node in self.visited:
             return self
         self.visited.add(node)
-
-        print(f"Inner {node=} {mapping_stack=}")
+        # print(f"Inner {node=} {mapping_stack=}")
 
         for child in self.adj_list[node]:
             self.replace(child, mapping_stack)
@@ -364,6 +364,43 @@ class newrename(Transformer):
                 # print(f"{succ.phis[key]=}")
 
         for join in self.visit_succ(node):
+            assert guard(join, ir.JoinNode)
+            print(f"{join=} {mapping_stack=}")
+
+            if join in self.phied:
+                new_phis = {}
+                for key, value in join.phis.items():
+                    og_var = self.search_mapping_and_mutate(mapping_stack, key)
+
+                    print(f"Phied {og_var=} {key=} {mapping_stack[og_var][-1]=}")
+
+                    join.phis[key].append(mapping_stack[og_var][-1])
+
+                    # new_var = self.new_var(og_var)
+
+                    # print(f"{og_var=} {new_var=}")
+                    # new_phis[new_var] = value
+
+                    # mapping_stack[og_var].append(new_var)
+
+                # join.phis = new_phis
+                continue
+            self.phied.add(join)
+            new_phis = {}
+            for key, value in join.phis.items():
+                og_var = self.search_mapping_and_mutate(mapping_stack, key)
+
+                new_var = self.new_var(og_var)
+
+                # print(f"{og_var=} {new_var=}")
+                new_phis[new_var] = value
+
+                mapping_stack[og_var].append(new_var)
+
+            join.phis = new_phis
+
+            print(f"{join=} {mapping_stack=}")
+
             self.inner(join, mapping_stack)
 
         return self
@@ -380,6 +417,8 @@ class newrename(Transformer):
         """
         Search mapping for variable and returns original key
         """
+        if var in mapping_stack:
+            return var
         for key, value in mapping_stack.items():
             if var in value:
                 return key
@@ -393,7 +432,7 @@ class newrename(Transformer):
             assert isinstance(key, expr.Var)
             assert isinstance(value, list)
 
-        print(f"Replace {node=} {mapping_stack=}")
+        # print(f"Replace {node=} {mapping_stack=}")
 
         if isinstance(node, ir.AssignNode):
             node.rvalue = backwards_replace(
