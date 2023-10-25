@@ -71,7 +71,7 @@ class AssignNode(Element):
 
 class ClockNode(Element):
     """
-    A clock edge occurs
+    A clock edge occurs, includes phi of variables
     """
 
     def __str__(self) -> str:

@@ -11,6 +11,7 @@ from python2verilog.optimizer.graph2optimizer import (  # nopycln: import
     dfs,
     dominance,
     dominance_frontier,
+    make_ssa,
     parallelize,
     visit_nonclocked,
 )
@@ -116,7 +117,7 @@ class TestGraph(unittest.TestCase):
             .can_optimize(graph["11"], graph["13"])
             .can_optimize(graph["11"], graph["15"])
             .can_optimize(graph["11"], graph["17"])
-            .parallelize()
+            .run()
         )
 
         with open("graph2_cytoscape.log", mode="w") as f:
@@ -125,13 +126,21 @@ class TestGraph(unittest.TestCase):
     def test_parallelize(self):
         graph = make_even_fib_graph()
 
-        graph = parallelize(graph).parallelize()
+        graph = parallelize(graph).run()
 
-        # dom_frontier = list(dominance_frontier(graph, graph["10"], graph.entry))
-        # print(f"{dom_frontier=}")
+        dom_frontier = list(dominance_frontier(graph, graph["12"], graph.entry))
+        print(f"{dom_frontier=}")
 
-        # dom_frontier = list(dominance_frontier(graph, graph["13"], graph.entry))
-        # print(f"{dom_frontier=}")
+        dom_frontier = list(dominance_frontier(graph, graph["0"], graph.entry))
+        print(f"{dom_frontier=}")
+
+        with open("graph2_cytoscape.log", mode="w") as f:
+            f.write(str(graph.to_cytoscape(id_in_label=True)))
+
+    def test_make_ssa(self):
+        graph = make_even_fib_graph()
+
+        graph = make_ssa(graph).run()
 
         with open("graph2_cytoscape.log", mode="w") as f:
             f.write(str(graph.to_cytoscape(id_in_label=True)))

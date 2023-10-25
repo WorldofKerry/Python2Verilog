@@ -8,6 +8,7 @@ from typing import Any, Iterator, Optional
 
 import python2verilog.ir.expressions as expr
 import python2verilog.ir.graph2 as ir
+from python2verilog.optimizer.helpers import backwards_replace
 from python2verilog.utils.generics import pretty_dict
 from python2verilog.utils.typed import guard  # nopycln: import
 
@@ -153,6 +154,63 @@ def assigned_variables(elements: Iterator[ir.Element]):
             yield elem.lvalue
 
 
+class make_ssa(ir.CFG):
+    """
+    Make CFG use ssa
+    """
+
+    def __init__(self, graph: ir.CFG):
+        self.mimic(graph)
+        self.variables: dict[expr.Var, set[expr.Var]] = {}
+        self.counter = 0
+
+    def run(self):
+        """
+        Run
+        """
+        self.visit(self.entry, set(), {})
+
+        print(f"{self.variables=}")
+
+        return self
+
+    def visit(
+        self,
+        node: ir.Element,
+        visited: set[ir.Element],
+        mapping: dict[expr.Var, expr.Expression],
+    ):
+        for key, value in mapping.items():
+            if key not in self.variables:
+                self.variables[key] = set()
+            self.variables[key].add(value)
+
+        print(f"{node=} {mapping=}")
+        if node in visited:
+            return
+        visited.add(node)
+
+        if isinstance(node, ir.AssignNode):
+            node.rvalue = backwards_replace(node.rvalue, mapping)
+
+            new_var = expr.Var(f"v{self.counter}")
+            self.counter += 1
+
+            mapping[node.lvalue] = new_var
+
+            node.lvalue = new_var
+
+            print(f"post {node=} {mapping=}")
+
+        if isinstance(node, ir.BranchNode):
+            node.expression = backwards_replace(node.expression, mapping)
+
+        for child in self.adj_list[node]:
+            self.visit(child, visited, copy.deepcopy(mapping))
+
+        return self
+
+
 class parallelize(ir.CFG):
     """
     parallelize nodes without branches
@@ -160,9 +218,8 @@ class parallelize(ir.CFG):
 
     def __init__(self, graph: ir.CFG):
         self.mimic(graph)
-        pass
 
-    def parallelize(self):
+    def run(self):
         """
         Parallelize
         """
