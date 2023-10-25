@@ -324,7 +324,15 @@ class newrename(Transformer):
     def starter(self, node: ir.Element):
         if node == self.entry:
             mapping_stack = self.entry_mapping()
-            self.replace(node, mapping_stack)
+            if isinstance(node, ir.AssignNode):
+                node.rvalue = backwards_replace(
+                    node.rvalue, self.make_mapping(mapping_stack)
+                )
+                new_lvalue = self.new_var(node.lvalue)
+                mapping_stack[
+                    self.search_mapping_and_mutate(mapping_stack, node.lvalue)
+                ].append(new_lvalue)
+                node.lvalue = new_lvalue
             self.inner(node, mapping_stack)
         elif isinstance(node, ir.JoinNode):
             mapping_stack = self.join_mapping(node)

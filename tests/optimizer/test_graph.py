@@ -294,11 +294,11 @@ class TestGraph(unittest.TestCase):
         graph = insert_phi.debug(graph).apply()
         graph = (
             newrename.debug(graph).starter(graph.entry)
-            # .single(graph[10])
-            # .single(graph[11])
-            # .single(graph[12])
+            # .starter(graph[10])
+            # .starter(graph[11])
+            # .starter(graph[12])
         )
-        # graph = newrename.debug(graph).single(graph[10])
+        # graph = newrename.debug(graph).starter(graph[10])
 
         dom_frontier = list(dominance_frontier(graph, graph[2], graph.entry))
         print(f"{dom_frontier=}")
