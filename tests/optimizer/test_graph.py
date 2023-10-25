@@ -7,6 +7,7 @@ from matplotlib import pyplot as plt
 from python2verilog.ir.expressions import *  # nopycln: import
 from python2verilog.ir.graph2 import *
 from python2verilog.optimizer.graph2optimizer import (  # nopycln: import
+    add_block_nodes,
     add_join_nodes,
     dfs,
     dominance,
@@ -259,6 +260,7 @@ class TestGraph(unittest.TestCase):
         graph = make_basic_branch()
 
         graph = add_join_nodes.debug(graph).apply()
+        graph = add_block_nodes.debug(graph).apply()
         # graph = insert_phi.debug(graph).apply()
         # graph = rename.debug(graph).apply()
 

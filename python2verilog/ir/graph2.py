@@ -71,6 +71,15 @@ class PhiNode(Element):
         return "Phi"
 
 
+class BlockNode(Element):
+    """
+    Label
+    """
+
+    def __str__(self) -> str:
+        return "BlockNode"
+
+
 class AssignNode(Element):
     """
     Variable assignment

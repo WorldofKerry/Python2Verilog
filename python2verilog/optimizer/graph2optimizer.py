@@ -228,10 +228,10 @@ class add_join_nodes(Transformer):
     def apply(self):
         nodes = list(dfs(self, self.entry))
         for node in nodes:
-            self.join(node)
+            self.single(node)
         return self
 
-    def join(self, node: ir.Element):
+    def single(self, node: ir.Element):
         parents = list(self.immediate_successors(node))
         if len(parents) <= 1:
             return
@@ -239,6 +239,27 @@ class add_join_nodes(Transformer):
             self.adj_list[parent] -= {node}
         self.add_node(ir.JoinNode(), *parents, children=[node])
 
+        return self
+
+
+class add_block_nodes(Transformer):
+    """
+    Add block nodes (think of it as a label)
+    """
+
+    def apply(self):
+        nodes = list(dfs(self, self.entry))
+        for node in nodes:
+            self.single(node)
+        return self
+
+    def single(self, node: ir.Element):
+        if not isinstance(node, (ir.TrueNode, ir.FalseNode)):
+            return self
+        children = set(self.adj_list[node])
+        for child in children:
+            self.add_node(ir.BlockNode(), node, children=[child])
+        self.adj_list[node] -= children
         return self
 
 
