@@ -306,6 +306,56 @@ class insert_phi(Transformer):
         return self
 
 
+class newrename(Transformer):
+    """
+    Renames variables for SSA
+    """
+
+    def __init__(self, graph: ir.CFG, *, apply: bool = True):
+        super().__init__(graph, apply=apply)
+        self.counter = 0
+
+    def single(self, node: ir.Element):
+        if node == self.entry:
+            mapping = self.entry_mapping()
+        elif isinstance(node, ir.JoinNode):
+            mapping = self.join_mapping(node)
+        print(f"{mapping=}")
+        return self
+
+    def inner(self, node: ir.Element, mapping):
+        pass
+
+    def join_mapping(self, node: ir.JoinNode):
+        new_phis = {}
+        mapping = {}
+        for var, phis in node.phis.items():
+            new_var = self.new_var(var)
+            mapping[var] = new_var
+            new_phis[new_var] = phis
+        node.phis = new_phis
+        return mapping
+
+    def get_global_variables(self):
+        nodes = dfs(self, self.entry)
+        lhs_vars = set()
+        global_vars = set()
+        for node in nodes:
+            if isinstance(node, ir.AssignNode):
+                global_vars |= set(get_variables(node.rvalue)) - lhs_vars
+                lhs_vars |= set(get_variables(node.lvalue))
+        return global_vars
+
+    def entry_mapping(self):
+        vars = self.get_global_variables()
+        return {var: [self.new_var(var)] for var in vars}
+
+    def new_var(self, var: expr.Var):
+        var = expr.Var(f"{var.py_name}{self.counter}")
+        self.counter += 1
+        return var
+
+
 class rename(Transformer):
     """
     Renames variables for SSA

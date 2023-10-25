@@ -15,6 +15,7 @@ from python2verilog.optimizer.graph2optimizer import (  # nopycln: import
     dominator_tree,
     insert_phi,
     make_ssa,
+    newrename,
     parallelize,
     rename,
     visit_nonclocked,
@@ -293,7 +294,8 @@ class TestGraph(unittest.TestCase):
         graph = add_join_nodes.debug(graph).apply()
         graph = add_block_nodes.debug(graph).apply()
         graph = insert_phi.debug(graph).apply()
-        # graph = rename.debug(graph).apply()
+        # graph = newrename.debug(graph).single(graph.entry)
+        graph = newrename.debug(graph).single(graph[10])
 
         dom_frontier = list(dominance_frontier(graph, graph[2], graph.entry))
         print(f"{dom_frontier=}")
