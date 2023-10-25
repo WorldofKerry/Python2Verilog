@@ -107,6 +107,29 @@ def dominator_tree(graph: ir.CFG):
     return dom_tree
 
 
+def join_dominator_tree(graph: ir.CFG):
+    """
+    Dominator tree with only join nodes
+    """
+    graph = copy.deepcopy(newrename(graph))
+    replacements = {}
+
+    def rec(node: ir.Element):
+        successors = set(graph.visit_succ(node))
+        print(f"join dom tree {node=} {successors=}")
+        replacements[node] = successors
+        for successor in successors:
+            rec(successor)
+
+    assert guard(graph.entry, ir.BlockHeadNode)
+    rec(graph.entry)
+
+    for key, value in replacements.items():
+        graph.adj_list[key] = value
+
+    return dominator_tree(graph)
+
+
 def build_tree(node_dict, root):
     if root in node_dict:
         children = node_dict[root]
@@ -354,7 +377,11 @@ class newrename(Transformer):
             for key, value in node.phis.items():
                 # Original variable before renaming
                 og_var = self.search_mapping_and_mutate(mapping_stack, key)
-                node.phis[key].append(mapping_stack[og_var][-1])
+                try:
+                    node.phis[key].append(mapping_stack[og_var][-1])
+                except:
+                    print(f"Threw on {key=} {node=} {mapping_stack=}")
+                    return self
             return self
         self.visited.add(node)
 
@@ -364,7 +391,12 @@ class newrename(Transformer):
         for key, value in node.phis.items():
             new_var = self.new_var(key)
             new_phis[new_var] = value
-            mapping_stack[key].append(new_var)
+
+            # Special case for temporaries
+            stack = mapping_stack.get(key, [])
+            stack.append(new_var)
+            mapping_stack[key] = stack
+
         node.phis = new_phis
 
         # Replace variable usage on LHS and RHS
@@ -383,6 +415,15 @@ class newrename(Transformer):
                 succ.phis[key] = aliases
 
         # Do work on successors
+        # Make a copy with only join nodes
+        dom_tree = join_dominator_tree(self)
+
+        print(f"{dom_tree=}")
+        print(f"{dom_tree[node]=} {node=}")
+        # print(f"{dom_tree[self[15]]=}")
+
+        return self
+
         for join in self.visit_succ(node):
             print(f"Pre {join=} {node=} {mapping_stack=}")
 
@@ -397,7 +438,11 @@ class newrename(Transformer):
             for node in non_joins:
                 if isinstance(node, ir.AssignNode):
                     og_var = self.search_mapping_and_mutate(mapping_stack, node.lvalue)
-                    mapping_stack[og_var].pop()
+                    try:
+                        mapping_stack[og_var].pop()
+                    except:
+                        print(f"Pop failed {node=} {mapping_stack=}")
+                        return self
 
             print(f"Post-Unwind {join=} {mapping_stack=} {node=}")
         return self

@@ -305,8 +305,8 @@ class TestGraph(unittest.TestCase):
 
     def test_ssa_funcs(self):
         # graph = make_even_fib_graph_no_clocks()
-        # graph = make_basic_branch()
-        graph = make_basic_while()
+        graph = make_basic_branch()
+        # graph = make_basic_while()
         # graph = make_basic_path()
 
         graph = add_join_nodes.debug(graph).apply()
