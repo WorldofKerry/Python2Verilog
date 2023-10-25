@@ -366,6 +366,7 @@ class newrename(Transformer):
         for join in self.visit_succ(node):
             assert guard(join, ir.JoinNode)
 
+            print(f"loop {join=}")
             if join in self.phied:
                 new_phis = {}
                 for key, value in join.phis.items():
@@ -374,7 +375,6 @@ class newrename(Transformer):
                     print(f"Phied {og_var=} {key=} {mapping_stack[og_var]=}")
 
                     join.phis[key].append(mapping_stack[og_var][-1])
-
                     # new_var = self.new_var(og_var)
 
                     # print(f"{og_var=} {new_var=}")

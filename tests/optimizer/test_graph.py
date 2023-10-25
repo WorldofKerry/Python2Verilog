@@ -137,6 +137,20 @@ def make_even_fib_graph_no_clocks():
     return graph
 
 
+def make_basic_path():
+    i = Var("i")
+
+    graph = CFG()
+
+    prev = graph.add_node(AssignNode(i, Int(0)))
+    prev = graph.add_node(AssignNode(i, Int(1)), prev)
+    prev = graph.add_node(AssignNode(i, Int(2)), prev)
+
+    prev = graph.add_node(TrueNode(), prev, children=[graph.entry])
+
+    return graph
+
+
 def make_basic_branch():
     i = Var("i")
     n = Var("n")
@@ -149,10 +163,14 @@ def make_basic_branch():
     postifelse = graph.add_node(AssignNode(n, i))
 
     prev = graph.add_node(TrueNode(), ifelse)
-    prev = graph.add_node(AssignNode(i, Int(1)), prev, children=[postifelse])
+    prev = graph.add_node(AssignNode(i, Int(1)), prev)
+    prev = graph.add_node(AssignNode(i, Int(2)), prev)
+    prev = graph.add_node(AssignNode(i, Int(3)), prev, children=[postifelse])
 
     prev = graph.add_node(FalseNode(), ifelse)
-    prev = graph.add_node(AssignNode(i, Int(2)), prev, children=[postifelse])
+    prev = graph.add_node(AssignNode(i, Int(1)), prev)
+    prev = graph.add_node(AssignNode(i, Int(2)), prev)
+    prev = graph.add_node(AssignNode(i, Int(4)), prev, children=[postifelse])
 
     return graph
 
@@ -286,8 +304,9 @@ class TestGraph(unittest.TestCase):
 
     def test_ssa_funcs(self):
         # graph = make_even_fib_graph_no_clocks()
-        # graph = make_basic_branch()
-        graph = make_basic_while()
+        graph = make_basic_branch()
+        # graph = make_basic_while()
+        # graph = make_basic_path()
 
         graph = add_join_nodes.debug(graph).apply()
         graph = add_dumb_join_nodes.debug(graph).apply()
