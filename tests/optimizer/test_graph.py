@@ -253,8 +253,8 @@ class TestGraph(unittest.TestCase):
             f.write(str(graph.to_cytoscape(id_in_label=True)))
 
     def test_ssa_funcs(self):
-        graph = make_even_fib_graph_no_clocks()
-        # graph = make_basic_branch()
+        # graph = make_even_fib_graph_no_clocks()
+        graph = make_basic_branch()
 
         graph = add_join_nodes.debug(graph).apply()
         graph = insert_phi.debug(graph).apply()

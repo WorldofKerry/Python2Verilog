@@ -389,6 +389,17 @@ class rename(Transformer):
             self.rename(child, stack_mapper)
         print(f"{stack_mapper=}")
 
+        if isinstance(node, ir.JoinNode):
+            for var in node.phis:
+                stack_mapper[var].pop()
+        if isinstance(node, ir.AssignNode):
+            stack_mapper[node.lvalue].pop()
+
+            # new_phis = {}
+            # for key, value in node.phis.items():
+            #     value.update({self.backwards_replace(key, stack_mapper): None})
+            #     stack_mapper[key].pop()
+
 
 class make_ssa(Transformer):
     """
