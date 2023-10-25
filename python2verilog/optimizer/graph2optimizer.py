@@ -360,12 +360,13 @@ class rename(Transformer):
         if isinstance(node, ir.AssignNode):
             node.rvalue = self.backwards_replace(node.rvalue, stack_mapper)
             new_var = self.new_var(node.lvalue)
+            print(f"AssignNode {new_var=}")
 
             old_mapper = stack_mapper.get(node.lvalue, [])
             old_mapper.append(new_var)
             stack_mapper[node.lvalue] = old_mapper
 
-            node.lvalue = self.new_var(node.lvalue)
+            node.lvalue = new_var
         if isinstance(node, ir.BranchNode):
             node.expression = self.backwards_replace(node.expression, stack_mapper)
             print(f"{node=}")
@@ -374,6 +375,7 @@ class rename(Transformer):
             new_phis = {}
             for key, value in node.phis.items():
                 new_key = self.new_var(key)
+                print(f"JoinNode {new_key=}")
                 value.update({self.backwards_replace(key, stack_mapper): None})
                 new_phis[new_key] = value
 
@@ -383,7 +385,6 @@ class rename(Transformer):
 
             node.phis = new_phis
         children = dominator_tree(self).get(node, set())
-        print(f"{node=} {children=}")
         for child in children:
             self.rename(child, stack_mapper)
         print(f"{stack_mapper=}")
