@@ -15,6 +15,7 @@ from python2verilog.optimizer.graph2optimizer import (  # nopycln: import
     insert_phi,
     make_ssa,
     parallelize,
+    rename,
     visit_nonclocked,
 )
 
@@ -245,8 +246,8 @@ class TestGraph(unittest.TestCase):
         graph = make_even_fib_graph_no_clocks()
 
         graph = add_join_nodes.debug(graph).apply()
-
         graph = insert_phi.debug(graph).apply()
+        graph = rename.debug(graph).apply()
 
         with open("graph2_cytoscape.log", mode="w") as f:
             f.write(str(graph.to_cytoscape(id_in_label=True)))

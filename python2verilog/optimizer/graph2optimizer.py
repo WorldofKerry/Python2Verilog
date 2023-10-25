@@ -214,9 +214,9 @@ class insert_phi(Transformer):
         return self
 
     def apply_to_var(self, v: expr.Var):
-        worklist = set()
-        ever_on_worklist = set()
-        already_has_phi = set()
+        worklist: set[ir.Element] = set()
+        ever_on_worklist: set[ir.Element] = set()
+        already_has_phi: set[ir.Element] = set()
 
         for node in dfs(self, self.entry):
             if isinstance(node, ir.AssignNode):
@@ -233,12 +233,15 @@ class insert_phi(Transformer):
             for d in dominance_frontier(self, n, self.entry):
                 if d not in already_has_phi:
                     assert guard(d, ir.JoinNode)
-                    d.phis.add(v)
+
+                    phi = d.phis.get(v, {})
+                    phi[n.unique_id] = None
+                    d.phis[v] = phi
+
                     already_has_phi.add(d)
                     if d not in ever_on_worklist:
                         worklist.add(d)
                         ever_on_worklist.add(d)
-
         return self
 
 
@@ -250,8 +253,17 @@ class rename(Transformer):
     def __init__(self, graph: ir.CFG, *, apply: bool = True):
         super().__init__(graph, apply=apply)
         self.visited = set()
-        self.stack: dict[expr.Var, set[expr.Var]] = {}
-        self.counter = 0
+        self.counter = -1
+        self.stack: dict[expr.Var, set[expr.Var]] = self.initial_mapping()
+        print(f"{self.stack=}")
+
+    def apply(self):
+        self.rename(self.entry)
+        return self
+
+    def initial_mapping(self):
+        vars = assigned_variables(dfs(self, self.entry))
+        return {var: self.new_var() for var in vars}
 
     def new_var(self):
         var = expr.Var(f"v{self.counter}")
@@ -263,8 +275,16 @@ class rename(Transformer):
             return
         if isinstance(b, ir.JoinNode):
             for var in b.phis:
-                # b.phis
-                pass
+                v = var
+                del b.phis[v]
+                vn = self.new_var()
+                b.phis[vn] = []
+        if isinstance(b, ir.AssignNode):
+            b.rvalue = backwards_replace(b.rvalue, self.stack)
+            vn = self.new_var()
+            b.lvalue = vn
+        for s in self[b]:
+            print(f"{s=}")
 
 
 class make_ssa(Transformer):

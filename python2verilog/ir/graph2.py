@@ -58,10 +58,10 @@ class JoinNode(Element):
 
     def __init__(self, unique_id: str = ""):
         super().__init__(unique_id)
-        self.phis: set[expr.Var] = set()
+        self.phis: dict[expr.Var, dict[str, expr.Var]] = {}
 
     def __str__(self) -> str:
-        return f"Join: {', '.join(map(str, self.phis))}"
+        return f"Join: {self.phis}"
 
 
 class PhiNode(Element):
