@@ -400,7 +400,7 @@ class newrename(Transformer):
 
             print(f"Pre {join=} {mapping_stack=}")
 
-            self.inner(join, copy.deepcopy(mapping_stack))
+            self.inner(join, mapping_stack)
 
             print(f"Between {join=} {mapping_stack=} {node=}")
 

@@ -160,7 +160,9 @@ def make_basic_branch():
     prev = graph.add_node(AssignNode(i, Int(0)))
     prev = ifelse = graph.add_node(BranchNode(BinOp(i, "<", n)), prev)
 
-    postifelse = graph.add_node(AssignNode(n, i))
+    prev = postifelse = graph.add_node(AssignNode(n, i))
+    prev = graph.add_node(AssignNode(i, i), prev)
+    prev = graph.add_node(AssignNode(i, Int(10)), prev)
 
     prev = graph.add_node(TrueNode(), ifelse)
     prev = graph.add_node(AssignNode(i, Int(1)), prev)
