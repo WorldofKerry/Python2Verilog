@@ -156,6 +156,36 @@ def make_basic_branch():
     return graph
 
 
+def make_basic_while():
+    x = Var("x")
+    y = Var("y")
+    z = Var("z")
+    a = Var("a")
+    n = Var("n")
+    m = Var("m")
+    ret = Var("ret")
+
+    graph = CFG()
+
+    prev = graph.add_node(AssignNode(x, n))
+    prev = graph.add_node(AssignNode(y, m), prev)
+    prev = graph.add_node(AssignNode(a, Int(0)), prev)
+
+    prev = ifelse = graph.add_node(BranchNode(BinOp(x, ">", Int(0))), prev)
+
+    prev = graph.add_node(TrueNode(), ifelse)
+    prev = graph.add_node(AssignNode(a, BinOp(a, "+", y)), prev)
+    prev = graph.add_node(
+        AssignNode(x, BinOp(x, "-", Int(-1))), prev, children=[ifelse]
+    )
+
+    prev = graph.add_node(FalseNode(), ifelse)
+    prev = graph.add_node(AssignNode(z, BinOp(a, "+", z)), prev)
+    prev = graph.add_node(AssignNode(ret, z), prev)
+
+    return graph
+
+
 def make_pdf_example():
     """
     Example from PDF "Building Static Single Assignment Form" by Yeoul NA, UCI
@@ -257,12 +287,16 @@ class TestGraph(unittest.TestCase):
 
     def test_ssa_funcs(self):
         # graph = make_even_fib_graph_no_clocks()
-        graph = make_basic_branch()
+        # graph = make_basic_branch()
+        graph = make_basic_while()
 
         graph = add_join_nodes.debug(graph).apply()
         graph = add_block_nodes.debug(graph).apply()
-        # graph = insert_phi.debug(graph).apply()
+        graph = insert_phi.debug(graph).apply()
         # graph = rename.debug(graph).apply()
+
+        dom_frontier = list(dominance_frontier(graph, graph[2], graph.entry))
+        print(f"{dom_frontier=}")
 
         with open("graph2_cytoscape.log", mode="w") as f:
             f.write(str(graph.to_cytoscape(id_in_label=True)))

@@ -295,11 +295,9 @@ class insert_phi(Transformer):
                 if d not in already_has_phi:
                     assert guard(d, ir.JoinNode)
 
-                    print(f"add phi {d=}")
-                    # phi = d.phis.get(v, {})
-                    # phi[n] = None
-                    # d.phis[v] = phi
-                    d.phis[v] = {}
+                    phi = d.phis.get(v, {})
+                    phi.update({n: None})
+                    d.phis[v] = phi
 
                     already_has_phi.add(d)
                     if d not in ever_on_worklist:

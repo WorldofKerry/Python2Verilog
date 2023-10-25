@@ -46,7 +46,7 @@ class Element:
 
     @reprlib.recursive_repr()
     def __repr__(self) -> str:
-        return f"{self.unique_id}[{str(self)}]"
+        return f"{self.unique_id}:{str(self)}"
 
 
 class JoinNode(Element):
@@ -56,10 +56,16 @@ class JoinNode(Element):
 
     def __init__(self, unique_id: str = ""):
         super().__init__(unique_id)
-        self.phis: dict[expr.Var, dict[str, expr.Var]] = {}
+        self.phis: dict[expr.Var, dict[Element, expr.Var]] = {}
 
     def __str__(self) -> str:
-        return f"Join: {self.phis}"
+        return f"Join: {self.__phis_formatter()}"
+
+    def __phis_formatter(self):
+        dic = {}
+        for key, inner in self.phis.items():
+            dic[key] = {elem.unique_id: val for elem, val in inner.items()}
+        return dic
 
 
 class PhiNode(Element):
