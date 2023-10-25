@@ -384,16 +384,20 @@ class newrename(Transformer):
 
         # Do work on successors
         for join in self.visit_succ(node):
-            print(f"Pre {join=} {mapping_stack=}")
+            print(f"Pre {join=} {node=} {mapping_stack=}")
 
             self.inner(join, mapping_stack)
 
             print(f"Between {join=} {mapping_stack=} {node=}")
 
             non_joins = []
-            for child in self.adj_list[join]:
-                non_joins.extend(iter_non_join(self, join))
+            for child in self.adj_list[node]:
+                non_joins.extend(iter_non_join(self, node))
             print(f"{non_joins=}")
+            for node in non_joins:
+                if isinstance(node, ir.AssignNode):
+                    og_var = self.search_mapping_and_mutate(mapping_stack, node.lvalue)
+                    mapping_stack[og_var].pop()
 
             print(f"Post-Unwind {join=} {mapping_stack=} {node=}")
         return self
