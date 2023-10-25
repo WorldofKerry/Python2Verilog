@@ -177,6 +177,7 @@ class Transformer(ir.CFG):
         """
         Apply transformation
         """
+        return self
 
 
 class add_join_nodes(Transformer):
@@ -201,17 +202,54 @@ class add_join_nodes(Transformer):
         return self
 
 
-class make_ssa(ir.CFG):
+class insert_phi(Transformer):
+    """
+    Add Phi Nodes
+    """
+
+    def apply(self):
+        return super().apply()
+
+    def apply_to_var(self, v: expr.Var):
+        worklist = set()
+        ever_on_worklist = set()
+        already_has_phi = set()
+
+        for node in dfs(self, self.entry):
+            if isinstance(node, ir.AssignNode):
+                print(f"{node.lvalue=} {v=} {node.lvalue == v}")
+                if node.lvalue == v:
+                    worklist.add(node)
+
+        print(f"{worklist=}")
+
+        ever_on_worklist |= worklist
+
+        while worklist:
+            n = worklist.pop()
+            for d in dominance_frontier(self, n, self.entry):
+                if d not in already_has_phi:
+                    assert guard(d, ir.JoinNode)
+                    d.phis.add(v)
+                    already_has_phi.add(d)
+                    if d not in ever_on_worklist:
+                        worklist.add(d)
+                        ever_on_worklist.add(d)
+
+        return self
+
+
+class make_ssa(Transformer):
     """
     Make CFG use ssa
     """
 
-    def __init__(self, graph: ir.CFG):
-        self.mimic(graph)
+    def __init__(self, graph: ir.CFG, *, apply: bool = True):
+        super().__init__(graph, apply=apply)
         self.variables: dict[expr.Var, set[expr.Var]] = {}
         self.counter = 0
 
-    def run(self):
+    def apply(self):
         """
         Run
         """
@@ -222,8 +260,6 @@ class make_ssa(ir.CFG):
         )
 
         print(f"{self.variables=}")
-
-        self.insert_join_nodes()
 
         return self
 

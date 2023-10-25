@@ -12,6 +12,7 @@ from python2verilog.optimizer.graph2optimizer import (  # nopycln: import
     dfs,
     dominance,
     dominance_frontier,
+    insert_phi,
     make_ssa,
     parallelize,
     visit_nonclocked,
@@ -242,14 +243,7 @@ class TestGraph(unittest.TestCase):
 
         graph = add_join_nodes.debug(graph).apply()
 
-        dom_frontier = list(dominance_frontier(graph, graph["3"], graph.entry))
-        print(f"{dom_frontier=}")
-
-        dom_frontier = list(dominance_frontier(graph, graph["5"], graph.entry))
-        print(f"{dom_frontier=}")
-
-        dom_frontier = list(dominance_frontier(graph, graph["0"], graph.entry))
-        print(f"{dom_frontier=}")
+        graph = insert_phi.debug(graph).apply_to_var(expr.Var("i"))
 
         with open("graph2_cytoscape.log", mode="w") as f:
             f.write(str(graph.to_cytoscape(id_in_label=True)))

@@ -22,7 +22,6 @@ class Element:
     def __init__(self, unique_id: str = ""):
         self._unique_id = typed_strict(unique_id, str)
         self.graph: Optional[CFG] = None
-        self.phis: dict[expr.Var, set[expr.Var]] = {}
 
     def __hash__(self) -> int:
         assert len(self.unique_id) > 0, f'"{self.unique_id}"'
@@ -57,8 +56,12 @@ class JoinNode(Element):
     Similar to MLIR block arguments
     """
 
+    def __init__(self, unique_id: str = ""):
+        super().__init__(unique_id)
+        self.phis: set[expr.Var] = set()
+
     def __str__(self) -> str:
-        return "Join"
+        return f"Join: {', '.join(map(str, self.phis))}"
 
 
 class PhiNode(Element):
