@@ -1,6 +1,7 @@
 """
 Graph 2 optimizers
 """
+from abc import abstractmethod
 import copy
 import itertools
 import logging
@@ -154,6 +155,52 @@ def assigned_variables(elements: Iterator[ir.Element]):
             yield elem.lvalue
 
 
+class Transformer(ir.CFG):
+    """
+    Abstract bass class for graph transformers
+    """
+
+    def __init__(self, graph: ir.CFG, *, apply: bool = True):
+        self.mimic(graph)
+        if apply:
+            self.apply()
+
+    @classmethod
+    def debug(cls, graph: ir.CFG):
+        """
+        A debug version that does not apply any transformations
+        """
+        return cls(graph=graph, apply=False)
+
+    @abstractmethod
+    def apply(self):
+        """
+        Apply transformation
+        """
+
+
+class add_join_nodes(Transformer):
+    """
+    Adds join nodes
+    """
+
+    def apply(self):
+        nodes = list(dfs(self, self.entry))
+        for node in nodes:
+            self.join(node)
+        return self
+
+    def join(self, node: ir.Element):
+        parents = list(self.immediate_successors(node))
+        if len(parents) <= 1:
+            return
+        for parent in parents:
+            self.adj_list[parent] -= {node}
+        self.add_node(ir.JoinNode(), *parents, children=[node])
+
+        return self
+
+
 class make_ssa(ir.CFG):
     """
     Make CFG use ssa
@@ -176,6 +223,8 @@ class make_ssa(ir.CFG):
 
         print(f"{self.variables=}")
 
+        self.insert_join_nodes()
+
         return self
 
     def get_global_variables(self):
@@ -195,6 +244,18 @@ class make_ssa(ir.CFG):
         new_var = expr.Var(f"v{self.counter}")
         self.counter += 1
         return new_var
+
+    def get_var_usage(self, node: ir.Element, var: expr.Var):
+        """
+        Get var uage
+        """
+        for value in self.variables.values():
+            if var in value:
+                subset = value
+
+        print(f"{subset=}")
+
+        nodes = dfs(self, node)
 
     def visit(
         self,

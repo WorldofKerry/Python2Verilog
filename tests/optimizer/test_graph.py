@@ -8,6 +8,7 @@ from matplotlib import pyplot as plt
 from python2verilog.ir.expressions import *  # nopycln: import
 from python2verilog.ir.graph2 import *
 from python2verilog.optimizer.graph2optimizer import (  # nopycln: import
+    add_join_nodes,
     dfs,
     dominance,
     dominance_frontier,
@@ -129,6 +130,45 @@ def make_even_fib_graph_no_clocks():
     return graph
 
 
+def make_basic_branch():
+    i = Var("i")
+    n = Var("n")
+
+    graph = CFG()
+
+    prev = graph.add_node(AssignNode(i, Int(0)))
+    prev = ifelse = graph.add_node(BranchNode(BinOp(i, "<", n)), prev)
+
+    prev = graph.add_node(TrueNode(), ifelse)
+    prev = graph.add_node(AssignNode(i, Int(1)), prev, children=[ifelse])
+
+    prev = graph.add_node(FalseNode(), ifelse)
+    prev = graph.add_node(AssignNode(i, Int(2)), prev, children=[ifelse])
+
+    return graph
+
+
+def make_pdf_example():
+    """
+    Example from PDF "Building Static Single Assignment Form" by Yeoul NA, UCI
+    """
+    graph = CFG()
+    graph.unique_counter = 0
+
+    for _ in range(8):
+        graph.add_node(ClockNode())
+
+    graph.add_edge(graph[1], graph[2], graph[4])
+    graph.add_edge(graph[2], graph[3])
+    graph.add_edge(graph[3], graph[8])
+    graph.add_edge(graph[4], graph[5], graph[6])
+    graph.add_edge(graph[5], graph[3], graph[7])
+    graph.add_edge(graph[6], graph[7])
+    graph.add_edge(graph[7], graph[4], graph[8])
+
+    return graph
+
+
 class TestGraph(unittest.TestCase):
     def test_graph2(self):
         graph = make_even_fib_graph()
@@ -148,18 +188,18 @@ class TestGraph(unittest.TestCase):
             f.write(str(graph.to_cytoscape(id_in_label=True)))
 
     def test_dominator_algorithms(self):
-        graph = make_basic_graph()
+        graph = make_pdf_example()
 
-        graph = (
-            parallelize(graph)
-            .can_optimize(graph["11"], graph["13"])
-            .can_optimize(graph["11"], graph["15"])
-            .can_optimize(graph["11"], graph["17"])
-            .run()
-        )
+        dom_frontier = set(dominance_frontier(graph, graph["4"], graph.entry))
+        # print(f"{dom_frontier=}")
+        self.assertEqual({graph[3], graph[4], graph[8]}, dom_frontier)
 
-        with open("graph2_cytoscape.log", mode="w") as f:
-            f.write(str(graph.to_cytoscape(id_in_label=True)))
+        dom_frontier = set(dominance_frontier(graph, graph["2"], graph.entry))
+        # print(f"{dom_frontier=}")
+        self.assertEqual({graph[3]}, dom_frontier)
+
+        # with open("graph2_cytoscape.log", mode="w") as f:
+        #     f.write(str(graph.to_cytoscape(id_in_label=True)))
 
     def test_parallelize(self):
         graph = make_even_fib_graph()
@@ -186,12 +226,29 @@ class TestGraph(unittest.TestCase):
     def test_make_clockless(self):
         graph = make_even_fib_graph_no_clocks()
 
-        # graph = make_ssa(graph).run()
+        graph = make_ssa(graph).run()
 
         dom_frontier = list(dominance_frontier(graph, graph["8"], graph.entry))
         print(f"{dom_frontier=}")
 
         dom_frontier = list(dominance_frontier(graph, graph["9"], graph.entry))
+        print(f"{dom_frontier=}")
+
+        with open("graph2_cytoscape.log", mode="w") as f:
+            f.write(str(graph.to_cytoscape(id_in_label=True)))
+
+    def test_ssa_funcs(self):
+        graph = make_basic_branch()
+
+        graph = add_join_nodes.debug(graph).apply()
+
+        dom_frontier = list(dominance_frontier(graph, graph["3"], graph.entry))
+        print(f"{dom_frontier=}")
+
+        dom_frontier = list(dominance_frontier(graph, graph["5"], graph.entry))
+        print(f"{dom_frontier=}")
+
+        dom_frontier = list(dominance_frontier(graph, graph["0"], graph.entry))
         print(f"{dom_frontier=}")
 
         with open("graph2_cytoscape.log", mode="w") as f:

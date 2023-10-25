@@ -5,6 +5,7 @@ Graph v2
 from __future__ import annotations
 import copy
 import logging
+import reprlib
 
 from typing import Collection, Iterator, Optional, Union
 
@@ -21,6 +22,7 @@ class Element:
     def __init__(self, unique_id: str = ""):
         self._unique_id = typed_strict(unique_id, str)
         self.graph: Optional[CFG] = None
+        self.phis: dict[expr.Var, set[expr.Var]] = {}
 
     def __hash__(self) -> int:
         assert len(self.unique_id) > 0, f'"{self.unique_id}"'
@@ -45,8 +47,27 @@ class Element:
         assert len(self._unique_id) == 0
         self._unique_id = typed_strict(unique_id, str)
 
+    @reprlib.recursive_repr()
     def __repr__(self) -> str:
         return f"{self.unique_id}[{self}]"
+
+
+class JoinNode(Element):
+    """
+    Similar to MLIR block arguments
+    """
+
+    def __str__(self) -> str:
+        return "Join"
+
+
+class PhiNode(Element):
+    """
+    Maps variables to other variables
+    """
+
+    def __str__(self) -> str:
+        return "Phi"
 
 
 class AssignNode(Element):
@@ -190,10 +211,11 @@ class CFG:
         assert all(target not in self.adj_list[source] for target in targets)
         self.adj_list[source] = self.adj_list[source].union(targets)
 
-    def __getitem__(self, key: Union[Element, str]):
+    def __getitem__(self, key: Union[Element, str, int]):
         if isinstance(key, Element):
             return self.adj_list[key]
-        if isinstance(key, str):
+        if isinstance(key, (str, int)):
+            key = str(key)
             for elem in self.adj_list:
                 if elem.unique_id == key:
                     return elem
