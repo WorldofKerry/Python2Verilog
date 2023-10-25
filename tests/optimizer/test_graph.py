@@ -91,6 +91,44 @@ def make_basic_graph():
     return graph
 
 
+def make_even_fib_graph_no_clocks():
+    """
+    Even fib numbers
+    """
+
+    out = Var("out")
+    i = Var("i")
+    n = Var("n")
+    a = Var("a")
+    b = Var("b")
+
+    graph = CFG()
+
+    # clock node vs first node as root
+    if False:
+        root = graph.add_node(ClockNode())
+        prev = graph.add_node(AssignNode(i, Int(0)), root)
+    else:
+        root = prev = graph.add_node(AssignNode(i, Int(0)))
+
+    prev = if_i_lt_n_prev = graph.add_node(BranchNode(BinOp(i, "<", n)), prev)
+
+    prev = graph.add_node(TrueNode(), prev)
+    if_a_mod_2 = graph.add_node(BranchNode(Mod(a, Int(2))), prev)
+    prev = graph.add_node(TrueNode(), if_a_mod_2)
+    prev = graph.add_node(AssignNode(out, a), prev)
+    graph.add_node(FalseNode(), if_a_mod_2, children=[prev])
+    a_assign_b = graph.add_node(AssignNode(a, b), prev)
+    b_assign_a_plus_b = graph.add_node(AssignNode(b, BinOp(a, "+", b)), prev)
+    prev = graph.add_node(
+        AssignNode(i, BinOp(i, "+", Int(1))),
+        a_assign_b,
+        b_assign_a_plus_b,
+        children=[if_i_lt_n_prev],
+    )
+    return graph
+
+
 class TestGraph(unittest.TestCase):
     def test_graph2(self):
         graph = make_even_fib_graph()
@@ -141,6 +179,20 @@ class TestGraph(unittest.TestCase):
         graph = make_even_fib_graph()
 
         graph = make_ssa(graph).run()
+
+        with open("graph2_cytoscape.log", mode="w") as f:
+            f.write(str(graph.to_cytoscape(id_in_label=True)))
+
+    def test_make_clockless(self):
+        graph = make_even_fib_graph_no_clocks()
+
+        # graph = make_ssa(graph).run()
+
+        dom_frontier = list(dominance_frontier(graph, graph["8"], graph.entry))
+        print(f"{dom_frontier=}")
+
+        dom_frontier = list(dominance_frontier(graph, graph["9"], graph.entry))
+        print(f"{dom_frontier=}")
 
         with open("graph2_cytoscape.log", mode="w") as f:
             f.write(str(graph.to_cytoscape(id_in_label=True)))

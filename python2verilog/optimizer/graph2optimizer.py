@@ -140,9 +140,9 @@ def dfs(
     if source not in graph.adj_list:
         return
     visited.add(source)
+    yield source
     for child in graph[source]:
         yield from dfs(graph, child, visited)
-    yield source
 
 
 def assigned_variables(elements: Iterator[ir.Element]):
@@ -168,11 +168,33 @@ class make_ssa(ir.CFG):
         """
         Run
         """
-        self.visit(self.entry, set(), {})
+        self.visit(
+            self.entry,
+            set(),
+            {var: self.new_var() for var in self.get_global_variables()},
+        )
 
         print(f"{self.variables=}")
 
         return self
+
+    def get_global_variables(self):
+        nodes = dfs(self, self.entry)
+        lhs_vars = set()
+        global_vars = set()
+        for node in nodes:
+            if isinstance(node, ir.AssignNode):
+                global_vars |= set(get_variables(node.rvalue)) - lhs_vars
+                lhs_vars |= set(get_variables(node.lvalue))
+        return global_vars
+
+    def new_var(self):
+        """
+        New SSA var
+        """
+        new_var = expr.Var(f"v{self.counter}")
+        self.counter += 1
+        return new_var
 
     def visit(
         self,
