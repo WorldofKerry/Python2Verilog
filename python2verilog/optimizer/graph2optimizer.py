@@ -340,8 +340,8 @@ class rename(Transformer):
         elif isinstance(expression, (expr.UInt, expr.Int)):
             return expression
         elif isinstance(expression, (expr.BinOp, expr.UBinOp)):
-            expression.left = backwards_replace(expression.left, mapping)
-            expression.right = backwards_replace(expression.right, mapping)
+            expression.left = self.backwards_replace(expression.left, mapping)
+            expression.right = self.backwards_replace(expression.right, mapping)
             return expression
         else:
             raise TypeError(f"{type(expression)} {expression}")
@@ -358,7 +358,7 @@ class rename(Transformer):
 
         print(f"{stack_mapper=}")
         if isinstance(node, ir.AssignNode):
-            node.rvalue = backwards_replace(node.rvalue, stack_mapper)
+            node.rvalue = self.backwards_replace(node.rvalue, stack_mapper)
             new_var = self.new_var(node.lvalue)
 
             old_mapper = stack_mapper.get(node.lvalue, [])
@@ -367,16 +367,20 @@ class rename(Transformer):
 
             node.lvalue = self.new_var(node.lvalue)
         if isinstance(node, ir.BranchNode):
-            node.expression = backwards_replace(node.expression, stack_mapper)
+            node.expression = self.backwards_replace(node.expression, stack_mapper)
             print(f"{node=}")
         if isinstance(node, ir.JoinNode):
             print(f"join {node=} {stack_mapper=}")
             new_phis = {}
             for key, value in node.phis.items():
                 new_key = self.new_var(key)
-                value.update({str(backwards_replace(key, stack_mapper)): None})
+                value.update({self.backwards_replace(key, stack_mapper): None})
                 new_phis[new_key] = value
-                stack_mapper[key].append(new_key)
+
+                old_mapper = stack_mapper.get(key, [])
+                old_mapper.append(new_key)
+                stack_mapper[key] = old_mapper
+
             node.phis = new_phis
         children = dominator_tree(self).get(node, set())
         print(f"{node=} {children=}")
