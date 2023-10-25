@@ -160,7 +160,6 @@ class parallelize(ir.CFG):
 
     def __init__(self, graph: ir.CFG):
         self.mimic(graph)
-        self.parallelize()
         pass
 
     def parallelize(self):
@@ -179,6 +178,7 @@ class parallelize(ir.CFG):
 
         # print(f"FRESSSSH")
         # self.can_optimize(self.entry, self["2"])
+        return self
 
     def get_pairs(self):
         """
@@ -194,9 +194,13 @@ class parallelize(ir.CFG):
 
     def can_optimize(self, first: ir.ClockNode, second: ir.ClockNode):
         """ """
-        if "11" not in first.unique_id or "13" not in second.unique_id:
-            return
+        # if "11" not in first.unique_id or "13" not in second.unique_id:
+        #     return
         print(f"{first=} {second=}")
+
+        if len(self.adj_list[second]) == 0:
+            print("Skipped second has no children")
+            return self
 
         first_nonclocked = list(visit_nonclocked(self, first))
         second_nonclocked = list(visit_nonclocked(self, second))
@@ -210,6 +214,8 @@ class parallelize(ir.CFG):
 
         if first_vars.isdisjoint(second_vars):
             self.reattach_to_valid_parent(first, second)
+
+        return self
 
     def reattach_to_valid_parent(self, first: ir.ClockNode, second: ir.ClockNode):
         """

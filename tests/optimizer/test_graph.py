@@ -84,7 +84,8 @@ def make_basic_graph():
     prev = graph.add_node(AssignNode(i, Int(14)), prev)
     tail2 = graph.add_node(ClockNode(), prev)
 
-    graph.add_node(AssignNode(n, Int(789)), tail1, tail2)
+    prev = graph.add_node(AssignNode(n, Int(789)), tail1, tail2)
+    graph.add_node(ClockNode(), prev)
 
     return graph
 
@@ -110,10 +111,13 @@ class TestGraph(unittest.TestCase):
     def test_dominator_algorithms(self):
         graph = make_basic_graph()
 
-        # result = list(dominance_frontier(graph, graph["A"], graph.entry))
-        # print(result)
-
-        graph = parallelize(graph)
+        graph = (
+            parallelize(graph)
+            .can_optimize(graph["11"], graph["13"])
+            .can_optimize(graph["11"], graph["15"])
+            .can_optimize(graph["11"], graph["17"])
+            .parallelize()
+        )
 
         with open("graph2_cytoscape.log", mode="w") as f:
             f.write(str(graph.to_cytoscape(id_in_label=True)))
