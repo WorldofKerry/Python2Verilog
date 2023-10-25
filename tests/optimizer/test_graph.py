@@ -144,11 +144,13 @@ def make_basic_branch():
     prev = graph.add_node(AssignNode(i, Int(0)))
     prev = ifelse = graph.add_node(BranchNode(BinOp(i, "<", n)), prev)
 
+    postifelse = graph.add_node(AssignNode(n, i))
+
     prev = graph.add_node(TrueNode(), ifelse)
-    prev = graph.add_node(AssignNode(i, Int(1)), prev, children=[ifelse])
+    prev = graph.add_node(AssignNode(i, Int(1)), prev, children=[postifelse])
 
     prev = graph.add_node(FalseNode(), ifelse)
-    prev = graph.add_node(AssignNode(i, Int(2)), prev, children=[ifelse])
+    prev = graph.add_node(AssignNode(i, Int(2)), prev, children=[postifelse])
 
     return graph
 
@@ -257,8 +259,8 @@ class TestGraph(unittest.TestCase):
         graph = make_basic_branch()
 
         graph = add_join_nodes.debug(graph).apply()
-        graph = insert_phi.debug(graph).apply()
-        graph = rename.debug(graph).apply()
+        # graph = insert_phi.debug(graph).apply()
+        # graph = rename.debug(graph).apply()
 
         with open("graph2_cytoscape.log", mode="w") as f:
             f.write(str(graph.to_cytoscape(id_in_label=True)))

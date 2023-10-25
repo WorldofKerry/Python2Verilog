@@ -33,56 +33,54 @@ def main():
 
     app = Dash(__name__)
 
-    app.layout = html.Div(
-        [
-            cyto.Cytoscape(
-                id="cytoscape-two-nodes",
-                layout={"name": "cose", "nodeRepulsion": 80000},
-                style={"width": "100%", "height": "1920px"},
-                stylesheet=[
-                    {
-                        "selector": "edge",
-                        "style": {
-                            "width": 3,
-                            "line-color": "#ccc",
-                            "target-arrow-color": "#ccc",
-                            "target-arrow-shape": "triangle",
-                            "curve-style": "bezier",
-                            "label": "data(label)",
-                            "color": "#FFFFFF",
-                            "font-size": "5",
-                        },
-                    },
-                    {
-                        "selector": "node",
-                        "style": {
-                            "label": "data(label)",
-                            "font-size": "10",
-                            "text-valign": "center",
-                            "text-halign": "center",
-                            "background-color": "#101010",
-                            "color": "#FFFFFF",
-                            "width": "50",
-                            "height": "50",
-                        },
-                    },
-                    {
-                        "selector": "edge[class = 'ClockedEdge']",
-                        "style": {
-                            "line-color": "#FF6666",
-                        },
-                    },
-                    {
-                        "selector": "edge[class = 'NonClockedEdge']",
-                        "style": {
-                            "line-color": "#66FF66",
-                        },
-                    },
-                ],
-                elements=elements,
-            )
-        ]
+    cytoscape = cyto.Cytoscape(
+        id="cytoscape-two-nodes",
+        layout={"name": "cose", "nodeRepulsion": 80000},
+        style={"width": "100%", "height": "1920px"},
+        stylesheet=[
+            {
+                "selector": "edge",
+                "style": {
+                    "width": 3,
+                    "line-color": "#ccc",
+                    "target-arrow-color": "#ccc",
+                    "target-arrow-shape": "triangle",
+                    "curve-style": "bezier",
+                    "label": "data(label)",
+                    "color": "#FFFFFF",
+                    "font-size": "5",
+                },
+            },
+            {
+                "selector": "node",
+                "style": {
+                    "label": "data(label)",
+                    "font-size": "10",
+                    "text-valign": "center",
+                    "text-halign": "center",
+                    "background-color": "#101010",
+                    "color": "#FFFFFF",
+                    "width": "50",
+                    "height": "50",
+                },
+            },
+            {
+                "selector": "edge[class = 'ClockedEdge']",
+                "style": {
+                    "line-color": "#FF6666",
+                },
+            },
+            {
+                "selector": "edge[class = 'NonClockedEdge']",
+                "style": {
+                    "line-color": "#66FF66",
+                },
+            },
+        ],
+        elements=elements,
     )
+
+    app.layout = html.Div([cytoscape])
     app.run(debug=True)
 
 
