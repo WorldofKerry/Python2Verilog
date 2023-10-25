@@ -103,6 +103,7 @@ def make_even_fib_graph_no_clocks():
     n = Var("n")
     a = Var("a")
     b = Var("b")
+    temp = Var("temp")
 
     graph = CFG()
 
@@ -119,13 +120,15 @@ def make_even_fib_graph_no_clocks():
     if_a_mod_2 = graph.add_node(BranchNode(Mod(a, Int(2))), prev)
     prev = graph.add_node(TrueNode(), if_a_mod_2)
     prev = graph.add_node(AssignNode(out, a), prev)
+
+    prev = graph.add_node(AssignNode(temp, BinOp(a, "+", b)), prev)
     graph.add_node(FalseNode(), if_a_mod_2, children=[prev])
-    a_assign_b = graph.add_node(AssignNode(a, b), prev)
-    b_assign_a_plus_b = graph.add_node(AssignNode(b, BinOp(a, "+", b)), prev)
+    prev = graph.add_node(AssignNode(a, b), prev)
+    prev = graph.add_node(AssignNode(b, temp), prev)
+
     prev = graph.add_node(
         AssignNode(i, BinOp(i, "+", Int(1))),
-        a_assign_b,
-        b_assign_a_plus_b,
+        prev,
         children=[if_i_lt_n_prev],
     )
     return graph
@@ -239,11 +242,11 @@ class TestGraph(unittest.TestCase):
             f.write(str(graph.to_cytoscape(id_in_label=True)))
 
     def test_ssa_funcs(self):
-        graph = make_basic_branch()
+        graph = make_even_fib_graph_no_clocks()
 
         graph = add_join_nodes.debug(graph).apply()
 
-        graph = insert_phi.debug(graph).apply_to_var(expr.Var("i"))
+        graph = insert_phi.debug(graph).apply()
 
         with open("graph2_cytoscape.log", mode="w") as f:
             f.write(str(graph.to_cytoscape(id_in_label=True)))

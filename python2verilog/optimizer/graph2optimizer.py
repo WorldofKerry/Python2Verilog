@@ -208,7 +208,10 @@ class insert_phi(Transformer):
     """
 
     def apply(self):
-        return super().apply()
+        vars = assigned_variables(dfs(self, self.entry))
+        for var in vars:
+            self.apply_to_var(var)
+        return self
 
     def apply_to_var(self, v: expr.Var):
         worklist = set()
@@ -237,6 +240,31 @@ class insert_phi(Transformer):
                         ever_on_worklist.add(d)
 
         return self
+
+
+class rename(Transformer):
+    """
+    Renames variables for SSA
+    """
+
+    def __init__(self, graph: ir.CFG, *, apply: bool = True):
+        super().__init__(graph, apply=apply)
+        self.visited = set()
+        self.stack: dict[expr.Var, set[expr.Var]] = {}
+        self.counter = 0
+
+    def new_var(self):
+        var = expr.Var(f"v{self.counter}")
+        self.counter += 1
+        return var
+
+    def rename(self, b: ir.Element):
+        if b in self.visited:
+            return
+        if isinstance(b, ir.JoinNode):
+            for var in b.phis:
+                # b.phis
+                pass
 
 
 class make_ssa(Transformer):
