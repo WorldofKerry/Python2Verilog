@@ -3,10 +3,8 @@ Graph v2
 """
 
 from __future__ import annotations
-import copy
-import logging
-import reprlib
 
+import reprlib
 from typing import Collection, Iterator, Optional, Union
 
 from python2verilog.ir import expressions as expr
@@ -48,7 +46,7 @@ class Element:
 
     @reprlib.recursive_repr()
     def __repr__(self) -> str:
-        return f"{self.unique_id}[{self}]"
+        return f"{self.unique_id}[{str(self)}]"
 
 
 class JoinNode(Element):

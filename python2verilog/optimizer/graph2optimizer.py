@@ -1,10 +1,10 @@
 """
 Graph 2 optimizers
 """
-from abc import abstractmethod
 import copy
 import itertools
 import logging
+from abc import abstractmethod
 from typing import Any, Iterator, Optional
 
 import python2verilog.ir.expressions as expr
@@ -77,7 +77,7 @@ def dominance(graph: ir.CFG) -> dict[ir.Element, set[ir.Element]]:
         new_vertices = set(dfs(temp_graph, graph.entry))
         delta = vertices - new_vertices
         dominance_[vertex] = delta
-    logging.debug(f"\n{print_tree(dominance_, graph.entry)}")
+    # logging.debug(f"\n{print_tree(dominance_, graph.entry)}")
     return dominance_
 
 
@@ -274,9 +274,11 @@ class insert_phi(Transformer):
                 if d not in already_has_phi:
                     assert guard(d, ir.JoinNode)
 
-                    phi = d.phis.get(v, {})
-                    phi[n.unique_id] = None
-                    d.phis[v] = phi
+                    print(f"add phi {d=}")
+                    # phi = d.phis.get(v, {})
+                    # phi[n] = None
+                    # d.phis[v] = phi
+                    d.phis[v] = {}
 
                     already_has_phi.add(d)
                     if d not in ever_on_worklist:
@@ -293,39 +295,94 @@ class rename(Transformer):
     def __init__(self, graph: ir.CFG, *, apply: bool = True):
         super().__init__(graph, apply=apply)
         self.visited = set()
-        self.counter = -1
-        self.stack: dict[expr.Var, set[expr.Var]] = self.initial_mapping()
-        print(f"{self.stack=}")
+        self.counter = 0
 
     def apply(self):
-        self.rename(self.entry)
+        self.rename(self.entry, self.initial_mapping())
         return self
 
-    def initial_mapping(self):
-        vars = assigned_variables(dfs(self, self.entry))
-        return {var: self.new_var() for var in vars}
+    def get_global_variables(self):
+        nodes = dfs(self, self.entry)
+        lhs_vars = set()
+        global_vars = set()
+        for node in nodes:
+            if isinstance(node, ir.AssignNode):
+                global_vars |= set(get_variables(node.rvalue)) - lhs_vars
+                lhs_vars |= set(get_variables(node.lvalue))
+        return global_vars
 
-    def new_var(self):
-        var = expr.Var(f"v{self.counter}")
+    def initial_mapping(self):
+        vars = self.get_global_variables()
+        return {var: [self.new_var(var)] for var in vars}
+
+    def new_var(self, var: expr.Var):
+        var = expr.Var(f"{var.py_name}_{self.counter}")
         self.counter += 1
         return var
 
-    def rename(self, b: ir.Element):
-        if b in self.visited:
-            return
-        if isinstance(b, ir.JoinNode):
-            for var in b.phis:
-                v = var
-                del b.phis[v]
-                vn = self.new_var()
-                b.phis[vn] = []
-        if isinstance(b, ir.AssignNode):
-            b.rvalue = backwards_replace(b.rvalue, self.stack)
-            vn = self.new_var()
-            b.lvalue = vn
-        for s in self[b]:
-            print(f"{s=}")
-        print(f"{dominator_tree(self)}")
+    def backwards_replace(
+        self, expression: expr.Expression, mapping: dict[expr.Var, list[expr.Var]]
+    ):
+        assert isinstance(expression, expr.Expression)
+        assert isinstance(mapping, dict)
+        for key, value in mapping.items():
+            assert isinstance(key, expr.Var)
+            assert isinstance(value, list)
+            for v in value:
+                assert isinstance(v, expr.Var)
+
+        expression = copy.deepcopy(expression)
+        if isinstance(expression, expr.Var):
+            for key in mapping:
+                if key.to_string() == expression.to_string():
+                    assert isinstance(mapping[key][-1], expr.Expression)
+                    return mapping[key][-1]
+        elif isinstance(expression, (expr.UInt, expr.Int)):
+            return expression
+        elif isinstance(expression, (expr.BinOp, expr.UBinOp)):
+            expression.left = backwards_replace(expression.left, mapping)
+            expression.right = backwards_replace(expression.right, mapping)
+            return expression
+        else:
+            raise TypeError(f"{type(expression)} {expression}")
+        return expression
+
+    def rename(self, node: ir.Element, stack_mapper: dict[expr.Var, list[expr.Var]]):
+        assert isinstance(node, ir.Element)
+        assert isinstance(stack_mapper, dict)
+        for key, value in stack_mapper.items():
+            assert isinstance(key, expr.Var)
+            assert isinstance(value, list)
+            for v in value:
+                assert isinstance(v, expr.Var)
+
+        print(f"{stack_mapper=}")
+        if isinstance(node, ir.AssignNode):
+            node.rvalue = backwards_replace(node.rvalue, stack_mapper)
+            new_var = self.new_var(node.lvalue)
+
+            old_mapper = stack_mapper.get(node.lvalue, [])
+            old_mapper.append(new_var)
+            stack_mapper[node.lvalue] = old_mapper
+
+            node.lvalue = self.new_var(node.lvalue)
+        if isinstance(node, ir.BranchNode):
+            node.expression = backwards_replace(node.expression, stack_mapper)
+            print(f"{node=}")
+        if isinstance(node, ir.JoinNode):
+            print(f"join {node=} {stack_mapper=}")
+            new_phis = {}
+            for key, value in node.phis.items():
+                new_key = self.new_var(key)
+                value.update({str(backwards_replace(key, stack_mapper)): None})
+                new_phis[new_key] = value
+                stack_mapper[key].append(new_key)
+            node.phis = new_phis
+        children = dominator_tree(self).get(node, set())
+        print(f"{node=} {children=}")
+        for child in children:
+            self.rename(child, stack_mapper)
+        print(f"{stack_mapper=}")
 
 
 class make_ssa(Transformer):
