@@ -49,7 +49,7 @@ class Element:
         return f"{self.unique_id}:{str(self)}"
 
 
-class JoinNode(Element):
+class BlockHeadNode(Element):
     """
     Similar to MLIR block arguments
     """

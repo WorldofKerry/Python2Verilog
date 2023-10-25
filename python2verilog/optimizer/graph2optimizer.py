@@ -202,7 +202,7 @@ def iter_non_join(graph: ir.CFG, node: ir.Element):
     not going past join nodes
     """
     for child in graph[node]:
-        if not isinstance(child, ir.JoinNode):
+        if not isinstance(child, ir.BlockHeadNode):
             yield child
             yield from iter_non_join(graph, child)
 
@@ -241,7 +241,7 @@ class add_join_nodes(Transformer):
         nodes = list(dfs(self, self.entry))
         for node in nodes:
             self.single(node)
-        join = self.add_node(ir.JoinNode(), children=[self.entry])
+        join = self.add_node(ir.BlockHeadNode(), children=[self.entry])
         self.entry = join
         return self
 
@@ -251,7 +251,7 @@ class add_join_nodes(Transformer):
             return
         for parent in parents:
             self.adj_list[parent] -= {node}
-        self.add_node(ir.JoinNode(), *parents, children=[node])
+        self.add_node(ir.BlockHeadNode(), *parents, children=[node])
 
         return self
 
@@ -272,7 +272,7 @@ class add_dumb_join_nodes(Transformer):
             return self
         children = set(self.adj_list[node])
         for child in children:
-            self.add_node(ir.JoinNode(), node, children=[child])
+            self.add_node(ir.BlockHeadNode(), node, children=[child])
         self.adj_list[node] -= children
         return self
 
@@ -307,7 +307,7 @@ class insert_phi(Transformer):
             n = worklist.pop()
             for d in dominance_frontier(self, n, self.entry):
                 if d not in already_has_phi:
-                    assert guard(d, ir.JoinNode)
+                    assert guard(d, ir.BlockHeadNode)
 
                     # phi = d.phis.get(v, [])
                     # phi.append(v)
@@ -337,46 +337,36 @@ class newrename(Transformer):
         return self
 
     def starter(self, node: ir.Element):
-        if node == self.entry:
-            mapping_stack = self.entry_mapping()
-            if isinstance(node, ir.AssignNode):
-                node.rvalue = backwards_replace(
-                    node.rvalue, self.make_mapping(mapping_stack)
-                )
-                new_lvalue = self.new_var(node.lvalue)
-                mapping_stack[
-                    self.search_mapping_and_mutate(mapping_stack, node.lvalue)
-                ].append(new_lvalue)
-                node.lvalue = new_lvalue
-            self.inner(node, mapping_stack)
-        elif isinstance(node, ir.JoinNode):
-            mapping_stack = self.join_mapping(node)
-            for child in self.adj_list[node]:
-                self.inner(child, mapping_stack)
+        assert guard(node, ir.BlockHeadNode)
+
+        mapping_stack = self.join_mapping(node)
+        self.inner(node, mapping_stack)
 
         return self
 
     def inner(self, node: ir.Element, mapping_stack: dict[expr.Var, list[expr.Var]]):
+        assert guard(node, ir.BlockHeadNode)
+
         if node in self.visited:
             return self
         self.visited.add(node)
-        # print(f"Inner {node=} {mapping_stack=}")
 
+        # Replace variable usage on LHS and RHS
+        # The top of stack should be what successors should use
         for child in self.adj_list[node]:
             self.replace(child, mapping_stack)
 
+        # Update RHS of phi successors
         for succ in self.visit_succ(node):
-            assert guard(succ, ir.JoinNode)
-            # print(f"{succ=} {mapping_stack=}")
+            assert guard(succ, ir.BlockHeadNode)
             for key, value in mapping_stack.items():
                 if key not in succ.phis:
                     continue
-                # print(f"{key=} {value=}")
                 aliases = succ.phis.get(key, [])
                 aliases.append(value[-1])
                 succ.phis[key] = aliases
-                # print(f"{succ.phis[key]=}")
 
+        # Do work on successors
         for join in self.visit_succ(node):
             print(f"Pre {join=} {mapping_stack=}")
 
@@ -446,12 +436,12 @@ class newrename(Transformer):
             return
         visited.add(node)
         for child in self.adj_list[node]:
-            if isinstance(child, ir.JoinNode):
+            if isinstance(child, ir.BlockHeadNode):
                 yield child
             else:
                 yield from self.visit_succ(child, visited)
 
-    def join_mapping(self, node: ir.JoinNode):
+    def join_mapping(self, node: ir.BlockHeadNode):
         new_phis = {}
         mapping = {}
         for var, phis in node.phis.items():
