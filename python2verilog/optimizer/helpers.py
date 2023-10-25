@@ -5,6 +5,7 @@ Optimizer helper functions
 import copy
 
 from python2verilog import ir
+from python2verilog.utils.typed import guard, guard_dict
 
 
 def backwards_replace(
@@ -18,6 +19,9 @@ def backwards_replace(
 
     :return: a copy of the updated expression.
     """
+    assert guard(expr, ir.Expression)
+    assert guard_dict(mapping, ir.Var, ir.Expression)
+
     expr = copy.deepcopy(expr)
     if isinstance(expr, ir.Var):
         for key in mapping:

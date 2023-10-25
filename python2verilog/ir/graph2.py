@@ -56,10 +56,10 @@ class JoinNode(Element):
 
     def __init__(self, unique_id: str = ""):
         super().__init__(unique_id)
-        self.phis: dict[expr.Var, dict[Element, expr.Var]] = {}
+        self.phis: dict[expr.Var, list[expr.Var]] = {}
 
     def __str__(self) -> str:
-        return f"Join: {self.__phis_formatter()}"
+        return f"Join{self.phis}"
 
     def __phis_formatter(self):
         dic = {}
@@ -82,8 +82,12 @@ class BlockNode(Element):
     Label
     """
 
+    def __init__(self, unique_id: str = ""):
+        super().__init__(unique_id)
+        self.mapping = {}
+
     def __str__(self) -> str:
-        return "BlockNode"
+        return f"Block{self.mapping}"
 
 
 class AssignNode(Element):

@@ -242,7 +242,7 @@ class add_join_nodes(Transformer):
         return self
 
 
-class add_block_nodes(Transformer):
+class add_dumb_join_nodes(Transformer):
     """
     Add block nodes (think of it as a label)
     """
@@ -258,7 +258,7 @@ class add_block_nodes(Transformer):
             return self
         children = set(self.adj_list[node])
         for child in children:
-            self.add_node(ir.BlockNode(), node, children=[child])
+            self.add_node(ir.JoinNode(), node, children=[child])
         self.adj_list[node] -= children
         return self
 
@@ -295,9 +295,10 @@ class insert_phi(Transformer):
                 if d not in already_has_phi:
                     assert guard(d, ir.JoinNode)
 
-                    phi = d.phis.get(v, {})
-                    phi.update({n: None})
-                    d.phis[v] = phi
+                    # phi = d.phis.get(v, [])
+                    # phi.append(v)
+                    # d.phis[v] = [v] * len(list(self.immediate_successors(d)))
+                    d.phis[v] = []
 
                     already_has_phi.add(d)
                     if d not in ever_on_worklist:
@@ -314,24 +315,117 @@ class newrename(Transformer):
     def __init__(self, graph: ir.CFG, *, apply: bool = True):
         super().__init__(graph, apply=apply)
         self.counter = 0
+        self.var_numberer = {}
+        self.visited = set()
 
-    def single(self, node: ir.Element):
-        if node == self.entry:
-            mapping = self.entry_mapping()
-        elif isinstance(node, ir.JoinNode):
-            mapping = self.join_mapping(node)
-        print(f"{mapping=}")
+    def apply(self):
         return self
 
-    def inner(self, node: ir.Element, mapping):
-        pass
+    def starter(self, node: ir.Element):
+        if node == self.entry:
+            mapping_stack = self.entry_mapping()
+            self.replace(node, mapping_stack)
+            self.inner(node, mapping_stack)
+        elif isinstance(node, ir.JoinNode):
+            mapping_stack = self.join_mapping(node)
+            for child in self.adj_list[node]:
+                self.inner(child, mapping_stack)
+
+        return self
+
+    def inner(self, node: ir.Element, mapping_stack: dict[expr.Var, list[expr.Var]]):
+        if node in self.visited:
+            return self
+        self.visited.add(node)
+
+        print(f"Inner {node=} {mapping_stack=}")
+
+        for child in self.adj_list[node]:
+            self.replace(child, mapping_stack)
+
+        for succ in self.visit_succ(node):
+            assert guard(succ, ir.JoinNode)
+            # print(f"{succ=} {mapping_stack=}")
+            for key, value in mapping_stack.items():
+                if key not in succ.phis:
+                    continue
+                # print(f"{key=} {value=}")
+                aliases = succ.phis.get(key, [])
+                aliases.append(value[-1])
+                succ.phis[key] = aliases
+                # print(f"{succ.phis[key]=}")
+
+        for join in self.visit_succ(node):
+            self.inner(join, mapping_stack)
+
+        return self
+
+    def make_mapping(self, mapping_stack: dict[expr.Var, list[expr.Var]]):
+        """
+        Converts mapping stack to mapping
+        """
+        return {key: value[-1] for key, value in mapping_stack.items()}
+
+    def search_mapping_and_mutate(
+        self, mapping_stack: dict[expr.Var, list[expr.Var]], var: expr.Var
+    ):
+        """
+        Search mapping for variable and returns original key
+        """
+        for key, value in mapping_stack.items():
+            if var in value:
+                return key
+        mapping_stack[var] = []
+        return var
+        raise RuntimeError(f"{var=} {mapping_stack=}")
+
+    def replace(self, node: ir.Element, mapping_stack: dict[expr.Var, list[expr.Var]]):
+        assert isinstance(mapping_stack, dict)
+        for key, value in mapping_stack.items():
+            assert isinstance(key, expr.Var)
+            assert isinstance(value, list)
+
+        print(f"Replace {node=} {mapping_stack=}")
+
+        if isinstance(node, ir.AssignNode):
+            node.rvalue = backwards_replace(
+                node.rvalue, self.make_mapping(mapping_stack)
+            )
+            new_lvalue = self.new_var(node.lvalue)
+            mapping_stack[
+                self.search_mapping_and_mutate(mapping_stack, node.lvalue)
+            ].append(new_lvalue)
+            node.lvalue = new_lvalue
+            for child in self.adj_list[node]:
+                self.replace(child, mapping_stack)
+        if isinstance(node, ir.BranchNode):
+            node.expression = backwards_replace(
+                node.expression, self.make_mapping(mapping_stack)
+            )
+            for child in self.adj_list[node]:
+                self.replace(child, mapping_stack)
+        if isinstance(node, (ir.TrueNode, ir.FalseNode)):
+            for child in self.adj_list[node]:
+                self.replace(child, mapping_stack)
+
+    def visit_succ(self, node: ir.Element, visited: Optional[set[ir.Element]] = None):
+        if visited is None:
+            visited = set()
+        if node in visited:
+            return
+        visited.add(node)
+        for child in self.adj_list[node]:
+            if isinstance(child, ir.JoinNode):
+                yield child
+            else:
+                yield from self.visit_succ(child, visited)
 
     def join_mapping(self, node: ir.JoinNode):
         new_phis = {}
         mapping = {}
         for var, phis in node.phis.items():
             new_var = self.new_var(var)
-            mapping[var] = new_var
+            mapping[var] = [new_var]
             new_phis[new_var] = phis
         node.phis = new_phis
         return mapping
@@ -348,12 +442,13 @@ class newrename(Transformer):
 
     def entry_mapping(self):
         vars = self.get_global_variables()
-        return {var: [self.new_var(var)] for var in vars}
+        return {var: [var] for var in vars}
 
     def new_var(self, var: expr.Var):
-        var = expr.Var(f"{var.py_name}{self.counter}")
-        self.counter += 1
-        return var
+        count = self.var_numberer.get(var, 0)
+        new_var = expr.Var(f"{var.py_name}{count}")
+        self.var_numberer[var] = count + 1
+        return new_var
 
 
 class rename(Transformer):

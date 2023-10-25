@@ -7,7 +7,7 @@ from matplotlib import pyplot as plt
 from python2verilog.ir.expressions import *  # nopycln: import
 from python2verilog.ir.graph2 import *
 from python2verilog.optimizer.graph2optimizer import (  # nopycln: import
-    add_block_nodes,
+    add_dumb_join_nodes,
     add_join_nodes,
     dfs,
     dominance,
@@ -176,9 +176,7 @@ def make_basic_while():
 
     prev = graph.add_node(TrueNode(), ifelse)
     prev = graph.add_node(AssignNode(a, BinOp(a, "+", y)), prev)
-    prev = graph.add_node(
-        AssignNode(x, BinOp(x, "-", Int(-1))), prev, children=[ifelse]
-    )
+    prev = graph.add_node(AssignNode(x, BinOp(x, "-", Int(1))), prev, children=[ifelse])
 
     prev = graph.add_node(FalseNode(), ifelse)
     prev = graph.add_node(AssignNode(z, BinOp(a, "+", z)), prev)
@@ -292,10 +290,15 @@ class TestGraph(unittest.TestCase):
         graph = make_basic_while()
 
         graph = add_join_nodes.debug(graph).apply()
-        graph = add_block_nodes.debug(graph).apply()
+        graph = add_dumb_join_nodes.debug(graph).apply()
         graph = insert_phi.debug(graph).apply()
-        # graph = newrename.debug(graph).single(graph.entry)
-        graph = newrename.debug(graph).single(graph[10])
+        graph = (
+            newrename.debug(graph).starter(graph.entry)
+            # .single(graph[10])
+            # .single(graph[11])
+            # .single(graph[12])
+        )
+        # graph = newrename.debug(graph).single(graph[10])
 
         dom_frontier = list(dominance_frontier(graph, graph[2], graph.entry))
         print(f"{dom_frontier=}")
