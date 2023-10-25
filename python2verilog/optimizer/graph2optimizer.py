@@ -365,14 +365,13 @@ class newrename(Transformer):
 
         for join in self.visit_succ(node):
             assert guard(join, ir.JoinNode)
-            print(f"{join=} {mapping_stack=}")
 
             if join in self.phied:
                 new_phis = {}
                 for key, value in join.phis.items():
                     og_var = self.search_mapping_and_mutate(mapping_stack, key)
 
-                    print(f"Phied {og_var=} {key=} {mapping_stack[og_var][-1]=}")
+                    print(f"Phied {og_var=} {key=} {mapping_stack[og_var]=}")
 
                     join.phis[key].append(mapping_stack[og_var][-1])
 
@@ -399,10 +398,30 @@ class newrename(Transformer):
 
             join.phis = new_phis
 
-            print(f"{join=} {mapping_stack=}")
+            print(f"Pre {join=} {mapping_stack=}")
 
-            self.inner(join, mapping_stack)
+            self.inner(join, copy.deepcopy(mapping_stack))
 
+            print(f"Between {join=} {mapping_stack=} {node=}")
+
+            # new_vars = []
+            # node_stack = []
+            # for node in self.adj_list[node_stack.pop()]:
+            #     if isinstance(node, ir.AssignNode):
+            #         new_vars.append(node.lvalue)
+            #         node_stack.extend(self.adj_list[node])
+            #     if isinstance(node, ir.BranchNode)
+
+            # for key in join.phis:
+            #     og_var = self.search_mapping_and_mutate(mapping_stack, key)
+            #     mapping_stack[og_var].pop()
+            #     print(f"popping {og_var=} {key=} {mapping_stack=}")
+            #     try:
+            #         pass
+            #     except:
+            #         pass
+
+            print(f"Post-Unwind {join=} {mapping_stack=} {node=}")
         return self
 
     def make_mapping(self, mapping_stack: dict[expr.Var, list[expr.Var]]):
