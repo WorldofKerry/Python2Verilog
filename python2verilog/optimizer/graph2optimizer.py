@@ -348,8 +348,24 @@ class newrename(Transformer):
         assert guard(node, ir.BlockHeadNode)
 
         if node in self.visited:
+            print(f"Early return {node=} {mapping_stack=}")
+            # Another node has this node as as a successor, but already visited,
+            # This means we can just update its phis
+            for key, value in node.phis.items():
+                # Original variable before renaming
+                og_var = self.search_mapping_and_mutate(mapping_stack, key)
+                node.phis[key].append(mapping_stack[og_var][-1])
             return self
         self.visited.add(node)
+
+        # Update LHS of node's PHIs with new variable
+        # Update mapping stack to mimic
+        new_phis = {}
+        for key, value in node.phis.items():
+            new_var = self.new_var(key)
+            new_phis[new_var] = value
+            mapping_stack[key].append(new_var)
+        node.phis = new_phis
 
         # Replace variable usage on LHS and RHS
         # The top of stack should be what successors should use
