@@ -66,17 +66,23 @@ def make_basic_graph():
     prev = graph.add_node(AssignNode(out, Int(10)), prev)
 
     prev = graph.add_node(ClockNode(), prev)
-    prev = ifelse = graph.add_node(BranchNode(BinOp(a, "<", b)), prev)
+    prev = graph.add_node(BranchNode(BinOp(a, "<", b)), prev)
+    true = graph.add_node(TrueNode(), prev)
+    false = graph.add_node(FalseNode(), prev)
 
-    prev = graph.add_node(ClockNode(), prev)
+    prev = graph.add_node(ClockNode(), true)
     prev = graph.add_node(AssignNode(out, Int(11)), prev)
 
     prev = graph.add_node(ClockNode(), prev)
-    tail1 = graph.add_node(AssignNode(out, Int(12)), prev)
+    prev = graph.add_node(AssignNode(out, Int(12)), prev)
+    tail1 = graph.add_node(ClockNode(), prev)
 
-    prev = ifelse
+    prev = graph.add_node(ClockNode(), false)
+    prev = graph.add_node(AssignNode(out, Int(13)), prev)
+
     prev = graph.add_node(ClockNode(), prev)
-    tail2 = graph.add_node(AssignNode(out, Int(13)), prev)
+    prev = graph.add_node(AssignNode(i, Int(14)), prev)
+    tail2 = graph.add_node(ClockNode(), prev)
 
     graph.add_node(AssignNode(n, Int(789)), tail1, tail2)
 

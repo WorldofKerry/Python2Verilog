@@ -35,11 +35,9 @@ def visit_nonclocked(graph: ir.CFG, node: ir.Element) -> Iterator[ir.Element]:
 
     yielding nodes with edges to a Clock node
     """
-    if any(map(lambda x: isinstance(x, ir.ClockNode), graph[node])):
-        yield node
-        return
     for child in graph[node]:
-        yield from visit_nonclocked(graph, child)
+        if not isinstance(child, ir.ClockNode):
+            yield child
 
 
 def visit_clocked(
@@ -196,37 +194,60 @@ class parallelize(ir.CFG):
 
     def can_optimize(self, first: ir.ClockNode, second: ir.ClockNode):
         """ """
-        # if "2" not in first.unique_id or "8" not in second.unique_id:
-        #     return
+        if "11" not in first.unique_id or "13" not in second.unique_id:
+            return
         print(f"{first=} {second=}")
 
-        first_vars = set(assigned_variables(visit_nonclocked(self, first)))
-        second_vars = set(assigned_variables(visit_nonclocked(self, second)))
+        first_nonclocked = list(visit_nonclocked(self, first))
+        second_nonclocked = list(visit_nonclocked(self, second))
 
-        # print(f"{first_vars.isdisjoint(second_vars)=}")
+        print(f"{first_nonclocked=} {second_nonclocked=}")
 
-        result = self.reattach_to_valid_parent(first, second)
+        first_vars = set(assigned_variables(first_nonclocked))
+        second_vars = set(assigned_variables(second_nonclocked))
+
+        print(f"{first_vars.isdisjoint(second_vars)=} {first_vars=} {second_vars=}")
+
+        if first_vars.isdisjoint(second_vars):
+            self.reattach_to_valid_parent(first, second)
 
     def reattach_to_valid_parent(self, first: ir.ClockNode, second: ir.ClockNode):
         """
         Attaches the children of first to second, while considering branching nodes
         """
 
-        parents = list(self.find_valid_parent(second))
+        foster_parents = list(self.find_valid_parent(second))
 
-        print(f"{parents=}")
+        print(f"{foster_parents=}")
 
-        for parent in parents:
-            print(f"set one {parent=}")
-            self.adj_list[parent] |= self.adj_list[second]
+        orphans = self[second]
 
-        next_clock_nodes = set(visit_clocked(self, second))
-        print(next_clock_nodes)
+        print(f"{orphans=}")
 
-        for parent in self.immediate_successors(second):
-            print(f"set two {parent=}")
-            if not isinstance(parent, (ir.ClockNode, ir.FalseNode, ir.TrueNode)):
-                self.adj_list[parent] |= next_clock_nodes
+        sad_parents = list(self.immediate_successors(second))
+
+        print(f"{sad_parents=}")
+
+        adopted_children = list(visit_clocked(self, second))
+
+        print(f"{adopted_children=}")
+
+        for foster_parent in foster_parents:
+            self.adj_list[foster_parent] |= orphans
+
+        for sad_parent in sad_parents:
+            self.adj_list[sad_parent] |= set(adopted_children)
+
+        # for parent in foster_parents:
+        #     print(f"set one {parent=}")
+        #     self.adj_list[parent] |= self.adj_list[second]
+
+        # next_clock_nodes = set(visit_clocked(self, second))
+        # print(next_clock_nodes)
+
+        # for parent in self.adj_list[second]:
+        #     print(f"set two {parent=}")
+        #     self.adj_list[parent] |= next_clock_nodes
 
         del self[second]
 
