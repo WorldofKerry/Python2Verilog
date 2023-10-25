@@ -195,6 +195,18 @@ def assigned_variables(elements: Iterator[ir.Element]):
             yield elem.lvalue
 
 
+def iter_non_join(graph: ir.CFG, node: ir.Element):
+    """
+    Recursively yields the node's children,
+
+    not going past join nodes
+    """
+    for child in graph[node]:
+        if not isinstance(child, ir.JoinNode):
+            yield child
+            yield from iter_non_join(graph, child)
+
+
 class Transformer(ir.CFG):
     """
     Abstract bass class for graph transformers
@@ -229,6 +241,8 @@ class add_join_nodes(Transformer):
         nodes = list(dfs(self, self.entry))
         for node in nodes:
             self.single(node)
+        join = self.add_node(ir.JoinNode(), children=[self.entry])
+        self.entry = join
         return self
 
     def single(self, node: ir.Element):
@@ -364,62 +378,16 @@ class newrename(Transformer):
                 # print(f"{succ.phis[key]=}")
 
         for join in self.visit_succ(node):
-            assert guard(join, ir.JoinNode)
-
-            print(f"loop {join=}")
-            if join in self.phied:
-                new_phis = {}
-                for key, value in join.phis.items():
-                    og_var = self.search_mapping_and_mutate(mapping_stack, key)
-
-                    print(f"Phied {og_var=} {key=} {mapping_stack[og_var]=}")
-
-                    join.phis[key].append(mapping_stack[og_var][-1])
-                    # new_var = self.new_var(og_var)
-
-                    # print(f"{og_var=} {new_var=}")
-                    # new_phis[new_var] = value
-
-                    # mapping_stack[og_var].append(new_var)
-
-                # join.phis = new_phis
-                continue
-            self.phied.add(join)
-            new_phis = {}
-            for key, value in join.phis.items():
-                og_var = self.search_mapping_and_mutate(mapping_stack, key)
-
-                new_var = self.new_var(og_var)
-
-                # print(f"{og_var=} {new_var=}")
-                new_phis[new_var] = value
-
-                mapping_stack[og_var].append(new_var)
-
-            join.phis = new_phis
-
             print(f"Pre {join=} {mapping_stack=}")
 
             self.inner(join, mapping_stack)
 
             print(f"Between {join=} {mapping_stack=} {node=}")
 
-            # new_vars = []
-            # node_stack = []
-            # for node in self.adj_list[node_stack.pop()]:
-            #     if isinstance(node, ir.AssignNode):
-            #         new_vars.append(node.lvalue)
-            #         node_stack.extend(self.adj_list[node])
-            #     if isinstance(node, ir.BranchNode)
-
-            # for key in join.phis:
-            #     og_var = self.search_mapping_and_mutate(mapping_stack, key)
-            #     mapping_stack[og_var].pop()
-            #     print(f"popping {og_var=} {key=} {mapping_stack=}")
-            #     try:
-            #         pass
-            #     except:
-            #         pass
+            non_joins = []
+            for child in self.adj_list[join]:
+                non_joins.extend(iter_non_join(self, join))
+            print(f"{non_joins=}")
 
             print(f"Post-Unwind {join=} {mapping_stack=} {node=}")
         return self
@@ -443,15 +411,12 @@ class newrename(Transformer):
                 return key
         mapping_stack[var] = []
         return var
-        raise RuntimeError(f"{var=} {mapping_stack=}")
 
     def replace(self, node: ir.Element, mapping_stack: dict[expr.Var, list[expr.Var]]):
         assert isinstance(mapping_stack, dict)
         for key, value in mapping_stack.items():
             assert isinstance(key, expr.Var)
             assert isinstance(value, list)
-
-        # print(f"Replace {node=} {mapping_stack=}")
 
         if isinstance(node, ir.AssignNode):
             node.rvalue = backwards_replace(
@@ -515,120 +480,6 @@ class newrename(Transformer):
         new_var = expr.Var(f"{var.py_name}{count}")
         self.var_numberer[var] = count + 1
         return new_var
-
-
-class rename(Transformer):
-    """
-    Renames variables for SSA
-    """
-
-    def __init__(self, graph: ir.CFG, *, apply: bool = True):
-        super().__init__(graph, apply=apply)
-        self.visited = set()
-        self.counter = 0
-
-    def apply(self):
-        self.rename(self.entry, self.initial_mapping())
-        return self
-
-    def get_global_variables(self):
-        nodes = dfs(self, self.entry)
-        lhs_vars = set()
-        global_vars = set()
-        for node in nodes:
-            if isinstance(node, ir.AssignNode):
-                global_vars |= set(get_variables(node.rvalue)) - lhs_vars
-                lhs_vars |= set(get_variables(node.lvalue))
-        return global_vars
-
-    def initial_mapping(self):
-        vars = self.get_global_variables()
-        return {var: [self.new_var(var)] for var in vars}
-
-    def new_var(self, var: expr.Var):
-        var = expr.Var(f"{var.py_name}_{self.counter}")
-        self.counter += 1
-        return var
-
-    def backwards_replace(
-        self, expression: expr.Expression, mapping: dict[expr.Var, list[expr.Var]]
-    ):
-        assert isinstance(expression, expr.Expression)
-        assert isinstance(mapping, dict)
-        for key, value in mapping.items():
-            assert isinstance(key, expr.Var)
-            assert isinstance(value, list)
-            for v in value:
-                assert isinstance(v, expr.Var)
-
-        expression = copy.deepcopy(expression)
-        if isinstance(expression, expr.Var):
-            for key in mapping:
-                if key.to_string() == expression.to_string():
-                    assert isinstance(mapping[key][-1], expr.Expression)
-                    return mapping[key][-1]
-        elif isinstance(expression, (expr.UInt, expr.Int)):
-            return expression
-        elif isinstance(expression, (expr.BinOp, expr.UBinOp)):
-            expression.left = self.backwards_replace(expression.left, mapping)
-            expression.right = self.backwards_replace(expression.right, mapping)
-            return expression
-        else:
-            raise TypeError(f"{type(expression)} {expression}")
-        return expression
-
-    def rename(self, node: ir.Element, stack_mapper: dict[expr.Var, list[expr.Var]]):
-        assert isinstance(node, ir.Element)
-        assert isinstance(stack_mapper, dict)
-        for key, value in stack_mapper.items():
-            assert isinstance(key, expr.Var)
-            assert isinstance(value, list)
-            for v in value:
-                assert isinstance(v, expr.Var)
-
-        print(f"{stack_mapper=}")
-        if isinstance(node, ir.AssignNode):
-            node.rvalue = self.backwards_replace(node.rvalue, stack_mapper)
-            new_var = self.new_var(node.lvalue)
-            print(f"AssignNode {new_var=}")
-
-            old_mapper = stack_mapper.get(node.lvalue, [])
-            old_mapper.append(new_var)
-            stack_mapper[node.lvalue] = old_mapper
-
-            node.lvalue = new_var
-        if isinstance(node, ir.BranchNode):
-            node.expression = self.backwards_replace(node.expression, stack_mapper)
-            print(f"{node=}")
-        if isinstance(node, ir.JoinNode):
-            print(f"join {node=} {stack_mapper=}")
-            new_phis = {}
-            for key, value in node.phis.items():
-                new_key = self.new_var(key)
-                print(f"JoinNode {new_key=}")
-                value.update({self.backwards_replace(key, stack_mapper): None})
-                new_phis[new_key] = value
-
-                old_mapper = stack_mapper.get(key, [])
-                old_mapper.append(new_key)
-                stack_mapper[key] = old_mapper
-
-            node.phis = new_phis
-        children = dominator_tree(self).get(node, set())
-        for child in children:
-            self.rename(child, stack_mapper)
-        print(f"{stack_mapper=}")
-
-        # if isinstance(node, ir.JoinNode):
-        #     for var in node.phis:
-        #         stack_mapper[var].pop()
-        # if isinstance(node, ir.AssignNode):
-        #     stack_mapper[node.lvalue].pop()
-
-        # new_phis = {}
-        # for key, value in node.phis.items():
-        #     value.update({self.backwards_replace(key, stack_mapper): None})
-        #     stack_mapper[key].pop()
 
 
 class make_ssa(Transformer):

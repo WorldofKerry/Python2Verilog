@@ -17,7 +17,6 @@ from python2verilog.optimizer.graph2optimizer import (  # nopycln: import
     make_ssa,
     newrename,
     parallelize,
-    rename,
     visit_nonclocked,
 )
 
@@ -306,23 +305,23 @@ class TestGraph(unittest.TestCase):
 
     def test_ssa_funcs(self):
         # graph = make_even_fib_graph_no_clocks()
-        graph = make_basic_branch()
-        # graph = make_basic_while()
+        # graph = make_basic_branch()
+        graph = make_basic_while()
         # graph = make_basic_path()
 
         graph = add_join_nodes.debug(graph).apply()
         graph = add_dumb_join_nodes.debug(graph).apply()
         graph = insert_phi.debug(graph).apply()
-        graph = (
-            newrename.debug(graph).starter(graph.entry)
-            # .starter(graph[10])
-            # .starter(graph[11])
-            # .starter(graph[12])
-        )
+        # graph = (
+        #     newrename.debug(graph).starter(graph.entry)
+        #     # .starter(graph[10])
+        #     # .starter(graph[11])
+        #     # .starter(graph[12])
+        # )
         # graph = newrename.debug(graph).starter(graph[10])
 
-        dom_frontier = list(dominance_frontier(graph, graph[2], graph.entry))
-        print(f"{dom_frontier=}")
+        # dom_frontier = list(dominance_frontier(graph, graph[2], graph.entry))
+        # print(f"{dom_frontier=}")
 
         with open("graph2_cytoscape.log", mode="w") as f:
             f.write(str(graph.to_cytoscape(id_in_label=True)))
