@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Optional
 
 from python2verilog import ir
+from python2verilog.api.context import context_to_verilog
 from python2verilog.api.file_namespaces import _file_namespaces
 from python2verilog.api.modes import Modes
 from python2verilog.backend.verilog.config import CodegenConfig

@@ -62,21 +62,61 @@ def visit_clocked(
             yield from visit_clocked(graph, child, visited)
 
 
-def dominance(graph: ir.CFG, source: ir.Element):
+def dominance(graph: ir.CFG) -> dict[ir.Element, set[ir.Element]]:
     """
-    Returns dict representing dominator tree of source
+    Returns dict dominance relations,
+
+    i.e. k in ret[n] means n dominates k
     """
-    vertices = set(dfs(graph, source))
-    dom_tree = {}
+    vertices = set(dfs(graph, graph.entry))
+    dominance_ = {}
 
     for vertex in vertices:
         temp_graph = copy.deepcopy(graph)
         del temp_graph[vertex]
-        new_vertices = set(dfs(temp_graph, source))
+        new_vertices = set(dfs(temp_graph, graph.entry))
         delta = vertices - new_vertices
-        dom_tree[vertex] = delta
-    logging.debug(f"\n{print_tree(dom_tree, source)}")
+        dominance_[vertex] = delta
+    logging.debug(f"\n{print_tree(dominance_, graph.entry)}")
+    return dominance_
+
+
+def dom(graph, a: ir.Element, b: ir.Element):
+    """
+    a dom b
+    """
+    dominance_ = dominance(graph)
+    return b in dominance_[a]
+
+
+def dominator_tree(graph: ir.CFG):
+    """
+    Returns dict representing dominator tree
+    """
+    visited = set()
+    nodes = reversed(list(dfs(graph, graph.entry)))
+    dom_tree = {}
+    dominance_ = dominance(graph)
+    for node in nodes:
+        temp = dominance_[node] - visited - {node}
+        if len(temp) > 0:
+            dom_tree[node] = temp
+        visited |= temp
+
+    # return {key.unique_id: set(map(lambda x: x.unique_id, value)) for key, value in dom_tree.items()}
     return dom_tree
+
+
+def build_tree(node_dict, root):
+    if root in node_dict:
+        children = node_dict[root]
+        tree = {root: {}}
+        for child in children:
+            subtree = build_tree(node_dict, child)
+            tree[root].update(subtree)
+        return tree
+    else:
+        return {root: {}}
 
 
 def dominance_frontier(graph: ir.CFG, n: ir.Element, entry: ir.Element):
@@ -87,7 +127,7 @@ def dominance_frontier(graph: ir.CFG, n: ir.Element, entry: ir.Element):
 
     for Z, M, N in set of Nodes
     """
-    dominance_ = dominance(graph, entry)
+    dominance_ = dominance(graph)
 
     zs = graph.adj_list.keys()
     ms = graph.adj_list.keys()
@@ -285,6 +325,7 @@ class rename(Transformer):
             b.lvalue = vn
         for s in self[b]:
             print(f"{s=}")
+        print(f"{dominator_tree(self)}")
 
 
 class make_ssa(Transformer):
@@ -411,7 +452,7 @@ class parallelize(ir.CFG):
         clock_nodes = filter(
             lambda x: isinstance(x, ir.ClockNode), self.adj_list.keys()
         )
-        dominance_ = dominance(self, self.entry)
+        dominance_ = dominance(self)
         for first, second in itertools.permutations(clock_nodes, 2):
             if second in dominance_[first]:
                 yield first, second

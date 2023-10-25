@@ -12,6 +12,7 @@ from python2verilog.optimizer.graph2optimizer import (  # nopycln: import
     dfs,
     dominance,
     dominance_frontier,
+    dominator_tree,
     insert_phi,
     make_ssa,
     parallelize,
@@ -202,6 +203,16 @@ class TestGraph(unittest.TestCase):
         dom_frontier = set(dominance_frontier(graph, graph["2"], graph.entry))
         # print(f"{dom_frontier=}")
         self.assertEqual({graph[3]}, dom_frontier)
+
+        dom_tree = dominator_tree(graph)
+        # print(f"{dom_tree=}")
+        self.assertEqual(
+            {
+                graph[1]: {graph[2], graph[3], graph[4], graph[8]},
+                graph[4]: {graph[5], graph[6], graph[7]},
+            },
+            dom_tree,
+        )
 
         # with open("graph2_cytoscape.log", mode="w") as f:
         #     f.write(str(graph.to_cytoscape(id_in_label=True)))
