@@ -22,12 +22,10 @@ class insert_phis(Transformer):
             block_args = BlockHeadNode()
 
             for var in self.get_operations_lhs(source):
-                # print(f"{type(var)=}")
-                block_args.phis[var] = {block: None}
+                block_args.phis[var] = {source: None}
 
             block.statements.insert(0, block_args)
 
-        # print(f"{dom_frontier=}")
         return self
 
     def get_operations_lhs(self, block: BasicBlock):
@@ -70,14 +68,12 @@ class rename_blocks(Transformer):
         for s in self.adj_list[b]:
             # For each successor in CFG
             assert guard(s, BasicBlock)
+            print(f"{b=} {str(s)=}")
             for statement in s.statements:
                 if isinstance(statement, ir.BlockHeadNode):
-                    for key, value in self.stacks.items():
-                        if key not in statement.phis:
-                            continue
-                        aliases = statement.phis.get(key, {})
-                        aliases[b] = value[-1]
-                        statement.phis[key] = aliases
+                    for var, phi in statement.phis.items():
+                        phi[b] = self.stacks[self.get_original_var(var)][-1]
+            print(f"{b=} {str(s)=}")
 
         if recursion:
             # DFS in dominator tree
@@ -96,10 +92,12 @@ class rename_blocks(Transformer):
         """
         Given a value in mapping stack, gets key
         """
+        if var in self.stacks:
+            return var
         for key, value in self.stacks.items():
             if var in value:
                 return key
-        raise RuntimeError()
+        raise RuntimeError(f"{type(var)=} {var=}")
 
     def update_phi_lhs(self, block: BlockHeadNode):
         replacement = {}
