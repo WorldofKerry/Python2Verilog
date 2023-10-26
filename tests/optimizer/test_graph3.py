@@ -1,8 +1,7 @@
 import unittest
-import logging
 
-from python2verilog.ir import graph2 as ir
 from python2verilog.ir import expressions as expr
+from python2verilog.ir import graph2 as ir
 from python2verilog.optimizer import graph3optimizer as opti
 
 
@@ -49,7 +48,7 @@ class TestGraph3(unittest.TestCase):
         graph = make_basic_loop()
 
         graph = opti.insert_phis.debug(graph).one_block(graph[2])
-        print(f"{list(opti.insert_phis.debug(graph).get_operations_lhs(graph[2]))=}")
+        # print(f"{list(opti.insert_phis.debug(graph).get_operations_lhs(graph[2]))=}")
 
         with open("graph2_cytoscape.log", mode="w") as f:
             f.write(str(graph.to_cytoscape(id_in_label=True)))

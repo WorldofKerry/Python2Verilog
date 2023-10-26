@@ -3,7 +3,6 @@ Graph 2 optimizers
 """
 import copy
 import itertools
-import logging
 from abc import abstractmethod
 from typing import Any, Iterator, Optional
 
@@ -60,25 +59,6 @@ def visit_clocked(
             yield child
         else:
             yield from visit_clocked(graph, child, visited)
-
-
-def dominance(graph: ir.CFG) -> dict[ir.Element, set[ir.Element]]:
-    """
-    Returns dict dominance relations,
-
-    i.e. k in ret[n] means n dominates k
-    """
-    vertices = set(dfs(graph, graph.entry))
-    dominance_ = {}
-
-    for vertex in vertices:
-        temp_graph = copy.deepcopy(graph)
-        del temp_graph[vertex]
-        new_vertices = set(dfs(temp_graph, graph.entry))
-        delta = vertices - new_vertices
-        dominance_[vertex] = delta
-    # logging.debug(f"\n{print_tree(dominance_, graph.entry)}")
-    return dominance_
 
 
 def dom(graph, a: ir.Element, b: ir.Element):
@@ -157,24 +137,6 @@ def print_tree(
     for child in tree[node]:
         ret += print_tree(tree, child, level + 1, visited)
     return ret
-
-
-def dfs(
-    graph: ir.CFG, source: ir.Element, visited: Optional[set[ir.Element]] = None
-) -> Iterator[ir.Element]:
-    """
-    Depth-first search
-    """
-    if visited is None:
-        visited = set()
-    if source in visited:
-        return
-    if source not in graph.adj_list:
-        return
-    visited.add(source)
-    yield source
-    for child in graph[source]:
-        yield from dfs(graph, child, visited)
 
 
 def assigned_variables(elements: Iterator[ir.Element]):
