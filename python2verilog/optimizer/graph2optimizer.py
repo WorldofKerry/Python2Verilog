@@ -550,7 +550,6 @@ class blockify(Transformer):
 
         if isinstance(node, ir.BlockHeadNode):
             successors = set(self.iter_block_children(node))
-            print(f"{node=} {successors=}")
             for succ in successors:
                 self.join_blocks(succ)
             self.adj_list[node] = successors
@@ -575,3 +574,21 @@ class to_dominance(Transformer):
 
     def do(self):
         domi = dominance(self)
+        print(f"{domi=}")
+
+        for key in set(self.adj_list):
+            self.adj_list[key] = set()
+
+        for key, value in domi.items():
+            self.adj_list[key] = set(value)
+
+
+def dfs_dominator_tree(graph: ir.CFG):
+    dom_tree = dominator_tree(graph)
+
+    def rec(node: ir.Element):
+        for dominated in dom_tree.get(node, set()):
+            yield from rec(dominated)
+        yield node
+
+    yield from rec(graph.entry)

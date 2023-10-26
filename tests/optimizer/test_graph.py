@@ -16,6 +16,7 @@ from python2verilog.optimizer.graph2optimizer import (  # nopycln: import
     dominator_tree,
     insert_phi,
     newrename,
+    to_dominance,
     visit_nonclocked,
 )
 
@@ -275,6 +276,7 @@ class TestGraph(unittest.TestCase):
 
         graph = add_join_nodes.debug(graph).apply()
         graph = add_dumb_join_nodes.debug(graph).apply()
+
         # graph = insert_phi.debug(graph).apply()
         # graph = (
         #     newrename.debug(graph).starter(graph.entry)
@@ -284,8 +286,9 @@ class TestGraph(unittest.TestCase):
         # )
 
         graph = blockify.debug(graph).apply()
+        # graph = to_dominance(graph).apply()
 
-        dom_tree = dominance(graph)
+        dom_tree = dominator_tree(graph)
         print(f"{dom_tree=}")
 
         # graph = newrename.debug(graph).starter(graph[10])
