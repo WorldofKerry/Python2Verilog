@@ -431,3 +431,32 @@ class CFG:
             for child in dom_tree.get(cur, set()):
                 if child != cur:
                     queue.append(child)
+
+    def traverse_until(self, source: Element, elem_type: type[Element]):
+        """
+        Builds a subtree rooted at source,
+        where every leaf is type elem_type,
+        and all paths from source to leaves contain x node(s) of type elem_type,
+        where x is 2 if type of source is elem_type else 1
+
+        Yields all nodes in subtree, excluding leaves
+        """
+        for child in self.adj_list[source]:
+            if not isinstance(child, elem_type):
+                yield child
+                yield from self.traverse_until(child)
+
+    def traverse_successors(self, source: Element, elem_type: type[Element]):
+        """
+        Builds a subtree rooted at source,
+        where every leaf is type elem_type,
+        and all paths from source to leaves contain x node(s) of type elem_type,
+        where x is 2 if type of source is elem_type else 1
+
+        Yields all leaves in subtree
+        """
+        for child in self.adj_list[source]:
+            if isinstance(child, elem_type):
+                yield child
+            else:
+                yield from self.traverse_successors(child)

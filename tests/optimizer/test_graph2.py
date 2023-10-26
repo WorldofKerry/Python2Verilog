@@ -7,8 +7,8 @@ from matplotlib import pyplot as plt
 from python2verilog.ir.expressions import *  # nopycln: import
 from python2verilog.ir.graph2 import *
 from python2verilog.optimizer.graph2optimizer import (  # nopycln: import
-    add_dumb_join_nodes,
-    add_join_nodes,
+    add_block_heads,
+    add_merge_heads,
     insert_phi,
     newrename,
     visit_nonclocked,
@@ -268,16 +268,16 @@ class TestGraph(unittest.TestCase):
         # graph = make_basic_while()
         # graph = make_basic_path()
 
-        graph = add_join_nodes.debug(graph).apply()
-        graph = add_dumb_join_nodes.debug(graph).apply()
+        graph = add_merge_heads.debug(graph).apply()
+        graph = add_block_heads.debug(graph).apply()
 
         graph = insert_phi.debug(graph).apply()
-        # graph = (
-        #     newrename.debug(graph).starter(graph.entry)
-        #     # .starter(graph[10])
-        #     # .starter(graph[11])
-        #     # .starter(graph[12])
-        # )
+        graph = (
+            newrename.debug(graph).apply(graph.entry, recursion=False)
+            # .starter(graph[10])
+            # .starter(graph[11])
+            # .starter(graph[12])
+        )
 
         # graph = blockify.debug(graph).apply()
         # graph = to_dominance(graph).apply()
