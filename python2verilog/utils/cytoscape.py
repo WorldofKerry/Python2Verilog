@@ -41,9 +41,9 @@ def main():
             {
                 "selector": "edge",
                 "style": {
-                    "width": 3,
-                    "line-color": "#000000",
-                    "target-arrow-color": "#000000",
+                    "width": 20,
+                    "line-color": "#303030",
+                    "target-arrow-color": "#303030",
                     "target-arrow-shape": "triangle",
                     "curve-style": "bezier",
                     "label": "data(label)",

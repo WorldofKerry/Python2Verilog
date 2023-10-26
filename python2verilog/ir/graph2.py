@@ -129,22 +129,31 @@ class BranchNode(Element):
         return super().__str__() + f"if {self.expression}"
 
 
-class TrueNode(Element):
+class MergeNode(BlockHead):
+    """
+    Merge node
+    """
+
+    def __str__(self) -> str:
+        return "Merge\n" + super().__str__()
+
+
+class TrueNode(BlockHead):
     """
     A true node for branch
     """
 
     def __str__(self) -> str:
-        return super().__str__() + "True"
+        return "True\n" + super().__str__()
 
 
-class FalseNode(Element):
+class FalseNode(BlockHead):
     """
     A false node for branch
     """
 
     def __str__(self) -> str:
-        return super().__str__() + "False"
+        return "False\n" + super().__str__()
 
 
 class CFG:

@@ -8,7 +8,7 @@ from python2verilog.ir.expressions import *  # nopycln: import
 from python2verilog.ir.graph2 import *
 from python2verilog.optimizer.graph2optimizer import (  # nopycln: import
     add_block_head_after_branch,
-    add_block_head_at_merge,
+    insert_merge_nodes,
     insert_phi,
     newrename,
     visit_nonclocked,
@@ -280,8 +280,8 @@ class TestGraph(unittest.TestCase):
         # graph = make_basic_while()
         # graph = make_basic_path()
 
-        graph = add_block_head_at_merge.debug(graph).apply()
-        graph = add_block_head_after_branch.debug(graph).apply()
+        graph = insert_merge_nodes.debug(graph).apply()
+        # graph = add_block_head_after_branch.debug(graph).apply()
 
         graph = insert_phi.debug(graph).apply()
         graph = (

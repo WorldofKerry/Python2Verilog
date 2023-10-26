@@ -168,18 +168,18 @@ class Transformer(ir.CFG):
         return self
 
 
-class add_block_head_at_merge(Transformer):
+class insert_merge_nodes(Transformer):
     """
     Adds block heads when there is a merge
 
-    Makes entry a join node
+    Makes entry a merge node
     """
 
     def apply(self):
         nodes = list(self.dfs(self.entry))
         for node in nodes:
             self.single(node)
-        join = self.add_node(ir.BlockHead(), children=[self.entry])
+        join = self.add_node(ir.MergeNode(), children=[self.entry])
         self.entry = join
         return self
 
@@ -189,7 +189,7 @@ class add_block_head_at_merge(Transformer):
             return
         for parent in parents:
             self.adj_list[parent] -= {node}
-        self.add_node(ir.BlockHead(), *parents, children=[node])
+        self.add_node(ir.MergeNode(), *parents, children=[node])
 
         return self
 
@@ -341,7 +341,7 @@ class newrename(Transformer):
     def gen_name(self, var: expr.Var):
         # Make new unqiue name
         count = self.var_counter.get(var, 0)
-        name = f"%{var.py_name}.{count}"
+        name = f"{var.py_name}.{count}"
         new_var = expr.Var(py_name=name, ver_name=name)
         self.var_counter[var] = count + 1
 
