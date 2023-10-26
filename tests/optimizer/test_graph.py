@@ -9,14 +9,13 @@ from python2verilog.ir.graph2 import *
 from python2verilog.optimizer.graph2optimizer import (  # nopycln: import
     add_dumb_join_nodes,
     add_join_nodes,
+    blockify,
     dfs,
     dominance,
     dominance_frontier,
     dominator_tree,
     insert_phi,
-    make_ssa,
     newrename,
-    parallelize,
     visit_nonclocked,
 )
 
@@ -267,57 +266,28 @@ class TestGraph(unittest.TestCase):
         # with open("graph2_cytoscape.log", mode="w") as f:
         #     f.write(str(graph.to_cytoscape(id_in_label=True)))
 
-    def test_parallelize(self):
-        graph = make_even_fib_graph()
-
-        graph = parallelize(graph).run()
-
-        dom_frontier = list(dominance_frontier(graph, graph["12"], graph.entry))
-        print(f"{dom_frontier=}")
-
-        dom_frontier = list(dominance_frontier(graph, graph["0"], graph.entry))
-        print(f"{dom_frontier=}")
-
-        with open("graph2_cytoscape.log", mode="w") as f:
-            f.write(str(graph.to_cytoscape(id_in_label=True)))
-
-    def test_make_ssa(self):
-        graph = make_even_fib_graph()
-
-        graph = make_ssa(graph).run()
-
-        with open("graph2_cytoscape.log", mode="w") as f:
-            f.write(str(graph.to_cytoscape(id_in_label=True)))
-
-    def test_make_clockless(self):
-        graph = make_even_fib_graph_no_clocks()
-
-        graph = make_ssa(graph).run()
-
-        dom_frontier = list(dominance_frontier(graph, graph["8"], graph.entry))
-        print(f"{dom_frontier=}")
-
-        dom_frontier = list(dominance_frontier(graph, graph["9"], graph.entry))
-        print(f"{dom_frontier=}")
-
-        with open("graph2_cytoscape.log", mode="w") as f:
-            f.write(str(graph.to_cytoscape(id_in_label=True)))
-
     def test_ssa_funcs(self):
         # graph = make_even_fib_graph_no_clocks()
-        graph = make_basic_branch()
+        # graph = make_basic_branch()
+        graph = make_pdf_example()
         # graph = make_basic_while()
         # graph = make_basic_path()
 
         graph = add_join_nodes.debug(graph).apply()
         graph = add_dumb_join_nodes.debug(graph).apply()
-        graph = insert_phi.debug(graph).apply()
-        graph = (
-            newrename.debug(graph).starter(graph.entry)
-            # .starter(graph[10])
-            # .starter(graph[11])
-            # .starter(graph[12])
-        )
+        # graph = insert_phi.debug(graph).apply()
+        # graph = (
+        #     newrename.debug(graph).starter(graph.entry)
+        #     # .starter(graph[10])
+        #     # .starter(graph[11])
+        #     # .starter(graph[12])
+        # )
+
+        graph = blockify.debug(graph).apply()
+
+        dom_tree = dominance(graph)
+        print(f"{dom_tree=}")
+
         # graph = newrename.debug(graph).starter(graph[10])
 
         # dom_frontier = list(dominance_frontier(graph, graph[2], graph.entry))

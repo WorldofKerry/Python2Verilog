@@ -3,6 +3,7 @@ Graph v2
 """
 
 from __future__ import annotations
+import copy
 
 import reprlib
 from typing import Collection, Iterator, Optional, Union
@@ -300,3 +301,20 @@ class CFG:
                 )
 
         return {"nodes": nodes, "edges": edges}
+
+    def iter_block_children(
+        self, node: Element, visited: Optional[set[Element]] = None
+    ):
+        """
+        Iterates over block children
+        """
+        if visited is None:
+            visited = set()
+        if node in visited:
+            return
+        visited.add(node)
+        for child in self.adj_list[node]:
+            if isinstance(child, BlockHeadNode):
+                yield child
+            else:
+                yield from self.iter_block_children(child, visited)
