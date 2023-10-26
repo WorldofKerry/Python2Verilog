@@ -311,9 +311,15 @@ class newrename(Transformer):
         """
         Gets stack
         """
-        return self._stacks[self.map_var(var)]
+        mapped = self.map_var(var)
+        if mapped in self._stacks:
+            return self._stacks[mapped]
+
         print(f"Suspicious variable {var=}")
-        return []
+        new_var = self.gen_name(var)
+        self._stacks[var] = [new_var]
+        self.global_vars[var] = self._stacks[var]
+        return self.stacks(var)
 
     def map_var(self, var: expr.Var):
         if var in self.var_mapping:

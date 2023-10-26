@@ -274,8 +274,8 @@ class TestGraph(unittest.TestCase):
         #     f.write(str(graph.to_cytoscape(id_in_label=True)))
 
     def test_ssa_funcs(self):
-        # graph = make_even_fib_graph_no_clocks()
-        graph = make_basic_branch()
+        graph = make_even_fib_graph_no_clocks()
+        # graph = make_basic_branch()
         # graph = make_pdf_example()
         # graph = make_basic_while()
         # graph = make_basic_path()
@@ -292,6 +292,8 @@ class TestGraph(unittest.TestCase):
             # .starter(graph[11])
             # .starter(graph[12])
         )
+
+        print(f"{graph.global_vars=}")
 
         # graph = blockify.debug(graph).apply()
         # graph = to_dominance(graph).apply()
