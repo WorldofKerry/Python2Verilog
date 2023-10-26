@@ -81,7 +81,7 @@ class BlockHead(Element):
     def __phis_formatter(self):
         lines = Lines()
         for key, inner in self.phis.items():
-            lines += f"{key} = \u03d5" + ", ".join(
+            lines += f"{key} = \u03d5 " + ", ".join(
                 map(lambda x: f"[{x[1]}, %{x[0].unique_id}]", inner.items())
             )
         return str(lines)
