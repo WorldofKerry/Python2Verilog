@@ -287,8 +287,8 @@ class newrename(Transformer):
         assert guard(b, BlockHeadNode)
         self.update_phi_lhs(b)
 
-        for statement in self.traverse_until(b, BlockHeadNode):
-            self.update_lhs_rhs_stack(statement)
+        for stmt in self.traverse_until(b, BlockHeadNode):
+            self.update_lhs_rhs_stack(stmt)
 
         for s in self.traverse_successors(b, BlockHeadNode):
             # For each successor in CFG
@@ -297,19 +297,34 @@ class newrename(Transformer):
                 phi[b] = self.stacks[self.get_original_var(var)][-1]
             print(f"{b=} {str(s)=}")
 
-        if recursion:
-            # DFS in dominator tree
+        # DFS in dominator tree
+        if recursion is True:
             for s in self.dominator_tree_iterate():
-                self.rename(s)
+                if s in set(self.traverse_successors(b, BlockHeadNode)):
+                    print(f"visiting {s=}")
+                    self.rename(s)
+        else:
+            if recursion:
+                cur = recursion.pop()
+                self.rename(cur, recursion)
+            # else:
+            #     print(f"returning {self.stacks=}")
+            #     return
 
         # Unwind stack
+        counter = {}
         for key in b.phis:
-            self.stacks[self.get_original_var(key)].pop()
-        for statement in self.traverse_until(b, BlockHeadNode):
-            if isinstance(statement, ir.AssignNode):
-                self.stacks[self.get_original_var(statement.lvalue)].pop()
+            og_var = self.get_original_var(key)
+            counter[og_var] = counter.get(og_var, 0) + 1
+        for stmt in self.traverse_until(b, BlockHeadNode):
+            if isinstance(stmt, ir.AssignNode):
+                og_var = self.get_original_var(stmt.lvalue)
+                counter[og_var] = counter.get(og_var, 0) + 1
+        for og_var, count in counter.items():
+            for _ in range(count):
+                self.stacks[og_var].pop()
 
-        print(f"Unwound {self.stacks}")
+        print(f"Unwound {self.stacks=}")
 
     def get_original_var(self, var: expr.Var):
         """
@@ -320,7 +335,7 @@ class newrename(Transformer):
         for key, value in self.stacks.items():
             if var in value:
                 return key
-        raise RuntimeError(f"{type(var)=} {var=}")
+        raise RuntimeError(f"{type(var)=} {var=} {self.stacks}")
 
     def update_phi_lhs(self, block: BlockHeadNode):
         replacement = {}

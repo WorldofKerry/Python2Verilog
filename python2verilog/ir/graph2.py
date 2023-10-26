@@ -413,9 +413,10 @@ class CFG:
         Yields nodes of dominator tree
         """
         # dom_tree = self.dominator_tree()
+        # print(f"{dom_tree=}")
 
         # def rec(node: Element):
-        #     yield node
+        #     print(f"{node=}")
         #     for child in dom_tree.get(node, set()):
         #         if node != child:
         #             yield from rec(child)
@@ -444,7 +445,7 @@ class CFG:
         for child in self.adj_list[source]:
             if not isinstance(child, elem_type):
                 yield child
-                yield from self.traverse_until(child)
+                yield from self.traverse_until(child, elem_type)
 
     def traverse_successors(self, source: Element, elem_type: type[Element]):
         """
@@ -459,4 +460,4 @@ class CFG:
             if isinstance(child, elem_type):
                 yield child
             else:
-                yield from self.traverse_successors(child)
+                yield from self.traverse_successors(child, elem_type)

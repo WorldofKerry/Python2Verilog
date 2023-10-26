@@ -273,7 +273,7 @@ class TestGraph(unittest.TestCase):
 
         graph = insert_phi.debug(graph).apply()
         graph = (
-            newrename.debug(graph).apply(graph.entry, recursion=False)
+            newrename.debug(graph).apply(graph.entry, recursion=[graph[15]])
             # .starter(graph[10])
             # .starter(graph[11])
             # .starter(graph[12])
