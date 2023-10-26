@@ -75,10 +75,7 @@ class BlockHead(Element):
         super().__init__(unique_id)
         self.phis: dict[expr.Var, dict[Element, expr.Var]] = {}
 
-    def __str__(self) -> str:
-        return super().__str__() + f"{BlockHead.__name__}\n{self.__phis_formatter()}"
-
-    def __phis_formatter(self):
+    def stringify_phis(self):
         lines = Lines()
         for key, inner in self.phis.items():
             lines += f"{key} = \u03d5 " + ", ".join(
@@ -135,7 +132,7 @@ class MergeNode(BlockHead):
     """
 
     def __str__(self) -> str:
-        return "Merge\n" + super().__str__()
+        return super().__str__() + "Merge\n" + self.stringify_phis()
 
 
 class TrueNode(BlockHead):
@@ -144,7 +141,7 @@ class TrueNode(BlockHead):
     """
 
     def __str__(self) -> str:
-        return "True\n" + super().__str__()
+        return super().__str__() + "True\n" + self.stringify_phis()
 
 
 class FalseNode(BlockHead):
@@ -153,7 +150,7 @@ class FalseNode(BlockHead):
     """
 
     def __str__(self) -> str:
-        return "False\n" + super().__str__()
+        return super().__str__() + "False\n" + self.stringify_phis()
 
 
 class CFG:
