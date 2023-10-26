@@ -263,6 +263,7 @@ class newrename(Transformer):
         self.visited = set()
         self.var_counter = {}
         self.stacks: dict[expr.Var, list[expr.Var]] = {}
+        self.var_mapping = {}
 
     def apply(self, block: BasicBlock, recursion: bool = True):
         self.rename(b=block, recursion=recursion)
@@ -288,7 +289,7 @@ class newrename(Transformer):
             # For each successor in CFG
             assert guard(s, BlockHeadNode)
             for var, phi in s.phis.items():
-                phi[b] = self.stacks[self.get_original_var(var)][-1]
+                phi[b] = self.stacks[self.var_mapping[var]][-1]
             print(f"{b=} {str(s)=}")
 
         # DFS in dominator tree
@@ -296,44 +297,14 @@ class newrename(Transformer):
             for s in self.dominator_tree_iterate():
                 if s in self.dominance()[b]:
                     if isinstance(s, ir.BlockHeadNode):
-                        # print(f"visiting {s=}")
                         self.rename(s)
-            # for s in self.traverse_successors(b, BlockHeadNode):
-            #     self.rename(s)
-        else:
-            if recursion:
-                cur = recursion.pop()
-                self.rename(cur, recursion)
-            # else:
-            #     print(f"returning {self.stacks=}")
-            #     return
 
         # Unwind stack
-        counter = {}
         for key in b.phis:
-            og_var = self.get_original_var(key)
-            counter[og_var] = counter.get(og_var, 0) + 1
+            self.stacks[self.var_mapping[key]].pop()
         for stmt in self.traverse_until(b, BlockHeadNode):
             if isinstance(stmt, ir.AssignNode):
-                og_var = self.get_original_var(stmt.lvalue)
-                counter[og_var] = counter.get(og_var, 0) + 1
-        for og_var, count in counter.items():
-            for _ in range(count):
-                self.stacks[og_var].pop()
-
-        print(f"Unwound {b=} {self.stacks=}")
-
-    def get_original_var(self, var: expr.Var):
-        """
-        Given a value in mapping stack, gets key
-        """
-        if var in self.stacks:
-            return var
-        for key, value in self.stacks.items():
-            if var in value:
-                return key
-        return expr.Var(var.py_name[0])  # TODO: problem
-        raise RuntimeError(f"{type(var)=} {var=} {self.stacks}")
+                self.stacks[self.var_mapping[stmt.lvalue]].pop()
 
     def update_phi_lhs(self, block: BlockHeadNode):
         replacement = {}
@@ -356,13 +327,17 @@ class newrename(Transformer):
     def gen_name(self, var: expr.Var):
         # Make new unqiue name
         count = self.var_counter.get(var, 0)
-        new_var = expr.Var(f"{var.py_name}{count}")
+        new_var = expr.Var(f"{var.py_name}.{count}")
         self.var_counter[var] = count + 1
 
         # Update var stack
         stack = self.stacks.get(var, [])
         stack.append(new_var)
         self.stacks[var] = stack
+
+        # Update var mapping
+        assert new_var not in self.var_mapping
+        self.var_mapping[new_var] = var
 
         return new_var
 
