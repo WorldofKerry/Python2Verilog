@@ -233,11 +233,8 @@ class insert_phi(Transformer):
 
         for node in self.dfs(self.entry):
             if isinstance(node, ir.AssignNode):
-                print(f"{node.lvalue=} {v=} {node.lvalue == v}")
                 if node.lvalue == v:
                     worklist.add(node)
-
-        print(f"{worklist=}")
 
         ever_on_worklist |= worklist
 
@@ -247,9 +244,6 @@ class insert_phi(Transformer):
                 if d not in already_has_phi:
                     assert guard(d, ir.BlockHeadNode)
 
-                    # phi = d.phis.get(v, [])
-                    # phi.append(v)
-                    # d.phis[v] = [v] * len(list(self.immediate_successors(d)))
                     d.phis[v] = {}
 
                     already_has_phi.add(d)
@@ -338,7 +332,7 @@ class newrename(Transformer):
         for key, value in self.stacks.items():
             if var in value:
                 return key
-        # return expr.Var(var.py_name[0])  # TODO: problem
+        return expr.Var(var.py_name[0])  # TODO: problem
         raise RuntimeError(f"{type(var)=} {var=} {self.stacks}")
 
     def update_phi_lhs(self, block: BlockHeadNode):

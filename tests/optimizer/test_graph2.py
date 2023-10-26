@@ -159,15 +159,19 @@ def make_basic_branch():
 
     prev = graph.add_node(TrueNode(), ifelse)
     prev = graph.add_node(AssignNode(i, i), prev)
+    prev = graph.add_node(AssignNode(i, i), prev)
     prev = graph.add_node(AssignNode(i, Int(1)), prev)
     prev = graph.add_node(AssignNode(i, Int(2)), prev)
+    prev = graph.add_node(AssignNode(i, i), prev)
     prev = graph.add_node(AssignNode(i, i), prev)
     prev = graph.add_node(AssignNode(i, Int(3)), prev, children=[postifelse])
 
     prev = graph.add_node(FalseNode(), ifelse)
     prev = graph.add_node(AssignNode(i, i), prev)
+    prev = graph.add_node(AssignNode(i, i), prev)
     prev = graph.add_node(AssignNode(i, Int(1)), prev)
     prev = graph.add_node(AssignNode(i, Int(2)), prev)
+    prev = graph.add_node(AssignNode(i, i), prev)
     prev = graph.add_node(AssignNode(i, i), prev)
     prev = graph.add_node(AssignNode(i, Int(4)), prev, children=[postifelse])
 

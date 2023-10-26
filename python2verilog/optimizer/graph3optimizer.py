@@ -43,6 +43,7 @@ class rename_blocks(Transformer):
         self.visited = set()
         self.var_counter = {}
         self.stacks: dict[expr.Var, list[expr.Var]] = {}
+        self.var_mapping = {}
 
     def apply(self, block: BasicBlock):
         self.rename(block)
@@ -56,7 +57,6 @@ class rename_blocks(Transformer):
         if b in self.visited:
             return
         self.visited.add(b)
-        print(f"rename {b=}")
 
         for statement in b.statements:
             if isinstance(statement, BlockHeadNode):
@@ -68,36 +68,23 @@ class rename_blocks(Transformer):
         for s in self.adj_list[b]:
             # For each successor in CFG
             assert guard(s, BasicBlock)
-            print(f"{b=} {str(s)=}")
             for statement in s.statements:
                 if isinstance(statement, ir.BlockHeadNode):
                     for var, phi in statement.phis.items():
-                        phi[b] = self.stacks[self.get_original_var(var)][-1]
-            print(f"{b=} {str(s)=}")
+                        phi[b] = self.stacks[self.var_mapping[var]][-1]
 
         if recursion:
             # DFS in dominator tree
-            for s in self.dominator_tree_iterate():
+            for s in self.dominator_tree().get(b, set()):
                 self.rename(s)
 
         # Unwind stack
         for statement in b.statements:
             if isinstance(statement, ir.BlockHeadNode):
                 for key in statement.phis:
-                    self.stacks[self.get_original_var(key)].pop()
+                    self.stacks[self.var_mapping[key]].pop()
             if isinstance(statement, ir.AssignNode):
-                self.stacks[self.get_original_var(statement.lvalue)].pop()
-
-    def get_original_var(self, var: expr.Var):
-        """
-        Given a value in mapping stack, gets key
-        """
-        if var in self.stacks:
-            return var
-        for key, value in self.stacks.items():
-            if var in value:
-                return key
-        raise RuntimeError(f"{type(var)=} {var=}")
+                self.stacks[self.var_mapping[statement.lvalue]].pop()
 
     def update_phi_lhs(self, block: BlockHeadNode):
         replacement = {}
@@ -120,13 +107,16 @@ class rename_blocks(Transformer):
     def gen_name(self, var: expr.Var):
         # Make new unqiue name
         count = self.var_counter.get(var, 0)
-        new_var = expr.Var(f"{var.py_name}{count}")
+        new_var = expr.Var(f"%{var.py_name}{count}")
         self.var_counter[var] = count + 1
 
         # Update var stack
         stack = self.stacks.get(var, [])
         stack.append(new_var)
         self.stacks[var] = stack
+
+        # Remember mapping
+        self.var_mapping[new_var] = var
 
         return new_var
 
