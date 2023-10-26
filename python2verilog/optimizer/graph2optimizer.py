@@ -299,10 +299,13 @@ class newrename(Transformer):
 
         # DFS in dominator tree
         if recursion is True:
-            for s in self.dominator_tree_iterate():
-                if s in set(self.traverse_successors(b, BlockHeadNode)):
-                    print(f"visiting {s=}")
-                    self.rename(s)
+            # for s in self.dominator_tree_iterate():
+            #     # if s in set(self.traverse_successors(b, BlockHeadNode)):
+            #     # print(f"visiting {s=}")
+            #     if isinstance(s, ir.BlockHeadNode):
+            #         self.rename(s)
+            for s in self.traverse_successors(b, BlockHeadNode):
+                self.rename(s)
         else:
             if recursion:
                 cur = recursion.pop()
@@ -324,7 +327,7 @@ class newrename(Transformer):
             for _ in range(count):
                 self.stacks[og_var].pop()
 
-        print(f"Unwound {self.stacks=}")
+        print(f"Unwound {b=} {self.stacks=}")
 
     def get_original_var(self, var: expr.Var):
         """
@@ -335,6 +338,7 @@ class newrename(Transformer):
         for key, value in self.stacks.items():
             if var in value:
                 return key
+        return expr.Var(var.py_name[0])  # TODO: problem
         raise RuntimeError(f"{type(var)=} {var=} {self.stacks}")
 
     def update_phi_lhs(self, block: BlockHeadNode):
@@ -374,7 +378,11 @@ class newrename(Transformer):
 
         e.g. for an item a -> [x, y, z], the resulting mapping has a -> z
         """
-        return {key: value[-1] for key, value in mapping_stack.items()}
+        mapping = {}
+        for key, value in mapping_stack.items():
+            if value:
+                mapping[key] = value[-1]
+        return mapping
 
 
 class blockify(Transformer):

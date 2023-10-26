@@ -424,7 +424,7 @@ class CFG:
         # yield from rec(self.entry)
 
         dom_tree = self.dominator_tree()
-        print(f"{dom_tree=}")
+        # print(f"{dom_tree=}")
         queue = [self.entry]
         while queue:
             cur = queue.pop(0)

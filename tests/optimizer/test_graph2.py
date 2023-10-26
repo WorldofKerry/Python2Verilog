@@ -158,13 +158,17 @@ def make_basic_branch():
     prev = graph.add_node(AssignNode(i, Int(10)), prev)
 
     prev = graph.add_node(TrueNode(), ifelse)
+    prev = graph.add_node(AssignNode(i, i), prev)
     prev = graph.add_node(AssignNode(i, Int(1)), prev)
     prev = graph.add_node(AssignNode(i, Int(2)), prev)
+    prev = graph.add_node(AssignNode(i, i), prev)
     prev = graph.add_node(AssignNode(i, Int(3)), prev, children=[postifelse])
 
     prev = graph.add_node(FalseNode(), ifelse)
+    prev = graph.add_node(AssignNode(i, i), prev)
     prev = graph.add_node(AssignNode(i, Int(1)), prev)
     prev = graph.add_node(AssignNode(i, Int(2)), prev)
+    prev = graph.add_node(AssignNode(i, i), prev)
     prev = graph.add_node(AssignNode(i, Int(4)), prev, children=[postifelse])
 
     return graph
@@ -273,7 +277,9 @@ class TestGraph(unittest.TestCase):
 
         graph = insert_phi.debug(graph).apply()
         graph = (
-            newrename.debug(graph).apply(graph.entry, recursion=[graph[15]])
+            newrename.debug(graph).apply(graph.entry, recursion=True)
+            # newrename.debug(graph).apply(graph.entry, recursion=[graph[15], graph[13], graph[16]])
+            # newrename.debug(graph).apply(graph.entry, recursion=[graph[16], graph[13], graph[15]])
             # .starter(graph[10])
             # .starter(graph[11])
             # .starter(graph[12])
