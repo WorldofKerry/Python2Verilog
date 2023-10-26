@@ -54,11 +54,11 @@ class Element:
 class BasicBlock(Element):
     def __init__(self, operations: Optional[list[Element]] = None, unique_id: str = ""):
         super().__init__(unique_id)
-        self.operations = [] if operations is None else operations
+        self.statements = [] if operations is None else operations
 
     def __str__(self) -> str:
         lines = Lines("BasicBlock\n")
-        for operation in self.operations:
+        for operation in self.statements:
             lines += f"{operation}"
         return lines.to_string()
 
@@ -70,7 +70,7 @@ class BlockHeadNode(Element):
 
     def __init__(self, unique_id: str = ""):
         super().__init__(unique_id)
-        self.phis: dict[expr.Var, list[expr.Var]] = {}
+        self.phis: dict[expr.Var, dict[Element, expr.Var]] = {}
 
     def __str__(self) -> str:
         return f"Join{self.__phis_formatter()}"
@@ -177,11 +177,23 @@ class CFG:
         self.prefix = typed_strict(prefix, str)
         self.entry = CFG.DUMMY
 
-    def mimic(self, graph: CFG):
+    def move(self, graph: CFG):
         """
-        In-place copy
+        Move constructor
         """
         self.adj_list = graph.adj_list
+        self.unique_counter = graph.unique_counter
+        self.prefix = graph.prefix
+        self.entry = graph.entry
+        return self
+
+    def copy(self, graph: CFG):
+        """
+        Copy constructor that assumes graph elements are immutable
+        """
+        self.adj_list = {}
+        for key, value in graph.adj_list.items():
+            self.adj_list[key] = copy.copy(value)
         self.unique_counter = graph.unique_counter
         self.prefix = graph.prefix
         self.entry = graph.entry
@@ -342,7 +354,7 @@ class CFG:
         dominance_ = {}
 
         for vertex in vertices:
-            temp_graph = copy.deepcopy(graph)
+            temp_graph = CFG().copy(graph)
             del temp_graph[vertex]
             new_vertices = set(temp_graph.dfs(graph.entry))
             delta = vertices - new_vertices
@@ -397,3 +409,35 @@ class CFG:
                 yield child
             else:
                 yield from self.iter_block_children(child, visited)
+
+    def dominator_tree(self: CFG):
+        """
+        Returns dict representing dominator tree
+        """
+        visited = set()
+        nodes = reversed(list(self.dfs(self.entry)))
+        dom_tree = {}
+        dominance_ = self.dominance()
+        for node in nodes:
+            temp = dominance_[node] - visited - {node}
+            if len(temp) > 0:
+                dom_tree[node] = temp
+            visited |= temp
+
+        # return {key.unique_id: set(map(lambda x: x.unique_id, value)) for key, value in dom_tree.items()}
+        return dom_tree
+
+    def dominator_tree_dfs(self: CFG):
+        """
+        Yields DFS of dominator tree
+        """
+        dom_tree = self.dominator_tree()
+        print(f"{dom_tree=}")
+
+        def rec(node: Element):
+            for child in dom_tree.get(node, set()):
+                if node != child:
+                    yield from rec(child)
+            yield node
+
+        yield from rec(self.entry)

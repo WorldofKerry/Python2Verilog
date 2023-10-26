@@ -69,23 +69,6 @@ def dom(graph, a: ir.Element, b: ir.Element):
     return b in dominance_[a]
 
 
-def dominator_tree(graph: ir.CFG):
-    """
-    Returns dict representing dominator tree
-    """
-    visited = set()
-    nodes = reversed(list(dfs(graph, graph.entry)))
-    dom_tree = {}
-    dominance_ = dominance(graph)
-    for node in nodes:
-        temp = dominance_[node] - visited - {node}
-        if len(temp) > 0:
-            dom_tree[node] = temp
-        visited |= temp
-
-    # return {key.unique_id: set(map(lambda x: x.unique_id, value)) for key, value in dom_tree.items()}
-    return dom_tree
-
 
 def join_dominator_tree(graph: ir.CFG):
     """
@@ -166,7 +149,7 @@ class Transformer(ir.CFG):
     """
 
     def __init__(self, graph: ir.CFG, *, apply: bool = True):
-        self.mimic(graph)
+        self.move(graph)
         if apply:
             self.apply()
 
@@ -564,7 +547,7 @@ class parallelize(ir.CFG):
     """
 
     def __init__(self, graph: ir.CFG):
-        self.mimic(graph)
+        self.move(graph)
 
     def run(self):
         """

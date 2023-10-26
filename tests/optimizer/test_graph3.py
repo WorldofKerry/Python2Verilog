@@ -6,6 +6,10 @@ from python2verilog.optimizer import graph3optimizer as opti
 
 
 def make_basic_loop():
+    """
+    Based on slide 17 of
+    https://groups.seas.harvard.edu/courses/cs153/2018fa/lectures/Lec23-SSA.pdf
+    """
     x = expr.Var("x")
     y = expr.Var("y")
     z = expr.Var("z")
@@ -49,6 +53,8 @@ class TestGraph3(unittest.TestCase):
 
         graph = opti.insert_phis.debug(graph).one_block(graph[2])
         # print(f"{list(opti.insert_phis.debug(graph).get_operations_lhs(graph[2]))=}")
+
+        graph = opti.rename_blocks.debug(graph).apply(graph[1])
 
         with open("graph2_cytoscape.log", mode="w") as f:
             f.write(str(graph.to_cytoscape(id_in_label=True)))
