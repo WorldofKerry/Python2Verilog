@@ -289,7 +289,7 @@ class newrename(Transformer):
             # For each successor in CFG
             assert guard(s, BlockHeadNode)
             for var, phi in s.phis.items():
-                phi[b] = self.stacks[self.var_mapping[var]][-1]
+                phi[b] = self.stacks[self.map_var(var)][-1]
             print(f"{b=} {str(s)=}")
 
         # DFS in dominator tree
@@ -301,10 +301,15 @@ class newrename(Transformer):
 
         # Unwind stack
         for key in b.phis:
-            self.stacks[self.var_mapping[key]].pop()
+            self.stacks[self.map_var(key)].pop()
         for stmt in self.traverse_until(b, BlockHeadNode):
             if isinstance(stmt, ir.AssignNode):
-                self.stacks[self.var_mapping[stmt.lvalue]].pop()
+                self.stacks[self.map_var(stmt.lvalue)].pop()
+
+    def map_var(self, var: expr.Var):
+        if var in self.var_mapping:
+            return self.var_mapping[var]
+        return var
 
     def update_phi_lhs(self, block: BlockHeadNode):
         replacement = {}

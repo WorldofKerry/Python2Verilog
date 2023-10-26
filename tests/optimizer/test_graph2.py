@@ -179,6 +179,10 @@ def make_basic_branch():
 
 
 def make_basic_while():
+    """
+    Based on slide 17 of
+    https://groups.seas.harvard.edu/courses/cs153/2018fa/lectures/Lec23-SSA.pdf
+    """
     x = Var("x")
     y = Var("y")
     z = Var("z")
@@ -271,9 +275,9 @@ class TestGraph(unittest.TestCase):
 
     def test_ssa_funcs(self):
         # graph = make_even_fib_graph_no_clocks()
-        graph = make_basic_branch()
+        # graph = make_basic_branch()
         # graph = make_pdf_example()
-        # graph = make_basic_while()
+        graph = make_basic_while()
         # graph = make_basic_path()
 
         graph = add_merge_heads.debug(graph).apply()
