@@ -1,4 +1,3 @@
-
 import python2verilog.ir.graph2 as ir
 from python2verilog.ir.graph2 import *
 from python2verilog.optimizer.graph2optimizer import Transformer

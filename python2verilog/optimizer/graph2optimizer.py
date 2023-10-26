@@ -61,13 +61,12 @@ def visit_clocked(
             yield from visit_clocked(graph, child, visited)
 
 
-def dom(graph, a: ir.Element, b: ir.Element):
+def dom(graph: ir.CFG, a: ir.Element, b: ir.Element):
     """
     a dom b
     """
-    dominance_ = dominance(graph)
+    dominance_ = graph.dominance()
     return b in dominance_[a]
-
 
 
 def join_dominator_tree(graph: ir.CFG):
@@ -90,7 +89,7 @@ def join_dominator_tree(graph: ir.CFG):
     for key, value in replacements.items():
         graph.adj_list[key] = value
 
-    return dominator_tree(graph)
+    return graph.dominator_tree()
 
 
 def build_tree(node_dict, root):
@@ -174,7 +173,7 @@ class add_join_nodes(Transformer):
     """
 
     def apply(self):
-        nodes = list(dfs(self, self.entry))
+        nodes = list(self.dfs(self.entry))
         for node in nodes:
             self.single(node)
         join = self.add_node(ir.BlockHeadNode(), children=[self.entry])
@@ -198,7 +197,7 @@ class add_dumb_join_nodes(Transformer):
     """
 
     def apply(self):
-        nodes = list(dfs(self, self.entry))
+        nodes = list(self.dfs(self.entry))
         for node in nodes:
             self.single(node)
         return self
@@ -219,7 +218,7 @@ class insert_phi(Transformer):
     """
 
     def apply(self):
-        vars = assigned_variables(dfs(self, self.entry))
+        vars = assigned_variables(self.dfs(self.entry))
         for var in vars:
             self.apply_to_var(var)
         return self
@@ -229,7 +228,7 @@ class insert_phi(Transformer):
         ever_on_worklist: set[ir.Element] = set()
         already_has_phi: set[ir.Element] = set()
 
-        for node in dfs(self, self.entry):
+        for node in self.dfs(self.entry):
             if isinstance(node, ir.AssignNode):
                 print(f"{node.lvalue=} {v=} {node.lvalue == v}")
                 if node.lvalue == v:
@@ -241,7 +240,7 @@ class insert_phi(Transformer):
 
         while worklist:
             n = worklist.pop()
-            for d in dominance_frontier(self, n, self.entry):
+            for d in self.dominance_frontier(n):
                 if d not in already_has_phi:
                     assert guard(d, ir.BlockHeadNode)
 
@@ -430,7 +429,7 @@ class newrename(Transformer):
         return mapping
 
     def get_global_variables(self):
-        nodes = dfs(self, self.entry)
+        nodes = self.dfs(self.entry)
         lhs_vars = set()
         global_vars = set()
         for node in nodes:
@@ -475,7 +474,7 @@ class make_ssa(Transformer):
         return self
 
     def get_global_variables(self):
-        nodes = dfs(self, self.entry)
+        nodes = self.dfs(self.entry)
         lhs_vars = set()
         global_vars = set()
         for node in nodes:
@@ -502,7 +501,7 @@ class make_ssa(Transformer):
 
         print(f"{subset=}")
 
-        nodes = dfs(self, node)
+        nodes = self.dfs(node)
 
     def visit(
         self,
@@ -574,7 +573,7 @@ class parallelize(ir.CFG):
         clock_nodes = filter(
             lambda x: isinstance(x, ir.ClockNode), self.adj_list.keys()
         )
-        dominance_ = dominance(self)
+        dominance_ = self.dominance()
         for first, second in itertools.permutations(clock_nodes, 2):
             if second in dominance_[first]:
                 yield first, second
