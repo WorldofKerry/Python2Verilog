@@ -1,6 +1,6 @@
-from collections import Counter
-from python2verilog.ir.graph2 import *
+
 import python2verilog.ir.graph2 as ir
+from python2verilog.ir.graph2 import *
 from python2verilog.optimizer.graph2optimizer import Transformer
 from python2verilog.optimizer.helpers import backwards_replace
 
@@ -23,12 +23,12 @@ class insert_phis(Transformer):
             block_args = BlockHeadNode()
 
             for var in self.get_operations_lhs(source):
-                print(f"{type(var)=}")
+                # print(f"{type(var)=}")
                 block_args.phis[var] = {block: None}
 
             block.statements.insert(0, block_args)
 
-        print(f"{dom_frontier=}")
+        # print(f"{dom_frontier=}")
         return self
 
     def get_operations_lhs(self, block: BasicBlock):
@@ -59,6 +59,7 @@ class rename_blocks(Transformer):
         if b in self.visited:
             return
         self.visited.add(b)
+        print(f"rename {b=}")
 
         for statement in b.statements:
             if isinstance(statement, BlockHeadNode):
@@ -81,7 +82,7 @@ class rename_blocks(Transformer):
 
         if recursion:
             # DFS in dominator tree
-            for s in self.dominator_tree_dfs():
+            for s in self.dominator_tree_iterate():
                 self.rename(s)
 
         # Unwind stack

@@ -54,7 +54,7 @@ class TestGraph3(unittest.TestCase):
         graph = opti.insert_phis.debug(graph).one_block(graph[2])
         # print(f"{list(opti.insert_phis.debug(graph).get_operations_lhs(graph[2]))=}")
 
-        graph = opti.rename_blocks.debug(graph).apply(graph[1])
+        graph = opti.rename_blocks.debug(graph).apply(graph.entry)
 
         with open("graph2_cytoscape.log", mode="w") as f:
-            f.write(str(graph.to_cytoscape(id_in_label=True)))
+            f.write(str(graph.to_cytoscape()))

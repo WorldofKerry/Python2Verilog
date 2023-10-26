@@ -235,7 +235,7 @@ class TestGraph(unittest.TestCase):
         print(f"{result=}")
 
         with open("graph2_cytoscape.log", mode="w") as f:
-            f.write(str(graph.to_cytoscape(id_in_label=True)))
+            f.write(str(graph.to_cytoscape(use_repr=True)))
 
     def test_dominator_algorithms(self):
         graph = make_pdf_example()

@@ -3,9 +3,9 @@ Graph v2
 """
 
 from __future__ import annotations
+
 import copy
 import logging
-
 import reprlib
 from typing import Collection, Iterator, Optional, Union
 
@@ -47,8 +47,11 @@ class Element:
         self._unique_id = typed_strict(unique_id, str)
 
     @reprlib.recursive_repr()
+    def __str__(self) -> str:
+        return f"%{self.unique_id}: "
+
     def __repr__(self) -> str:
-        return f"%{self.unique_id}: {str(self)}"
+        return f"{self.unique_id}"
 
 
 class BasicBlock(Element):
@@ -57,7 +60,7 @@ class BasicBlock(Element):
         self.statements = [] if operations is None else operations
 
     def __str__(self) -> str:
-        lines = Lines("BasicBlock\n")
+        lines = Lines(f"{super().__str__()}BasicBlock\n")
         for operation in self.statements:
             lines += f"{operation}"
         return lines.to_string()
@@ -298,7 +301,7 @@ class CFG:
         return str(lines)
 
     def to_cytoscape(
-        self, id_in_label: bool = False
+        self, use_repr: bool = False
     ) -> dict[str, list[dict[str, dict[str, str]]]]:
         """
         To cytoscape visualizer
@@ -311,7 +314,7 @@ class CFG:
                 {
                     "data": {
                         "id": elem.unique_id,
-                        "label": repr(elem) if id_in_label else str(elem),
+                        "label": repr(elem) if use_repr else str(elem),
                     }
                 }
             )
@@ -427,17 +430,26 @@ class CFG:
         # return {key.unique_id: set(map(lambda x: x.unique_id, value)) for key, value in dom_tree.items()}
         return dom_tree
 
-    def dominator_tree_dfs(self: CFG):
+    def dominator_tree_iterate(self: CFG):
         """
-        Yields DFS of dominator tree
+        Yields nodes of dominator tree
         """
+        # dom_tree = self.dominator_tree()
+
+        # def rec(node: Element):
+        #     yield node
+        #     for child in dom_tree.get(node, set()):
+        #         if node != child:
+        #             yield from rec(child)
+
+        # yield from rec(self.entry)
+
         dom_tree = self.dominator_tree()
         print(f"{dom_tree=}")
-
-        def rec(node: Element):
-            for child in dom_tree.get(node, set()):
-                if node != child:
-                    yield from rec(child)
-            yield node
-
-        yield from rec(self.entry)
+        queue = [self.entry]
+        while queue:
+            cur = queue.pop(0)
+            yield cur
+            for child in dom_tree.get(cur, set()):
+                if child != cur:
+                    queue.append(child)
