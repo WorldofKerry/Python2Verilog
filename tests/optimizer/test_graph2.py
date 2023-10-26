@@ -7,8 +7,8 @@ from matplotlib import pyplot as plt
 from python2verilog.ir.expressions import *  # nopycln: import
 from python2verilog.ir.graph2 import *
 from python2verilog.optimizer.graph2optimizer import (  # nopycln: import
-    add_block_heads,
-    add_merge_heads,
+    add_block_head_after_branch,
+    add_block_head_at_merge,
     insert_phi,
     newrename,
     visit_nonclocked,
@@ -275,13 +275,13 @@ class TestGraph(unittest.TestCase):
 
     def test_ssa_funcs(self):
         # graph = make_even_fib_graph_no_clocks()
-        # graph = make_basic_branch()
+        graph = make_basic_branch()
         # graph = make_pdf_example()
-        graph = make_basic_while()
+        # graph = make_basic_while()
         # graph = make_basic_path()
 
-        graph = add_merge_heads.debug(graph).apply()
-        graph = add_block_heads.debug(graph).apply()
+        graph = add_block_head_at_merge.debug(graph).apply()
+        graph = add_block_head_after_branch.debug(graph).apply()
 
         graph = insert_phi.debug(graph).apply()
         graph = (

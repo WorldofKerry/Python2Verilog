@@ -168,7 +168,7 @@ class Transformer(ir.CFG):
         return self
 
 
-class add_merge_heads(Transformer):
+class add_block_head_at_merge(Transformer):
     """
     Adds block heads when there is a merge
 
@@ -194,7 +194,7 @@ class add_merge_heads(Transformer):
         return self
 
 
-class add_block_heads(Transformer):
+class add_block_head_after_branch(Transformer):
     """
     Add block nodes (think of it as a label)
     """
@@ -262,8 +262,9 @@ class newrename(Transformer):
         super().__init__(graph, apply=apply)
         self.visited = set()
         self.var_counter = {}
-        self.stacks: dict[expr.Var, list[expr.Var]] = {}
+        self._stacks: dict[expr.Var, list[expr.Var]] = {}
         self.var_mapping = {}
+        self.global_vars = {}
 
     def apply(self, block: BasicBlock, recursion: bool = True):
         self.rename(b=block, recursion=recursion)
@@ -289,7 +290,7 @@ class newrename(Transformer):
             # For each successor in CFG
             assert guard(s, BlockHead)
             for var, phi in s.phis.items():
-                phi[b] = self.stacks[self.map_var(var)][-1]
+                phi[b] = self.stacks(var)[-1]
             print(f"{b=} {str(s)=}")
 
         # DFS in dominator tree
@@ -301,10 +302,18 @@ class newrename(Transformer):
 
         # Unwind stack
         for key in b.phis:
-            self.stacks[self.map_var(key)].pop()
+            self.stacks(key).pop()
         for stmt in self.traverse_until(b, BlockHead):
             if isinstance(stmt, ir.AssignNode):
-                self.stacks[self.map_var(stmt.lvalue)].pop()
+                self.stacks(stmt.lvalue).pop()
+
+    def stacks(self, var: expr.Var):
+        """
+        Gets stack
+        """
+        return self._stacks[self.map_var(var)]
+        print(f"Suspicious variable {var=}")
+        return []
 
     def map_var(self, var: expr.Var):
         if var in self.var_mapping:
@@ -321,12 +330,12 @@ class newrename(Transformer):
     def update_lhs_rhs_stack(self, statement: Element):
         if isinstance(statement, AssignNode):
             statement.rvalue = backwards_replace(
-                statement.rvalue, self.make_mapping(self.stacks)
+                statement.rvalue, self.make_mapping(self._stacks)
             )
             statement.lvalue = self.gen_name(statement.lvalue)
         if isinstance(statement, BranchNode):
             statement.expression = backwards_replace(
-                statement.expression, self.make_mapping(self.stacks)
+                statement.expression, self.make_mapping(self._stacks)
             )
 
     def gen_name(self, var: expr.Var):
@@ -337,9 +346,9 @@ class newrename(Transformer):
         self.var_counter[var] = count + 1
 
         # Update var stack
-        stack = self.stacks.get(var, [])
+        stack = self._stacks.get(var, [])
         stack.append(new_var)
-        self.stacks[var] = stack
+        self._stacks[var] = stack
 
         # Update var mapping
         assert new_var not in self.var_mapping
