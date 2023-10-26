@@ -76,35 +76,13 @@ class BlockHeadNode(Element):
         self.phis: dict[expr.Var, dict[Element, expr.Var]] = {}
 
     def __str__(self) -> str:
-        return f"Join{self.__phis_formatter()}"
+        return super().__str__() + f"Join{self.__phis_formatter()}"
 
     def __phis_formatter(self):
         dic = {}
         for key, inner in self.phis.items():
             dic[key] = {elem.unique_id: val for elem, val in inner.items()}
         return dic
-
-
-class PhiNode(Element):
-    """
-    Maps variables to other variables
-    """
-
-    def __str__(self) -> str:
-        return "Phi"
-
-
-class BlockNode(Element):
-    """
-    Label
-    """
-
-    def __init__(self, unique_id: str = ""):
-        super().__init__(unique_id)
-        self.mapping = {}
-
-    def __str__(self) -> str:
-        return f"Block{self.mapping}"
 
 
 class AssignNode(Element):
@@ -124,7 +102,7 @@ class AssignNode(Element):
         self.rvalue = typed_strict(rvalue, expr.Expression)
 
     def __str__(self) -> str:
-        return f"{self.lvalue} = {self.rvalue}"
+        return super().__str__() + f"{self.lvalue} = {self.rvalue}"
 
 
 class ClockNode(Element):
@@ -133,7 +111,7 @@ class ClockNode(Element):
     """
 
     def __str__(self) -> str:
-        return "Clock"
+        return super().__str__() + "Clock"
 
 
 class BranchNode(Element):
@@ -146,7 +124,7 @@ class BranchNode(Element):
         self.expression = typed_strict(expression, expr.Expression)
 
     def __str__(self) -> str:
-        return f"if {self.expression}"
+        return super().__str__() + f"if {self.expression}"
 
 
 class TrueNode(Element):
@@ -155,7 +133,7 @@ class TrueNode(Element):
     """
 
     def __str__(self) -> str:
-        return "True"
+        return super().__str__() + "True"
 
 
 class FalseNode(Element):
@@ -164,7 +142,7 @@ class FalseNode(Element):
     """
 
     def __str__(self) -> str:
-        return "False"
+        return super().__str__() + "False"
 
 
 class CFG:

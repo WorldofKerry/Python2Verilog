@@ -247,7 +247,7 @@ class insert_phi(Transformer):
                     # phi = d.phis.get(v, [])
                     # phi.append(v)
                     # d.phis[v] = [v] * len(list(self.immediate_successors(d)))
-                    d.phis[v] = []
+                    d.phis[v] = {}
 
                     already_has_phi.add(d)
                     if d not in ever_on_worklist:
@@ -267,6 +267,7 @@ class newrename(Transformer):
         self.var_numberer = {}
         self.visited = set()
         self.phied = set()
+        self.mapping_stack = {}
 
     def apply(self):
         return self
@@ -376,8 +377,7 @@ class newrename(Transformer):
         for key, value in mapping_stack.items():
             if var in value:
                 return key
-        mapping_stack[var] = []
-        return var
+        raise RuntimeError()
 
     def replace(self, node: ir.Element, mapping_stack: dict[expr.Var, list[expr.Var]]):
         assert isinstance(mapping_stack, dict)
@@ -446,6 +446,7 @@ class newrename(Transformer):
         count = self.var_numberer.get(var, 0)
         new_var = expr.Var(f"{var.py_name}{count}")
         self.var_numberer[var] = count + 1
+
         return new_var
 
 

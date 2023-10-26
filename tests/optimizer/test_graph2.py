@@ -263,15 +263,15 @@ class TestGraph(unittest.TestCase):
 
     def test_ssa_funcs(self):
         # graph = make_even_fib_graph_no_clocks()
-        # graph = make_basic_branch()
-        graph = make_pdf_example()
+        graph = make_basic_branch()
+        # graph = make_pdf_example()
         # graph = make_basic_while()
         # graph = make_basic_path()
 
         graph = add_join_nodes.debug(graph).apply()
         graph = add_dumb_join_nodes.debug(graph).apply()
 
-        # graph = insert_phi.debug(graph).apply()
+        graph = insert_phi.debug(graph).apply()
         # graph = (
         #     newrename.debug(graph).starter(graph.entry)
         #     # .starter(graph[10])
@@ -279,11 +279,11 @@ class TestGraph(unittest.TestCase):
         #     # .starter(graph[12])
         # )
 
-        graph = blockify.debug(graph).apply()
+        # graph = blockify.debug(graph).apply()
         # graph = to_dominance(graph).apply()
 
-        dom_tree = dominator_tree(graph)
-        print(f"{dom_tree=}")
+        # dom_tree = dominator_tree(graph)
+        # print(f"{dom_tree=}")
 
         # graph = newrename.debug(graph).starter(graph[10])
 
@@ -291,4 +291,4 @@ class TestGraph(unittest.TestCase):
         # print(f"{dom_frontier=}")
 
         with open("graph2_cytoscape.log", mode="w") as f:
-            f.write(str(graph.to_cytoscape(id_in_label=True)))
+            f.write(str(graph.to_cytoscape()))
