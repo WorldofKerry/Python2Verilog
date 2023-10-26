@@ -19,7 +19,7 @@ class insert_phis(Transformer):
         dom_frontier: set[BasicBlock] = set(self.dominance_frontier(source))
 
         for block in dom_frontier:
-            block_args = BlockHeadNode()
+            block_args = BlockHead()
 
             for var in self.get_operations_lhs(source):
                 block_args.phis[var] = {source: None}
@@ -59,7 +59,7 @@ class rename_blocks(Transformer):
         self.visited.add(b)
 
         for statement in b.statements:
-            if isinstance(statement, BlockHeadNode):
+            if isinstance(statement, BlockHead):
                 self.update_phi_lhs(statement)
 
         for statement in b.statements:
@@ -69,7 +69,7 @@ class rename_blocks(Transformer):
             # For each successor in CFG
             assert guard(s, BasicBlock)
             for statement in s.statements:
-                if isinstance(statement, ir.BlockHeadNode):
+                if isinstance(statement, ir.BlockHead):
                     for var, phi in statement.phis.items():
                         phi[b] = self.stacks[self.var_mapping[var]][-1]
 
@@ -80,13 +80,13 @@ class rename_blocks(Transformer):
 
         # Unwind stack
         for statement in b.statements:
-            if isinstance(statement, ir.BlockHeadNode):
+            if isinstance(statement, ir.BlockHead):
                 for key in statement.phis:
                     self.stacks[self.var_mapping[key]].pop()
             if isinstance(statement, ir.AssignNode):
                 self.stacks[self.var_mapping[statement.lvalue]].pop()
 
-    def update_phi_lhs(self, block: BlockHeadNode):
+    def update_phi_lhs(self, block: BlockHead):
         replacement = {}
         for v, phis in block.phis.items():
             vn = self.gen_name(v)

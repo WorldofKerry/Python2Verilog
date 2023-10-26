@@ -66,7 +66,7 @@ class BasicBlock(Element):
         return lines.to_string()
 
 
-class BlockHeadNode(Element):
+class BlockHead(Element):
     """
     Similar to MLIR block arguments
     """
@@ -76,13 +76,15 @@ class BlockHeadNode(Element):
         self.phis: dict[expr.Var, dict[Element, expr.Var]] = {}
 
     def __str__(self) -> str:
-        return super().__str__() + f"Join{self.__phis_formatter()}"
+        return super().__str__() + f"{BlockHead.__name__}\n{self.__phis_formatter()}"
 
     def __phis_formatter(self):
-        dic = {}
+        lines = Lines()
         for key, inner in self.phis.items():
-            dic[key] = {elem.unique_id: val for elem, val in inner.items()}
-        return dic
+            lines += f"{key} = \u03d5" + ", ".join(
+                map(lambda x: f"[{x[1]}, %{x[0].unique_id}]", inner.items())
+            )
+        return str(lines)
 
 
 class AssignNode(Element):
@@ -386,7 +388,7 @@ class CFG:
             return
         visited.add(node)
         for child in self.adj_list[node]:
-            if isinstance(child, BlockHeadNode):
+            if isinstance(child, BlockHead):
                 yield child
             else:
                 yield from self.iter_block_children(child, visited)

@@ -84,7 +84,7 @@ def join_dominator_tree(graph: ir.CFG):
         for successor in successors:
             rec(successor)
 
-    assert guard(graph.entry, ir.BlockHeadNode)
+    assert guard(graph.entry, ir.BlockHead)
     rec(graph.entry)
 
     for key, value in replacements.items():
@@ -138,7 +138,7 @@ def iter_non_join(graph: ir.CFG, node: ir.Element):
     not going past join nodes
     """
     for child in graph[node]:
-        if not isinstance(child, ir.BlockHeadNode):
+        if not isinstance(child, ir.BlockHead):
             yield child
             yield from iter_non_join(graph, child)
 
@@ -179,7 +179,7 @@ class add_merge_heads(Transformer):
         nodes = list(self.dfs(self.entry))
         for node in nodes:
             self.single(node)
-        join = self.add_node(ir.BlockHeadNode(), children=[self.entry])
+        join = self.add_node(ir.BlockHead(), children=[self.entry])
         self.entry = join
         return self
 
@@ -189,7 +189,7 @@ class add_merge_heads(Transformer):
             return
         for parent in parents:
             self.adj_list[parent] -= {node}
-        self.add_node(ir.BlockHeadNode(), *parents, children=[node])
+        self.add_node(ir.BlockHead(), *parents, children=[node])
 
         return self
 
@@ -210,7 +210,7 @@ class add_block_heads(Transformer):
             return self
         children = set(self.adj_list[node])
         for child in children:
-            self.add_node(ir.BlockHeadNode(), node, children=[child])
+            self.add_node(ir.BlockHead(), node, children=[child])
         self.adj_list[node] -= children
         return self
 
@@ -242,7 +242,7 @@ class insert_phi(Transformer):
             n = worklist.pop()
             for d in self.dominance_frontier(n):
                 if d not in already_has_phi:
-                    assert guard(d, ir.BlockHeadNode)
+                    assert guard(d, ir.BlockHead)
 
                     d.phis[v] = {}
 
@@ -269,7 +269,7 @@ class newrename(Transformer):
         self.rename(b=block, recursion=recursion)
         return self
 
-    def rename(self, b: BlockHeadNode, recursion: bool = True):
+    def rename(self, b: BlockHead, recursion: bool = True):
         """
         Based on slide 33 of
         https://ics.uci.edu/~yeouln/course/ssa.pdf
@@ -279,15 +279,15 @@ class newrename(Transformer):
         self.visited.add(b)
         print(f"rename {b=}")
 
-        assert guard(b, BlockHeadNode)
+        assert guard(b, BlockHead)
         self.update_phi_lhs(b)
 
-        for stmt in self.traverse_until(b, BlockHeadNode):
+        for stmt in self.traverse_until(b, BlockHead):
             self.update_lhs_rhs_stack(stmt)
 
-        for s in self.traverse_successors(b, BlockHeadNode):
+        for s in self.traverse_successors(b, BlockHead):
             # For each successor in CFG
-            assert guard(s, BlockHeadNode)
+            assert guard(s, BlockHead)
             for var, phi in s.phis.items():
                 phi[b] = self.stacks[self.map_var(var)][-1]
             print(f"{b=} {str(s)=}")
@@ -296,13 +296,13 @@ class newrename(Transformer):
         if recursion is True:
             for s in self.dominator_tree_iterate():
                 if s in self.dominance()[b]:
-                    if isinstance(s, ir.BlockHeadNode):
+                    if isinstance(s, ir.BlockHead):
                         self.rename(s)
 
         # Unwind stack
         for key in b.phis:
             self.stacks[self.map_var(key)].pop()
-        for stmt in self.traverse_until(b, BlockHeadNode):
+        for stmt in self.traverse_until(b, BlockHead):
             if isinstance(stmt, ir.AssignNode):
                 self.stacks[self.map_var(stmt.lvalue)].pop()
 
@@ -311,7 +311,7 @@ class newrename(Transformer):
             return self.var_mapping[var]
         return var
 
-    def update_phi_lhs(self, block: BlockHeadNode):
+    def update_phi_lhs(self, block: BlockHead):
         replacement = {}
         for v, phis in block.phis.items():
             vn = self.gen_name(v)
@@ -332,7 +332,8 @@ class newrename(Transformer):
     def gen_name(self, var: expr.Var):
         # Make new unqiue name
         count = self.var_counter.get(var, 0)
-        new_var = expr.Var(f"{var.py_name}.{count}")
+        name = f"%{var.py_name}.{count}"
+        new_var = expr.Var(py_name=name, ver_name=name)
         self.var_counter[var] = count + 1
 
         # Update var stack
@@ -366,7 +367,7 @@ class blockify(Transformer):
 
     def apply(self):
         for key in self.adj_list:
-            if isinstance(key, ir.BlockHeadNode):
+            if isinstance(key, ir.BlockHead):
                 self.adj_list[key] = set()
 
         return super().apply()
