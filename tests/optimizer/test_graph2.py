@@ -9,14 +9,9 @@ from python2verilog.ir.graph2 import *
 from python2verilog.optimizer.graph2optimizer import (  # nopycln: import
     add_dumb_join_nodes,
     add_join_nodes,
-    blockify,
-    dfs,
-    dominance,
-    dominance_frontier,
     dominator_tree,
     insert_phi,
     newrename,
-    to_dominance,
     visit_nonclocked,
 )
 

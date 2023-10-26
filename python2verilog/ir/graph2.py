@@ -4,6 +4,7 @@ Graph v2
 
 from __future__ import annotations
 import copy
+import logging
 
 import reprlib
 from typing import Collection, Iterator, Optional, Union
@@ -47,7 +48,19 @@ class Element:
 
     @reprlib.recursive_repr()
     def __repr__(self) -> str:
-        return f"{self.unique_id}:{str(self)}"
+        return f"%{self.unique_id}: {str(self)}"
+
+
+class BasicBlock(Element):
+    def __init__(self, operations: Optional[list[Element]] = None, unique_id: str = ""):
+        super().__init__(unique_id)
+        self.operations = [] if operations is None else operations
+
+    def __str__(self) -> str:
+        lines = Lines("BasicBlock\n")
+        for operation in self.operations:
+            lines += f"{operation}"
+        return lines.to_string()
 
 
 class BlockHeadNode(Element):
@@ -60,7 +73,7 @@ class BlockHeadNode(Element):
         self.phis: dict[expr.Var, list[expr.Var]] = {}
 
     def __str__(self) -> str:
-        return f"Join{self.phis}"
+        return f"Join{self.__phis_formatter()}"
 
     def __phis_formatter(self):
         dic = {}
@@ -301,6 +314,72 @@ class CFG:
                 )
 
         return {"nodes": nodes, "edges": edges}
+
+    def dfs(
+        graph: CFG, source: Element, visited: Optional[set[Element]] = None
+    ) -> Iterator[Element]:
+        """
+        Depth-first search
+        """
+        if visited is None:
+            visited = set()
+        if source in visited:
+            return
+        if source not in graph.adj_list:
+            return
+        visited.add(source)
+        yield source
+        for child in graph[source]:
+            yield from graph.dfs(child, visited)
+
+    def dominance(graph: CFG) -> dict[Element, set[Element]]:
+        """
+        Returns dict dominance relations,
+
+        i.e. k in ret[n] means n dominates k
+        """
+        vertices = set(graph.dfs(graph.entry))
+        dominance_ = {}
+
+        for vertex in vertices:
+            temp_graph = copy.deepcopy(graph)
+            del temp_graph[vertex]
+            new_vertices = set(temp_graph.dfs(graph.entry))
+            delta = vertices - new_vertices
+            dominance_[vertex] = delta
+        # logging.debug(f"\n{print_tree(dominance_, graph.entry)}")
+        return dominance_
+
+    def dominance_frontier(graph: CFG, n: Element):
+        """
+        Gets dominator frontier of n with respect to graph entry
+
+        DF(N) = {Z | M→Z & (N dom M) & ¬(N sdom Z)}
+
+        for Z, M, N in set of Nodes
+        """
+        dominance_ = graph.dominance()
+
+        zs = graph.adj_list.keys()
+        ms = graph.adj_list.keys()
+
+        for z in zs:
+            for m in ms:
+                # M -> Z
+                m_to_z = z in graph.adj_list[m]
+
+                # N dom M
+                n_dom_m = m in dominance_[n]
+
+                # ~(N sdom Z)
+                n_sdom_z = z in dominance_[n] and n != z
+
+                if m_to_z and n_dom_m and not n_sdom_z:
+                    yield z
+                else:
+                    logging.debug(
+                        f"{graph.dominance_frontier.__name__} {z=} {m=} {m_to_z=} {n_dom_m=} {n_sdom_z=}"
+                    )
 
     def iter_block_children(
         self, node: Element, visited: Optional[set[Element]] = None

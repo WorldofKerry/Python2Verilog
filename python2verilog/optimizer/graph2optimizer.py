@@ -115,7 +115,7 @@ def join_dominator_tree(graph: ir.CFG):
     replacements = {}
 
     def rec(node: ir.Element):
-        successors = set(graph.iter_block_children(node))
+        successors = set(graph.visit_succ(node))
         print(f"join dom tree {node=} {successors=}")
         replacements[node] = successors
         for successor in successors:
@@ -140,38 +140,6 @@ def build_tree(node_dict, root):
         return tree
     else:
         return {root: {}}
-
-
-def dominance_frontier(graph: ir.CFG, n: ir.Element, entry: ir.Element):
-    """
-    Gets dominator frontier of n with respect to graph entry
-
-    DF(N) = {Z | M→Z & (N dom M) & ¬(N sdom Z)}
-
-    for Z, M, N in set of Nodes
-    """
-    dominance_ = dominance(graph)
-
-    zs = graph.adj_list.keys()
-    ms = graph.adj_list.keys()
-
-    for z in zs:
-        for m in ms:
-            # M -> Z
-            m_to_z = z in graph.adj_list[m]
-
-            # N dom M
-            n_dom_m = m in dominance_[n]
-
-            # ~(N sdom Z)
-            n_sdom_z = z in dominance_[n] and n != z
-
-            if m_to_z and n_dom_m and not n_sdom_z:
-                yield z
-            else:
-                logging.debug(
-                    f"{dominance_frontier.__name__} {z=} {m=} {m_to_z=} {n_dom_m=} {n_sdom_z=}"
-                )
 
 
 def print_tree(
@@ -405,7 +373,7 @@ class newrename(Transformer):
             self.replace(child, mapping_stack)
 
         # Update RHS of phi successors
-        for succ in self.iter_block_children(node):
+        for succ in self.visit_succ(node):
             assert guard(succ, ir.BlockHeadNode)
             for key, value in mapping_stack.items():
                 if key not in succ.phis:
@@ -424,7 +392,7 @@ class newrename(Transformer):
 
         return self
 
-        for join in self.iter_block_children(node):
+        for join in self.visit_succ(node):
             print(f"Pre {join=} {node=} {mapping_stack=}")
 
             self.inner(join, mapping_stack)
@@ -494,6 +462,18 @@ class newrename(Transformer):
             for child in self.adj_list[node]:
                 self.replace(child, mapping_stack)
 
+    def visit_succ(self, node: ir.Element, visited: Optional[set[ir.Element]] = None):
+        if visited is None:
+            visited = set()
+        if node in visited:
+            return
+        visited.add(node)
+        for child in self.adj_list[node]:
+            if isinstance(child, ir.BlockHeadNode):
+                yield child
+            else:
+                yield from self.visit_succ(child, visited)
+
     def join_mapping(self, node: ir.BlockHeadNode):
         new_phis = {}
         mapping = {}
@@ -525,70 +505,206 @@ class newrename(Transformer):
         return new_var
 
 
-class blockify(Transformer):
+class make_ssa(Transformer):
     """
-    Removes non-block nodes
+    Make CFG use ssa
     """
 
     def __init__(self, graph: ir.CFG, *, apply: bool = True):
         super().__init__(graph, apply=apply)
-        self.visited = set()
+        self.variables: dict[expr.Var, set[expr.Var]] = {}
+        self.counter = 0
 
     def apply(self):
-        self.join_blocks(self.entry)
-        self.remove_nonblocks()
+        """
+        Run
+        """
+        self.visit(
+            self.entry,
+            set(),
+            {var: self.new_var() for var in self.get_global_variables()},
+        )
+
+        print(f"{self.variables=}")
+
         return self
 
-    def join_blocks(self, node: ir.Element):
-        """
-        Join block nodes
-        """
+    def get_global_variables(self):
+        nodes = dfs(self, self.entry)
+        lhs_vars = set()
+        global_vars = set()
+        for node in nodes:
+            if isinstance(node, ir.AssignNode):
+                global_vars |= set(get_variables(node.rvalue)) - lhs_vars
+                lhs_vars |= set(get_variables(node.lvalue))
+        return global_vars
 
-        if node in self.visited:
+    def new_var(self):
+        """
+        New SSA var
+        """
+        new_var = expr.Var(f"v{self.counter}")
+        self.counter += 1
+        return new_var
+
+    def get_var_usage(self, node: ir.Element, var: expr.Var):
+        """
+        Get var uage
+        """
+        for value in self.variables.values():
+            if var in value:
+                subset = value
+
+        print(f"{subset=}")
+
+        nodes = dfs(self, node)
+
+    def visit(
+        self,
+        node: ir.Element,
+        visited: set[ir.Element],
+        mapping: dict[expr.Var, expr.Expression],
+    ):
+        for key, value in mapping.items():
+            if key not in self.variables:
+                self.variables[key] = set()
+            self.variables[key].add(value)
+
+        print(f"{node=} {mapping=}")
+        if node in visited:
             return
-        self.visited.add(node)
+        visited.add(node)
 
-        if isinstance(node, ir.BlockHeadNode):
-            successors = set(self.iter_block_children(node))
-            for succ in successors:
-                self.join_blocks(succ)
-            self.adj_list[node] = successors
+        if isinstance(node, ir.AssignNode):
+            node.rvalue = backwards_replace(node.rvalue, mapping)
 
-    def remove_nonblocks(self):
-        """
-        Remove non-block nodes
-        """
-        for node in set(self.adj_list):
-            if not isinstance(node, ir.BlockHeadNode):
-                del self[node]
+            new_var = expr.Var(f"v{self.counter}")
+            self.counter += 1
+
+            mapping[node.lvalue] = new_var
+
+            node.lvalue = new_var
+
+            print(f"post {node=} {mapping=}")
+
+        if isinstance(node, ir.BranchNode):
+            node.expression = backwards_replace(node.expression, mapping)
+
+        for child in self.adj_list[node]:
+            self.visit(child, visited, copy.deepcopy(mapping))
+
+        return self
 
 
-class to_dominance(Transformer):
+class parallelize(ir.CFG):
     """
-    To dominance
+    parallelize nodes without branches
     """
 
-    def apply(self):
-        self.do()
-        return super().apply()
+    def __init__(self, graph: ir.CFG):
+        self.mimic(graph)
 
-    def do(self):
-        domi = dominance(self)
-        print(f"{domi=}")
+    def run(self):
+        """
+        Parallelize
+        """
+        for first, second in self.get_pairs():
+            # print(f"{first=} {second=}")
+            if (
+                first in self.adj_list
+                and second in self.adj_list
+                and first is not self.entry
+                and second is not self.entry
+            ):
+                self.can_optimize(first, second)
 
-        for key in set(self.adj_list):
-            self.adj_list[key] = set()
+        # print(f"FRESSSSH")
+        # self.can_optimize(self.entry, self["2"])
+        return self
 
-        for key, value in domi.items():
-            self.adj_list[key] = set(value)
+    def get_pairs(self):
+        """
+        Get pairs of clock nodes where first dominates second
+        """
+        clock_nodes = filter(
+            lambda x: isinstance(x, ir.ClockNode), self.adj_list.keys()
+        )
+        dominance_ = dominance(self)
+        for first, second in itertools.permutations(clock_nodes, 2):
+            if second in dominance_[first]:
+                yield first, second
 
+    def can_optimize(self, first: ir.ClockNode, second: ir.ClockNode):
+        """ """
+        # if "11" not in first.unique_id or "13" not in second.unique_id:
+        #     return
+        print(f"{first=} {second=}")
 
-def dfs_dominator_tree(graph: ir.CFG):
-    dom_tree = dominator_tree(graph)
+        if len(self.adj_list[second]) == 0:
+            print("Skipped second has no children")
+            return self
 
-    def rec(node: ir.Element):
-        for dominated in dom_tree.get(node, set()):
-            yield from rec(dominated)
-        yield node
+        first_nonclocked = list(visit_nonclocked(self, first))
+        second_nonclocked = list(visit_nonclocked(self, second))
 
-    yield from rec(graph.entry)
+        print(f"{first_nonclocked=} {second_nonclocked=}")
+
+        first_vars = set(assigned_variables(first_nonclocked))
+        second_vars = set(assigned_variables(second_nonclocked))
+
+        print(f"{first_vars.isdisjoint(second_vars)=} {first_vars=} {second_vars=}")
+
+        if first_vars.isdisjoint(second_vars):
+            self.reattach_to_valid_parent(first, second)
+
+        return self
+
+    def reattach_to_valid_parent(self, first: ir.ClockNode, second: ir.ClockNode):
+        """
+        Attaches the children of first to second, while considering branching nodes
+        """
+
+        foster_parents = list(self.find_valid_parent(second))
+
+        print(f"{foster_parents=}")
+
+        orphans = self[second]
+
+        print(f"{orphans=}")
+
+        sad_parents = list(self.immediate_successors(second))
+
+        print(f"{sad_parents=}")
+
+        adopted_children = list(visit_clocked(self, second))
+
+        print(f"{adopted_children=}")
+
+        for foster_parent in foster_parents:
+            self.adj_list[foster_parent] |= orphans
+
+        for sad_parent in sad_parents:
+            self.adj_list[sad_parent] |= set(adopted_children)
+
+        # for parent in foster_parents:
+        #     print(f"set one {parent=}")
+        #     self.adj_list[parent] |= self.adj_list[second]
+
+        # next_clock_nodes = set(visit_clocked(self, second))
+        # print(next_clock_nodes)
+
+        # for parent in self.adj_list[second]:
+        #     print(f"set two {parent=}")
+        #     self.adj_list[parent] |= next_clock_nodes
+
+        del self[second]
+
+    def find_valid_parent(self, node: ir.ClockNode):
+        """
+        Yields valid parents
+        """
+        for parent in self.immediate_successors(node):
+            if isinstance(parent, (ir.ClockNode, ir.FalseNode, ir.TrueNode)):
+                yield parent
+            else:
+                yield from self.find_valid_parent(parent)
