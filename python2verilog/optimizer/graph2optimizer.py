@@ -264,10 +264,12 @@ class newrename(Transformer):
         self.var_counter = {}
         self._stacks: dict[expr.Var, list[expr.Var]] = {}
         self.var_mapping = {}
-        self.global_vars = {}
+        self.global_vars = set()
 
     def apply(self, block: BasicBlock, recursion: bool = True):
         self.rename(b=block, recursion=recursion)
+        assert guard(self.entry, BlockHead)
+        self.entry.phis = {x: {} for x in self.global_vars}
         return self
 
     def rename(self, b: BlockHead, recursion: bool = True):
@@ -318,7 +320,7 @@ class newrename(Transformer):
         print(f"Suspicious variable {var=}")
         new_var = self.gen_name(var)
         self._stacks[var] = [new_var]
-        self.global_vars[var] = self._stacks[var]
+        self.global_vars.add(new_var)
         return self.stacks(var)
 
     def map_var(self, var: expr.Var):
