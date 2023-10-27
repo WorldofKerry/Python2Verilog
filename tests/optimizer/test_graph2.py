@@ -143,7 +143,6 @@ def multiplier():
     """
     Multiplier
     """
-    ret = Var("return")
     i = Var("i")
     n = Var("n")
     a = Var("a")
@@ -158,7 +157,7 @@ def multiplier():
     prev = ifelse = graph.add_node(BranchNode(BinOp(i, "<", a)), prev)
 
     prev = graph.add_node(FalseNode(), ifelse)
-    out_node = graph.add_node(AssignNode(ret, c), prev)
+    out_node = graph.add_node(EndNode({c}), prev)
 
     prev = graph.add_node(TrueNode(), ifelse, children=[ifelse])
 
@@ -199,6 +198,7 @@ def make_basic_branch():
     prev = postifelse = graph.add_node(AssignNode(n, i))
     prev = graph.add_node(AssignNode(i, i), prev)
     prev = graph.add_node(AssignNode(i, Int(10)), prev)
+    prev = graph.add_node(EndNode({i}), prev)
 
     prev = graph.add_node(TrueNode(), ifelse)
     prev = graph.add_node(AssignNode(i, i), prev)
@@ -317,17 +317,17 @@ class TestGraph(unittest.TestCase):
         #     f.write(str(graph.to_cytoscape(id_in_label=True)))
 
     def test_ssa_funcs(self):
-        graph = make_even_fib_graph_no_clocks()
-        # graph = multiplier()
+        # graph = make_even_fib_graph_no_clocks()
+        graph = multiplier()
         # graph = make_basic_branch()
         # graph = make_pdf_example()
         # graph = make_basic_while()
         # graph = make_basic_path()
 
-        # graph = insert_merge_nodes.debug(graph).apply()
-        # graph = insert_phi.debug(graph).apply()
-        # graph = newrename.debug(graph).apply(graph.entry, recursion=True)
-        # graph = dataflow.debug(graph).apply()
+        graph = insert_merge_nodes.debug(graph).apply()
+        graph = insert_phi.debug(graph).apply()
+        graph = newrename.debug(graph).apply(graph.entry, recursion=True)
+        graph = dataflow.debug(graph).apply()
 
         with open("graph2_cytoscape.log", mode="w") as f:
             f.write(str(graph.to_cytoscape()))

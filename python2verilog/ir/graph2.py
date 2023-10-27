@@ -163,9 +163,10 @@ class EndNode(BlockHead):
     whether it be a function return or a coroutine yield
     """
 
-    def __init__(self, values: list[expr.Var], unique_id: str = ""):
+    def __init__(self, values: set[expr.Var], unique_id: str = ""):
         super().__init__(unique_id)
-        self.values = typed_list(values, expr.Var)
+        self.phis = {value: {} for value in values}
+        self.values = typed_set(values, expr.Var)
 
     def __str__(self) -> str:
         return (
@@ -328,21 +329,15 @@ class CFG:
                 }
             )
             for child in children:
-                if isinstance(elem, (TrueNode, FalseNode, BranchNode)) and isinstance(
-                    child, ((TrueNode, FalseNode, BranchNode))
-                ):
+                data_flow_t = TrueNode, FalseNode, BranchNode, EndNode
+                control_flow_t = AssignNode, MergeNode
+                if isinstance(elem, data_flow_t) and isinstance(child, data_flow_t):
                     classs = "ControlFlow"
-                elif isinstance(elem, (AssignNode, MergeNode)) and isinstance(
-                    child, ((AssignNode, MergeNode))
+                elif isinstance(elem, control_flow_t) and isinstance(
+                    child, control_flow_t
                 ):
                     classs = "DataFlow"
-                elif isinstance(elem, (AssignNode, MergeNode)) and isinstance(
-                    child, (TrueNode, FalseNode, BranchNode)
-                ):
-                    classs = "Mapper"
-                elif isinstance(child, (AssignNode, MergeNode)) and isinstance(
-                    elem, (TrueNode, FalseNode, BranchNode)
-                ):
+                else:
                     classs = "Mapper"
                 edges.append(
                     {

@@ -19,6 +19,7 @@ def typed_list(list_: Optional[list[Any]], type_: Type[_ValueType]) -> list[_Val
     """
     if list_ is None:
         return []
+    assert isinstance(list_, list)
     assert all(guard(elem, type_) for elem in list_)
     return list_
 
@@ -29,6 +30,7 @@ def typed_set(set_: Optional[set[Any]], type_: Type[_ValueType]) -> set[_ValueTy
     """
     if set_ is None:
         return set()
+    assert isinstance(set_, set)
     assert all(guard(elem, type_) for elem in set_)
     return set_
 
