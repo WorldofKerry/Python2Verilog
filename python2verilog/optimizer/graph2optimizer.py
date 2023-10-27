@@ -295,7 +295,7 @@ class newrename(Transformer):
             assert guard(s, BlockHead)
             for var, phi in s.phis.items():
                 phi[b] = self.stacks(var)[-1]
-            print(f"{b=} {str(s)=}")
+            print(f"{s=} {b=} {str(s)=} {self._stacks=}")
 
         # DFS in dominator tree
         if recursion is True:

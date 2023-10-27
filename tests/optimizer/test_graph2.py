@@ -136,6 +136,48 @@ def make_even_fib_graph_no_clocks():
     return graph
 
 
+def make_even_fib_graph_no_true_false():
+    """
+    Even fib numbers
+    """
+
+    out = Var("out")
+    i = Var("i")
+    n = Var("n")
+    a = Var("a")
+    b = Var("b")
+    temp = Var("temp")
+
+    graph = CFG()
+
+    # clock node vs first node as root
+    if False:
+        root = graph.add_node(ClockNode())
+        prev = graph.add_node(AssignNode(i, Int(0)), root)
+    else:
+        root = prev = graph.add_node(AssignNode(i, Int(0)))
+
+    prev = if_i_lt_n_prev = graph.add_node(BranchNode(BinOp(i, "<", n)), prev)
+
+    if_a_mod_2 = graph.add_node(BranchNode(Mod(a, Int(2))), prev)
+
+    out_node = graph.add_node(AssignNode(out, a), if_a_mod_2)
+
+    prev = graph.add_node(AssignNode(temp, BinOp(a, "+", b)), if_a_mod_2, out_node)
+    prev = graph.add_node(AssignNode(a, b), prev)
+    prev = graph.add_node(AssignNode(b, temp), prev)
+
+    prev = graph.add_node(AssignNode(i, i), prev)
+    prev = graph.add_node(
+        AssignNode(i, BinOp(i, "+", Int(1))),
+        prev,
+    )
+
+    graph.add_edge(prev, if_i_lt_n_prev)
+
+    return graph
+
+
 def make_basic_path():
     a = Var("a")
     b = Var("b")
@@ -285,11 +327,12 @@ class TestGraph(unittest.TestCase):
         #     f.write(str(graph.to_cytoscape(id_in_label=True)))
 
     def test_ssa_funcs(self):
-        # graph = make_even_fib_graph_no_clocks()
+        graph = make_even_fib_graph_no_clocks()
+        # graph = make_even_fib_graph_no_true_false()
         # graph = make_basic_branch()
         # graph = make_pdf_example()
         # graph = make_basic_while()
-        graph = make_basic_path()
+        # graph = make_basic_path()
 
         graph = insert_merge_nodes.debug(graph).apply()
         # graph = add_block_head_after_branch.debug(graph).apply()
@@ -304,7 +347,7 @@ class TestGraph(unittest.TestCase):
             # .starter(graph[12])
         )
 
-        graph = parallelize.debug(graph).apply()
+        # graph = parallelize.debug(graph).apply()
 
         # graph = blockify.debug(graph).apply()
         # graph = to_dominance(graph).apply()
