@@ -160,7 +160,7 @@ def multiplier():
     prev = graph.add_node(FalseNode(), ifelse)
     out_node = graph.add_node(AssignNode(ret, c), prev)
 
-    prev = graph.add_node(TrueNode(), ifelse)
+    prev = graph.add_node(TrueNode(), ifelse, children=[ifelse])
 
     prev = graph.add_node(AssignNode(c, BinOp(c, "+", b)), prev)
     prev = graph.add_node(AssignNode(i, BinOp(i, "+", Int(1))), prev, children=[ifelse])
