@@ -123,7 +123,7 @@ class BranchNode(Element):
         self.cond = typed_strict(expression, expr.Expression)
 
     def __str__(self) -> str:
-        return super().__str__() + f"if {self.cond}"
+        return super().__str__() + f"If {self.cond}"
 
 
 class MergeNode(BlockHead):
@@ -132,7 +132,9 @@ class MergeNode(BlockHead):
     """
 
     def __str__(self) -> str:
-        return super().__str__() + "Merge\n" + self.stringify_phis()
+        return (
+            super().__str__() + f"{MergeNode.__name__[:-4]}\n" + self.stringify_phis()
+        )
 
 
 class TrueNode(BlockHead):
@@ -141,7 +143,7 @@ class TrueNode(BlockHead):
     """
 
     def __str__(self) -> str:
-        return super().__str__() + "True\n" + self.stringify_phis()
+        return super().__str__() + f"{TrueNode.__name__[:-4]}\n" + self.stringify_phis()
 
 
 class FalseNode(BlockHead):
@@ -150,7 +152,19 @@ class FalseNode(BlockHead):
     """
 
     def __str__(self) -> str:
-        return super().__str__() + "False\n" + self.stringify_phis()
+        return (
+            super().__str__() + f"{FalseNode.__name__[:-4]}\n" + self.stringify_phis()
+        )
+
+
+class EndNode(BlockHead):
+    """
+    A node indicate the end of a frame,
+    whether it be a function return or a coroutine yield
+    """
+
+    def __str__(self) -> str:
+        return super().__str__() + f"{EndNode.__name__[:-4]}\n" + self.stringify_phis()
 
 
 class CFG:
