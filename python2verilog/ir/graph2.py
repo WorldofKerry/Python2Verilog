@@ -317,6 +317,10 @@ class CFG:
                     child, (TrueNode, FalseNode, BranchNode)
                 ):
                     classs = "Mapper"
+                elif isinstance(child, (AssignNode, MergeNode)) and isinstance(
+                    elem, (TrueNode, FalseNode, BranchNode)
+                ):
+                    classs = "Mapper"
                 edges.append(
                     {
                         "data": {
