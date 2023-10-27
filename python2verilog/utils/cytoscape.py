@@ -67,13 +67,13 @@ def main():
             {
                 "selector": "edge[class = 'ClockedEdge']",
                 "style": {
-                    "line-color": "#FF6666",
+                    "line-color": "#FFAE42",
                 },
             },
             {
                 "selector": "edge[class = 'NonClockedEdge']",
                 "style": {
-                    "line-color": "#66FF66",
+                    "line-color": "#8A2BE2",
                 },
             },
         ],

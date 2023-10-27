@@ -310,6 +310,9 @@ class CFG:
                         "data": {
                             "source": elem.unique_id,
                             "target": child.unique_id,
+                            "class": "ClockedEdge"
+                            if isinstance(elem, (TrueNode, FalseNode, BranchNode))
+                            else "NonClockedEdge",
                         }
                     }
                 )

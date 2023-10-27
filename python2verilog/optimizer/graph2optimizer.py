@@ -423,6 +423,8 @@ class dataflow(Transformer):
             self.work(node)
         for node in list(self.dfs(self.entry)):
             self.add_edges(node)
+        for node in self.dfs(self.entry):
+            self.update_phis(node)
         for node in list(self.dfs(self.entry)):
             self.remove_edges(node)
         return self
@@ -449,9 +451,21 @@ class dataflow(Transformer):
                 for phi in node.phis.values():
                     for var in phi.values():
                         self.adj_list[self.mapping[var]].add(node)
+
         except Exception as e:
             print(f"{var=} {self.mapping} {e=}")
             raise e
+
+    def update_phis(self, node: Element):
+        if not isinstance(node, BlockHead):
+            return
+        new_phis = {}
+        for lhs, phi in node.phis.items():
+            new_phis[lhs] = {}
+            for rhs in phi.values():
+                new_phis[lhs][self.mapping[rhs]] = rhs
+        print(f"{repr(node)=}\n{node.phis=}\n{new_phis=}")
+        node.phis = new_phis
 
     def remove_edges(self, node: Element):
         """
