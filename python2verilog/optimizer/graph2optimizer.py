@@ -181,8 +181,20 @@ class insert_merge_nodes(Transformer):
             self.single(node)
 
         # Update entry
-        join = self.add_node(ir.MergeNode(), children=[self.entry])
-        self.entry = join
+
+        if True:
+            entry = self.add_node(ir.TrueNode())
+            self.add_node(ir.MergeNode(), entry, children=[self.entry])
+
+            self.entry = entry
+        elif False:
+            entry = self.add_node(ir.MergeNode())
+            self.add_node(ir.TrueNode(), entry, children=[self.entry])
+
+            self.entry = entry
+        else:
+            entry = self.add_node(ir.MergeNode(), children=[self.entry])
+            self.entry = entry
         return self
 
     def single(self, node: ir.Element):
@@ -429,7 +441,19 @@ class dataflow(Transformer):
             self.add_data_flow_edges(node)
         for node in list(self.dfs(self.entry)):
             self.remove_data_flow_edges(node)
+        for node in list(self.dfs(self.entry)):
+            self.remove_cf_to_df_edges(node)
         return self
+
+    def remove_cf_to_df_edges(self, node: ir.Element):
+        """
+        Removes control flow to data flow edges
+        """
+        if isinstance(node, (TrueNode, FalseNode, BranchNode, EndNode)):
+            for child in set(self.adj_list[node]):
+                if isinstance(node, (AssignNode, MergeNode)):
+                    self.adj_list[node].remove(child)
+                    print(f"Rmv {node=} {child=}")
 
     def add_control_flow_edges(self, src: Element):
         # Requires to be ran before adding data flow edges

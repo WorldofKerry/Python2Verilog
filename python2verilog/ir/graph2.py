@@ -329,13 +329,13 @@ class CFG:
                 }
             )
             for child in children:
-                data_flow_t = TrueNode, FalseNode, BranchNode, EndNode
-                control_flow_t = AssignNode, MergeNode
-                if isinstance(elem, data_flow_t) and isinstance(child, data_flow_t):
-                    classs = "ControlFlow"
-                elif isinstance(elem, control_flow_t) and isinstance(
+                control_flow_t = TrueNode, FalseNode, BranchNode, EndNode
+                data_flow_t = AssignNode, MergeNode
+                if isinstance(elem, control_flow_t) and isinstance(
                     child, control_flow_t
                 ):
+                    classs = "ControlFlow"
+                elif isinstance(elem, data_flow_t) and isinstance(child, data_flow_t):
                     classs = "DataFlow"
                 else:
                     classs = "Mapper"
@@ -345,6 +345,7 @@ class CFG:
                             "source": elem.unique_id,
                             "target": child.unique_id,
                             "class": classs,
+                            "label": classs,
                         }
                     }
                 )
