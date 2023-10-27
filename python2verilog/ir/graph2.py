@@ -163,8 +163,17 @@ class EndNode(BlockHead):
     whether it be a function return or a coroutine yield
     """
 
+    def __init__(self, values: list[expr.Var], unique_id: str = ""):
+        super().__init__(unique_id)
+        self.values = typed_list(values, expr.Var)
+
     def __str__(self) -> str:
-        return super().__str__() + f"{EndNode.__name__[:-4]}\n" + self.stringify_phis()
+        return (
+            super().__str__()
+            + f"{EndNode.__name__[:-4]}\n"
+            + self.stringify_phis()
+            + f"{self.values}"
+        )
 
 
 class CFG:

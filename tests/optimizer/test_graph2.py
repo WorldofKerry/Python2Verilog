@@ -120,7 +120,7 @@ def make_even_fib_graph_no_clocks():
     if_a_mod_2 = graph.add_node(BranchNode(Mod(a, Int(2))), prev)
 
     prev = graph.add_node(TrueNode(), if_a_mod_2)
-    out_node = graph.add_node(EndNode(), prev)
+    out_node = graph.add_node(EndNode([a]), prev)
 
     prev = graph.add_node(FalseNode(), if_a_mod_2)
 
@@ -324,32 +324,10 @@ class TestGraph(unittest.TestCase):
         # graph = make_basic_while()
         # graph = make_basic_path()
 
-        graph = insert_merge_nodes.debug(graph).apply()
-        # graph = add_block_head_after_branch.debug(graph).apply()
-
-        graph = insert_phi.debug(graph).apply()
-        graph = (
-            newrename.debug(graph).apply(graph.entry, recursion=True)
-            # newrename.debug(graph).apply(graph.entry, recursion=[graph[15], graph[13], graph[16]])
-            # newrename.debug(graph).apply(graph.entry, recursion=[graph[16], graph[13], graph[15]])
-            # .starter(graph[10])
-            # .starter(graph[11])
-            # .starter(graph[12])
-        )
-
-        # graph = parallelize.debug(graph).apply()
-        graph = dataflow.debug(graph).apply()
-
-        # graph = blockify.debug(graph).apply()
-        # graph = to_dominance(graph).apply()
-
-        # dom_tree = dominator_tree(graph)
-        # print(f"{dom_tree=}")
-
-        # graph = newrename.debug(graph).starter(graph[10])
-
-        # dom_frontier = list(dominance_frontier(graph, graph[2], graph.entry))
-        # print(f"{dom_frontier=}")
+        # graph = insert_merge_nodes.debug(graph).apply()
+        # graph = insert_phi.debug(graph).apply()
+        # graph = newrename.debug(graph).apply(graph.entry, recursion=True)
+        # graph = dataflow.debug(graph).apply()
 
         with open("graph2_cytoscape.log", mode="w") as f:
             f.write(str(graph.to_cytoscape()))
