@@ -421,13 +421,21 @@ class dataflow(Transformer):
     def apply(self):
         for node in self.dfs(self.entry):
             self.work(node)
-        for node in list(self.dfs(self.entry)):
-            self.add_edges(node)
         for node in self.dfs(self.entry):
-            self.update_phis(node)
+            self.make_phis_immediate(node)
+        for node in list(self.dfs(node)):
+            self.add_control_flow_edges(node)
         for node in list(self.dfs(self.entry)):
-            self.remove_edges(node)
+            self.add_data_flow_edges(node)
+        for node in list(self.dfs(self.entry)):
+            self.remove_data_flow_edges(node)
         return self
+
+    def add_control_flow_edges(self, src: Element):
+        # Requires to be ran before adding data flow edges
+        if isinstance(src, (TrueNode, FalseNode)):
+            for node in list(self.subtree_leaves(src, BranchNode)):
+                self.adj_list[src].add(node)
 
     def work(self, node: Element):
         if isinstance(node, AssignNode):
@@ -436,7 +444,7 @@ class dataflow(Transformer):
             for var in node.phis:
                 self.mapping[var] = node
 
-    def add_edges(self, node: Element):
+    def add_data_flow_edges(self, node: Element):
         """
         Add data flow edges
         """
@@ -456,7 +464,11 @@ class dataflow(Transformer):
             print(f"{var=} {self.mapping} {e=}")
             raise e
 
-    def update_phis(self, node: Element):
+    def make_phis_immediate(self, node: Element):
+        """
+        The element label in PHI nodes replaced with their immediate successor,
+        and not their immedate merge node successor
+        """
         if not isinstance(node, BlockHead):
             return
         new_phis = {}
@@ -467,7 +479,7 @@ class dataflow(Transformer):
         print(f"{repr(node)=}\n{node.phis=}\n{new_phis=}")
         node.phis = new_phis
 
-    def remove_edges(self, node: Element):
+    def remove_data_flow_edges(self, node: Element):
         """
         Remove edges that don't have data flow
         """

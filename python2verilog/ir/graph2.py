@@ -441,7 +441,12 @@ class CFG:
                 yield child
                 yield from self.subtree_excluding(child, elem_type)
 
-    def subtree_leaves(self, source: Element, elem_type: type[Element]):
+    def subtree_leaves(
+        self,
+        source: Element,
+        elem_type: type[Element],
+        visited: Optional[set[Element]] = None,
+    ):
         """
         Builds a subtree rooted at source,
         where every leaf is type elem_type,
@@ -450,8 +455,13 @@ class CFG:
 
         Yields all leaves in subtree
         """
+        if visited is None:
+            visited = set()
+        if source in visited:
+            return
+        visited.add(source)
         for child in self.adj_list[source]:
             if isinstance(child, elem_type):
                 yield child
             else:
-                yield from self.subtree_leaves(child, elem_type)
+                yield from self.subtree_leaves(child, elem_type, visited)
