@@ -11,6 +11,7 @@ from python2verilog.optimizer.graph2optimizer import (  # nopycln: import
     insert_merge_nodes,
     insert_phi,
     newrename,
+    parallelize,
     visit_nonclocked,
 )
 
@@ -140,10 +141,16 @@ def make_basic_path():
     b = Var("b")
     c = Var("c")
 
+    i = Var("i")
+
     graph = CFG()
 
-    prev = graph.add_node(AssignNode(a, b))
-    prev = graph.add_node(AssignNode(c, a), prev)
+    prev = graph.add_node(AssignNode(i, i))
+    prev = graph.add_node(AssignNode(a, BinOp(b, "+", Int(1))), prev)
+    prev = graph.add_node(AssignNode(i, i), prev)
+    prev = graph.add_node(AssignNode(c, BinOp(a, "+", Int(2))), prev)
+
+    prev = graph.add_node(MergeNode(), prev)
 
     return graph
 
@@ -297,7 +304,7 @@ class TestGraph(unittest.TestCase):
             # .starter(graph[12])
         )
 
-        print(f"{graph.global_vars=}")
+        graph = parallelize.debug(graph).apply()
 
         # graph = blockify.debug(graph).apply()
         # graph = to_dominance(graph).apply()

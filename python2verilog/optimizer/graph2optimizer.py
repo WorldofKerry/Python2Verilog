@@ -179,6 +179,8 @@ class insert_merge_nodes(Transformer):
         nodes = list(self.dfs(self.entry))
         for node in nodes:
             self.single(node)
+
+        # Update entry
         join = self.add_node(ir.MergeNode(), children=[self.entry])
         self.entry = join
         return self
@@ -379,17 +381,27 @@ class newrename(Transformer):
         return mapping
 
 
-class blockify(Transformer):
+class parallelize(Transformer):
     """
-    Extracts block nodes from graph and their relationships
+    Adds parallel paths between two BlockHead nodes
     """
+
+    def __init__(self, graph: CFG, *, apply: bool = True):
+        super().__init__(graph, apply=apply)
 
     def apply(self):
-        for key in self.adj_list:
-            if isinstance(key, ir.BlockHead):
-                self.adj_list[key] = set()
-
+        self.single(self.entry, {})
         return super().apply()
 
+    def single(self, block: BlockHead, mapping: dict[expr.Var, expr.Expression]):
+        """
+        Adds parallel paths between two BlockHead nodes
+        """
+        for node in self.traverse_until(block, BlockHead):
+            if isinstance(node, AssignNode):
+                node.rvalue = backwards_replace(node.rvalue, mapping)
+                mapping[node.lvalue] = node.rvalue
+            if isinstance(node, BranchNode):
+                node.expr = backwards_replace(node.expr, mapping)
 
-# class parallelize
+        return self
