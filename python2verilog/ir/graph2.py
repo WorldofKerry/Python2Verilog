@@ -120,10 +120,10 @@ class BranchNode(Element):
 
     def __init__(self, expression: expr.Expression, unique_id: str = ""):
         super().__init__(unique_id)
-        self.expr = typed_strict(expression, expr.Expression)
+        self.cond = typed_strict(expression, expr.Expression)
 
     def __str__(self) -> str:
-        return super().__str__() + f"if {self.expr}"
+        return super().__str__() + f"if {self.cond}"
 
 
 class MergeNode(BlockHead):
@@ -265,7 +265,7 @@ class CFG:
             return
         raise TypeError()
 
-    def immediate_successors(self, element: Element) -> Iterator[Element]:
+    def predecessors(self, element: Element) -> Iterator[Element]:
         """
         Get immediate successors/parents of a element
         """
@@ -382,23 +382,6 @@ class CFG:
                         f"{graph.dominance_frontier.__name__} {z=} {m=} {m_to_z=} {n_dom_m=} {n_sdom_z=}"
                     )
 
-    def iter_block_children(
-        self, node: Element, visited: Optional[set[Element]] = None
-    ):
-        """
-        Iterates over block children
-        """
-        if visited is None:
-            visited = set()
-        if node in visited:
-            return
-        visited.add(node)
-        for child in self.adj_list[node]:
-            if isinstance(child, BlockHead):
-                yield child
-            else:
-                yield from self.iter_block_children(child, visited)
-
     def dominator_tree(self: CFG):
         """
         Returns dict representing dominator tree
@@ -441,7 +424,7 @@ class CFG:
                 if child != cur:
                     queue.append(child)
 
-    def traverse_until(self, source: Element, elem_type: type[Element]):
+    def subtree_excluding(self, source: Element, elem_type: type[Element]):
         """
         Builds a subtree rooted at source,
         where every leaf is type elem_type,
@@ -453,9 +436,9 @@ class CFG:
         for child in self.adj_list[source]:
             if not isinstance(child, elem_type):
                 yield child
-                yield from self.traverse_until(child, elem_type)
+                yield from self.subtree_excluding(child, elem_type)
 
-    def traverse_successors(self, source: Element, elem_type: type[Element]):
+    def subtree_leaves(self, source: Element, elem_type: type[Element]):
         """
         Builds a subtree rooted at source,
         where every leaf is type elem_type,
@@ -468,4 +451,4 @@ class CFG:
             if isinstance(child, elem_type):
                 yield child
             else:
-                yield from self.traverse_successors(child, elem_type)
+                yield from self.subtree_leaves(child, elem_type)

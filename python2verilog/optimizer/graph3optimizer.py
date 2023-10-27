@@ -100,8 +100,8 @@ class rename_blocks(Transformer):
             )
             statement.lvalue = self.gen_name(statement.lvalue)
         if isinstance(statement, BranchNode):
-            statement.expr = backwards_replace(
-                statement.expr, self.make_mapping(self.stacks)
+            statement.cond = backwards_replace(
+                statement.cond, self.make_mapping(self.stacks)
             )
 
     def gen_name(self, var: expr.Var):

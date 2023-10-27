@@ -186,7 +186,7 @@ class insert_merge_nodes(Transformer):
         return self
 
     def single(self, node: ir.Element):
-        parents = list(self.immediate_successors(node))
+        parents = list(self.predecessors(node))
         if len(parents) <= 1:
             return
         for parent in parents:
@@ -287,10 +287,10 @@ class newrename(Transformer):
         assert guard(b, BlockHead)
         self.update_phi_lhs(b)
 
-        for stmt in self.traverse_until(b, BlockHead):
+        for stmt in self.subtree_excluding(b, BlockHead):
             self.update_lhs_rhs_stack(stmt)
 
-        for s in self.traverse_successors(b, BlockHead):
+        for s in self.subtree_leaves(b, BlockHead):
             # For each successor in CFG
             assert guard(s, BlockHead)
             for var, phi in s.phis.items():
@@ -307,7 +307,7 @@ class newrename(Transformer):
         # Unwind stack
         for key in b.phis:
             self.stacks(key).pop()
-        for stmt in self.traverse_until(b, BlockHead):
+        for stmt in self.subtree_excluding(b, BlockHead):
             if isinstance(stmt, ir.AssignNode):
                 self.stacks(stmt.lvalue).pop()
 
@@ -346,9 +346,9 @@ class newrename(Transformer):
             )
             stmt.lvalue = self.gen_name(stmt.lvalue)
         if isinstance(stmt, BranchNode):
-            for var in get_variables(stmt.expr):
+            for var in get_variables(stmt.cond):
                 self.stacks(var)
-            stmt.expr = backwards_replace(stmt.expr, self.make_mapping(self._stacks))
+            stmt.cond = backwards_replace(stmt.cond, self.make_mapping(self._stacks))
 
     def gen_name(self, var: expr.Var):
         # Make new unqiue name
@@ -397,11 +397,90 @@ class parallelize(Transformer):
         """
         Adds parallel paths between two BlockHead nodes
         """
-        for node in self.traverse_until(block, BlockHead):
+        for node in self.subtree_excluding(block, BlockHead):
             if isinstance(node, AssignNode):
                 node.rvalue = backwards_replace(node.rvalue, mapping)
                 mapping[node.lvalue] = node.rvalue
             if isinstance(node, BranchNode):
-                node.expr = backwards_replace(node.expr, mapping)
+                node.cond = backwards_replace(node.cond, mapping)
 
         return self
+
+
+class dataflow(Transformer):
+    """
+    Adds data flow edges to graph
+    """
+
+    def __init__(self, graph: CFG, *, apply: bool = True):
+        super().__init__(graph, apply=apply)
+
+        # Maps each assignment mode to their SSA variable
+        self.mapping = {}
+
+    def apply(self):
+        for node in self.dfs(self.entry):
+            self.work(node)
+        for node in list(self.dfs(self.entry)):
+            self.add_edges(node)
+        for node in list(self.dfs(self.entry)):
+            self.remove_edges(node)
+        return self
+
+    def work(self, node: Element):
+        if isinstance(node, AssignNode):
+            self.mapping[node.lvalue] = node
+        if isinstance(node, BlockHead):
+            for var in node.phis:
+                self.mapping[var] = node
+
+    def add_edges(self, node: Element):
+        """
+        Add data flow edges
+        """
+        try:
+            if isinstance(node, AssignNode):
+                for var in get_variables(node.rvalue):
+                    self.adj_list[self.mapping[var]].add(node)
+            if isinstance(node, BranchNode):
+                for var in get_variables(node.cond):
+                    self.adj_list[self.mapping[var]].add(node)
+            if isinstance(node, BlockHead):
+                for phi in node.phis.values():
+                    for var in phi.values():
+                        self.adj_list[self.mapping[var]].add(node)
+        except Exception as e:
+            print(f"{var=} {self.mapping} {e=}")
+            raise e
+
+    def remove_edges(self, node: Element):
+        """
+        Remove edges that don't have data flow
+        """
+        try:
+            preds = self.predecessors(node)
+            if isinstance(node, AssignNode):
+                vars = set(get_variables(node.rvalue))
+            elif isinstance(node, BranchNode):
+                vars = set(get_variables(node.cond))
+            else:
+                return
+            for pred in preds:
+                if isinstance(pred, (TrueNode, FalseNode)):
+                    continue
+                if isinstance(pred, AssignNode):
+                    if pred.lvalue not in vars:
+                        print(f"remove {repr(pred)} to {repr(node)}")
+                        self.adj_list[pred].remove(node)
+                if isinstance(pred, BlockHead):
+                    # If all phi LHSs do not include vars
+                    for var in pred.phis:
+                        if var in vars:
+                            break
+                    else:
+                        print(f"remove {repr(pred)} to {repr(node)} {vars=}")
+                        self.adj_list[pred].remove(node)
+
+        except Exception as e:
+            print(f"{var=} {self.mapping} {e=}")
+            # raise e

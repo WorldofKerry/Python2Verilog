@@ -8,6 +8,7 @@ from python2verilog.ir.expressions import *  # nopycln: import
 from python2verilog.ir.graph2 import *
 from python2verilog.optimizer.graph2optimizer import (  # nopycln: import
     add_block_head_after_branch,
+    dataflow,
     insert_merge_nodes,
     insert_phi,
     newrename,
@@ -95,7 +96,7 @@ def make_even_fib_graph_no_clocks():
     Even fib numbers
     """
 
-    out = Var("out")
+    yiel = Var("yield")
     i = Var("i")
     n = Var("n")
     a = Var("a")
@@ -109,7 +110,9 @@ def make_even_fib_graph_no_clocks():
         root = graph.add_node(ClockNode())
         prev = graph.add_node(AssignNode(i, Int(0)), root)
     else:
-        root = prev = graph.add_node(AssignNode(i, Int(0)))
+        prev = graph.add_node(AssignNode(a, Int(0)))
+        prev = graph.add_node(AssignNode(b, Int(1)), prev)
+        prev = graph.add_node(AssignNode(i, Int(0)), prev)
 
     prev = if_i_lt_n_prev = graph.add_node(BranchNode(BinOp(i, "<", n)), prev)
 
@@ -117,7 +120,7 @@ def make_even_fib_graph_no_clocks():
     if_a_mod_2 = graph.add_node(BranchNode(Mod(a, Int(2))), prev)
 
     prev = graph.add_node(TrueNode(), if_a_mod_2)
-    out_node = graph.add_node(AssignNode(out, a), prev)
+    out_node = graph.add_node(AssignNode(yiel, a), prev)
 
     prev = graph.add_node(FalseNode(), if_a_mod_2)
 
@@ -348,6 +351,7 @@ class TestGraph(unittest.TestCase):
         )
 
         # graph = parallelize.debug(graph).apply()
+        graph = dataflow.debug(graph).apply()
 
         # graph = blockify.debug(graph).apply()
         # graph = to_dominance(graph).apply()
