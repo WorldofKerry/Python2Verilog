@@ -114,32 +114,36 @@ def make_even_fib_graph_no_clocks():
 
     prev = graph.add_node(TrueNode(), prev)
     if_a_mod_2 = graph.add_node(BranchNode(Mod(a, Int(2))), prev)
-    prev = graph.add_node(TrueNode(), if_a_mod_2)
-    prev = graph.add_node(AssignNode(out, a), prev)
 
-    prev = graph.add_node(AssignNode(temp, BinOp(a, "+", b)), prev)
-    graph.add_node(FalseNode(), if_a_mod_2, children=[prev])
+    prev = graph.add_node(TrueNode(), if_a_mod_2)
+    out_node = graph.add_node(AssignNode(out, a), prev)
+
+    prev = graph.add_node(FalseNode(), if_a_mod_2)
+
+    prev = graph.add_node(AssignNode(temp, BinOp(a, "+", b)), prev, out_node)
     prev = graph.add_node(AssignNode(a, b), prev)
     prev = graph.add_node(AssignNode(b, temp), prev)
 
+    prev = graph.add_node(AssignNode(i, i), prev)
     prev = graph.add_node(
         AssignNode(i, BinOp(i, "+", Int(1))),
         prev,
-        children=[if_i_lt_n_prev],
     )
+
+    graph.add_edge(prev, if_i_lt_n_prev)
+
     return graph
 
 
 def make_basic_path():
-    i = Var("i")
+    a = Var("a")
+    b = Var("b")
+    c = Var("c")
 
     graph = CFG()
 
-    prev = graph.add_node(AssignNode(i, Int(0)))
-    prev = graph.add_node(AssignNode(i, Int(1)), prev)
-    prev = graph.add_node(AssignNode(i, Int(2)), prev)
-
-    prev = graph.add_node(TrueNode(), prev, children=[graph.entry])
+    prev = graph.add_node(AssignNode(a, b))
+    prev = graph.add_node(AssignNode(c, a), prev)
 
     return graph
 
@@ -274,11 +278,11 @@ class TestGraph(unittest.TestCase):
         #     f.write(str(graph.to_cytoscape(id_in_label=True)))
 
     def test_ssa_funcs(self):
-        graph = make_even_fib_graph_no_clocks()
+        # graph = make_even_fib_graph_no_clocks()
         # graph = make_basic_branch()
         # graph = make_pdf_example()
         # graph = make_basic_while()
-        # graph = make_basic_path()
+        graph = make_basic_path()
 
         graph = insert_merge_nodes.debug(graph).apply()
         # graph = add_block_head_after_branch.debug(graph).apply()

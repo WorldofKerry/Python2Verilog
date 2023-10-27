@@ -120,10 +120,10 @@ class BranchNode(Element):
 
     def __init__(self, expression: expr.Expression, unique_id: str = ""):
         super().__init__(unique_id)
-        self.expression = typed_strict(expression, expr.Expression)
+        self.expr = typed_strict(expression, expr.Expression)
 
     def __str__(self) -> str:
-        return super().__str__() + f"if {self.expression}"
+        return super().__str__() + f"if {self.expr}"
 
 
 class MergeNode(BlockHead):

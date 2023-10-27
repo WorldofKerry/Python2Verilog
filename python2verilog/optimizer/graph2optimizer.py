@@ -311,13 +311,13 @@ class newrename(Transformer):
 
     def stacks(self, var: expr.Var):
         """
-        Gets stack
+        Gets stack for specific var,
+        and updates global variables if not seen before
         """
         mapped = self.map_var(var)
         if mapped in self._stacks:
             return self._stacks[mapped]
 
-        print(f"Suspicious variable {var=}")
         new_var = self.gen_name(var)
         self._stacks[var] = [new_var]
         self.global_vars.add(new_var)
@@ -335,16 +335,18 @@ class newrename(Transformer):
             replacement[vn] = phis
         block.phis = replacement
 
-    def update_lhs_rhs_stack(self, statement: Element):
-        if isinstance(statement, AssignNode):
-            statement.rvalue = backwards_replace(
-                statement.rvalue, self.make_mapping(self._stacks)
+    def update_lhs_rhs_stack(self, stmt: Element):
+        if isinstance(stmt, AssignNode):
+            for var in get_variables(stmt.rvalue):
+                self.stacks(var)
+            stmt.rvalue = backwards_replace(
+                stmt.rvalue, self.make_mapping(self._stacks)
             )
-            statement.lvalue = self.gen_name(statement.lvalue)
-        if isinstance(statement, BranchNode):
-            statement.expression = backwards_replace(
-                statement.expression, self.make_mapping(self._stacks)
-            )
+            stmt.lvalue = self.gen_name(stmt.lvalue)
+        if isinstance(stmt, BranchNode):
+            for var in get_variables(stmt.expr):
+                self.stacks(var)
+            stmt.expr = backwards_replace(stmt.expr, self.make_mapping(self._stacks))
 
     def gen_name(self, var: expr.Var):
         # Make new unqiue name
@@ -388,3 +390,6 @@ class blockify(Transformer):
                 self.adj_list[key] = set()
 
         return super().apply()
+
+
+# class parallelize
