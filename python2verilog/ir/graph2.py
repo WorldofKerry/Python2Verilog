@@ -305,14 +305,24 @@ class CFG:
                 }
             )
             for child in children:
+                if isinstance(elem, (TrueNode, FalseNode, BranchNode)) and isinstance(
+                    child, ((TrueNode, FalseNode, BranchNode))
+                ):
+                    classs = "ControlFlow"
+                elif isinstance(elem, (AssignNode, MergeNode)) and isinstance(
+                    child, ((AssignNode, MergeNode))
+                ):
+                    classs = "DataFlow"
+                elif isinstance(elem, (AssignNode, MergeNode)) and isinstance(
+                    child, (TrueNode, FalseNode, BranchNode)
+                ):
+                    classs = "Mapper"
                 edges.append(
                     {
                         "data": {
                             "source": elem.unique_id,
                             "target": child.unique_id,
-                            "class": "ClockedEdge"
-                            if isinstance(elem, (TrueNode, FalseNode, BranchNode))
-                            else "NonClockedEdge",
+                            "class": classs,
                         }
                     }
                 )

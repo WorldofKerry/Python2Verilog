@@ -67,13 +67,31 @@ def main():
             {
                 "selector": "edge[class = 'ClockedEdge']",
                 "style": {
-                    "line-color": "#FFAE42",
+                    "line-color": "#FF6666",
                 },
             },
             {
                 "selector": "edge[class = 'NonClockedEdge']",
                 "style": {
-                    "line-color": "#8A2BE2",
+                    "line-color": "#66FF66",
+                },
+            },
+            {
+                "selector": "edge[class = 'ControlFlow']",
+                "style": {
+                    "line-color": "#00FAB6",
+                },
+            },
+            {
+                "selector": "edge[class = 'DataFlow']",
+                "style": {
+                    "line-color": "#FAB900",
+                },
+            },
+            {
+                "selector": "edge[class = 'Mapper']",
+                "style": {
+                    "line-color": "#DC01FA",
                 },
             },
         ],

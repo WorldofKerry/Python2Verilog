@@ -421,8 +421,8 @@ class dataflow(Transformer):
     def apply(self):
         for node in self.dfs(self.entry):
             self.work(node)
-        for node in self.dfs(self.entry):
-            self.make_phis_immediate(node)
+        # for node in self.dfs(self.entry):
+        #     self.make_phis_immediate(node)
         for node in list(self.dfs(node)):
             self.add_control_flow_edges(node)
         for node in list(self.dfs(self.entry)):

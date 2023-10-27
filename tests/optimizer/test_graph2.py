@@ -139,44 +139,31 @@ def make_even_fib_graph_no_clocks():
     return graph
 
 
-def make_even_fib_graph_no_true_false():
+def multiplier():
     """
-    Even fib numbers
+    Multiplier
     """
-
-    out = Var("out")
+    ret = Var("return")
     i = Var("i")
     n = Var("n")
     a = Var("a")
     b = Var("b")
-    temp = Var("temp")
+    c = Var("c")
 
     graph = CFG()
 
-    # clock node vs first node as root
-    if False:
-        root = graph.add_node(ClockNode())
-        prev = graph.add_node(AssignNode(i, Int(0)), root)
-    else:
-        root = prev = graph.add_node(AssignNode(i, Int(0)))
+    prev = graph.add_node(AssignNode(i, Int(0)))
+    prev = graph.add_node(AssignNode(c, Int(0)), prev)
 
-    prev = if_i_lt_n_prev = graph.add_node(BranchNode(BinOp(i, "<", n)), prev)
+    prev = ifelse = graph.add_node(BranchNode(BinOp(i, "<", a)), prev)
 
-    if_a_mod_2 = graph.add_node(BranchNode(Mod(a, Int(2))), prev)
+    prev = graph.add_node(FalseNode(), ifelse)
+    out_node = graph.add_node(AssignNode(ret, c), prev)
 
-    out_node = graph.add_node(AssignNode(out, a), if_a_mod_2)
+    prev = graph.add_node(TrueNode(), ifelse)
 
-    prev = graph.add_node(AssignNode(temp, BinOp(a, "+", b)), if_a_mod_2, out_node)
-    prev = graph.add_node(AssignNode(a, b), prev)
-    prev = graph.add_node(AssignNode(b, temp), prev)
-
-    prev = graph.add_node(AssignNode(i, i), prev)
-    prev = graph.add_node(
-        AssignNode(i, BinOp(i, "+", Int(1))),
-        prev,
-    )
-
-    graph.add_edge(prev, if_i_lt_n_prev)
+    prev = graph.add_node(AssignNode(c, BinOp(c, "+", b)), prev)
+    prev = graph.add_node(AssignNode(i, BinOp(i, "+", Int(1))), prev, children=[ifelse])
 
     return graph
 
@@ -330,8 +317,8 @@ class TestGraph(unittest.TestCase):
         #     f.write(str(graph.to_cytoscape(id_in_label=True)))
 
     def test_ssa_funcs(self):
-        graph = make_even_fib_graph_no_clocks()
-        # graph = make_even_fib_graph_no_true_false()
+        # graph = make_even_fib_graph_no_clocks()
+        graph = multiplier()
         # graph = make_basic_branch()
         # graph = make_pdf_example()
         # graph = make_basic_while()
