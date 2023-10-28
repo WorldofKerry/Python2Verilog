@@ -428,35 +428,36 @@ class dataflow(Transformer):
         for node in list(self.dfs(node)):
             self.add_cf_to_cf_edges(node)
 
-        # assert len(set(self.subtree_leaves(self.entry, ir.BranchNode))) == 1
-        # for succ in self.subtree_leaves(self.entry, ir.BranchNode):
-        #     print(f"control entry {succ=}")
-        #     self.control_entry = succ
+        assert len(set(self.subtree_leaves(self.entry, ir.BranchNode))) == 1
+        for succ in self.subtree_leaves(self.entry, ir.BranchNode):
+            print(f"control entry {succ=}")
+            self.control_entry = succ
 
         for node in list(self.dfs(self.entry)):
-            self.add_df_to_cf_first_cf(node)
+            self.relate_cf_to_df(node)
 
         for node in list(self.dfs(self.entry)):
             self.add_df_to_df_edges(node)
         for node in list(self.dfs(self.entry)):
             self.rmv_df_to_df_edges(node)
-        # for node in list(self.dfs(self.entry)):
-        #     self.add_df_to_cf(node)
         for node in list(self.dfs(self.entry)):
             self.rmv_cf_to_df_edges(node)
+        for node in list(self.dfs(self.entry)):
+            self.rm_df_to_cf(node)
+        for node in self.adj_list:
+            self.add_df_to_cf(node)
         return self
 
     def rm_df_to_cf(self, src: Element):
         """
         Removes all data flow to control flow edges whose src is not a FuncNode
         """
-        if isinstance(src, FuncNode):
-            return
-        for child in set(self.adj_list[src]):
-            if not isinstance(child, (AssignNode, FuncNode, CallNode)):
-                self.adj_list[src].remove(child)
+        if isinstance(src, (FuncNode)):
+            for child in set(self.adj_list[src]):
+                if isinstance(child, (BranchNode)):
+                    self.adj_list[src].remove(child)
 
-    def add_df_to_cf_first_cf(self, src: Element):
+    def relate_cf_to_df(self, src: Element):
         """
         Adds edge from data flow to its first control flow edge
         """
@@ -464,7 +465,7 @@ class dataflow(Transformer):
         if not isinstance(src, FuncNode):
             return
         for leaf in set(self.subtree_leaves(src, ir.BranchNode)):
-            self.adj_list[src].add(leaf)
+            self.adj_list[leaf].add(src)
 
     def add_df_to_cf(self, node: Element):
         """
@@ -474,6 +475,10 @@ class dataflow(Transformer):
             if isinstance(node, BranchNode):
                 for var in get_variables(node.cond):
                     self.adj_list[self.mapping[var]].add(node)
+            if isinstance(node, EndNode):
+                for phi in node.phis.values():
+                    for var in phi.values():
+                        self.adj_list[self.mapping[var]].add(node)
 
         except Exception as e:
             # print(f"{var=} {self.mapping} {e=}")
