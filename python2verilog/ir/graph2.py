@@ -357,9 +357,11 @@ class CFG:
                     child, control_flow_t
                 ):
                     classs = "ControlFlow"
-                elif isinstance(elem, data_flow_t) and isinstance(child, data_flow_t):
+                elif isinstance(elem, data_flow_t):
                     classs = "DataFlow"
-                else:
+                elif isinstance(elem, control_flow_t) and isinstance(
+                    child, data_flow_t
+                ):
                     classs = "Mapper"
                 edges.append(
                     {

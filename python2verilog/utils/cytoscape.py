@@ -92,6 +92,8 @@ def main():
                 "selector": "edge[class = 'Mapper']",
                 "style": {
                     "line-color": "#DC01FA",
+                    "source-arrow-color": "#303030",
+                    "source-arrow-shape": "triangle",
                 },
             },
         ],
