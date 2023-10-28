@@ -624,7 +624,7 @@ class replace_merge_nodes(Transformer):
         subtree = set(self.subtree_excluding(src, BlockHead)) | {src}
 
         # Pairs of succ(node) -> node, where node is a BlockHead
-        pairs: list[tuple(ir.Element, ir.BlockHead)] = []
+        pairs: list[tuple[ir.Element, ir.BlockHead]] = []
         print(f"checking {src=} {leaves=} {subtree=}")
         for leaf in leaves:
             for node in subtree:
@@ -635,20 +635,30 @@ class replace_merge_nodes(Transformer):
         for parent, child in pairs:
             # For each pair, insert a call node
             call_node = CallNode()
-            for lhs, phi in child.phis.items():
+            for phi in child.phis.values():
                 call_node.args.append(phi[src])
-            self.add_node(call_node, parent, children=[child])
-            self.adj_list[parent].remove(child)
 
-            self.mapping[call_node] = child
+            # Only insert Call if phi merges
+            if len(call_node.args) > 0:
+                self.add_node(call_node, parent, children=[child])
+                self.adj_list[parent].remove(child)
+
+                self.mapping[call_node] = child
+
         return self
 
     def replace_merge_with_func(self, src: ir.Element):
         if not isinstance(src, ir.MergeNode):
             return
         preds = self.predecessors(src)
-        func_node = FuncNode()
-        func_node.params = [key for key in src.phis]
-        self.add_node(func_node, *preds, children=self.adj_list[src])
-        print(f"Deleting {src=}")
-        del self[src]
+
+        if len(src.phis) > 0:
+            func_node = FuncNode()
+            func_node.params = [key for key in src.phis]
+            self.add_node(func_node, *preds, children=self.adj_list[src])
+            print(f"Deleting {src=}")
+            del self[src]
+        else:
+            for pred in preds:
+                self.add_edge(pred, *self.adj_list[src])
+            del self[src]
