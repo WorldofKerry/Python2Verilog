@@ -13,6 +13,7 @@ from python2verilog.optimizer.graph2optimizer import (  # nopycln: import
     insert_phi,
     newrename,
     parallelize,
+    replace_merge_nodes,
     visit_nonclocked,
 )
 
@@ -159,7 +160,7 @@ def multiplier():
     prev = graph.add_node(FalseNode(), ifelse)
     out_node = graph.add_node(EndNode({c}), prev)
 
-    prev = graph.add_node(TrueNode(), ifelse, children=[ifelse])
+    prev = graph.add_node(TrueNode(), ifelse)
 
     prev = graph.add_node(AssignNode(c, BinOp(c, "+", b)), prev)
     prev = graph.add_node(AssignNode(i, BinOp(i, "+", Int(1))), prev, children=[ifelse])
@@ -327,8 +328,9 @@ class TestGraph(unittest.TestCase):
         graph = insert_merge_nodes.debug(graph).apply()
         graph = insert_phi.debug(graph).apply()
         graph = newrename.debug(graph).apply(graph.entry, recursion=True)
-        graph = dataflow.debug(graph).apply()
-        print(f"{graph.dominance()=}")
+        graph = replace_merge_nodes.debug(graph).apply()
+        # graph = dataflow.debug(graph).apply()
+        # print(f"{graph.dominance()=}")
 
         with open("graph2_cytoscape.log", mode="w") as f:
             f.write(str(graph.to_cytoscape()))

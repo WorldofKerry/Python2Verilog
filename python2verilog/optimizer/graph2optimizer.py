@@ -534,3 +534,52 @@ class dataflow(Transformer):
         except Exception as e:
             print(f"{var=} {self.mapping} {e=}")
             # raise e
+
+
+class replace_merge_nodes(Transformer):
+    def __init__(self, graph: CFG, *, apply: bool = True):
+        super().__init__(graph, apply=apply)
+
+        # Mapping of call node to merge node
+        self.mapping: dict[ir.Element, ir.Element] = {}
+
+    def apply(self):
+        for node in set(self.dfs(self.entry)):
+            self.insert_call(node)
+        for node in set(self.dfs(self.entry)):
+            self.replace_merge_with_func(node)
+        return super().apply()
+
+    def insert_call(self, src: ir.Element):
+        if not isinstance(src, ir.BlockHead):
+            return
+        leaves = set(self.subtree_leaves(src, BlockHead))
+        subtree = set(self.subtree_excluding(src, BlockHead))
+
+        # Pairs of succ(node) -> node, where node is a BlockHead
+        pairs: dict[ir.Element, ir.BlockHead] = {}
+        for leaf in leaves:
+            for node in subtree:
+                if leaf in self.adj_list[node]:
+                    pairs[node] = leaf
+        print(f"{pairs=}")
+
+        for parent, child in pairs.items():
+            # For each pair, insert a call node
+            call_node = CallNode()
+            for lhs, phi in child.phis.items():
+                call_node.args.append(phi[src])
+            self.add_node(call_node, parent, children=[child])
+            self.adj_list[parent].remove(child)
+
+            self.mapping[call_node] = child
+        return self
+
+    def replace_merge_with_func(self, src: ir.Element):
+        if not isinstance(src, ir.MergeNode):
+            return
+        preds = self.predecessors(src)
+        func_node = FuncNode()
+        func_node.params = [key for key in src.phis]
+        self.add_node(func_node, *preds, children=self.adj_list[src])
+        del self[src]

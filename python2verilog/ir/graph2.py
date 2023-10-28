@@ -177,6 +177,26 @@ class EndNode(BlockHead):
         )
 
 
+class CallNode(Element):
+    def __init__(self, unique_id: str = ""):
+        super().__init__(unique_id)
+        self.args: list[expr.Var] = []
+
+    def __str__(self) -> str:
+        return super().__str__() + f"{self.__class__.__name__[:-4]}" + f"\n{self.args}"
+
+
+class FuncNode(Element):
+    def __init__(self, unique_id: str = ""):
+        super().__init__(unique_id)
+        self.params: list[expr.Var] = []
+
+    def __str__(self) -> str:
+        return (
+            super().__str__() + f"{self.__class__.__name__[:-4]}" + f"\n{self.params}"
+        )
+
+
 class CFG:
     """
     Graph
