@@ -602,10 +602,10 @@ class replace_merge_nodes(Transformer):
         self.mapping: dict[ir.Element, ir.Element] = {}
 
     def apply(self):
-        for node in set(self.dfs(self.entry)):
+        for node in self.adj_list.copy():
             self.insert_call(node)
-        # for node in set(self.dfs(self.entry)):
-        #     self.replace_merge_with_func(node)
+        for node in self.adj_list.copy():
+            self.replace_merge_with_func(node)
 
         # Replace entry with FuncNode
         assert guard(self.entry, ir.BlockHead)
