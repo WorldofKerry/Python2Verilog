@@ -418,6 +418,7 @@ class dataflow(Transformer):
 
         # Maps each assignment mode to their SSA variable
         self.mapping = {}
+        self.control_entry = Element()  # Temporary
 
     def apply(self):
         for node in self.dfs(self.entry):
@@ -425,29 +426,77 @@ class dataflow(Transformer):
         # for node in self.dfs(self.entry):
         #     self.make_phis_immediate(node)
         for node in list(self.dfs(node)):
-            self.add_control_flow_edges(node)
+            self.add_cf_to_cf_edges(node)
+
+        # assert len(set(self.subtree_leaves(self.entry, ir.BranchNode))) == 1
+        # for succ in self.subtree_leaves(self.entry, ir.BranchNode):
+        #     print(f"control entry {succ=}")
+        #     self.control_entry = succ
+
         for node in list(self.dfs(self.entry)):
-            self.add_data_flow_edges(node)
+            self.add_df_to_cf_first_cf(node)
+
         for node in list(self.dfs(self.entry)):
-            self.remove_data_flow_edges(node)
+            self.add_df_to_df_edges(node)
+        for node in list(self.dfs(self.entry)):
+            self.rmv_df_to_df_edges(node)
         # for node in list(self.dfs(self.entry)):
-        #     self.remove_cf_to_df_edges(node)
+        #     self.add_df_to_cf(node)
+        for node in list(self.dfs(self.entry)):
+            self.rmv_cf_to_df_edges(node)
         return self
 
-    def remove_cf_to_df_edges(self, node: ir.Element):
+    def rm_df_to_cf(self, src: Element):
+        """
+        Removes all data flow to control flow edges whose src is not a FuncNode
+        """
+        if isinstance(src, FuncNode):
+            return
+        for child in set(self.adj_list[src]):
+            if not isinstance(child, (AssignNode, FuncNode, CallNode)):
+                self.adj_list[src].remove(child)
+
+    def add_df_to_cf_first_cf(self, src: Element):
+        """
+        Adds edge from data flow to its first control flow edge
+        """
+        # assert len(set(self.subtree_leaves(src, ir.BranchNode))) == 1
+        if not isinstance(src, FuncNode):
+            return
+        for leaf in set(self.subtree_leaves(src, ir.BranchNode)):
+            self.adj_list[src].add(leaf)
+
+    def add_df_to_cf(self, node: Element):
+        """
+        Add data flow edges between data flow nodes
+        """
+        try:
+            if isinstance(node, BranchNode):
+                for var in get_variables(node.cond):
+                    self.adj_list[self.mapping[var]].add(node)
+
+        except Exception as e:
+            # print(f"{var=} {self.mapping} {e=}")
+            raise e
+
+    def rmv_cf_to_df_edges(self, node: ir.Element):
         """
         Removes control flow to data flow edges
         """
         if isinstance(node, (TrueNode, FalseNode, BranchNode, EndNode)):
+            print(f"iter {node=}")
             for child in set(self.adj_list[node]):
-                if isinstance(node, (AssignNode, MergeNode)):
+                print(f"iter {child=}")
+                if isinstance(child, (AssignNode, MergeNode)):
                     self.adj_list[node].remove(child)
                     print(f"Rmv {node=} {child=}")
 
-    def add_control_flow_edges(self, src: Element):
+    def add_cf_to_cf_edges(self, src: Element):
         # Requires to be ran before adding data flow edges
         if isinstance(src, (TrueNode, FalseNode)):
+            print(f"add_control_flow_edge {src=}")
             for node in list(self.subtree_leaves(src, BranchNode)):
+                print(f"adding {node=}")
                 self.adj_list[src].add(node)
 
     def make_ssa_mapping(self, node: Element):
@@ -460,7 +509,7 @@ class dataflow(Transformer):
             for var in node.params:
                 self.mapping[var] = node
 
-    def add_data_flow_edges(self, node: Element):
+    def add_df_to_df_edges(self, node: Element):
         """
         Add data flow edges between data flow nodes
         """
@@ -494,7 +543,7 @@ class dataflow(Transformer):
         print(f"{repr(node)=}\n{node.phis=}\n{new_phis=}")
         node.phis = new_phis
 
-    def remove_data_flow_edges(self, node: Element):
+    def rmv_df_to_df_edges(self, node: Element):
         """
         Remove edges that don't have data flow
         """
