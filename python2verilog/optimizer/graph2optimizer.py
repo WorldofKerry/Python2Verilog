@@ -181,20 +181,8 @@ class insert_merge_nodes(Transformer):
             self.single(node)
 
         # Update entry
-
-        if True:
-            entry = self.add_node(ir.TrueNode())
-            self.add_node(ir.MergeNode(), entry, children=[self.entry])
-
-            self.entry = entry
-        elif False:
-            entry = self.add_node(ir.MergeNode())
-            self.add_node(ir.TrueNode(), entry, children=[self.entry])
-
-            self.entry = entry
-        else:
-            entry = self.add_node(ir.MergeNode(), children=[self.entry])
-            self.entry = entry
+        entry = self.add_node(ir.BlockHead(), children=[self.entry])
+        self.entry = entry
         return self
 
     def single(self, node: ir.Element):
@@ -548,6 +536,15 @@ class replace_merge_nodes(Transformer):
             self.insert_call(node)
         for node in set(self.dfs(self.entry)):
             self.replace_merge_with_func(node)
+
+        # Replace entry with FuncNode
+        assert guard(self.entry, ir.BlockHead)
+        func_node = FuncNode()
+        func_node.params = [key for key in self.entry.phis]
+        self.add_node(func_node, children=self.adj_list[self.entry])
+        del self[self.entry]
+        self.entry = func_node
+
         return super().apply()
 
     def insert_call(self, src: ir.Element):

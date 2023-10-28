@@ -307,6 +307,8 @@ class CFG:
                 if key in children:
                     children.remove(key)
             return
+        if self.entry == key:
+            self.entry = None
         raise TypeError()
 
     def predecessors(self, element: Element) -> Iterator[Element]:
