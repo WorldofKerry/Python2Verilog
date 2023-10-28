@@ -421,43 +421,44 @@ class dataflow(Transformer):
         self.control_entry = Element()  # Temporary
 
     def apply(self):
-        for node in self.dfs(self.entry):
+        for node in self.adj_list:
             self.make_ssa_mapping(node)
         # for node in self.dfs(self.entry):
         #     self.make_phis_immediate(node)
-        for node in list(self.dfs(node)):
+        for node in self.adj_list:
             self.add_cf_to_cf_edges(node)
 
-        assert len(set(self.subtree_leaves(self.entry, ir.BranchNode))) == 1
-        for succ in self.subtree_leaves(self.entry, ir.BranchNode):
-            print(f"control entry {succ=}")
-            self.control_entry = succ
-
-        for node in list(self.dfs(self.entry)):
-            self.relate_cf_to_df(node)
-
-        for node in list(self.dfs(self.entry)):
-            self.add_df_to_df_edges(node)
-        for node in list(self.dfs(self.entry)):
-            self.rmv_df_to_df_edges(node)
-        for node in list(self.dfs(self.entry)):
-            self.rmv_cf_to_df_edges(node)
-        for node in list(self.dfs(self.entry)):
+        for node in self.adj_list:
+            self.add_df_to_cf_edges(node)
+        for node in self.adj_list:
             self.rm_df_to_cf(node)
         for node in self.adj_list:
             self.add_df_to_cf(node)
+
+        # Cleanup data flow
+        # for node in list(self.dfs(self.entry)):
+        #     self.add_df_to_df_edges(node)
+        # for node in list(self.dfs(self.entry)):
+        #     self.rmv_df_to_df_edges(node)
+
+        # for node in list(self.dfs(self.entry)):
+        #     self.rmv_cf_to_df_edges(node)
         return self
 
     def rm_df_to_cf(self, src: Element):
         """
         Removes all data flow to control flow edges whose src is not a FuncNode
         """
-        if isinstance(src, (FuncNode)):
+        if isinstance(src, (TrueNode, FalseNode, EndNode)):
             for child in set(self.adj_list[src]):
-                if isinstance(child, (BranchNode)):
+                if isinstance(child, (FuncNode, AssignNode, CallNode)):
+                    self.adj_list[src].remove(child)
+        if isinstance(src, BranchNode):
+            for child in set(self.adj_list[src]):
+                if isinstance(child, (AssignNode, EndNode)):
                     self.adj_list[src].remove(child)
 
-    def relate_cf_to_df(self, src: Element):
+    def add_df_to_cf_edges(self, src: Element):
         """
         Adds edge from data flow to its first control flow edge
         """
@@ -498,7 +499,7 @@ class dataflow(Transformer):
 
     def add_cf_to_cf_edges(self, src: Element):
         # Requires to be ran before adding data flow edges
-        if isinstance(src, (TrueNode, FalseNode)):
+        if isinstance(src, (TrueNode, FalseNode, EndNode)):
             print(f"add_control_flow_edge {src=}")
             for node in list(self.subtree_leaves(src, BranchNode)):
                 print(f"adding {node=}")

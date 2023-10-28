@@ -318,8 +318,8 @@ class TestGraph(unittest.TestCase):
         #     f.write(str(graph.to_cytoscape(id_in_label=True)))
 
     def test_ssa_funcs(self):
-        # graph = make_even_fib_graph_no_clocks()
-        graph = multiplier()
+        graph = make_even_fib_graph_no_clocks()
+        # graph = multiplier()
         # graph = make_basic_branch()
         # graph = make_pdf_example()
         # graph = make_basic_while()
@@ -329,7 +329,7 @@ class TestGraph(unittest.TestCase):
         graph = insert_phi.debug(graph).apply()
         graph = newrename.debug(graph).apply(graph.entry, recursion=True)
         graph = replace_merge_nodes.debug(graph).apply()
-        graph = dataflow.debug(graph).apply()
+        # graph = dataflow.debug(graph).apply()
         # print(f"{graph.dominance()=}")
 
         with open("graph2_cytoscape.log", mode="w") as f:
