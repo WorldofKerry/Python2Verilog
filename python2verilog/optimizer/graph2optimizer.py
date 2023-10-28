@@ -421,7 +421,7 @@ class dataflow(Transformer):
 
     def apply(self):
         for node in self.dfs(self.entry):
-            self.work(node)
+            self.make_ssa_mapping(node)
         # for node in self.dfs(self.entry):
         #     self.make_phis_immediate(node)
         for node in list(self.dfs(node)):
@@ -430,8 +430,8 @@ class dataflow(Transformer):
             self.add_data_flow_edges(node)
         for node in list(self.dfs(self.entry)):
             self.remove_data_flow_edges(node)
-        for node in list(self.dfs(self.entry)):
-            self.remove_cf_to_df_edges(node)
+        # for node in list(self.dfs(self.entry)):
+        #     self.remove_cf_to_df_edges(node)
         return self
 
     def remove_cf_to_df_edges(self, node: ir.Element):
@@ -450,32 +450,34 @@ class dataflow(Transformer):
             for node in list(self.subtree_leaves(src, BranchNode)):
                 self.adj_list[src].add(node)
 
-    def work(self, node: Element):
+    def make_ssa_mapping(self, node: Element):
         if isinstance(node, AssignNode):
             self.mapping[node.lvalue] = node
         if isinstance(node, BlockHead):
             for var in node.phis:
                 self.mapping[var] = node
+        if isinstance(node, FuncNode):
+            for var in node.params:
+                self.mapping[var] = node
 
     def add_data_flow_edges(self, node: Element):
         """
-        Add data flow edges
+        Add data flow edges between data flow nodes
         """
         try:
             if isinstance(node, AssignNode):
                 for var in get_variables(node.rvalue):
                     self.adj_list[self.mapping[var]].add(node)
-            if isinstance(node, BranchNode):
-                for var in get_variables(node.cond):
+            # if isinstance(node, BranchNode):
+            #     for var in get_variables(node.cond):
+            #         self.adj_list[self.mapping[var]].add(node)
+            if isinstance(node, CallNode):
+                for var in node.args:
                     self.adj_list[self.mapping[var]].add(node)
-            if isinstance(node, BlockHead):
-                for phi in node.phis.values():
-                    for var in phi.values():
-                        self.adj_list[self.mapping[var]].add(node)
 
         except Exception as e:
-            print(f"{var=} {self.mapping} {e=}")
-            # raise e
+            # print(f"{var=} {self.mapping} {e=}")
+            raise e
 
     def make_phis_immediate(self, node: Element):
         """
@@ -500,25 +502,32 @@ class dataflow(Transformer):
             preds = self.predecessors(node)
             if isinstance(node, AssignNode):
                 vars = set(get_variables(node.rvalue))
-            elif isinstance(node, BranchNode):
-                vars = set(get_variables(node.cond))
+            elif isinstance(node, CallNode):
+                vars = set(node.args)
             else:
                 return
+
             for pred in preds:
-                if isinstance(pred, (TrueNode, FalseNode)):
-                    continue
                 if isinstance(pred, AssignNode):
                     if pred.lvalue not in vars:
                         print(f"remove {repr(pred)} to {repr(node)}")
                         self.adj_list[pred].remove(node)
-                if isinstance(pred, BlockHead):
-                    # If all phi LHSs do not include vars
-                    for var in pred.phis:
+                elif isinstance(pred, FuncNode):
+                    # If all parameters do not include vars
+                    for var in pred.params:
                         if var in vars:
                             break
                     else:
                         print(f"remove {repr(pred)} to {repr(node)} {vars=}")
                         self.adj_list[pred].remove(node)
+                # elif isinstance(pred, BlockHead):
+                #     # If all phi LHSs do not include vars
+                #     for var in pred.phis:
+                #         if var in vars:
+                #             break
+                #     else:
+                #         print(f"remove {repr(pred)} to {repr(node)} {vars=}")
+                #         self.adj_list[pred].remove(node)
 
         except Exception as e:
             print(f"{var=} {self.mapping} {e=}")

@@ -352,7 +352,7 @@ class CFG:
             )
             for child in children:
                 control_flow_t = TrueNode, FalseNode, BranchNode, EndNode
-                data_flow_t = AssignNode, MergeNode
+                data_flow_t = AssignNode, MergeNode, FuncNode, CallNode
                 if isinstance(elem, control_flow_t) and isinstance(
                     child, control_flow_t
                 ):
