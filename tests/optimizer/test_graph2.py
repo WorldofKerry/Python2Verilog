@@ -121,7 +121,7 @@ def make_even_fib_graph_no_clocks():
     if_a_mod_2 = graph.add_node(BranchNode(Mod(a, Int(2))), prev)
 
     prev = graph.add_node(TrueNode(), if_a_mod_2)
-    out_node = graph.add_node(EndNode([a]), prev)
+    out_node = graph.add_node(EndNode({a}), prev)
 
     prev = graph.add_node(FalseNode(), if_a_mod_2)
 
@@ -318,8 +318,8 @@ class TestGraph(unittest.TestCase):
         #     f.write(str(graph.to_cytoscape(id_in_label=True)))
 
     def test_ssa_funcs(self):
-        # graph = make_even_fib_graph_no_clocks()
-        graph = multiplier()
+        graph = make_even_fib_graph_no_clocks()
+        # graph = multiplier()
         # graph = make_basic_branch()
         # graph = make_pdf_example()
         # graph = make_basic_while()

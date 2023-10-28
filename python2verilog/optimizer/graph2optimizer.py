@@ -271,6 +271,7 @@ class newrename(Transformer):
     def apply(self, block: BasicBlock, recursion: bool = True):
         self.rename(b=block, recursion=recursion)
         assert guard(self.entry, BlockHead)
+        print(f"{self.global_vars=}")
         self.entry.phis = {x: {} for x in self.global_vars}
         return self
 
@@ -474,7 +475,7 @@ class dataflow(Transformer):
 
         except Exception as e:
             print(f"{var=} {self.mapping} {e=}")
-            raise e
+            # raise e
 
     def make_phis_immediate(self, node: Element):
         """
@@ -550,18 +551,18 @@ class replace_merge_nodes(Transformer):
     def insert_call(self, src: ir.Element):
         if not isinstance(src, ir.BlockHead):
             return
-        leaves = set(self.subtree_leaves(src, BlockHead))
+        leaves = set(self.subtree_leaves(src, MergeNode))
         subtree = set(self.subtree_excluding(src, BlockHead))
 
         # Pairs of succ(node) -> node, where node is a BlockHead
-        pairs: dict[ir.Element, ir.BlockHead] = {}
+        pairs: list[tuple(ir.Element, ir.BlockHead)] = []
         for leaf in leaves:
             for node in subtree:
                 if leaf in self.adj_list[node]:
-                    pairs[node] = leaf
+                    pairs.append((node, leaf))
         print(f"{pairs=}")
 
-        for parent, child in pairs.items():
+        for parent, child in pairs:
             # For each pair, insert a call node
             call_node = CallNode()
             for lhs, phi in child.phis.items():
@@ -579,4 +580,5 @@ class replace_merge_nodes(Transformer):
         func_node = FuncNode()
         func_node.params = [key for key in src.phis]
         self.add_node(func_node, *preds, children=self.adj_list[src])
+        print(f"Deleting {src=}")
         del self[src]
