@@ -350,6 +350,11 @@ class newrename(Transformer):
             for var in get_variables(stmt.cond):
                 self.stacks(var)
             stmt.cond = backwards_replace(stmt.cond, self.make_mapping(self._stacks))
+        if isinstance(stmt, EndNode):
+            new_values = set()
+            for var in stmt.values:
+                new_values.add(backwards_replace(var, self.make_mapping(self._stacks)))
+            stmt.values = new_values
 
     def gen_name(self, var: expr.Var):
         # Make new unqiue name
@@ -599,8 +604,8 @@ class replace_merge_nodes(Transformer):
     def apply(self):
         for node in set(self.dfs(self.entry)):
             self.insert_call(node)
-        for node in set(self.dfs(self.entry)):
-            self.replace_merge_with_func(node)
+        # for node in set(self.dfs(self.entry)):
+        #     self.replace_merge_with_func(node)
 
         # Replace entry with FuncNode
         assert guard(self.entry, ir.BlockHead)
@@ -616,15 +621,16 @@ class replace_merge_nodes(Transformer):
         if not isinstance(src, ir.BlockHead):
             return
         leaves = set(self.subtree_leaves(src, MergeNode))
-        subtree = set(self.subtree_excluding(src, BlockHead))
+        subtree = set(self.subtree_excluding(src, BlockHead)) | {src}
 
         # Pairs of succ(node) -> node, where node is a BlockHead
         pairs: list[tuple(ir.Element, ir.BlockHead)] = []
+        print(f"checking {src=} {leaves=} {subtree=}")
         for leaf in leaves:
             for node in subtree:
                 if leaf in self.adj_list[node]:
                     pairs.append((node, leaf))
-        print(f"{pairs=}")
+        print(f"{src=} {pairs=}")
 
         for parent, child in pairs:
             # For each pair, insert a call node

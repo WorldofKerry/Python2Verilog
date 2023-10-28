@@ -157,7 +157,7 @@ class FalseNode(BlockHead):
         )
 
 
-class EndNode(BlockHead):
+class EndNode(Element):
     """
     A node indicate the end of a frame,
     whether it be a function return or a coroutine yield
@@ -165,16 +165,10 @@ class EndNode(BlockHead):
 
     def __init__(self, values: set[expr.Var], unique_id: str = ""):
         super().__init__(unique_id)
-        self.phis = {value: {} for value in values}
         self.values = typed_set(values, expr.Var)
 
     def __str__(self) -> str:
-        return (
-            super().__str__()
-            + f"{EndNode.__name__[:-4]}\n"
-            + self.stringify_phis()
-            + f"{self.values}"
-        )
+        return super().__str__() + f"{EndNode.__name__[:-4]}\n" + f"{self.values}"
 
 
 class CallNode(Element):
