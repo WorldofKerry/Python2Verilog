@@ -324,6 +324,7 @@ class newrename(Transformer):
         new_var = self.gen_name(var)
         self._stacks[var] = [new_var]
         self.global_vars.add(new_var)
+        # breakpoint()
         return self.stacks(var)
 
     def map_var(self, var: expr.Var):
@@ -662,9 +663,9 @@ class replace_merge_nodes(Transformer):
             del self[src]
 
 
-class propagate(Transformer):
+class propagate_and_remove(Transformer):
     """
-    Propagates variables
+    Propagates variables and removes unused/dead variables
     """
 
     def __init__(self, graph: CFG, *, apply: bool = True):
@@ -681,6 +682,21 @@ class propagate(Transformer):
         for node in self.adj_list:
             self.get_used(node)
         print(f"{self.used=}")
+        for node in self.adj_list.copy():
+            self.rmv_unused_assigns(node)
+
+        for node in self.adj_list:
+            self.rmv_unused_phis(node)
+
+        # Round 2 to deal with unused phis
+        self.used = set()
+        for node in self.adj_list:
+            self.get_used(node)
+        for node in self.adj_list.copy():
+            self.rmv_unused_assigns(node)
+        for node in self.adj_list:
+            self.rmv_unused_phis(node)
+
         return self
 
     def make_ssa_mapping(self, node: Element):
@@ -712,3 +728,26 @@ class propagate(Transformer):
         elif isinstance(src, ir.CallNode):
             for var in src.args:
                 self.used.add(var)
+
+    def rmv_unused_assigns(self, src: ir.Element):
+        if not isinstance(src, AssignNode):
+            return
+        if src.lvalue not in self.used:
+            succs = set(self.adj_list[src])
+            assert len(succs) == 1
+            preds = set(self.predecessors(src))
+            for pred in preds:
+                self.adj_list[pred] |= succs
+            del self[src]
+
+    def rmv_unused_phis(self, src: ir.Element):
+        if not isinstance(src, FuncNode):
+            return
+        for param in src.params.copy():
+            print(f"{src=} {param=} {self.used=}")
+            if param not in self.used:
+                index = src.params.index(param)
+                del src.params[index]
+                for pred in self.predecessors(src):
+                    assert guard(pred, CallNode)
+                    del pred.args[index]

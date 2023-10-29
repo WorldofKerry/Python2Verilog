@@ -13,7 +13,7 @@ from python2verilog.optimizer.graph2optimizer import (  # nopycln: import
     insert_phi,
     newrename,
     parallelize,
-    propagate,
+    propagate_and_remove,
     replace_merge_nodes,
     visit_nonclocked,
 )
@@ -332,7 +332,7 @@ class TestGraph(unittest.TestCase):
         graph = insert_phi.debug(graph).apply()
         graph = newrename.debug(graph).apply(graph.entry, recursion=True)
         graph = replace_merge_nodes.debug(graph).apply()
-        graph = propagate.debug(graph).apply()
+        graph = propagate_and_remove.debug(graph).apply()
         # graph = dataflow.debug(graph).apply()
         # print(f"{graph.dominance()=}")
 
