@@ -870,40 +870,53 @@ class rmv_assigns_and_phis(Transformer):
     def __init__(self, graph: CFG, *, apply: bool = True):
         super().__init__(graph, apply=apply)
         self.responsible: dict[expr.Var, ir.Element] = {}
-        self.used: set[expr.Var] = set()
+        self.ref_count: dict[expr.Var, int] = {}
         self.to_be_rmved: set[expr.Var] = set()
 
     def apply(self):
         for node in self.adj_list:
             self.make_all_and_used(node)
-        print(
-            f"{self.responsible=} {self.used=} {(set(self.responsible) - self.used)=}"
-        )
+        print(f"{self.responsible=} {self.ref_count=}")
 
-        self.to_be_rmved = set(self.responsible) - self.used
+        self.to_be_rmved = set(self.responsible) - set(
+            key for key, value in self.ref_count.items() if value > 0
+        )
+        print(f"{self.to_be_rmved=}")
         while self.to_be_rmved:
             self.remove(self.to_be_rmved.pop())
+            self.to_be_rmved |= set(key for key, value in self.ref_count.items() if value == 0)
+            for var in set(key for key, value in self.ref_count.items() if value == 0):
+                del self.ref_count[var]
+        print(f"{self.responsible=} {self.ref_count=}")
         return self
 
     def make_all_and_used(self, src: ir.Element):
         if isinstance(src, AssignNode):
-            for var in get_variables(src.rvalue):
-                self.used.add(var)
             self.responsible[src.lvalue] = src
+            for var in get_variables(src.rvalue):
+                self.ref_count[var] = self.ref_count.get(var, 0) + 1
         elif isinstance(src, BranchNode):
             for var in get_variables(src.cond):
-                self.used.add(var)
+                self.ref_count[var] = self.ref_count.get(var, 0) + 1
         elif isinstance(src, CallNode):
             for var in src.args:
-                self.used.add(var)
+                self.ref_count[var] = self.ref_count.get(var, 0) + 1
         elif isinstance(src, FuncNode):
             for var in src.params:
                 self.responsible[var] = src
+        elif isinstance(src, EndNode):
+            for var in src.values:
+                self.ref_count[var] = self.ref_count.get(var, 0) + 1
 
     def remove(self, var: expr.Var):
         print(f"{var=}")
         src = self.responsible[var]
+        if src not in self.adj_list:
+            return
         if isinstance(src, AssignNode):
+            for var in get_variables(src.rvalue):
+                self.ref_count[var] -= 1
+            
             succs = set(self.adj_list[src])
             assert len(succs) == 1
             preds = set(self.predecessors(src))
@@ -914,6 +927,6 @@ class rmv_assigns_and_phis(Transformer):
             index = src.params.index(var)
             del src.params[index]
             for pred in self.predecessors(src):
-                assert guard(pred, CallNode)
+                assert guard(pred, CallNode)                
                 self.to_be_rmved.add(pred.args[index])
                 del pred.args[index]
