@@ -200,6 +200,7 @@ class CFG:
 
     def __init__(self, prefix: str = ""):
         self.adj_list: dict[Element, set[Element]] = {}
+        self.data_flow: set[tuple[Element, Element]] = set()
         self.unique_counter = -1
         self.prefix = typed_strict(prefix, str)
         self.entry = CFG.DUMMY
@@ -212,6 +213,7 @@ class CFG:
         self.unique_counter = graph.unique_counter
         self.prefix = graph.prefix
         self.entry = graph.entry
+        self.data_flow = graph.data_flow
         return self
 
     def copy(self, graph: CFG):
@@ -221,6 +223,9 @@ class CFG:
         self.adj_list = {}
         for key, value in graph.adj_list.items():
             self.adj_list[key] = copy.copy(value)
+        self.data_flow = set()
+        for source, target in graph.data_flow:
+            self.data_flow.add((source, target))
         self.unique_counter = graph.unique_counter
         self.prefix = graph.prefix
         self.entry = graph.entry
@@ -345,28 +350,40 @@ class CFG:
                 }
             )
             for child in children:
-                control_flow_t = TrueNode, FalseNode, BranchNode, EndNode
-                data_flow_t = AssignNode, MergeNode, FuncNode, CallNode
-                if isinstance(elem, control_flow_t) and isinstance(
-                    child, control_flow_t
-                ):
-                    classs = "ControlFlow"
-                elif isinstance(elem, data_flow_t):
-                    classs = "DataFlow"
-                elif isinstance(elem, control_flow_t) and isinstance(
-                    child, data_flow_t
-                ):
-                    classs = "Mapper"
+                # control_flow_t = TrueNode, FalseNode, BranchNode, EndNode
+                # data_flow_t = AssignNode, MergeNode, FuncNode, CallNode
+                # if isinstance(elem, control_flow_t) and isinstance(
+                #     child, control_flow_t
+                # ):
+                #     classs = "ControlFlow"
+                # elif isinstance(elem, data_flow_t):
+                #     classs = "DataFlow"
+                # elif isinstance(elem, control_flow_t) and isinstance(
+                #     child, data_flow_t
+                # ):
+                #     classs = "Mapper"
                 edges.append(
                     {
                         "data": {
                             "source": elem.unique_id,
                             "target": child.unique_id,
-                            "class": classs,
-                            "label": classs,
+                            "class": "ControlFlow",
+                            "label": "ControlFlow",
                         }
                     }
                 )
+
+        for source, target in self.data_flow:
+            edges.append(
+                {
+                    "data": {
+                        "source": source.unique_id,
+                        "target": target.unique_id,
+                        "class": "ClockedEdge",
+                        "label": "COOL",
+                    }
+                }
+            )
 
         return {"nodes": nodes, "edges": edges}
 

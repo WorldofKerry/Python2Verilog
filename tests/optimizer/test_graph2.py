@@ -16,6 +16,7 @@ from python2verilog.optimizer.graph2optimizer import (  # nopycln: import
     replace_merge_nodes,
     visit_nonclocked,
 )
+from python2verilog.utils.cytoscape import run_dash
 
 
 def make_even_fib_graph():
@@ -329,8 +330,9 @@ class TestGraph(unittest.TestCase):
         graph = insert_phi.debug(graph).apply()
         graph = newrename.debug(graph).apply(graph.entry, recursion=True)
         graph = replace_merge_nodes.debug(graph).apply()
-        # graph = dataflow.debug(graph).apply()
+        graph = dataflow.debug(graph).apply()
         # print(f"{graph.dominance()=}")
 
-        with open("graph2_cytoscape.log", mode="w") as f:
-            f.write(str(graph.to_cytoscape()))
+        # with open("graph2_cytoscape.log", mode="w") as f:
+            # f.write(str(graph.to_cytoscape()))
+        run_dash(graph.to_cytoscape())

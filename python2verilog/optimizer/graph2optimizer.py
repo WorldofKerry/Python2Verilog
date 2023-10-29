@@ -428,21 +428,20 @@ class dataflow(Transformer):
     def apply(self):
         for node in self.adj_list:
             self.make_ssa_mapping(node)
-        # for node in self.dfs(self.entry):
-        #     self.make_phis_immediate(node)
-        for node in self.adj_list:
-            self.add_cf_to_cf_edges(node)
 
-        for node in self.adj_list:
-            self.add_df_to_cf_edges(node)
-        for node in self.adj_list:
-            self.rm_df_to_cf(node)
-        for node in self.adj_list:
-            self.add_df_to_cf(node)
+        # for node in self.adj_list:
+        #     self.add_cf_to_cf_edges(node)
+
+        # for node in self.adj_list:
+        #     self.add_df_to_cf_edges(node)
+        # for node in self.adj_list:
+        #     self.rm_df_to_cf(node)
+        # for node in self.adj_list:
+        #     self.add_df_to_cf(node)
 
         # Cleanup data flow
-        # for node in list(self.dfs(self.entry)):
-        #     self.add_df_to_df_edges(node)
+        for node in list(self.dfs(self.entry)):
+            self.add_df_to_df_edges(node)
         # for node in list(self.dfs(self.entry)):
         #     self.rmv_df_to_df_edges(node)
 
@@ -527,13 +526,12 @@ class dataflow(Transformer):
         try:
             if isinstance(node, AssignNode):
                 for var in get_variables(node.rvalue):
-                    self.adj_list[self.mapping[var]].add(node)
-            # if isinstance(node, BranchNode):
-            #     for var in get_variables(node.cond):
-            #         self.adj_list[self.mapping[var]].add(node)
+                    self.data_flow.add((self.mapping[var], node))
+                    # self.adj_list[self.mapping[var]].add(node)
             if isinstance(node, CallNode):
                 for var in node.args:
-                    self.adj_list[self.mapping[var]].add(node)
+                    self.data_flow.add((self.mapping[var], node))
+                    # self.adj_list[self.mapping[var]].add(node)
 
         except Exception as e:
             # print(f"{var=} {self.mapping} {e=}")

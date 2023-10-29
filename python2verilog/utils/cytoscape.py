@@ -30,7 +30,10 @@ def main():
         elements = ast.literal_eval(file.read())
     if not elements:
         raise RuntimeError("Empty elements")
+    run_dash(elements)
 
+
+def run_dash(elements):
     app = Dash(__name__)
 
     cytoscape = cyto.Cytoscape(
