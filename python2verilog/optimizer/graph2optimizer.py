@@ -697,6 +697,14 @@ class propagate_and_remove(Transformer):
         for node in self.adj_list:
             self.rmv_unused_phis(node)
 
+        self.used = set()
+        for node in self.adj_list:
+            self.get_used(node)
+        for node in self.adj_list.copy():
+            self.rmv_unused_assigns(node)
+        for node in self.adj_list:
+            self.rmv_unused_phis(node)
+
         return self
 
     def make_ssa_mapping(self, node: Element):
@@ -727,6 +735,9 @@ class propagate_and_remove(Transformer):
                 self.used.add(var)
         elif isinstance(src, ir.CallNode):
             for var in src.args:
+                self.used.add(var)
+        elif isinstance(src, ir.EndNode):
+            for var in src.values:
                 self.used.add(var)
 
     def rmv_unused_assigns(self, src: ir.Element):
