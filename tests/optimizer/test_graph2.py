@@ -13,6 +13,7 @@ from python2verilog.optimizer.graph2optimizer import (  # nopycln: import
     insert_phi,
     newrename,
     parallelize,
+    propagate,
     replace_merge_nodes,
     visit_nonclocked,
 )
@@ -122,6 +123,7 @@ def make_even_fib_graph_no_clocks():
     if_a_mod_2 = graph.add_node(BranchNode(Mod(a, Int(2))), prev)
 
     prev = graph.add_node(TrueNode(), if_a_mod_2)
+    prev = graph.add_node(AssignNode(a, BinOp(a, "+", Int(10))), prev)
     out_node = graph.add_node(EndNode({a}), prev)
 
     prev = graph.add_node(FalseNode(), if_a_mod_2)
@@ -330,9 +332,10 @@ class TestGraph(unittest.TestCase):
         graph = insert_phi.debug(graph).apply()
         graph = newrename.debug(graph).apply(graph.entry, recursion=True)
         graph = replace_merge_nodes.debug(graph).apply()
-        graph = dataflow.debug(graph).apply()
+        graph = propagate.debug(graph).apply()
+        # graph = dataflow.debug(graph).apply()
         # print(f"{graph.dominance()=}")
 
         # with open("graph2_cytoscape.log", mode="w") as f:
-            # f.write(str(graph.to_cytoscape()))
+        # f.write(str(graph.to_cytoscape()))
         run_dash(graph.to_cytoscape())

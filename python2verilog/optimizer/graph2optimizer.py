@@ -660,3 +660,55 @@ class replace_merge_nodes(Transformer):
             for pred in preds:
                 self.add_edge(pred, *self.adj_list[src])
             del self[src]
+
+
+class propagate(Transformer):
+    """
+    Propagates variables
+    """
+
+    def __init__(self, graph: CFG, *, apply: bool = True):
+        super().__init__(graph, apply=apply)
+        self.mapping: dict[expr.Var, expr.Expression] = {}
+        self.used: set[expr.Var] = set()
+
+    def apply(self):
+        for node in self.adj_list:
+            self.make_ssa_mapping(node)
+        print(f"{self.mapping=}")
+        for node in self.adj_list:
+            self.replace(node)
+        for node in self.adj_list:
+            self.get_used(node)
+        print(f"{self.used=}")
+        return self
+
+    def make_ssa_mapping(self, node: Element):
+        if isinstance(node, AssignNode):
+            self.mapping[node.lvalue] = node.rvalue
+
+    def replace(self, src: ir.Element):
+        if not isinstance(src, FuncNode):
+            return
+        for node in set(self.subtree_excluding(src, CallNode)) | set(
+            self.subtree_leaves(src, CallNode)
+        ):
+            if isinstance(node, ir.AssignNode):
+                node.rvalue = backwards_replace(node.rvalue, self.mapping)
+            elif isinstance(node, ir.BranchNode):
+                node.cond = backwards_replace(node.cond, self.mapping)
+            # elif isinstance(node, ir.CallNode):
+            #     new_args = []
+            #     for arg in node.args:
+            #         new_args.append(backwards_replace(arg, self.mapping))
+
+    def get_used(self, src: ir.Element):
+        if isinstance(src, ir.AssignNode):
+            for var in get_variables(src.rvalue):
+                self.used.add(var)
+        elif isinstance(src, ir.BranchNode):
+            for var in get_variables(src.cond):
+                self.used.add(var)
+        elif isinstance(src, ir.CallNode):
+            for var in src.args:
+                self.used.add(var)
