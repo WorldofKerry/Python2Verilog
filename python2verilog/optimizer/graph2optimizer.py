@@ -785,6 +785,7 @@ class rmv_redundant_calls(Transformer):
                 del self[call_node]
             del self[src]
 
+
 class rmv_redundant_branches(Transformer):
     def apply(self):
         for node in self.adj_list.copy():
@@ -794,17 +795,15 @@ class rmv_redundant_branches(Transformer):
     def single(self, src: ir.Element):
         if not isinstance(src, BranchNode):
             return
-        assert len(self.adj_list[src]) == 2
-        one, two = self.adj_list[src]
-        print(f"{src=} {self.adj_list[one]=} {self.adj_list[two]=}")
-        if self.adj_list[one] == self.adj_list[two]:
 
-            succs = self.adj_list[one]
+        all_succs = [self.adj_list[x] for x in self.adj_list[src]]
+        if all(all_succs[0] == succ for succ in all_succs):
+            succs = all_succs[0]
             preds = self.predecessors(src)
-            
+
             for pred in preds:
-                self.adj_list[pred] |= succs 
-        
-            del self[one]
-            del self[two]
+                self.adj_list[pred] |= succs
+
+            for branch in self.adj_list[src].copy():
+                del self[branch]
             del self[src]

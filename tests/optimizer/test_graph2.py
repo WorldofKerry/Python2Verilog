@@ -323,8 +323,8 @@ class TestGraph(unittest.TestCase):
         #     f.write(str(graph.to_cytoscape(id_in_label=True)))
 
     def test_ssa_funcs(self):
-        # graph = make_even_fib_graph_no_clocks()
-        graph = multiplier()
+        graph = make_even_fib_graph_no_clocks()
+        # graph = multiplier()
         # graph = make_basic_branch()
         # graph = make_pdf_example()
         # graph = make_basic_while()
