@@ -13,8 +13,9 @@ from python2verilog.optimizer.graph2optimizer import (  # nopycln: import
     insert_phi,
     newrename,
     parallelize,
-    propagate_and_remove,
+    propagate,
     replace_merge_nodes,
+    rmv_assigns_and_phis,
     rmv_redundant_branches,
     rmv_redundant_calls,
     visit_nonclocked,
@@ -334,7 +335,8 @@ class TestGraph(unittest.TestCase):
         graph = insert_phi.debug(graph).apply()
         graph = newrename.debug(graph).apply(graph.entry, recursion=True)
         graph = replace_merge_nodes.debug(graph).apply()
-        graph = propagate_and_remove.debug(graph).apply()
+        graph = propagate.debug(graph).apply()
+        graph = rmv_assigns_and_phis.debug(graph).apply()
         graph = rmv_redundant_calls(graph)
         graph = rmv_redundant_branches(graph)
         # graph = dataflow.debug(graph).apply()

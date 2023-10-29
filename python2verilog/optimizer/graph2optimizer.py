@@ -663,7 +663,7 @@ class replace_merge_nodes(Transformer):
             del self[src]
 
 
-class propagate_and_remove(Transformer):
+class propagate(Transformer):
     """
     Propagates variables and removes unused/dead variables
     """
@@ -672,40 +672,97 @@ class propagate_and_remove(Transformer):
         super().__init__(graph, apply=apply)
         self.mapping: dict[expr.Var, expr.Expression] = {}
         self.used: set[expr.Var] = set()
+        self.core: dict[expr.Var, ir.Element] = {}
+        self.visited: set[ir.Element] = set()
+        self.reference_count: dict[expr.Var, int] = {}
 
     def apply(self):
         for node in self.adj_list:
             self.make_ssa_mapping(node)
-        print(f"{self.mapping=}")
         for node in self.adj_list:
-            self.replace(node)
+            self.make_core_mapping(node)
+        print(f"{self.core=}")
         for node in self.adj_list:
-            self.get_used(node)
-        print(f"{self.used=}")
-        for node in self.adj_list.copy():
-            self.rmv_unused_assigns(node)
+            self.dfs_make_mapping(node)
 
-        for node in self.adj_list:
-            self.rmv_unused_phis(node)
+        # for node in self.adj_list:
+        #     self.make_reference_count(node)
+
+        # print(f"{self.reference_count=}")
+
+        # print(f"{self.mapping=}")
+        # for node in self.adj_list:
+        #     self.replace(node)
+        # for node in self.adj_list:
+        #     self.get_used(node)
+        # for node in self.adj_list.copy():
+        #     self.rmv_unused_assigns(node)
+
+        # for node in self.adj_list:
+        #     self.rmv_unused_phis(node)
 
         # Round 2 to deal with unused phis
-        self.used = set()
-        for node in self.adj_list:
-            self.get_used(node)
-        for node in self.adj_list.copy():
-            self.rmv_unused_assigns(node)
-        for node in self.adj_list:
-            self.rmv_unused_phis(node)
+        # self.used = set()
+        # for node in self.adj_list:
+        #     self.get_used(node)
+        # print(f"{self.mapping=}")
+        # print(f"{(set(self.mapping.keys()) - self.used)=}")
 
-        self.used = set()
-        for node in self.adj_list:
-            self.get_used(node)
-        for node in self.adj_list.copy():
-            self.rmv_unused_assigns(node)
-        for node in self.adj_list:
-            self.rmv_unused_phis(node)
+        # for node in self.adj_list:
+        #     self.rmv_unused_phis(node)
+
+        # self.used = set()
+        # for node in self.adj_list:
+        #     self.get_used(node)
+        # for node in self.adj_list.copy():
+        #     self.rmv_unused_assigns(node)
 
         return self
+
+    def make_reference_count(self, node: Element):
+        if isinstance(node, AssignNode):
+            for var in get_variables(node.rvalue):
+                self.reference_count[var] = self.reference_count.get(var, 0) + 1
+        elif isinstance(node, BranchNode):
+            for var in get_variables(node.cond):
+                self.reference_count[var] = self.reference_count.get(var, 0) + 1
+        elif isinstance(node, CallNode):
+            for var in node.args:
+                self.reference_count[var] = self.reference_count.get(var, 0) + 1
+
+    def make_core_mapping(self, node: Element):
+        """
+        Variables that are params for function nodes are core variables.
+        That is, they cannot be optimized away (except their removal),
+        as they're responsible for the PHI functionality
+        """
+        if isinstance(node, FuncNode):
+            for var in node.params:
+                self.core[var] = node
+
+    def dfs_make_mapping(self, node: Element):
+        """
+        Recursively make mapping
+        """
+        if node in self.visited:
+            return
+        self.visited.add(node)
+        if isinstance(node, AssignNode):
+            done = False
+            while not done:
+                print(f"Iter {node=}")
+                vars = list(get_variables(node.rvalue))
+                if all(var in self.core for var in vars):
+                    done = True
+                node.rvalue = backwards_replace(node.rvalue, self.mapping)
+        elif isinstance(node, BranchNode):
+            done = False
+            while not done:
+                print(f"Iter {node=}")
+                vars = list(get_variables(node.cond))
+                if all(var in self.core for var in vars):
+                    done = True
+                node.cond = backwards_replace(node.cond, self.mapping)
 
     def make_ssa_mapping(self, node: Element):
         if isinstance(node, AssignNode):
@@ -807,3 +864,56 @@ class rmv_redundant_branches(Transformer):
             for branch in self.adj_list[src].copy():
                 del self[branch]
             del self[src]
+
+
+class rmv_assigns_and_phis(Transformer):
+    def __init__(self, graph: CFG, *, apply: bool = True):
+        super().__init__(graph, apply=apply)
+        self.responsible: dict[expr.Var, ir.Element] = {}
+        self.used: set[expr.Var] = set()
+        self.to_be_rmved: set[expr.Var] = set()
+
+    def apply(self):
+        for node in self.adj_list:
+            self.make_all_and_used(node)
+        print(
+            f"{self.responsible=} {self.used=} {(set(self.responsible) - self.used)=}"
+        )
+
+        self.to_be_rmved = set(self.responsible) - self.used
+        while self.to_be_rmved:
+            self.remove(self.to_be_rmved.pop())
+        return self
+
+    def make_all_and_used(self, src: ir.Element):
+        if isinstance(src, AssignNode):
+            for var in get_variables(src.rvalue):
+                self.used.add(var)
+            self.responsible[src.lvalue] = src
+        elif isinstance(src, BranchNode):
+            for var in get_variables(src.cond):
+                self.used.add(var)
+        elif isinstance(src, CallNode):
+            for var in src.args:
+                self.used.add(var)
+        elif isinstance(src, FuncNode):
+            for var in src.params:
+                self.responsible[var] = src
+
+    def remove(self, var: expr.Var):
+        print(f"{var=}")
+        src = self.responsible[var]
+        if isinstance(src, AssignNode):
+            succs = set(self.adj_list[src])
+            assert len(succs) == 1
+            preds = set(self.predecessors(src))
+            for pred in preds:
+                self.adj_list[pred] |= succs
+            del self[src]
+        elif isinstance(src, FuncNode):
+            index = src.params.index(var)
+            del src.params[index]
+            for pred in self.predecessors(src):
+                assert guard(pred, CallNode)
+                self.to_be_rmved.add(pred.args[index])
+                del pred.args[index]
