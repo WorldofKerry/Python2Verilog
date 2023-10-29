@@ -796,6 +796,7 @@ class rmv_redundant_branches(Transformer):
             return
         assert len(self.adj_list[src]) == 2
         one, two = self.adj_list[src]
+        print(f"{src=} {self.adj_list[one]=} {self.adj_list[two]=}")
         if self.adj_list[one] == self.adj_list[two]:
 
             succs = self.adj_list[one]
@@ -804,6 +805,6 @@ class rmv_redundant_branches(Transformer):
             for pred in preds:
                 self.adj_list[pred] |= succs 
         
-        del self[one]
-        del self[two]
-        del self[src]
+            del self[one]
+            del self[two]
+            del self[src]

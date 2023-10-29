@@ -324,8 +324,8 @@ class TestGraph(unittest.TestCase):
 
     def test_ssa_funcs(self):
         # graph = make_even_fib_graph_no_clocks()
-        # graph = multiplier()
-        graph = make_basic_branch()
+        graph = multiplier()
+        # graph = make_basic_branch()
         # graph = make_pdf_example()
         # graph = make_basic_while()
         # graph = make_basic_path()
