@@ -15,6 +15,8 @@ from python2verilog.optimizer.graph2optimizer import (  # nopycln: import
     parallelize,
     propagate_and_remove,
     replace_merge_nodes,
+    rmv_redundant_branches,
+    rmv_redundant_calls,
     visit_nonclocked,
 )
 from python2verilog.utils.cytoscape import run_dash
@@ -333,6 +335,8 @@ class TestGraph(unittest.TestCase):
         graph = newrename.debug(graph).apply(graph.entry, recursion=True)
         graph = replace_merge_nodes.debug(graph).apply()
         graph = propagate_and_remove.debug(graph).apply()
+        graph = rmv_redundant_calls(graph)
+        graph = rmv_redundant_branches(graph)
         # graph = dataflow.debug(graph).apply()
         # print(f"{graph.dominance()=}")
 

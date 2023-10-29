@@ -762,3 +762,48 @@ class propagate_and_remove(Transformer):
                 for pred in self.predecessors(src):
                     assert guard(pred, CallNode)
                     del pred.args[index]
+
+
+class rmv_redundant_calls(Transformer):
+    def apply(self):
+        for node in self.adj_list.copy():
+            self.single(node)
+        return self
+
+    def single(self, src: ir.Element):
+        if not isinstance(src, FuncNode):
+            return
+        if len(src.params) == 0:
+            func_succs = set(self.adj_list[src])
+            assert len(func_succs) == 1
+            call_nodes = set(self.predecessors(src))
+            for call_node in call_nodes:
+                assert guard(call_node, ir.CallNode)
+                assert len(call_node.args) == 0
+                for call_preds in set(self.predecessors(call_node)):
+                    self.adj_list[call_preds] |= func_succs
+                del self[call_node]
+            del self[src]
+
+class rmv_redundant_branches(Transformer):
+    def apply(self):
+        for node in self.adj_list.copy():
+            self.single(node)
+        return self
+
+    def single(self, src: ir.Element):
+        if not isinstance(src, BranchNode):
+            return
+        assert len(self.adj_list[src]) == 2
+        one, two = self.adj_list[src]
+        if self.adj_list[one] == self.adj_list[two]:
+
+            succs = self.adj_list[one]
+            preds = self.predecessors(src)
+            
+            for pred in preds:
+                self.adj_list[pred] |= succs 
+        
+        del self[one]
+        del self[two]
+        del self[src]
