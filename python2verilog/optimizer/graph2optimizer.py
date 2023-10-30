@@ -894,6 +894,7 @@ class lower_to_fsm(Transformer):
         self.new.unique_counter = 100
         self.visited_count: dict[ir.Element, int] = {}
         self.mapping: dict[expr.Var, expr.Expression] = {}
+        self.truely_visited: set[ir.Element] = set()
         super().__init__(graph, apply=apply)
 
     def apply(self):
@@ -922,11 +923,15 @@ class lower_to_fsm(Transformer):
         self.new.add_node(new_node)
 
         self.visited_count[src] = self.visited_count.get(src, 0) + 1
-        if self.visited_count[src] > 3:
-            # print(f"DONE {self.mapping} {src=}")
-            # self.visited_count = {}
-            # self.mapping = {}
-            # self.clone(src)
+        if self.visited_count[src] > 3 and isinstance(src, FuncNode):
+            print(f"DONE {src=}")
+            self.visited_count = {}
+            self.mapping = {}
+
+            if src not in self.truely_visited:
+                self.truely_visited.add(src)
+                self.clone(src)
+
             return new_node
 
         if isinstance(src, ir.FuncNode):
@@ -947,15 +952,15 @@ class lower_to_fsm(Transformer):
         for node in self.adj_list[src]:
             # print(f"{self.mapping=}")
 
-            for key in self.mapping:
-                if self.mapping[key] in get_variables(self.mapping[key]):
-                    # temp fix to prevent infinite recursion
-                    continue
-                self.mapping[key] = backwards_replace(self.mapping[key], self.mapping)
+            # for key in self.mapping:
+            #     if self.mapping[key] in get_variables(self.mapping[key]):
+            #         # temp fix to prevent infinite recursion
+            #         continue
+            #     self.mapping[key] = backwards_replace(self.mapping[key], self.mapping)
 
-            # print(f"Add node {src=} -> {new_node=}")
+            print(f"Add node {src=} -> {new_node=}")
             new_child = self.clone(node)
-            # print(f"Add edge {new_node=} -> {new_child=}")
+            print(f"Add edge {new_node=} -> {new_child=}")
 
             self.new.add_edge(new_node, new_child)
         return new_node
