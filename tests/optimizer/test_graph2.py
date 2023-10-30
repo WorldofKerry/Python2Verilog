@@ -228,6 +228,23 @@ def make_basic_branch():
     return graph
 
 
+def make_chain():
+    a = Var("a")
+    b = Var("b")
+    c = Var("c")
+    d = Var("d")
+
+    graph = CFG()
+
+    prev = graph.add_node(AssignNode(c, d))
+    prev = graph.add_node(AssignNode(b, c), prev)
+    prev = graph.add_node(AssignNode(a, b), prev)
+    prev = graph.add_node(AssignNode(c, BinOp(a, "+", Int(1))), prev)
+    prev = graph.add_node(EndNode({c}), prev)
+
+    return graph
+
+
 def make_basic_while():
     """
     Based on slide 17 of
@@ -324,9 +341,10 @@ class TestGraph(unittest.TestCase):
         #     f.write(str(graph.to_cytoscape(id_in_label=True)))
 
     def test_ssa_funcs(self):
-        # graph = make_even_fib_graph_no_clocks()
+        graph = make_even_fib_graph_no_clocks()
+        # graph = make_chain()
         # graph = multiplier()
-        graph = make_basic_branch()
+        # graph = make_basic_branch()
         # graph = make_pdf_example()
         # graph = make_basic_while()
         # graph = make_basic_path()
@@ -337,8 +355,9 @@ class TestGraph(unittest.TestCase):
         graph = replace_merge_nodes.debug(graph).apply()
         graph = propagate.debug(graph).apply()
         graph = rmv_assigns_and_phis.debug(graph).apply()
-        graph = rmv_redundant_calls(graph)
-        graph = rmv_redundant_branches(graph)
+        # graph = rmv_redundant_calls(graph)
+        # graph = rmv_redundant_branches(graph)
+
         # graph = dataflow.debug(graph).apply()
         # print(f"{graph.dominance()=}")
 
