@@ -898,6 +898,7 @@ class lower_to_fsm(Transformer):
 
     def apply(self):
         self.clone(self.entry)
+        # self.clone(self[12])
         self.copy(self.new)
         return super().apply()
 
@@ -906,7 +907,8 @@ class lower_to_fsm(Transformer):
         new_node.graph = None
         new_node._unique_id = ""
 
-        print(f"{new_node=} {str(new_node)=} {self.mapping=}")
+        # print(f"{new_node=} {str(new_node)=} {self.mapping=}")
+        print(f"{self.visited_count=} {self.mapping=}")
         if isinstance(new_node, ir.AssignNode):
             new_node.rvalue = backwards_replace(new_node.rvalue, self.mapping)
         elif isinstance(new_node, BranchNode):
@@ -921,32 +923,39 @@ class lower_to_fsm(Transformer):
 
         self.visited_count[src] = self.visited_count.get(src, 0) + 1
         if self.visited_count[src] > 3:
-            print(f"DONE {self.mapping} {src=}")
+            # print(f"DONE {self.mapping} {src=}")
             # self.visited_count = {}
             # self.mapping = {}
             # self.clone(src)
             return new_node
 
-        for node in self.adj_list[src]:
-            print(f"{node=} {list(self.subtree_excluding(node, FuncNode))}")
-            if isinstance(src, ir.FuncNode):
+        if isinstance(src, ir.FuncNode):
+            pass
+        elif isinstance(src, ir.AssignNode):
+            if src.lvalue in self.mapping:
+                # raise RuntimeError(f"{src.lvalue=}")
                 pass
-            elif isinstance(src, ir.AssignNode):
+            else:
                 self.mapping[src.lvalue] = src.rvalue
-            elif isinstance(src, ir.CallNode):
-                print(f"Inner")
-                for succ in self.adj_list[src]:
-                    assert guard(succ, ir.FuncNode)
-                    for arg, param in zip(src.args, succ.params):
-                        self.mapping[param] = arg
-            print(f"{self.mapping=}")
+        elif isinstance(src, ir.CallNode):
+            # print(f"Inner")
+            for succ in self.adj_list[src]:
+                assert guard(succ, ir.FuncNode)
+                for arg, param in zip(src.args, succ.params):
+                    self.mapping[param] = arg
+
+        for node in self.adj_list[src]:
+            # print(f"{self.mapping=}")
 
             for key in self.mapping:
+                if self.mapping[key] in get_variables(self.mapping[key]):
+                    # temp fix to prevent infinite recursion
+                    continue
                 self.mapping[key] = backwards_replace(self.mapping[key], self.mapping)
 
-            print(f"Add node {src=} -> {new_node=}")
+            # print(f"Add node {src=} -> {new_node=}")
             new_child = self.clone(node)
-            print(f"Add edge {new_node=} -> {new_child=}")
+            # print(f"Add edge {new_node=} -> {new_child=}")
 
             self.new.add_edge(new_node, new_child)
         return new_node
