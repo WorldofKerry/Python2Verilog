@@ -8,3 +8,4 @@ networkx[default]
 dash_cytoscape
 dash
 parameterized
+typing_extensions

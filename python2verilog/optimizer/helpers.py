@@ -42,6 +42,6 @@ def backwards_replace(
         raise TypeError(f"{type(expr)} {expr}")
     try:
         expr = ir.Int(eval(str(expr)))
-    except SyntaxError:
+    except Exception:
         pass
     return expr
