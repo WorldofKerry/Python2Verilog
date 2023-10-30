@@ -925,17 +925,20 @@ class lower_to_fsm(Transformer):
         self.visited_count[src] = self.visited_count.get(src, 0) + 1
         if self.visited_count[src] > 3 and isinstance(src, FuncNode):
             print(f"DONE {src=}")
-            self.visited_count = {}
-            self.mapping = {}
 
             if src not in self.truely_visited:
+                print(f"RECURSE {src=} {self.mapping=}")
+
+                self.visited_count = {}
+                self.mapping = {}
                 self.truely_visited.add(src)
                 self.clone(src)
 
             return new_node
 
         if isinstance(src, ir.FuncNode):
-            pass
+            for param in src.params:
+                self.mapping[param] = param
         elif isinstance(src, ir.AssignNode):
             if src.lvalue in self.mapping:
                 # raise RuntimeError(f"{src.lvalue=}")
