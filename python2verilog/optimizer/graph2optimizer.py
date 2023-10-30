@@ -894,18 +894,10 @@ class lower_to_fsm(Transformer):
         self.new.unique_counter = 100
         self.visited_count: dict[ir.Element, int] = {}
         self.mapping: dict[expr.Var, expr.Expression] = {}
-        self.edges = []
         super().__init__(graph, apply=apply)
 
     def apply(self):
-        self.visited_count = {}
-        self.mapping = {}
         self.clone(self.entry)
-        for src, dst in self.edges:
-            try:
-                self.new.add_edge(src, dst)
-            except Exception as e:
-                print(f"{e=}")
         self.copy(self.new)
         return super().apply()
 
@@ -927,10 +919,12 @@ class lower_to_fsm(Transformer):
 
         self.new.add_node(new_node)
 
-        # if any(count == 3 for count in self.visited_count.values()):
-        #     return new_node
         self.visited_count[src] = self.visited_count.get(src, 0) + 1
         if self.visited_count[src] > 3:
+            print(f"DONE {self.mapping} {src=}")
+            # self.visited_count = {}
+            # self.mapping = {}
+            # self.clone(src)
             return new_node
 
         for node in self.adj_list[src]:
