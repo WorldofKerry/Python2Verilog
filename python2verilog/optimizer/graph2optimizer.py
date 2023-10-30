@@ -150,10 +150,13 @@ class Transformer(ir.CFG):
     """
 
     def __init__(self, graph: Optional[ir.CFG] = None, *, apply: bool = True):
+        print(f"ctor")
         if graph is not None:
+            print("not None")
             self.copy(graph)
-        if apply:
-            self.apply()
+            if apply:
+                print("apply")
+                self.apply()
 
     @classmethod
     def debug(cls, graph: ir.CFG):
@@ -169,11 +172,14 @@ class Transformer(ir.CFG):
         """
         return self
 
-    def __or__(self, __value: ir.CFG) -> ir.CFG:
-        assert guard(__value, ir.CFG)
-        return self.__init__(__value)
+    def __or__(self, __value: Union[type[ir.CFG], ir.CFG]) -> ir.CFG:
+        print(f"__or__ {__value}")
+        if isinstance(__value, ir.CFG):
+            return __value
+        elif isinstance(__value, type):
+            return __value(graph=self)
 
-    def __ror__(self, __value: ir.CFG) -> ir.CFG:
+    def __ror__(self, __value: Union[type[ir.CFG], ir.CFG]) -> ir.CFG:
         return self.__or__(__value)
 
 
@@ -269,8 +275,8 @@ class newrename(Transformer):
     Renames variables for SSA
     """
 
-    def __init__(self, graph: CFG, *, apply: bool = True):
-        super().__init__(graph, apply=apply)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.visited = set()
         self.var_counter = {}
         self._stacks: dict[expr.Var, list[expr.Var]] = {}
@@ -402,9 +408,6 @@ class parallelize(Transformer):
     Adds parallel paths between two BlockHead nodes
     """
 
-    def __init__(self, graph: CFG, *, apply: bool = True):
-        super().__init__(graph, apply=apply)
-
     def apply(self):
         self.single(self.entry, {})
         return super().apply()
@@ -428,8 +431,8 @@ class dataflow(Transformer):
     Adds data flow edges to graph
     """
 
-    def __init__(self, graph: CFG, *, apply: bool = True):
-        super().__init__(graph, apply=apply)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
         # Maps each assignment mode to their SSA variable
         self.mapping = {}
@@ -603,8 +606,8 @@ class dataflow(Transformer):
 
 
 class replace_merge_nodes(Transformer):
-    def __init__(self, graph: CFG, *, apply: bool = True):
-        super().__init__(graph, apply=apply)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
         # Mapping of call node to merge node
         self.mapping: dict[ir.Element, ir.Element] = {}
@@ -677,8 +680,9 @@ class propagate(Transformer):
     Propagates variables and removes unused/dead variables
     """
 
-    def __init__(self, graph: CFG, *, apply: bool = True):
-        super().__init__(graph, apply=apply)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
         self.mapping: dict[expr.Var, expr.Expression] = {}
         self.used: set[expr.Var] = set()
         self.core: dict[expr.Var, ir.Element] = {}
@@ -863,11 +867,12 @@ class rmv_redundant_branches(Transformer):
 
 
 class rmv_assigns_and_phis(Transformer):
-    def __init__(self, graph: CFG, *, apply: bool = True):
-        super().__init__(graph, apply=apply)
+    def __init__(self, *args, **kwargs):
+        print("subclass ctor")
         self.responsible: dict[expr.Var, ir.Element] = {}
         self.ref_count: dict[expr.Var, int] = {}
         self.to_be_rmved: set[expr.Var] = set()
+        super().__init__(*args, **kwargs)
 
     def apply(self):
         for node in self.adj_list:

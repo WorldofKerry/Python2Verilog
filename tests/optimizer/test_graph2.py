@@ -352,10 +352,10 @@ class TestGraph(unittest.TestCase):
         run_dash(graph.to_cytoscape())
 
     def test_ssa_funcs(self):
-        graph = make_even_fib_graph_no_clocks()
+        # graph = make_even_fib_graph_no_clocks()
         # graph = make_chain()
         # graph = multiplier()
-        # graph = make_basic_branch()
+        graph = make_basic_branch()
         # graph = make_pdf_example()
         # graph = make_basic_while()
         # graph = make_basic_path()
@@ -365,9 +365,14 @@ class TestGraph(unittest.TestCase):
         graph = newrename.debug(graph).apply(graph.entry, recursion=True)
         graph = replace_merge_nodes.debug(graph).apply()
         graph = propagate.debug(graph).apply()
-        graph = rmv_assigns_and_phis.debug(graph).apply()
-        graph = rmv_redundant_calls(graph)
-        graph = rmv_redundant_branches(graph)
+
+        graph = (
+            graph | rmv_assigns_and_phis.debug(graph).apply() | rmv_redundant_calls | rmv_redundant_branches
+        )
+
+        # graph = rmv_assigns_and_phis.debug(graph).apply()
+        # graph = rmv_redundant_calls(graph)
+        # graph = rmv_redundant_branches(graph)
 
         # graph = dataflow.debug(graph).apply()
         # print(f"{graph.dominance()=}")
