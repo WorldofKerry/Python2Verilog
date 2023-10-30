@@ -10,6 +10,7 @@ from typing import Any, Iterator, Optional
 import python2verilog.ir.expressions as expr
 import python2verilog.ir.graph2 as ir
 from python2verilog.ir.graph2 import *
+from python2verilog.ir.graph2 import Optional
 from python2verilog.optimizer.helpers import backwards_replace
 from python2verilog.utils.generics import pretty_dict
 from python2verilog.utils.typed import guard  # nopycln: import
@@ -70,6 +71,13 @@ class Transformer(ir.CFG, metaclass=TransformerMetaClass):
         Apply transformation
         """
         return self
+
+    @abstractmethod
+    def init(self):
+        """
+        Initialize instance variables
+        """
+        pass
 
 
 class insert_merge_nodes(Transformer):
@@ -294,29 +302,6 @@ class make_ssa(Transformer):
             if value:
                 mapping[key] = value[-1]
         return mapping
-
-
-class parallelize(Transformer):
-    """
-    Adds parallel paths between two BlockHead nodes
-    """
-
-    def apply(self):
-        self.single(self.entry, {})
-        return super().apply()
-
-    def single(self, block: BlockHead, mapping: dict[expr.Var, expr.Expression]):
-        """
-        Adds parallel paths between two BlockHead nodes
-        """
-        for node in self.subtree_excluding(block, BlockHead):
-            if isinstance(node, AssignNode):
-                node.rvalue = backwards_replace(node.rvalue, mapping)
-                mapping[node.lvalue] = node.rvalue
-            if isinstance(node, BranchNode):
-                node.cond = backwards_replace(node.cond, mapping)
-
-        return self
 
 
 class dataflow(Transformer):
@@ -826,3 +811,39 @@ class rmv_dead_assigns_and_params(Transformer):
                 assert guard(pred, CallNode)
                 self.to_be_removed.add(pred.args[index])
                 del pred.args[index]
+
+
+class parallelize(Transformer):
+    def __init__(self, graph: CFG | None = None, *, apply: bool = True):
+        self.stack = []
+        super().__init__(graph, apply=apply)
+
+    def apply(self):
+        self.stack = list(self.adj_list)
+        while self.stack:
+            self.single(self.stack.pop())
+        # self.single(self[1])
+        # self.single(self[2])
+        return self
+
+    def single(self, src: ir.Element):
+        if not isinstance(src, ir.AssignNode):
+            return
+        preds = list(self.predecessors(src))
+        if all(
+            (self.check(pred, var) for pred in preds)
+            for var in get_variables(src.rvalue)
+        ):
+            succs = self.adj_list[src].copy()
+            for pred_pred in self.predecessors(preds[0]):
+                self.adj_list[pred_pred].add(src)
+
+            for pred in preds:
+                self.adj_list[pred].remove(src)
+                self.adj_list[pred] |= succs
+
+    def check(self, src: ir.Element, var: expr.Var):
+        if isinstance(src, ir.AssignNode):
+            return var != src.lvalue
+        if isinstance(src, ir.FuncNode):
+            return all(var != v for v in src.params)
