@@ -144,7 +144,31 @@ def iter_non_join(graph: ir.CFG, node: ir.Element):
             yield from iter_non_join(graph, child)
 
 
-class Transformer(ir.CFG):
+class MetaTransformer(type):
+    def __or__(self, __value: Union[type[ir.CFG], ir.CFG]) -> ir.CFG:
+        # print(f"__or__ {__value}")
+        if isinstance(__value, ir.CFG):
+            print("First")
+            try:
+                __value.prefix
+            except AttributeError as e:
+                print(f"Except {e}")
+                __value.copy(self)
+            return __value
+        elif isinstance(__value, type):
+            print("Second")
+            return __value(graph=self)
+
+    def __ror__(self, __value: Union[type[ir.CFG], ir.CFG]) -> ir.CFG:
+        print(f"{type(self)=} {self=}")
+        if isinstance(__value, ir.CFG):
+            ret = self.__new__(self)
+            ret.__init__(__value)
+            return ret
+        return self | __value
+
+
+class transformer(ir.CFG, metaclass=MetaTransformer):
     """
     Abstract bass class for graph transformers
     """
@@ -173,17 +197,22 @@ class Transformer(ir.CFG):
         return self
 
     def __or__(self, __value: Union[type[ir.CFG], ir.CFG]) -> ir.CFG:
-        print(f"__or__ {__value}")
+        # print(f"__or__ {__value}")
         if isinstance(__value, ir.CFG):
+            try:
+                __value.prefix
+            except AttributeError as e:
+                print(f"Except {e}")
+                __value.copy(self)
             return __value
         elif isinstance(__value, type):
             return __value(graph=self)
 
     def __ror__(self, __value: Union[type[ir.CFG], ir.CFG]) -> ir.CFG:
-        return self.__or__(__value)
+        return self | __value
 
 
-class insert_merge_nodes(Transformer):
+class insert_merge_nodes(transformer):
     """
     Adds block heads when there is a merge
 
@@ -211,7 +240,7 @@ class insert_merge_nodes(Transformer):
         return self
 
 
-class add_block_head_after_branch(Transformer):
+class add_block_head_after_branch(transformer):
     """
     Add block nodes (think of it as a label)
     """
@@ -232,7 +261,7 @@ class add_block_head_after_branch(Transformer):
         return self
 
 
-class insert_phi(Transformer):
+class insert_phi(transformer):
     """
     Add Phi Nodes
     """
@@ -270,21 +299,21 @@ class insert_phi(Transformer):
         return self
 
 
-class newrename(Transformer):
+class newrename(transformer):
     """
     Renames variables for SSA
     """
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
         self.visited = set()
         self.var_counter = {}
         self._stacks: dict[expr.Var, list[expr.Var]] = {}
         self.var_mapping = {}
         self.global_vars = set()
+        super().__init__(*args, **kwargs)
 
-    def apply(self, block: BasicBlock, recursion: bool = True):
-        self.rename(b=block, recursion=recursion)
+    def apply(self, recursion: bool = True):
+        self.rename(b=self.entry, recursion=recursion)
         assert guard(self.entry, BlockHead)
         print(f"{self.global_vars=}")
         self.entry.phis = {x: {} for x in self.global_vars}
@@ -403,7 +432,7 @@ class newrename(Transformer):
         return mapping
 
 
-class parallelize(Transformer):
+class parallelize(transformer):
     """
     Adds parallel paths between two BlockHead nodes
     """
@@ -426,7 +455,7 @@ class parallelize(Transformer):
         return self
 
 
-class dataflow(Transformer):
+class dataflow(transformer):
     """
     Adds data flow edges to graph
     """
@@ -605,12 +634,12 @@ class dataflow(Transformer):
             # raise e
 
 
-class replace_merge_nodes(Transformer):
+class replace_merge_nodes(transformer):
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
         # Mapping of call node to merge node
         self.mapping: dict[ir.Element, ir.Element] = {}
+
+        super().__init__(*args, **kwargs)
 
     def apply(self):
         for node in self.adj_list.copy():
@@ -675,19 +704,18 @@ class replace_merge_nodes(Transformer):
             del self[src]
 
 
-class propagate(Transformer):
+class propagate(transformer):
     """
     Propagates variables and removes unused/dead variables
     """
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
         self.mapping: dict[expr.Var, expr.Expression] = {}
         self.used: set[expr.Var] = set()
         self.core: dict[expr.Var, ir.Element] = {}
         self.visited: set[ir.Element] = set()
         self.reference_count: dict[expr.Var, int] = {}
+        super().__init__(*args, **kwargs)
 
     def apply(self):
         for node in self.adj_list:
@@ -821,7 +849,7 @@ class propagate(Transformer):
                     del pred.args[index]
 
 
-class rmv_redundant_calls(Transformer):
+class rmv_redundant_calls(transformer):
     def apply(self):
         for node in self.adj_list.copy():
             self.single(node)
@@ -843,7 +871,7 @@ class rmv_redundant_calls(Transformer):
             del self[src]
 
 
-class rmv_redundant_branches(Transformer):
+class rmv_redundant_branches(transformer):
     def apply(self):
         for node in self.adj_list.copy():
             self.single(node)
@@ -866,7 +894,7 @@ class rmv_redundant_branches(Transformer):
             del self[src]
 
 
-class rmv_assigns_and_phis(Transformer):
+class rmv_assigns_and_phis(transformer):
     def __init__(self, *args, **kwargs):
         print("subclass ctor")
         self.responsible: dict[expr.Var, ir.Element] = {}

@@ -7,6 +7,7 @@ from matplotlib import pyplot as plt
 from python2verilog.ir.expressions import *  # nopycln: import
 from python2verilog.ir.graph2 import *
 from python2verilog.optimizer.graph2optimizer import (  # nopycln: import
+    transformer,
     add_block_head_after_branch,
     dataflow,
     insert_merge_nodes,
@@ -360,14 +361,22 @@ class TestGraph(unittest.TestCase):
         # graph = make_basic_while()
         # graph = make_basic_path()
 
-        graph = insert_merge_nodes.debug(graph).apply()
-        graph = insert_phi.debug(graph).apply()
-        graph = newrename.debug(graph).apply(graph.entry, recursion=True)
-        graph = replace_merge_nodes.debug(graph).apply()
-        graph = propagate.debug(graph).apply()
+        # graph = insert_merge_nodes.debug(graph).apply()
+        # graph = insert_phi.debug(graph).apply()
+        # graph = newrename.debug(graph).apply(graph.entry, recursion=True)
+        # graph = replace_merge_nodes.debug(graph).apply()
+        # graph = propagate.debug(graph).apply()
 
         graph = (
-            graph | rmv_assigns_and_phis.debug(graph).apply() | rmv_redundant_calls | rmv_redundant_branches
+            graph
+            | insert_merge_nodes
+            | insert_phi
+            | newrename
+            | replace_merge_nodes
+            | propagate
+            | rmv_assigns_and_phis
+            | rmv_redundant_calls
+            | rmv_redundant_branches
         )
 
         # graph = rmv_assigns_and_phis.debug(graph).apply()
