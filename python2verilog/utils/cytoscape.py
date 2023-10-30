@@ -104,7 +104,8 @@ def run_dash(elements):
     )
 
     app.layout = html.Div([cytoscape])
-    app.run(debug=True)
+    # app.run(debug=True) # for auto-update on file-save
+    app.run()
 
 
 if __name__ == "__main__":

@@ -122,7 +122,10 @@ def make_even_fib_graph_no_clocks():
 
     prev = if_i_lt_n_prev = graph.add_node(BranchNode(BinOp(i, "<", n)), prev)
 
-    prev = graph.add_node(TrueNode(), prev)
+    prev = graph.add_node(FalseNode(), if_i_lt_n_prev)
+    prev = graph.add_node(EndNode([]), prev)
+
+    prev = graph.add_node(TrueNode(), if_i_lt_n_prev)
     if_a_mod_2 = graph.add_node(BranchNode(Mod(a, Int(2))), prev)
 
     prev = graph.add_node(TrueNode(), if_a_mod_2)
@@ -341,9 +344,16 @@ class TestGraph(unittest.TestCase):
         # with open("graph2_cytoscape.log", mode="w") as f:
         #     f.write(str(graph.to_cytoscape(id_in_label=True)))
 
-    def test_ssa_funcs(self):
-        # graph = make_even_fib_graph_no_clocks()
+    def test_metaclass(self):
         graph = make_chain()
+
+        graph = graph | CoolTrans
+
+        run_dash(graph.to_cytoscape())
+
+    def test_ssa_funcs(self):
+        graph = make_even_fib_graph_no_clocks()
+        # graph = make_chain()
         # graph = multiplier()
         # graph = make_basic_branch()
         # graph = make_pdf_example()

@@ -4,6 +4,7 @@ Graph 2 optimizers
 import copy
 import itertools
 from abc import abstractmethod
+import types
 from typing import Any, Iterator, Optional
 
 import python2verilog.ir.expressions as expr
@@ -148,8 +149,9 @@ class Transformer(ir.CFG):
     Abstract bass class for graph transformers
     """
 
-    def __init__(self, graph: ir.CFG, *, apply: bool = True):
-        self.copy(graph)
+    def __init__(self, graph: Optional[ir.CFG] = None, *, apply: bool = True):
+        if graph is not None:
+            self.copy(graph)
         if apply:
             self.apply()
 
@@ -166,6 +168,13 @@ class Transformer(ir.CFG):
         Apply transformation
         """
         return self
+
+    def __or__(self, __value: ir.CFG) -> ir.CFG:
+        assert guard(__value, ir.CFG)
+        return self.__init__(__value)
+
+    def __ror__(self, __value: ir.CFG) -> ir.CFG:
+        return self.__or__(__value)
 
 
 class insert_merge_nodes(Transformer):
@@ -684,39 +693,6 @@ class propagate(Transformer):
         print(f"{self.core=}")
         for node in self.adj_list:
             self.dfs_make_mapping(node)
-
-        # for node in self.adj_list:
-        #     self.make_reference_count(node)
-
-        # print(f"{self.reference_count=}")
-
-        # print(f"{self.mapping=}")
-        # for node in self.adj_list:
-        #     self.replace(node)
-        # for node in self.adj_list:
-        #     self.get_used(node)
-        # for node in self.adj_list.copy():
-        #     self.rmv_unused_assigns(node)
-
-        # for node in self.adj_list:
-        #     self.rmv_unused_phis(node)
-
-        # Round 2 to deal with unused phis
-        # self.used = set()
-        # for node in self.adj_list:
-        #     self.get_used(node)
-        # print(f"{self.mapping=}")
-        # print(f"{(set(self.mapping.keys()) - self.used)=}")
-
-        # for node in self.adj_list:
-        #     self.rmv_unused_phis(node)
-
-        # self.used = set()
-        # for node in self.adj_list:
-        #     self.get_used(node)
-        # for node in self.adj_list.copy():
-        #     self.rmv_unused_assigns(node)
-
         return self
 
     def make_reference_count(self, node: Element):
