@@ -376,6 +376,7 @@ class TestGraph(unittest.TestCase):
             | rmv_dead_assigns_and_params
             | rmv_argless_calls
             | rmv_redundant_branches
+            | rmv_dead_assigns_and_params  # when branch references param
         )
 
         # graph = rmv_assigns_and_phis.debug(graph).apply()

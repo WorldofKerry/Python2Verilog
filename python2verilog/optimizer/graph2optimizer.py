@@ -760,57 +760,58 @@ class rmv_redundant_branches(Transformer):
 
 class rmv_dead_assigns_and_params(Transformer):
     def __init__(self, *args, **kwargs):
-        print("subclass ctor")
-        self.responsible: dict[expr.Var, ir.Element] = {}
-        self.ref_count: dict[expr.Var, int] = {}
-        self.to_be_rmved: set[expr.Var] = set()
+        self.var_to_definition: dict[expr.Var, ir.Element] = {}
+        self.var_to_ref_count: dict[expr.Var, int] = {}
+        self.to_be_removed: set[expr.Var] = set()
         super().__init__(*args, **kwargs)
 
     def apply(self):
         for node in self.adj_list:
-            self.make_all_and_used(node)
-        print(f"{self.responsible=} {self.ref_count=}")
+            self.create_ref_count(node)
+        print(f"{self.var_to_definition=} {self.var_to_ref_count=}")
 
-        self.to_be_rmved = set(self.responsible) - set(
-            key for key, value in self.ref_count.items() if value > 0
+        self.to_be_removed = set(self.var_to_definition) - set(
+            key for key, value in self.var_to_ref_count.items() if value > 0
         )
-        print(f"{self.to_be_rmved=}")
-        while self.to_be_rmved:
-            self.remove(self.to_be_rmved.pop())
-            self.to_be_rmved |= set(
-                key for key, value in self.ref_count.items() if value == 0
+        print(f"{self.to_be_removed=}")
+        while self.to_be_removed:
+            self.remove_unreferenced(self.to_be_removed.pop())
+            self.to_be_removed |= set(
+                key for key, value in self.var_to_ref_count.items() if value == 0
             )
-            for var in set(key for key, value in self.ref_count.items() if value == 0):
-                del self.ref_count[var]
-        print(f"{self.responsible=} {self.ref_count=}")
+            for var in set(
+                key for key, value in self.var_to_ref_count.items() if value == 0
+            ):
+                del self.var_to_ref_count[var]
+        print(f"{self.var_to_definition=} {self.var_to_ref_count=}")
         return self
 
-    def make_all_and_used(self, src: ir.Element):
+    def create_ref_count(self, src: ir.Element):
         if isinstance(src, AssignNode):
-            self.responsible[src.lvalue] = src
+            self.var_to_definition[src.lvalue] = src
             for var in get_variables(src.rvalue):
-                self.ref_count[var] = self.ref_count.get(var, 0) + 1
+                self.var_to_ref_count[var] = self.var_to_ref_count.get(var, 0) + 1
         elif isinstance(src, BranchNode):
             for var in get_variables(src.cond):
-                self.ref_count[var] = self.ref_count.get(var, 0) + 1
+                self.var_to_ref_count[var] = self.var_to_ref_count.get(var, 0) + 1
         elif isinstance(src, CallNode):
             for var in src.args:
-                self.ref_count[var] = self.ref_count.get(var, 0) + 1
+                self.var_to_ref_count[var] = self.var_to_ref_count.get(var, 0) + 1
         elif isinstance(src, FuncNode):
             for var in src.params:
-                self.responsible[var] = src
+                self.var_to_definition[var] = src
         elif isinstance(src, EndNode):
             for var in src.values:
-                self.ref_count[var] = self.ref_count.get(var, 0) + 1
+                self.var_to_ref_count[var] = self.var_to_ref_count.get(var, 0) + 1
 
-    def remove(self, var: expr.Var):
+    def remove_unreferenced(self, var: expr.Var):
         print(f"{var=}")
-        src = self.responsible[var]
+        src = self.var_to_definition[var]
         if src not in self.adj_list:
             return
         if isinstance(src, AssignNode):
             for var in get_variables(src.rvalue):
-                self.ref_count[var] -= 1
+                self.var_to_ref_count[var] -= 1
 
             succs = set(self.adj_list[src])
             assert len(succs) == 1
@@ -823,5 +824,5 @@ class rmv_dead_assigns_and_params(Transformer):
             del src.params[index]
             for pred in self.predecessors(src):
                 assert guard(pred, CallNode)
-                self.to_be_rmved.add(pred.args[index])
+                self.to_be_removed.add(pred.args[index])
                 del pred.args[index]
