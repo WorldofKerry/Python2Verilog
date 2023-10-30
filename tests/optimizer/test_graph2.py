@@ -19,7 +19,6 @@ from python2verilog.optimizer.graph2optimizer import (  # nopycln: import
     rmv_assigns_and_phis,
     rmv_redundant_branches,
     rmv_redundant_calls,
-    visit_nonclocked,
 )
 from python2verilog.utils.cytoscape import run_dash
 

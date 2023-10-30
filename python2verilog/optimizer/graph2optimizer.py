@@ -32,118 +32,6 @@ def get_variables(exp: expr.Expression) -> Iterator[expr.Var]:
         raise RuntimeError(f"{type(exp)}")
 
 
-def visit_nonclocked(graph: ir.CFG, node: ir.Element) -> Iterator[ir.Element]:
-    """
-    Recursively visit childrens of node,
-
-    yielding nodes with edges to a Clock node
-    """
-    for child in graph[node]:
-        if not isinstance(child, ir.ClockNode):
-            yield child
-
-
-def visit_clocked(
-    graph: ir.CFG, node: ir.Element, visited: Optional[set[ir.Element]] = None
-):
-    """
-    Recursively visit children of node that are clock nodes
-
-    Excludes node if it is a clock node
-    """
-    if visited is None:
-        visited = set()
-    if node in visited:
-        return
-    visited.add(node)
-    for child in graph[node]:
-        if isinstance(child, ir.ClockNode):
-            yield child
-        else:
-            yield from visit_clocked(graph, child, visited)
-
-
-def dom(graph: ir.CFG, a: ir.Element, b: ir.Element):
-    """
-    a dom b
-    """
-    dominance_ = graph.dominance()
-    return b in dominance_[a]
-
-
-def join_dominator_tree(graph: ir.CFG):
-    """
-    Dominator tree with only join nodes
-    """
-    graph = copy.deepcopy(newrename(graph))
-    replacements = {}
-
-    def rec(node: ir.Element):
-        successors = set(graph.visit_succ(node))
-        print(f"join dom tree {node=} {successors=}")
-        replacements[node] = successors
-        for successor in successors:
-            rec(successor)
-
-    assert guard(graph.entry, ir.BlockHead)
-    rec(graph.entry)
-
-    for key, value in replacements.items():
-        graph.adj_list[key] = value
-
-    return graph.dominator_tree()
-
-
-def build_tree(node_dict, root):
-    if root in node_dict:
-        children = node_dict[root]
-        tree = {root: {}}
-        for child in children:
-            subtree = build_tree(node_dict, child)
-            tree[root].update(subtree)
-        return tree
-    else:
-        return {root: {}}
-
-
-def print_tree(
-    tree: [Any, Any], node: Any, level: int = 0, visited: Optional[set[Any]] = None
-):
-    """
-    Print tree stored as dict
-    """
-    if visited is None:
-        visited = set()
-    if node in visited:
-        return ""
-    visited.add(node)
-    ret = "\t" * level + " -> " + repr(node) + "\n"
-    for child in tree[node]:
-        ret += print_tree(tree, child, level + 1, visited)
-    return ret
-
-
-def assigned_variables(elements: Iterator[ir.Element]):
-    """
-    Yields variables assigned in elements
-    """
-    for elem in elements:
-        if isinstance(elem, ir.AssignNode):
-            yield elem.lvalue
-
-
-def iter_non_join(graph: ir.CFG, node: ir.Element):
-    """
-    Recursively yields the node's children,
-
-    not going past join nodes
-    """
-    for child in graph[node]:
-        if not isinstance(child, ir.BlockHead):
-            yield child
-            yield from iter_non_join(graph, child)
-
-
 class TransformerMetaClass(type):
     def __ror__(self, __value: Union[ir.CFG, type[ir.CFG]]) -> ir.CFG:
         if isinstance(__value, ir.CFG):
@@ -239,7 +127,11 @@ class insert_phi(Transformer):
     """
 
     def apply(self):
-        vars = assigned_variables(self.dfs(self.entry))
+        vars = [
+            node.lvalue
+            for node in self.dfs(self.entry)
+            if isinstance(node, ir.AssignNode)
+        ]
         for var in vars:
             self.apply_to_var(var)
         return self
