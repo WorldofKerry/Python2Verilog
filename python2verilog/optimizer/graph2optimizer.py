@@ -891,6 +891,7 @@ class rmv_loops(Transformer):
 class lower_to_fsm(Transformer):
     def __init__(self, graph: CFG | None = None, *, apply: bool = True):
         self.new: ir.CFG = ir.CFG()
+        self.new.unique_counter = 100
         self.visited_count: dict[ir.Element, int] = {}
         self.mapping: dict[expr.Var, expr.Expression] = {}
         self.edges = []
@@ -925,7 +926,7 @@ class lower_to_fsm(Transformer):
         self.new.add_node(new_node)
 
         if any(count == 2 for count in self.visited_count.values()):
-            return src
+            return new_node
         self.visited_count[src] = self.visited_count.get(src, 0) + 1
 
         for node in self.adj_list[src]:
