@@ -315,7 +315,7 @@ class dataflow(Transformer):
         super().__init__(*args, **kwargs)
 
         # Maps each assignment mode to their SSA variable
-        self.mapping = {}
+        mapping = {}
         self.control_entry = Element()  # Temporary
 
     def apply(self):
@@ -974,47 +974,61 @@ class lower_to_fsm(Transformer):
 
 class codegen(Transformer):
     def __init__(self, graph: CFG | None = None, *, apply: bool = True):
-        self.mapping: dict[expr.Var, expr.Expression] = {}
         self.counter = 0
         super().__init__(graph, apply=apply)
 
     def apply(self):
         return super().apply()
 
-    def start(self, src: ir.Element, indent: int = 0):
+    def start(
+        self,
+        src: ir.Element,
+        indent: int = 0,
+        mapping: Optional[dict[expr.Var, expr.Expression]] = None,
+    ):
+        if mapping is None:
+            mapping = {}
         if isinstance(src, ir.FuncNode):
             yield "  " * indent + f"def func({str(src.params)[1:-1]}):"
             if len(list(self.adj_list[src])) == 1:
-                yield from self.start(list(self.adj_list[src])[0], indent + 1)
+                yield from self.start(list(self.adj_list[src])[0], indent + 1, mapping)
         elif isinstance(src, ir.AssignNode):
             self.counter += 1
             if self.counter > 1000:
                 return
-            print(f"{src} {self.mapping=}")
-            src.rvalue = backwards_replace(src.rvalue, self.mapping)
-            self.mapping[src.lvalue] = src.rvalue
+            print(f"{src} {mapping=}")
+            src.rvalue = backwards_replace(src.rvalue, mapping)
+            mapping[src.lvalue] = src.rvalue
             yield "  " * indent + f"{src.lvalue} = {src.rvalue}"
-            yield from self.start(list(self.adj_list[src])[0], indent)
+            yield from self.start(list(self.adj_list[src])[0], indent, mapping)
         elif isinstance(src, ir.CallNode):
             new_args = []
             for arg in src.args:
-                new_args.append(backwards_replace(arg, self.mapping))
+                new_args.append(backwards_replace(arg, mapping))
             src.args = new_args
 
             func = list(self.adj_list[src])[0]
             assert guard(func, ir.FuncNode)
             for arg, param in zip(src.args, func.params):
-                self.mapping[param] = arg
+                mapping[param] = arg
                 yield "  " * indent + f"{param} = {arg}"
             if len(list(self.adj_list[func])) == 1:
-                yield from self.start(list(self.adj_list[func])[0], indent)
+                yield from self.start(list(self.adj_list[func])[0], indent, mapping)
         elif isinstance(src, ir.BranchNode):
             yield "  " * indent + f"if {src.cond}:"
             true, false = list(self.adj_list[src])
             if isinstance(false, ir.TrueNode):
                 false, true = true, false
-            yield from self.start(list(self.adj_list[true])[0], indent + 1)
+            yield from self.start(
+                list(self.adj_list[true])[0], indent + 1, copy.deepcopy(mapping)
+            )
             yield "  " * indent + "else:"
-            yield from self.start(list(self.adj_list[false])[0], indent + 1)
+            yield from self.start(
+                list(self.adj_list[false])[0], indent + 1, copy.deepcopy(mapping)
+            )
         elif isinstance(src, ir.EndNode):
+            new_values = []
+            for value in src.values:
+                new_values.append(backwards_replace(value, mapping))
+            src.values = new_values
             yield "  " * indent + f"return {src.values}"
