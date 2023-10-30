@@ -71,6 +71,7 @@ class Transformer(ir.CFG, metaclass=TransformerMetaClass):
         """
         Apply transformation
         """
+        print(f"Running {self.__class__.__name__}")
         return self
 
     @abstractmethod
@@ -96,7 +97,7 @@ class insert_merge_nodes(Transformer):
         # Update entry
         entry = self.add_node(ir.BlockHead(), children=[self.entry])
         self.entry = entry
-        return self
+        return super().apply()
 
     def single(self, node: ir.Element):
         parents = list(self.predecessors(node))
@@ -127,7 +128,7 @@ class add_block_head_after_branch(Transformer):
         for child in children:
             self.add_node(ir.BlockHead(), node, children=[child])
         self.adj_list[node] -= children
-        return self
+        return super().apply()
 
 
 class insert_phis(Transformer):
@@ -143,7 +144,7 @@ class insert_phis(Transformer):
         ]
         for var in vars:
             self.apply_to_var(var)
-        return self
+        return super().apply()
 
     def apply_to_var(self, v: expr.Var):
         worklist: set[ir.Element] = set()
@@ -339,7 +340,7 @@ class dataflow(Transformer):
 
         # for node in list(self.dfs(self.entry)):
         #     self.rmv_cf_to_df_edges(node)
-        return self
+        return super().apply()
 
     def rm_df_to_cf(self, src: Element):
         """
@@ -575,7 +576,7 @@ class propagate_vars_and_consts(Transformer):
         print(f"{self.core=}")
         for node in self.adj_list:
             self.dfs_make_mapping(node)
-        return self
+        return super().apply()
 
     def make_reference_count(self, node: Element):
         if isinstance(node, AssignNode):
@@ -703,7 +704,7 @@ class rmv_argless_calls(Transformer):
     def apply(self):
         for node in self.adj_list.copy():
             self.single(node)
-        return self
+        return super().apply()
 
     def single(self, src: ir.Element):
         if not isinstance(src, FuncNode):
@@ -725,7 +726,7 @@ class rmv_redundant_branches(Transformer):
     def apply(self):
         for node in self.adj_list.copy():
             self.single(node)
-        return self
+        return super().apply()
 
     def single(self, src: ir.Element):
         if not isinstance(src, BranchNode):
@@ -770,7 +771,7 @@ class rmv_dead_assigns_and_params(Transformer):
             ):
                 del self.var_to_ref_count[var]
         print(f"{self.var_to_definition=} {self.var_to_ref_count=}")
-        return self
+        return super().apply()
 
     def create_ref_count(self, src: ir.Element):
         if isinstance(src, AssignNode):
@@ -825,7 +826,7 @@ class parallelize(Transformer):
             self.single(self.stack.pop())
         # self.single(self[1])
         # self.single(self[2])
-        return self
+        return super().apply()
 
     def single(self, src: ir.Element):
         if not isinstance(src, ir.AssignNode):
@@ -861,7 +862,7 @@ class rmv_loops(Transformer):
         self.mapping = {}
         self.single(self.entry)
         print(f"{self.mapping=}")
-        return self
+        return super().apply()
 
     def single(self, src: ir.Element):
         if any(count == 8 for count in self.visited_count.values()):
@@ -885,3 +886,66 @@ class rmv_loops(Transformer):
         self.visited_count[src] = self.visited_count.get(src, 0) + 1
         for succ in self.adj_list[src]:
             self.single(succ)
+
+
+class lower_to_fsm(Transformer):
+    def __init__(self, graph: CFG | None = None, *, apply: bool = True):
+        self.new: ir.CFG = ir.CFG()
+        self.visited_count: dict[ir.Element, int] = {}
+        self.mapping: dict[expr.Var, expr.Expression] = {}
+        self.edges = []
+        super().__init__(graph, apply=apply)
+
+    def apply(self):
+        self.visited_count = {}
+        self.mapping = {}
+        self.clone(self.entry)
+        for src, dst in self.edges:
+            try:
+                self.new.add_edge(src, dst)
+            except Exception as e:
+                print(f"{e=}")
+        self.copy(self.new)
+        return super().apply()
+
+    def clone(self, src: ir.Element):
+        new_node = copy.copy(src)
+        new_node.graph = None
+        new_node._unique_id = ""
+
+        print(f"{str(new_node)=} {self.mapping=}")
+        if isinstance(new_node, ir.AssignNode):
+            new_node.rvalue = backwards_replace(new_node.rvalue, self.mapping)
+        elif isinstance(new_node, CallNode):
+            new_args = []
+            for arg in new_node.args:
+                new_args.append(backwards_replace(arg, self.mapping))
+            new_node.args = new_args
+
+        self.new.add_node(new_node)
+
+        if any(count == 2 for count in self.visited_count.values()):
+            return src
+        self.visited_count[src] = self.visited_count.get(src, 0) + 1
+
+        for node in self.adj_list[src]:
+            print(f"{node=} {list(self.subtree_excluding(node, FuncNode))}")
+            if isinstance(node, ir.FuncNode):
+                pass
+            elif isinstance(src, ir.AssignNode):
+                self.mapping[src.lvalue] = src.rvalue
+            elif isinstance(src, ir.CallNode):
+                for succ in self.adj_list[src]:
+                    assert guard(succ, ir.FuncNode)
+                    for arg, param in zip(src.args, succ.params):
+                        self.mapping[param] = arg
+
+            for key in self.mapping:
+                self.mapping[key] = backwards_replace(self.mapping[key], self.mapping)
+
+            print(f"Add node {src=} -> {new_node=}")
+            new_child = self.clone(node)
+            print(f"Add edge {new_node=} -> {new_child=}")
+
+            self.new.add_edge(new_node, new_child)
+        return new_node

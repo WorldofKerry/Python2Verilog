@@ -332,7 +332,7 @@ class CFG:
         return str(lines)
 
     def to_cytoscape(
-        self, use_repr: bool = False
+        self, use_repr: bool = False, id_prefix: str = ""
     ) -> dict[str, list[dict[str, dict[str, str]]]]:
         """
         To cytoscape visualizer
@@ -344,7 +344,7 @@ class CFG:
             nodes.append(
                 {
                     "data": {
-                        "id": elem.unique_id,
+                        "id": f"{id_prefix}{elem.unique_id}",
                         "label": repr(elem) if use_repr else str(elem),
                     }
                 }
@@ -365,8 +365,8 @@ class CFG:
                 edges.append(
                     {
                         "data": {
-                            "source": elem.unique_id,
-                            "target": child.unique_id,
+                            "source": f"{id_prefix}{elem.unique_id}",
+                            "target": f"{id_prefix}{child.unique_id}",
                             "class": "ControlFlow",
                             "label": "ControlFlow",
                         }
@@ -377,8 +377,8 @@ class CFG:
             edges.append(
                 {
                     "data": {
-                        "source": source.unique_id,
-                        "target": target.unique_id,
+                        "source": f"{id_prefix}{source.unique_id}",
+                        "target": f"{id_prefix}{target.unique_id}",
                         "class": "ClockedEdge",
                         "label": "COOL",
                     }
@@ -504,10 +504,15 @@ class CFG:
 
         Yields all nodes in subtree, excluding leaves
         """
-        for child in self.adj_list[source]:
-            if not isinstance(child, elem_type):
-                yield child
-                yield from self.subtree_excluding(child, elem_type)
+        stack = list(self.adj_list[source])
+        while stack:
+            print(f"stuck {stack=}")
+            cur = stack.pop()
+            if isinstance(cur, elem_type):
+                continue
+            yield cur
+            for child in self.adj_list[cur]:
+                stack.append(child)
 
     def subtree_leaves(
         self,

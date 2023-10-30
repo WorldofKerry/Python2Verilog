@@ -12,6 +12,7 @@ from python2verilog.optimizer.graph2optimizer import (  # nopycln: import
     dataflow,
     insert_merge_nodes,
     insert_phis,
+    lower_to_fsm,
     make_ssa,
     parallelize,
     propagate_vars_and_consts,
@@ -374,18 +375,13 @@ class TestGraph(unittest.TestCase):
     def test_ssa_funcs(self):
         # graph = make_even_fib_graph_no_clocks()
         # graph = make_chain()
-        # graph = multiplier()
+        graph = multiplier()
         # graph = make_basic_branch()
+        # graph = make_const_loop()
+
         # graph = make_pdf_example()
         # graph = make_basic_while()
         # graph = make_basic_path()
-        graph = make_const_loop()
-
-        # graph = insert_merge_nodes.debug(graph).apply()
-        # graph = insert_phi.debug(graph).apply()
-        # graph = newrename.debug(graph).apply(graph.entry, recursion=True)
-        # graph = replace_merge_nodes.debug(graph).apply()
-        # graph = propagate.debug(graph).apply()
 
         graph = (
             graph
@@ -402,6 +398,9 @@ class TestGraph(unittest.TestCase):
             # | rmv_loops
         )
 
+        lowered = CFG()
+        lowered = graph | lower_to_fsm
+
         # graph = rmv_assigns_and_phis.debug(graph).apply()
         # graph = rmv_redundant_calls(graph)
         # graph = rmv_redundant_branches(graph)
@@ -411,4 +410,10 @@ class TestGraph(unittest.TestCase):
 
         # with open("graph2_cytoscape.log", mode="w") as f:
         # f.write(str(graph.to_cytoscape()))
-        run_dash(graph.to_cytoscape())
+        cyto = graph.to_cytoscape()
+        lowered_cyto = lowered.to_cytoscape(id_prefix="lowered")
+        print(f"{lowered_cyto=}")
+        cyto["nodes"].extend(lowered_cyto["nodes"])
+        cyto["edges"].extend(lowered_cyto["edges"])
+        print(f"{cyto['nodes']=}")
+        run_dash(cyto)
