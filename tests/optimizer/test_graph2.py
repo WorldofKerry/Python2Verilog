@@ -9,6 +9,7 @@ from python2verilog.ir.graph2 import *
 from python2verilog.optimizer.graph2optimizer import (  # nopycln: import
     Transformer,
     add_block_head_after_branch,
+    codegen,
     dataflow,
     insert_merge_nodes,
     insert_phis,
@@ -400,6 +401,13 @@ class TestGraph(unittest.TestCase):
 
         lowered = CFG()
         lowered = graph | lower_to_fsm
+
+        print(f"{lowered.entries=} {lowered.adj_list=}")
+        for entry in lowered.entries:
+            result = codegen(lowered)
+            output = list(result.start(entry))
+            text = "\n".join(output).replace(".", "")
+            print(f"{text}")
 
         # graph = rmv_assigns_and_phis.debug(graph).apply()
         # graph = rmv_redundant_calls(graph)

@@ -895,6 +895,7 @@ class lower_to_fsm(Transformer):
         self.visited_count: dict[ir.Element, int] = {}
         self.mapping: dict[expr.Var, expr.Expression] = {}
         self.truely_visited: set[ir.Element] = set()
+        self.entries = set()
         super().__init__(graph, apply=apply)
 
     def apply(self):
@@ -921,6 +922,8 @@ class lower_to_fsm(Transformer):
             new_node.values = new_values
 
         self.new.add_node(new_node)
+        if len(self.visited_count) == 0:
+            self.entries.add(new_node)
 
         self.visited_count[src] = self.visited_count.get(src, 0) + 1
         if self.visited_count[src] > 3 and isinstance(src, FuncNode):
@@ -967,3 +970,51 @@ class lower_to_fsm(Transformer):
 
             self.new.add_edge(new_node, new_child)
         return new_node
+
+
+class codegen(Transformer):
+    def __init__(self, graph: CFG | None = None, *, apply: bool = True):
+        self.mapping: dict[expr.Var, expr.Expression] = {}
+        self.counter = 0
+        super().__init__(graph, apply=apply)
+
+    def apply(self):
+        return super().apply()
+
+    def start(self, src: ir.Element, indent: int = 0):
+        if isinstance(src, ir.FuncNode):
+            yield "  " * indent + f"def func({str(src.params)[1:-1]}):"
+            if len(list(self.adj_list[src])) == 1:
+                yield from self.start(list(self.adj_list[src])[0], indent + 1)
+        elif isinstance(src, ir.AssignNode):
+            self.counter += 1
+            if self.counter > 1000:
+                return
+            print(f"{src} {self.mapping=}")
+            src.rvalue = backwards_replace(src.rvalue, self.mapping)
+            self.mapping[src.lvalue] = src.rvalue
+            yield "  " * indent + f"{src.lvalue} = {src.rvalue}"
+            yield from self.start(list(self.adj_list[src])[0], indent)
+        elif isinstance(src, ir.CallNode):
+            new_args = []
+            for arg in src.args:
+                new_args.append(backwards_replace(arg, self.mapping))
+            src.args = new_args
+
+            func = list(self.adj_list[src])[0]
+            assert guard(func, ir.FuncNode)
+            for arg, param in zip(src.args, func.params):
+                self.mapping[param] = arg
+                yield "  " * indent + f"{param} = {arg}"
+            if len(list(self.adj_list[func])) == 1:
+                yield from self.start(list(self.adj_list[func])[0], indent)
+        elif isinstance(src, ir.BranchNode):
+            yield "  " * indent + f"if {src.cond}:"
+            true, false = list(self.adj_list[src])
+            if isinstance(false, ir.TrueNode):
+                false, true = true, false
+            yield from self.start(list(self.adj_list[true])[0], indent + 1)
+            yield "  " * indent + "else:"
+            yield from self.start(list(self.adj_list[false])[0], indent + 1)
+        elif isinstance(src, ir.EndNode):
+            yield "  " * indent + f"return {src.values}"
