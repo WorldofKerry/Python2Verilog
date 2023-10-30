@@ -15,7 +15,7 @@ def backwards_replace(
     If the expression matches a key in the mapping, it is replaced with
     the corresponding value in the mapping.
 
-    Note: ignores exclusive vars in replacement process
+    Note: evaluates constants when possible
 
     :return: a copy of the updated expression.
     """
@@ -40,4 +40,8 @@ def backwards_replace(
         expr.expr = backwards_replace(expr.expr, mapping)
     else:
         raise TypeError(f"{type(expr)} {expr}")
+    try:
+        expr = ir.Int(eval(str(expr)))
+    except SyntaxError:
+        pass
     return expr

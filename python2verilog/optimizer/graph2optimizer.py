@@ -914,32 +914,38 @@ class lower_to_fsm(Transformer):
         new_node.graph = None
         new_node._unique_id = ""
 
-        print(f"{str(new_node)=} {self.mapping=}")
+        print(f"{new_node=} {str(new_node)=} {self.mapping=}")
         if isinstance(new_node, ir.AssignNode):
             new_node.rvalue = backwards_replace(new_node.rvalue, self.mapping)
-        elif isinstance(new_node, CallNode):
-            new_args = []
-            for arg in new_node.args:
-                new_args.append(backwards_replace(arg, self.mapping))
-            new_node.args = new_args
+        elif isinstance(new_node, BranchNode):
+            new_node.cond = backwards_replace(new_node.cond, self.mapping)
+        elif isinstance(new_node, EndNode):
+            new_values = []
+            for value in new_node.values:
+                new_values.append(backwards_replace(value, self.mapping))
+            new_node.values = new_values
 
         self.new.add_node(new_node)
 
-        if any(count == 2 for count in self.visited_count.values()):
-            return new_node
+        # if any(count == 3 for count in self.visited_count.values()):
+        #     return new_node
         self.visited_count[src] = self.visited_count.get(src, 0) + 1
+        if self.visited_count[src] > 3:
+            return new_node
 
         for node in self.adj_list[src]:
             print(f"{node=} {list(self.subtree_excluding(node, FuncNode))}")
-            if isinstance(node, ir.FuncNode):
+            if isinstance(src, ir.FuncNode):
                 pass
             elif isinstance(src, ir.AssignNode):
                 self.mapping[src.lvalue] = src.rvalue
             elif isinstance(src, ir.CallNode):
+                print(f"Inner")
                 for succ in self.adj_list[src]:
                     assert guard(succ, ir.FuncNode)
                     for arg, param in zip(src.args, succ.params):
                         self.mapping[param] = arg
+            print(f"{self.mapping=}")
 
             for key in self.mapping:
                 self.mapping[key] = backwards_replace(self.mapping[key], self.mapping)
