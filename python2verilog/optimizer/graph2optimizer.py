@@ -121,7 +121,7 @@ class add_block_head_after_branch(Transformer):
         return self
 
 
-class insert_phi(Transformer):
+class insert_phis(Transformer):
     """
     Add Phi Nodes
     """
@@ -163,7 +163,7 @@ class insert_phi(Transformer):
         return self
 
 
-class newrename(Transformer):
+class make_ssa(Transformer):
     """
     Renames variables for SSA
     """
@@ -498,7 +498,7 @@ class dataflow(Transformer):
             # raise e
 
 
-class replace_merge_nodes(Transformer):
+class replace_merge_with_call_and_func(Transformer):
     def __init__(self, *args, **kwargs):
         # Mapping of call node to merge node
         self.mapping: dict[ir.Element, ir.Element] = {}
@@ -568,7 +568,7 @@ class replace_merge_nodes(Transformer):
             del self[src]
 
 
-class propagate(Transformer):
+class propagate_vars_and_consts(Transformer):
     """
     Propagates variables and removes unused/dead variables
     """
@@ -713,7 +713,7 @@ class propagate(Transformer):
                     del pred.args[index]
 
 
-class rmv_redundant_calls(Transformer):
+class rmv_argless_calls(Transformer):
     def apply(self):
         for node in self.adj_list.copy():
             self.single(node)
@@ -758,7 +758,7 @@ class rmv_redundant_branches(Transformer):
             del self[src]
 
 
-class rmv_assigns_and_phis(Transformer):
+class rmv_dead_assigns_and_params(Transformer):
     def __init__(self, *args, **kwargs):
         print("subclass ctor")
         self.responsible: dict[expr.Var, ir.Element] = {}

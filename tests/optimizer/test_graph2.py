@@ -11,14 +11,14 @@ from python2verilog.optimizer.graph2optimizer import (  # nopycln: import
     add_block_head_after_branch,
     dataflow,
     insert_merge_nodes,
-    insert_phi,
-    newrename,
+    insert_phis,
+    make_ssa,
     parallelize,
-    propagate,
-    replace_merge_nodes,
-    rmv_assigns_and_phis,
+    propagate_vars_and_consts,
+    replace_merge_with_call_and_func,
+    rmv_dead_assigns_and_params,
     rmv_redundant_branches,
-    rmv_redundant_calls,
+    rmv_argless_calls,
 )
 from python2verilog.utils.cytoscape import run_dash
 
@@ -352,10 +352,10 @@ class TestGraph(unittest.TestCase):
         run_dash(graph.to_cytoscape())
 
     def test_ssa_funcs(self):
-        graph = make_even_fib_graph_no_clocks()
+        # graph = make_even_fib_graph_no_clocks()
         # graph = make_chain()
         # graph = multiplier()
-        # graph = make_basic_branch()
+        graph = make_basic_branch()
         # graph = make_pdf_example()
         # graph = make_basic_while()
         # graph = make_basic_path()
@@ -369,12 +369,12 @@ class TestGraph(unittest.TestCase):
         graph = (
             graph
             | insert_merge_nodes
-            | insert_phi
-            | newrename
-            | replace_merge_nodes
-            | propagate
-            | rmv_assigns_and_phis
-            | rmv_redundant_calls
+            | insert_phis
+            | make_ssa
+            | replace_merge_with_call_and_func
+            | propagate_vars_and_consts
+            | rmv_dead_assigns_and_params
+            | rmv_argless_calls
             | rmv_redundant_branches
         )
 
