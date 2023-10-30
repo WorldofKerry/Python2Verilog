@@ -17,6 +17,7 @@ from python2verilog.optimizer.graph2optimizer import (  # nopycln: import
     propagate_vars_and_consts,
     replace_merge_with_call_and_func,
     rmv_dead_assigns_and_params,
+    rmv_loops,
     rmv_redundant_branches,
     rmv_argless_calls,
 )
@@ -249,6 +250,25 @@ def make_chain():
     return graph
 
 
+def make_const_loop():
+    x = Var("x")
+    i = Var("i")
+
+    graph = CFG()
+
+    prev = graph.add_node(AssignNode(i, Int(0)))
+    ifelse = graph.add_node(BranchNode(BinOp(i, "<", Int(10))), prev)
+
+    prev = graph.add_node(TrueNode(), ifelse)
+    prev = graph.add_node(AssignNode(x, BinOp(x, "+", i)), prev)
+    prev = graph.add_node(AssignNode(i, BinOp(i, "+", Int(1))), prev, children=[ifelse])
+
+    prev = graph.add_node(FalseNode(), ifelse)
+    prev = graph.add_node(EndNode([x]), prev)
+
+    return graph
+
+
 def make_basic_while():
     """
     Based on slide 17 of
@@ -352,13 +372,14 @@ class TestGraph(unittest.TestCase):
         run_dash(graph.to_cytoscape())
 
     def test_ssa_funcs(self):
-        graph = make_even_fib_graph_no_clocks()
+        # graph = make_even_fib_graph_no_clocks()
         # graph = make_chain()
         # graph = multiplier()
         # graph = make_basic_branch()
         # graph = make_pdf_example()
         # graph = make_basic_while()
         # graph = make_basic_path()
+        graph = make_const_loop()
 
         # graph = insert_merge_nodes.debug(graph).apply()
         # graph = insert_phi.debug(graph).apply()
@@ -377,7 +398,8 @@ class TestGraph(unittest.TestCase):
             | rmv_argless_calls
             | rmv_redundant_branches
             | rmv_dead_assigns_and_params  # when branch references param
-            | parallelize
+            # | parallelize
+            # | rmv_loops
         )
 
         # graph = rmv_assigns_and_phis.debug(graph).apply()

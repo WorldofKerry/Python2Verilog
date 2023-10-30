@@ -1,6 +1,7 @@
 """
 Graph 2 optimizers
 """
+import ast
 import copy
 import itertools
 from abc import abstractmethod
@@ -847,3 +848,40 @@ class parallelize(Transformer):
             return var != src.lvalue
         if isinstance(src, ir.FuncNode):
             return all(var != v for v in src.params)
+
+
+class rmv_loops(Transformer):
+    def __init__(self, graph: CFG | None = None, *, apply: bool = True):
+        self.visited_count: dict[ir.Element, int] = {}
+        self.mapping: dict[expr.Var, expr.Expression] = {}
+        super().__init__(graph, apply=apply)
+
+    def apply(self):
+        self.visited_count = {}
+        self.mapping = {}
+        self.single(self.entry)
+        print(f"{self.mapping=}")
+        return self
+
+    def single(self, src: ir.Element):
+        if any(count == 8 for count in self.visited_count.values()):
+            return
+
+        if isinstance(src, ir.AssignNode):
+            self.mapping[src.lvalue] = src.rvalue
+        elif isinstance(src, ir.CallNode):
+            for succ in self.adj_list[src]:
+                assert guard(succ, ir.FuncNode)
+                for arg, param in zip(src.args, succ.params):
+                    self.mapping[param] = arg
+        for key in self.mapping:
+            self.mapping[key] = backwards_replace(self.mapping[key], self.mapping)
+        for key in self.mapping:
+            try:
+                self.mapping[key] = expr.Int(eval(str(self.mapping[key])))
+            except Exception as e:
+                print(f"{e=} {str(self.mapping[key])=}")
+
+        self.visited_count[src] = self.visited_count.get(src, 0) + 1
+        for succ in self.adj_list[src]:
+            self.single(succ)
