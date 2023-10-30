@@ -165,7 +165,7 @@ class EndNode(Element):
 
     def __init__(self, values: set[expr.Var], unique_id: str = ""):
         super().__init__(unique_id)
-        self.values = typed_set(values, expr.Var)
+        self.values: list[expr.Var] = typed_list(values, expr.Var)
 
     def __str__(self) -> str:
         return super().__str__() + f"{EndNode.__name__[:-4]}\n" + f"{self.values}"

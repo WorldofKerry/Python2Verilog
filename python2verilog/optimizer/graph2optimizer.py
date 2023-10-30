@@ -763,6 +763,26 @@ class propagate(Transformer):
                 if all(var in self.core for var in vars):
                     done = True
                 node.cond = backwards_replace(node.cond, self.mapping)
+        elif isinstance(node, EndNode):
+            done = False
+            old_values = node.values
+            while not done:
+                new_values = []
+                for value in old_values:
+                    new_values.append(backwards_replace(value, self.mapping))
+
+                variables = []
+                for value in new_values:
+                    variables.extend(list(get_variables(value)))
+
+                print(f"{new_values=} {variables=} {node.values=} {self.mapping=}")
+                if all(var in self.core for var in variables):
+                    done = True
+
+                old_values = new_values
+
+            if all(isinstance(value, expr.Var) for value in new_values):
+                node.values = new_values
 
     def make_ssa_mapping(self, node: Element):
         if isinstance(node, AssignNode):
@@ -884,7 +904,9 @@ class rmv_assigns_and_phis(Transformer):
         print(f"{self.to_be_rmved=}")
         while self.to_be_rmved:
             self.remove(self.to_be_rmved.pop())
-            self.to_be_rmved |= set(key for key, value in self.ref_count.items() if value == 0)
+            self.to_be_rmved |= set(
+                key for key, value in self.ref_count.items() if value == 0
+            )
             for var in set(key for key, value in self.ref_count.items() if value == 0):
                 del self.ref_count[var]
         print(f"{self.responsible=} {self.ref_count=}")
@@ -916,7 +938,7 @@ class rmv_assigns_and_phis(Transformer):
         if isinstance(src, AssignNode):
             for var in get_variables(src.rvalue):
                 self.ref_count[var] -= 1
-            
+
             succs = set(self.adj_list[src])
             assert len(succs) == 1
             preds = set(self.predecessors(src))
@@ -927,6 +949,6 @@ class rmv_assigns_and_phis(Transformer):
             index = src.params.index(var)
             del src.params[index]
             for pred in self.predecessors(src):
-                assert guard(pred, CallNode)                
+                assert guard(pred, CallNode)
                 self.to_be_rmved.add(pred.args[index])
                 del pred.args[index]

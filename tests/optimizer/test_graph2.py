@@ -127,7 +127,7 @@ def make_even_fib_graph_no_clocks():
 
     prev = graph.add_node(TrueNode(), if_a_mod_2)
     prev = graph.add_node(AssignNode(a, BinOp(a, "+", Int(10))), prev)
-    out_node = graph.add_node(EndNode({a}), prev)
+    out_node = graph.add_node(EndNode([a]), prev)
 
     prev = graph.add_node(FalseNode(), if_a_mod_2)
 
@@ -164,7 +164,7 @@ def multiplier():
     prev = ifelse = graph.add_node(BranchNode(BinOp(i, "<", a)), prev)
 
     prev = graph.add_node(FalseNode(), ifelse)
-    out_node = graph.add_node(EndNode({c}), prev)
+    out_node = graph.add_node(EndNode([c]), prev)
 
     prev = graph.add_node(TrueNode(), ifelse)
 
@@ -205,7 +205,7 @@ def make_basic_branch():
     prev = postifelse = graph.add_node(AssignNode(n, i))
     prev = graph.add_node(AssignNode(i, i), prev)
     prev = graph.add_node(AssignNode(i, Int(10)), prev)
-    prev = graph.add_node(EndNode({i}), prev)
+    prev = graph.add_node(EndNode([i]), prev)
 
     prev = graph.add_node(TrueNode(), ifelse)
     prev = graph.add_node(AssignNode(i, i), prev)
@@ -239,8 +239,9 @@ def make_chain():
     prev = graph.add_node(AssignNode(c, d))
     prev = graph.add_node(AssignNode(b, c), prev)
     prev = graph.add_node(AssignNode(a, b), prev)
-    prev = graph.add_node(AssignNode(c, BinOp(a, "+", Int(1))), prev)
-    prev = graph.add_node(EndNode({c}), prev)
+    # prev = graph.add_node(AssignNode(c, BinOp(a, "+", Int(1))), prev)
+    prev = graph.add_node(AssignNode(c, a), prev)
+    prev = graph.add_node(EndNode([c]), prev)
 
     return graph
 
@@ -341,8 +342,8 @@ class TestGraph(unittest.TestCase):
         #     f.write(str(graph.to_cytoscape(id_in_label=True)))
 
     def test_ssa_funcs(self):
-        graph = make_even_fib_graph_no_clocks()
-        # graph = make_chain()
+        # graph = make_even_fib_graph_no_clocks()
+        graph = make_chain()
         # graph = multiplier()
         # graph = make_basic_branch()
         # graph = make_pdf_example()
@@ -355,8 +356,8 @@ class TestGraph(unittest.TestCase):
         graph = replace_merge_nodes.debug(graph).apply()
         graph = propagate.debug(graph).apply()
         graph = rmv_assigns_and_phis.debug(graph).apply()
-        # graph = rmv_redundant_calls(graph)
-        # graph = rmv_redundant_branches(graph)
+        graph = rmv_redundant_calls(graph)
+        graph = rmv_redundant_branches(graph)
 
         # graph = dataflow.debug(graph).apply()
         # print(f"{graph.dominance()=}")
