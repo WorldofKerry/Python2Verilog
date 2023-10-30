@@ -1,10 +1,10 @@
 import python2verilog.ir.graph2 as ir
 from python2verilog.ir.graph2 import *
-from python2verilog.optimizer.graph2optimizer import transformer
+from python2verilog.optimizer.graph2optimizer import Transformer
 from python2verilog.optimizer.helpers import backwards_replace
 
 
-class insert_phis(transformer):
+class insert_phis(Transformer):
     """
     On basic blocks
     """
@@ -37,7 +37,7 @@ class insert_phis(transformer):
                 yield operation.lvalue
 
 
-class rename_blocks(transformer):
+class rename_blocks(Transformer):
     def __init__(self, graph: CFG, *, apply: bool = True):
         super().__init__(graph, apply=apply)
         self.visited = set()

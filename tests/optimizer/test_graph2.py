@@ -7,7 +7,7 @@ from matplotlib import pyplot as plt
 from python2verilog.ir.expressions import *  # nopycln: import
 from python2verilog.ir.graph2 import *
 from python2verilog.optimizer.graph2optimizer import (  # nopycln: import
-    transformer,
+    Transformer,
     add_block_head_after_branch,
     dataflow,
     insert_merge_nodes,
@@ -353,10 +353,10 @@ class TestGraph(unittest.TestCase):
         run_dash(graph.to_cytoscape())
 
     def test_ssa_funcs(self):
-        # graph = make_even_fib_graph_no_clocks()
+        graph = make_even_fib_graph_no_clocks()
         # graph = make_chain()
         # graph = multiplier()
-        graph = make_basic_branch()
+        # graph = make_basic_branch()
         # graph = make_pdf_example()
         # graph = make_basic_while()
         # graph = make_basic_path()

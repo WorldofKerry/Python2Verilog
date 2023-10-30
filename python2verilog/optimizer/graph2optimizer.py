@@ -144,31 +144,18 @@ def iter_non_join(graph: ir.CFG, node: ir.Element):
             yield from iter_non_join(graph, child)
 
 
-class MetaTransformer(type):
-    def __or__(self, __value: Union[type[ir.CFG], ir.CFG]) -> ir.CFG:
-        # print(f"__or__ {__value}")
-        if isinstance(__value, ir.CFG):
-            print("First")
-            try:
-                __value.prefix
-            except AttributeError as e:
-                print(f"Except {e}")
-                __value.copy(self)
-            return __value
-        elif isinstance(__value, type):
-            print("Second")
-            return __value(graph=self)
-
-    def __ror__(self, __value: Union[type[ir.CFG], ir.CFG]) -> ir.CFG:
-        print(f"{type(self)=} {self=}")
+class TransformerMetaClass(type):
+    def __ror__(self, __value: Union[ir.CFG, type[ir.CFG]]) -> ir.CFG:
         if isinstance(__value, ir.CFG):
             ret = self.__new__(self)
             ret.__init__(__value)
             return ret
-        return self | __value
+        if isinstance(__value, type(Transformer)):
+            return __value(graph=self)
+        return NotImplemented
 
 
-class transformer(ir.CFG, metaclass=MetaTransformer):
+class Transformer(ir.CFG, metaclass=TransformerMetaClass):
     """
     Abstract bass class for graph transformers
     """
@@ -196,23 +183,8 @@ class transformer(ir.CFG, metaclass=MetaTransformer):
         """
         return self
 
-    def __or__(self, __value: Union[type[ir.CFG], ir.CFG]) -> ir.CFG:
-        # print(f"__or__ {__value}")
-        if isinstance(__value, ir.CFG):
-            try:
-                __value.prefix
-            except AttributeError as e:
-                print(f"Except {e}")
-                __value.copy(self)
-            return __value
-        elif isinstance(__value, type):
-            return __value(graph=self)
 
-    def __ror__(self, __value: Union[type[ir.CFG], ir.CFG]) -> ir.CFG:
-        return self | __value
-
-
-class insert_merge_nodes(transformer):
+class insert_merge_nodes(Transformer):
     """
     Adds block heads when there is a merge
 
@@ -240,7 +212,7 @@ class insert_merge_nodes(transformer):
         return self
 
 
-class add_block_head_after_branch(transformer):
+class add_block_head_after_branch(Transformer):
     """
     Add block nodes (think of it as a label)
     """
@@ -261,7 +233,7 @@ class add_block_head_after_branch(transformer):
         return self
 
 
-class insert_phi(transformer):
+class insert_phi(Transformer):
     """
     Add Phi Nodes
     """
@@ -299,7 +271,7 @@ class insert_phi(transformer):
         return self
 
 
-class newrename(transformer):
+class newrename(Transformer):
     """
     Renames variables for SSA
     """
@@ -432,7 +404,7 @@ class newrename(transformer):
         return mapping
 
 
-class parallelize(transformer):
+class parallelize(Transformer):
     """
     Adds parallel paths between two BlockHead nodes
     """
@@ -455,7 +427,7 @@ class parallelize(transformer):
         return self
 
 
-class dataflow(transformer):
+class dataflow(Transformer):
     """
     Adds data flow edges to graph
     """
@@ -634,7 +606,7 @@ class dataflow(transformer):
             # raise e
 
 
-class replace_merge_nodes(transformer):
+class replace_merge_nodes(Transformer):
     def __init__(self, *args, **kwargs):
         # Mapping of call node to merge node
         self.mapping: dict[ir.Element, ir.Element] = {}
@@ -704,7 +676,7 @@ class replace_merge_nodes(transformer):
             del self[src]
 
 
-class propagate(transformer):
+class propagate(Transformer):
     """
     Propagates variables and removes unused/dead variables
     """
@@ -849,7 +821,7 @@ class propagate(transformer):
                     del pred.args[index]
 
 
-class rmv_redundant_calls(transformer):
+class rmv_redundant_calls(Transformer):
     def apply(self):
         for node in self.adj_list.copy():
             self.single(node)
@@ -871,7 +843,7 @@ class rmv_redundant_calls(transformer):
             del self[src]
 
 
-class rmv_redundant_branches(transformer):
+class rmv_redundant_branches(Transformer):
     def apply(self):
         for node in self.adj_list.copy():
             self.single(node)
@@ -894,7 +866,7 @@ class rmv_redundant_branches(transformer):
             del self[src]
 
 
-class rmv_assigns_and_phis(transformer):
+class rmv_assigns_and_phis(Transformer):
     def __init__(self, *args, **kwargs):
         print("subclass ctor")
         self.responsible: dict[expr.Var, ir.Element] = {}
