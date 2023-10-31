@@ -36,6 +36,3 @@ class Argument:
             parser.addoption(f"-{self.short}", f"--{self.dashed_name}", **self.kwargs)
         else:
             parser.addoption(f"--{self.dashed_name}", **self.kwargs)
-
-    def __repr__(self):
-        return f"{__class__} {self.name}: {self.value}"

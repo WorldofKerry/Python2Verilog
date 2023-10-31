@@ -23,7 +23,6 @@ with tempfile.NamedTemporaryFile(suffix=".py") as tmp:
     spec.loader.exec_module(module)
 
     # ...or, while the tmp file exists, you can query it externally
-    import inspect
 
-    print(inspect.getsource(module.fib))
-    print(module.ns)
+    # print(inspect.getsource(module.fib))
+    # print(module.ns)
