@@ -589,7 +589,9 @@ class rmv_dead_assigns_and_params(Transformer):
 
     def create_ref_count(self, src: ir.Node2):
         if isinstance(src, AssignNode):
-            self.var_to_definition[src.lvalue] = src
+            self.var_to_definition[src.lvalue] = self.var_to_definition.get(
+                src.lvalue, []
+            ) + [src]
             for var in get_variables(src.rvalue):
                 self.var_to_ref_count[var] = self.var_to_ref_count.get(var, 0) + 1
         elif isinstance(src, BranchNode):
@@ -600,33 +602,34 @@ class rmv_dead_assigns_and_params(Transformer):
                 self.var_to_ref_count[var] = self.var_to_ref_count.get(var, 0) + 1
         elif isinstance(src, FuncNode):
             for var in src.params:
-                self.var_to_definition[var] = src
+                self.var_to_definition[var] = self.var_to_definition.get(var, []) + [
+                    src
+                ]
         elif isinstance(src, EndNode):
             for var in src.values:
                 self.var_to_ref_count[var] = self.var_to_ref_count.get(var, 0) + 1
 
     def remove_unreferenced(self, var: expr.Var):
         print(f"{var=}")
-        src = self.var_to_definition[var]
-        if src not in self.nodes():
-            return
-        if isinstance(src, AssignNode):
-            for var in get_variables(src.rvalue):
-                self.var_to_ref_count[var] -= 1
+        for src in self.var_to_definition[var]:
+            if src not in self.nodes():
+                return
+            if isinstance(src, AssignNode):
+                for var in get_variables(src.rvalue):
+                    self.var_to_ref_count[var] -= 1
 
-            succs = set(self.successors(src))
-            # assert len(succs) == 1
-            preds = set(self.predecessors(src))
-            for pred in preds:
-                self.add_edge(pred, *succs)
-            del self[src]
-        elif isinstance(src, FuncNode):
-            index = src.params.index(var)
-            del src.params[index]
-            for pred in self.predecessors(src):
-                assert guard(pred, CallNode)
-                self.to_be_removed.add(pred.args[index])
-                del pred.args[index]
+                succs = set(self.successors(src))
+                preds = set(self.predecessors(src))
+                for pred in preds:
+                    self.add_edge(pred, *succs)
+                del self[src]
+            elif isinstance(src, FuncNode):
+                index = src.params.index(var)
+                del src.params[index]
+                for pred in self.predecessors(src):
+                    assert guard(pred, CallNode)
+                    self.to_be_removed.add(pred.args[index])
+                    del pred.args[index]
 
 
 class parallelize(Transformer):
