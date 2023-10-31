@@ -245,7 +245,7 @@ class CFG:
                 return key
         raise RuntimeError()
 
-    def successors(self, element: Element):
+    def successors(self, element: Element) -> set[Element]:
         return self._adj_list[element]
 
     def elements(self):
@@ -308,6 +308,11 @@ class CFG:
             assert all(target not in self._adj_list[source] for target in targets)
 
         self._adj_list[source] = self._adj_list[source].union(targets)
+
+    def remove_edge(self, source: Element, target: Element):
+        assert guard(source, Element)
+        assert guard(target, Element)
+        self._adj_list[source].remove(target)
 
     def __getitem__(self, key: Union[Element, str, int]):
         if isinstance(key, Element):

@@ -112,32 +112,10 @@ class insert_merge_nodes(Transformer):
         if len(parents) <= 1:
             return
         for parent in parents:
-            self._adj_list[parent] -= {node}
+            self.remove_edge(parent, node)
         self.add_node(ir.MergeNode(), *parents, children=[node])
 
         return self
-
-
-class add_block_head_after_branch(Transformer):
-    """
-    Add block nodes (think of it as a label)
-    """
-
-    def apply(self, graph: ir.CFG):
-        self.copy(graph)
-        nodes = list(self.dfs(self.exit_to_entry[None]))
-        for node in nodes:
-            self.single(node)
-        return self
-
-    def single(self, node: ir.Element):
-        if not isinstance(node, (ir.TrueNode, ir.FalseNode)):
-            return self
-        children = set(self._adj_list[node])
-        for child in children:
-            self.add_node(ir.BlockHead(), node, children=[child])
-        self._adj_list[node] -= children
-        return super().apply(graph)
 
 
 class insert_phis(Transformer):
@@ -979,7 +957,9 @@ class codegen(Transformer):
                     # assign_nodes.append(AssignNode(param, arg))
 
                 if len(list(self._adj_list[func])) == 1:
-                    yield from self.start(list(self._adj_list[func])[0], indent, mapping)
+                    yield from self.start(
+                        list(self._adj_list[func])[0], indent, mapping
+                    )
 
         elif isinstance(src, ir.BranchNode):
             src.cond = backwards_replace(src.cond, mapping)

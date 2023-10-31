@@ -8,7 +8,6 @@ from python2verilog.ir.expressions import *  # nopycln: import
 from python2verilog.ir.graph2 import *
 from python2verilog.optimizer.graph2optimizer import (  # nopycln: import
     Transformer,
-    add_block_head_after_branch,
     codegen,
     make_nonblocking,
     insert_merge_nodes,
