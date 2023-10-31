@@ -11,7 +11,7 @@ from typing import Any, Iterator, Optional
 import python2verilog.ir.expressions as expr
 import python2verilog.ir.graph2 as ir
 from python2verilog.ir.graph2 import *
-from python2verilog.ir.graph2 import Optional
+from python2verilog.ir.graph2 import Optional, Union
 from python2verilog.optimizer.helpers import backwards_replace
 from python2verilog.utils.generics import pretty_dict
 from python2verilog.utils.typed import guard  # nopycln: import
@@ -35,14 +35,15 @@ def get_variables(exp: expr.Expression) -> Iterator[expr.Var]:
 
 
 class TransformerMetaClass(type):
-    def __ror__(self, __value: Union[ir.CFG, type[ir.CFG]]) -> ir.CFG:
-        if isinstance(__value, ir.CFG):
-            ret = self.__new__(self)
-            ret.__init__(__value)
-            return ret
-        if isinstance(__value, type(Transformer)):
-            return __value(graph=self)
-        return NotImplemented
+    # def __ror__(self, __value: Union[ir.CFG, type[ir.CFG]]) -> ir.CFG:
+    #     if isinstance(__value, ir.CFG):
+    #         ret = self.__new__(self)
+    #         ret.__init__(__value)
+    #         return ret
+    #     if isinstance(__value, type(Transformer)):
+    #         return __value(graph=self)
+    #     return NotImplemented
+    pass
 
 
 class Transformer(ir.CFG, metaclass=TransformerMetaClass):
@@ -51,13 +52,11 @@ class Transformer(ir.CFG, metaclass=TransformerMetaClass):
     """
 
     def __init__(self, graph: Optional[ir.CFG] = None, *, apply: bool = True):
-        print(f"ctor")
-        if graph is not None:
-            print("not None")
-            self.copy(graph)
-            if apply:
-                print("apply")
-                self.apply()
+        self.__applied = False
+        # if graph is not None:
+        #     self.copy(graph)
+        #     if apply and not self.__applied:
+        #         self.apply()
 
     @classmethod
     def debug(cls, graph: ir.CFG):
@@ -66,20 +65,28 @@ class Transformer(ir.CFG, metaclass=TransformerMetaClass):
         """
         return cls(graph=graph, apply=False)
 
-    @abstractmethod
-    def apply(self):
+    def apply(self, graph: ir.CFG):
         """
         Apply transformation
         """
-        print(f"Running {self.__class__.__name__}")
+        self.__applied = True
+        print(f"Ran {self.__class__.__name__}")
         return self
 
-    @abstractmethod
     def init(self):
         """
         Initialize instance variables
         """
         pass
+
+    def __ror__(self, __value: CFG | type[CFG]) -> CFG:
+        print(f"__ror__ {self=} {__value=}")
+        if isinstance(__value, CFG):
+            if not self.__applied:
+                self.apply(__value)
+                self.__applied = True
+            return self
+        return NotImplemented
 
 
 class insert_merge_nodes(Transformer):
@@ -89,7 +96,8 @@ class insert_merge_nodes(Transformer):
     Makes entry a merge node
     """
 
-    def apply(self):
+    def apply(self, graph: CFG):
+        self.copy(graph)
         nodes = list(self.dfs(self.entry))
         for node in nodes:
             self.single(node)
@@ -97,7 +105,7 @@ class insert_merge_nodes(Transformer):
         # Update entry
         entry = self.add_node(ir.BlockHead(), children=[self.entry])
         self.entry = entry
-        return super().apply()
+        return super().apply(graph)
 
     def single(self, node: ir.Element):
         parents = list(self.predecessors(node))
@@ -115,7 +123,8 @@ class add_block_head_after_branch(Transformer):
     Add block nodes (think of it as a label)
     """
 
-    def apply(self):
+    def apply(self, graph: ir.CFG):
+        self.copy(graph)
         nodes = list(self.dfs(self.entry))
         for node in nodes:
             self.single(node)
@@ -128,7 +137,7 @@ class add_block_head_after_branch(Transformer):
         for child in children:
             self.add_node(ir.BlockHead(), node, children=[child])
         self.adj_list[node] -= children
-        return super().apply()
+        return super().apply(graph)
 
 
 class insert_phis(Transformer):
@@ -136,7 +145,8 @@ class insert_phis(Transformer):
     Add Phi Nodes
     """
 
-    def apply(self):
+    def apply(self, graph: ir.CFG):
+        self.copy(graph)
         vars = [
             node.lvalue
             for node in self.dfs(self.entry)
@@ -144,7 +154,7 @@ class insert_phis(Transformer):
         ]
         for var in vars:
             self.apply_to_var(var)
-        return super().apply()
+        return super().apply(graph)
 
     def apply_to_var(self, v: expr.Var):
         worklist: set[ir.Element] = set()
@@ -186,7 +196,8 @@ class make_ssa(Transformer):
         self.global_vars = set()
         super().__init__(*args, **kwargs)
 
-    def apply(self, recursion: bool = True):
+    def apply(self, graph: ir.CFG, recursion: bool = True):
+        self.copy(graph)
         self.rename(b=self.entry, recursion=recursion)
         assert guard(self.entry, BlockHead)
         print(f"{self.global_vars=}")
@@ -318,7 +329,9 @@ class dataflow(Transformer):
         mapping = {}
         self.control_entry = Element()  # Temporary
 
-    def apply(self):
+    def apply(self, graph: ir.CFG):
+        self.copy(graph)
+
         for node in self.adj_list:
             self.make_ssa_mapping(node)
 
@@ -340,7 +353,7 @@ class dataflow(Transformer):
 
         # for node in list(self.dfs(self.entry)):
         #     self.rmv_cf_to_df_edges(node)
-        return super().apply()
+        return super().apply(graph)
 
     def rm_df_to_cf(self, src: Element):
         """
@@ -492,7 +505,8 @@ class replace_merge_with_call_and_func(Transformer):
 
         super().__init__(*args, **kwargs)
 
-    def apply(self):
+    def apply(self, graph: ir.CFG):
+        self.copy(graph)
         for node in self.adj_list.copy():
             self.insert_call(node)
         for node in self.adj_list.copy():
@@ -506,7 +520,7 @@ class replace_merge_with_call_and_func(Transformer):
         del self[self.entry]
         self.entry = func_node
 
-        return super().apply()
+        return super().apply(graph)
 
     def insert_call(self, src: ir.Element):
         if not isinstance(src, ir.BlockHead):
@@ -568,7 +582,8 @@ class propagate_vars_and_consts(Transformer):
         self.reference_count: dict[expr.Var, int] = {}
         super().__init__(*args, **kwargs)
 
-    def apply(self):
+    def apply(self, graph: ir.CFG):
+        self.copy(graph)
         for node in self.adj_list:
             self.make_ssa_mapping(node)
         for node in self.adj_list:
@@ -576,7 +591,7 @@ class propagate_vars_and_consts(Transformer):
         print(f"{self.core=}")
         for node in self.adj_list:
             self.dfs_make_mapping(node)
-        return super().apply()
+        return super().apply(graph)
 
     def make_reference_count(self, node: Element):
         if isinstance(node, AssignNode):
@@ -701,10 +716,11 @@ class propagate_vars_and_consts(Transformer):
 
 
 class rmv_argless_calls(Transformer):
-    def apply(self):
+    def apply(self, graph: ir.CFG):
+        self.copy(graph)
         for node in self.adj_list.copy():
             self.single(node)
-        return super().apply()
+        return super().apply(graph)
 
     def single(self, src: ir.Element):
         if not isinstance(src, FuncNode):
@@ -723,10 +739,11 @@ class rmv_argless_calls(Transformer):
 
 
 class rmv_redundant_branches(Transformer):
-    def apply(self):
+    def apply(self, graph: ir.CFG):
+        self.copy(graph)
         for node in self.adj_list.copy():
             self.single(node)
-        return super().apply()
+        return super().apply(graph)
 
     def single(self, src: ir.Element):
         if not isinstance(src, BranchNode):
@@ -750,13 +767,14 @@ class rmv_dead_assigns_and_params(Transformer):
         self.var_to_definition: dict[expr.Var, ir.Element] = {}
         self.var_to_ref_count: dict[expr.Var, int] = {}
         self.to_be_removed: set[expr.Var] = set()
+        super().__init__(graph, apply=apply)
+
+    def apply(self, graph: ir.CFG):
         try:
             self.entries = graph.entries
         except:
             pass
-        super().__init__(graph, apply=apply)
-
-    def apply(self):
+        self.copy(graph)
         for node in self.adj_list:
             self.create_ref_count(node)
         print(f"{self.var_to_definition=} {self.var_to_ref_count=}")
@@ -775,7 +793,7 @@ class rmv_dead_assigns_and_params(Transformer):
             ):
                 del self.var_to_ref_count[var]
         print(f"{self.var_to_definition=} {self.var_to_ref_count=}")
-        return super().apply()
+        return super().apply(graph)
 
     def create_ref_count(self, src: ir.Element):
         if isinstance(src, AssignNode):
@@ -824,13 +842,14 @@ class parallelize(Transformer):
         self.stack = []
         super().__init__(graph, apply=apply)
 
-    def apply(self):
+    def apply(self, graph: ir.CFG):
+        self.copy(graph)
         self.stack = list(self.adj_list)
         while self.stack:
             self.single(self.stack.pop())
         # self.single(self[1])
         # self.single(self[2])
-        return super().apply()
+        return super().apply(graph)
 
     def single(self, src: ir.Element):
         if not isinstance(src, ir.AssignNode):
@@ -861,12 +880,13 @@ class rmv_loops(Transformer):
         self.mapping: dict[expr.Var, expr.Expression] = {}
         super().__init__(graph, apply=apply)
 
-    def apply(self):
+    def apply(self, graph: ir.CFG):
+        self.copy(graph)
         self.visited_count = {}
         self.mapping = {}
         self.single(self.entry)
         print(f"{self.mapping=}")
-        return super().apply()
+        return super().apply(graph)
 
     def single(self, src: ir.Element):
         if any(count == 8 for count in self.visited_count.values()):
@@ -902,11 +922,12 @@ class lower_to_fsm(Transformer):
         self.entries = set()
         super().__init__(graph, apply=apply)
 
-    def apply(self):
+    def apply(self, graph: ir.CFG):
+        self.copy(graph)
         self.clone(self.entry)
         # self.clone(self[12])
         self.copy(self.new)
-        return super().apply()
+        return super().apply(graph)
 
     def get_used_vars(self, src: ir.Element):
         wrote = set()
@@ -931,7 +952,7 @@ class lower_to_fsm(Transformer):
         return read - wrote
 
     def clone(self, src: ir.Element):
-        new_node = copy.copy(src)
+        new_node = copy.deepcopy(src)
         new_node.graph = None
         new_node._unique_id = ""
 
@@ -961,9 +982,9 @@ class lower_to_fsm(Transformer):
                 self.visited_count = {}
                 self.mapping = {}
 
-                need = self.get_used_vars(src)
-                print(f"{need=}")
                 assert guard(new_node, FuncNode)
+                need = self.get_used_vars(src)
+                print(f"{need=} {new_node=}")
                 new_node.params.extend(need)
 
                 self.truely_visited.add(src)
@@ -1007,14 +1028,15 @@ class lower_to_fsm(Transformer):
 class make_nonblocking(Transformer):
     def __init__(self, graph: CFG | None = None, *, apply: bool = True):
         self.counter = 0
-        self.entries = graph.entries
         super().__init__(graph, apply=apply)
 
-    def apply(self):
+    def apply(self, graph: ir.CFG):
+        self.entries = graph.entries
+        self.copy(graph)
         print(f"{self.entries}")
         for entry in self.entries:
             self.start(entry)
-        return super().apply()
+        return super().apply(graph)
 
     def start(
         self,
@@ -1087,13 +1109,14 @@ class make_nonblocking(Transformer):
 class codegen(Transformer):
     def __init__(self, graph: CFG | None = None, *, apply: bool = True):
         self.counter = 0
-        self.entries = graph.entries
         super().__init__(graph, apply=apply)
 
-    def apply(self):
+    def apply(self, graph: ir.CFG):
+        self.entries = graph.entries
+        self.copy(graph)
         for entry in self.entries:
             self.start(entry)
-        return super().apply()
+        return super().apply(graph)
 
     def start(
         self,

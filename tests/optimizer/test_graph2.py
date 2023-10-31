@@ -375,9 +375,9 @@ class TestGraph(unittest.TestCase):
         run_dash(graph.to_cytoscape())
 
     def test_ssa_funcs(self):
-        graph = make_even_fib_graph_no_clocks()
+        # graph = make_even_fib_graph_no_clocks()
         # graph = make_chain()
-        # graph = multiplier()
+        graph = multiplier()
         # graph = make_basic_branch()
         # graph = make_const_loop()
 
@@ -387,25 +387,28 @@ class TestGraph(unittest.TestCase):
 
         graph = (
             graph
-            | insert_merge_nodes
-            | insert_phis
-            | make_ssa
-            | replace_merge_with_call_and_func
-            | propagate_vars_and_consts
-            | rmv_dead_assigns_and_params
-            | rmv_argless_calls
-            | rmv_redundant_branches
-            | rmv_dead_assigns_and_params  # when branch references param
+            | insert_merge_nodes()
+            | insert_phis()
+            | make_ssa()
+            | replace_merge_with_call_and_func()
+            | propagate_vars_and_consts()
+            | rmv_dead_assigns_and_params()
+            | rmv_argless_calls()
+            | rmv_redundant_branches()
+            | rmv_dead_assigns_and_params()  # when branch references param
             # | parallelize
             # | rmv_loops
         )
 
         lowered = CFG()
-        lowered = graph | lower_to_fsm | make_nonblocking | rmv_dead_assigns_and_params
+        lowered = (
+            graph | lower_to_fsm() | make_nonblocking() | rmv_dead_assigns_and_params()
+        )
+        print(f"{type(lowered)} {lowered}")
 
         print(f"{lowered.entries=} {lowered.adj_list=}")
         for entry in lowered.entries:
-            result = codegen(lowered)
+            result = lowered | codegen()
             output = list(result.start(entry))
             text = "\n".join(output).replace(".", "")
             print(f"{text}")

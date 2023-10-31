@@ -46,6 +46,15 @@ class Element:
         assert len(self._unique_id) == 0
         self._unique_id = typed_strict(unique_id, str)
 
+    def __deepcopy__(self, memo):
+        cls = self.__class__
+        result = cls.__new__(cls)
+        memo[id(self)] = result
+        for k, v in self.__dict__.items():
+            setattr(result, k, copy.deepcopy(v, memo))
+        result._unique_id = self._unique_id
+        return result
+
     @reprlib.recursive_repr()
     def __str__(self) -> str:
         return f"%{self.unique_id}: "
@@ -327,8 +336,8 @@ class CFG:
 
     def __str__(self) -> str:
         lines = Lines(f"Graph with prefix `{self.prefix}`")
-        for elem, children in self.adj_list.items():
-            lines += f"{repr(elem)}: {str(children)[1:-1] if children else 'none'}"
+        # for elem, children in self.adj_list.items():
+        #     lines += f"{repr(elem)}: {str(children)[1:-1] if children else 'none'}"
         return str(lines)
 
     def to_cytoscape(
