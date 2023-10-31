@@ -208,31 +208,37 @@ class CFG:
 
     def __init__(self, prefix: str = ""):
         self.adj_list: dict[Element, set[Element]] = {}
-        self.data_flow: set[tuple[Element, Element]] = set()
-        self.unique_counter = -1
+
+        # Unused
         self.prefix = typed_strict(prefix, str)
+
+        # Incremented before usage (i.e. current value is already used)
+        self.unique_counter = -1
+
+        # The initial entry is stored as None -> Element
         self.exit_to_entry: dict[Optional[CallNode], FuncNode] = {}
 
     def copy(self, graph: CFG):
         """
         Copy constructor that assumes graph elements are immutable
         """
-        self.adj_list = {}
-        for key, value in graph.adj_list.items():
-            self.adj_list[key] = copy.copy(value)
-        self.data_flow = set()
-        for source, target in graph.data_flow:
-            self.data_flow.add((source, target))
+
+        # Regular values
         self.unique_counter = graph.unique_counter
         self.prefix = graph.prefix
 
-        # Make sure exit to entry uses same elements as the deepcopy of adj_list
+        self.adj_list = {}
+        for elem, edge_list in graph.adj_list.items():
+            self.adj_list[elem] = copy.copy(edge_list)
+
+        # Make sure exit to entry uses same elements as new copy used in of adj_list
         self.exit_to_entry = {}
-        for key, value in graph.exit_to_entry.items():
-            if key is None:
-                self.exit_to_entry[None] = self[value.unique_id]
+        for exit, entry in graph.exit_to_entry.items():
+            if exit is None:
+                self.exit_to_entry[None] = self[entry.unique_id]
             else:
-                self.exit_to_entry[self[key.unique_id]] = self[value.unique_id]
+                self.exit_to_entry[self[exit.unique_id]] = self[entry.unique_id]
+
         return self
 
     def add_node(
@@ -370,18 +376,6 @@ class CFG:
                         }
                     }
                 )
-
-        for source, target in self.data_flow:
-            edges.append(
-                {
-                    "data": {
-                        "source": f"{id_prefix}{source.unique_id}",
-                        "target": f"{id_prefix}{target.unique_id}",
-                        "class": "ClockedEdge",
-                        "label": "COOL",
-                    }
-                }
-            )
 
         return {"nodes": nodes, "edges": edges}
 
