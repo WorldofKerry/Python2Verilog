@@ -246,7 +246,7 @@ class CFG:
         raise RuntimeError()
 
     def successors(self, element: Element) -> set[Element]:
-        return self._adj_list[element]
+        return set(self._adj_list[element])
 
     def elements(self):
         return list(self._adj_list.keys())

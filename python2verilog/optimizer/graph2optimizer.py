@@ -306,16 +306,16 @@ class replace_merge_with_call_and_func(Transformer):
 
     def apply(self, graph: ir.CFG):
         self.copy(graph)
-        for node in self._adj_list.copy():
+        for node in self.elements():
             self.insert_call(node)
-        for node in self._adj_list.copy():
+        for node in self.elements():
             self.replace_merge_with_func(node)
 
         # Replace entry with FuncNode
         assert guard(self.exit_to_entry[None], ir.BlockHead)
         func_node = FuncNode()
         func_node.params = [key for key in self.exit_to_entry[None].phis]
-        self.add_node(func_node, children=self._adj_list[self.exit_to_entry[None]])
+        self.add_node(func_node, children=self.successors(self.exit_to_entry[None]))
         del self[self.exit_to_entry[None]]
         self.exit_to_entry[None] = func_node
 
@@ -332,7 +332,7 @@ class replace_merge_with_call_and_func(Transformer):
         print(f"checking {src=} {leaves=} {subtree=}")
         for leaf in leaves:
             for node in subtree:
-                if leaf in self._adj_list[node]:
+                if leaf in self.successors(node):
                     pairs.append((node, leaf))
         print(f"{src=} {pairs=}")
 
@@ -345,7 +345,7 @@ class replace_merge_with_call_and_func(Transformer):
             # Only insert Call if phi merges
             if len(call_node.args) > 0:
                 self.add_node(call_node, parent, children=[child])
-                self._adj_list[parent].remove(child)
+                self.remove_edge(parent, child)
 
                 self.mapping[call_node] = child
 
@@ -359,12 +359,12 @@ class replace_merge_with_call_and_func(Transformer):
         if len(src.phis) > 0:
             func_node = FuncNode()
             func_node.params = [key for key in src.phis]
-            self.add_node(func_node, *preds, children=self._adj_list[src])
+            self.add_node(func_node, *preds, children=self.successors(src))
             print(f"Deleting {src=}")
             del self[src]
         else:
             for pred in preds:
-                self.add_edge(pred, *self._adj_list[src])
+                self.add_edge(pred, *self.successors(src))
             del self[src]
 
 
@@ -383,12 +383,12 @@ class propagate_vars_and_consts(Transformer):
 
     def apply(self, graph: ir.CFG):
         self.copy(graph)
-        for node in self._adj_list:
+        for node in self.elements():
             self.make_ssa_mapping(node)
-        for node in self._adj_list:
+        for node in self.elements():
             self.make_core_mapping(node)
         print(f"{self.core=}")
-        for node in self._adj_list:
+        for node in self.elements():
             self.dfs_make_mapping(node)
         return super().apply(graph)
 
@@ -495,11 +495,11 @@ class propagate_vars_and_consts(Transformer):
         if not isinstance(src, AssignNode):
             return
         if src.lvalue not in self.used:
-            succs = set(self._adj_list[src])
+            succs = set(self.successors(src))
             assert len(succs) == 1
             preds = set(self.predecessors(src))
             for pred in preds:
-                self._adj_list[pred] |= succs
+                self.add_edge(pred, *succs)
             del self[src]
 
     def rmv_unused_phis(self, src: ir.Element):
@@ -518,7 +518,7 @@ class propagate_vars_and_consts(Transformer):
 class rmv_argless_calls(Transformer):
     def apply(self, graph: ir.CFG):
         self.copy(graph)
-        for node in self._adj_list.copy():
+        for node in self.elements():
             self.single(node)
         return super().apply(graph)
 
@@ -526,14 +526,14 @@ class rmv_argless_calls(Transformer):
         if not isinstance(src, FuncNode):
             return
         if len(src.params) == 0:
-            func_succs = set(self._adj_list[src])
+            func_succs = set(self.successors(src))
             assert len(func_succs) == 1
             call_nodes = set(self.predecessors(src))
             for call_node in call_nodes:
                 assert guard(call_node, ir.CallNode)
                 assert len(call_node.args) == 0
                 for call_preds in set(self.predecessors(call_node)):
-                    self._adj_list[call_preds] |= func_succs
+                    self.add_edge(call_preds, *func_succs)
                 del self[call_node]
             del self[src]
 
@@ -541,7 +541,7 @@ class rmv_argless_calls(Transformer):
 class rmv_redundant_branches(Transformer):
     def apply(self, graph: ir.CFG):
         self.copy(graph)
-        for node in self._adj_list.copy():
+        for node in self.elements():
             self.single(node)
         return super().apply(graph)
 
@@ -549,15 +549,15 @@ class rmv_redundant_branches(Transformer):
         if not isinstance(src, BranchNode):
             return
 
-        all_succs = [self._adj_list[x] for x in self._adj_list[src]]
+        all_succs = [self.successors(x) for x in self.successors(src)]
         if all(all_succs[0] == succ for succ in all_succs):
             succs = all_succs[0]
             preds = self.predecessors(src)
 
             for pred in preds:
-                self._adj_list[pred] |= succs
+                self.add_edge(pred, *succs)
 
-            for branch in self._adj_list[src].copy():
+            for branch in self.successors(src):
                 del self[branch]
             del self[src]
 
@@ -575,7 +575,7 @@ class rmv_dead_assigns_and_params(Transformer):
         except:
             pass
         self.copy(graph)
-        for node in self._adj_list:
+        for node in self.elements():
             self.create_ref_count(node)
         print(f"{self.var_to_definition=} {self.var_to_ref_count=}")
 
@@ -616,17 +616,17 @@ class rmv_dead_assigns_and_params(Transformer):
     def remove_unreferenced(self, var: expr.Var):
         print(f"{var=}")
         src = self.var_to_definition[var]
-        if src not in self._adj_list:
+        if src not in self.elements():
             return
         if isinstance(src, AssignNode):
             for var in get_variables(src.rvalue):
                 self.var_to_ref_count[var] -= 1
 
-            succs = set(self._adj_list[src])
+            succs = set(self.successors(src))
             # assert len(succs) == 1
             preds = set(self.predecessors(src))
             for pred in preds:
-                self._adj_list[pred] |= succs
+                self.add_edge(pred, *succs)
             del self[src]
         elif isinstance(src, FuncNode):
             index = src.params.index(var)
@@ -644,7 +644,7 @@ class parallelize(Transformer):
 
     def apply(self, graph: ir.CFG):
         self.copy(graph)
-        self.stack = list(self._adj_list)
+        self.stack = self.elements()
         while self.stack:
             self.single(self.stack.pop())
         # self.single(self[1])
@@ -659,13 +659,13 @@ class parallelize(Transformer):
             (self.check(pred, var) for pred in preds)
             for var in get_variables(src.rvalue)
         ):
-            succs = self._adj_list[src].copy()
+            succs = self.successors(src)
             for pred_pred in self.predecessors(preds[0]):
-                self._adj_list[pred_pred].add(src)
+                self.add_edge(pred_pred, src)
 
             for pred in preds:
-                self._adj_list[pred].remove(src)
-                self._adj_list[pred] |= succs
+                self.remove_edge(pred, src)
+                self.add_edge(pred, *succs)
 
     def check(self, src: ir.Element, var: expr.Var):
         if isinstance(src, ir.AssignNode):
@@ -695,7 +695,7 @@ class rmv_loops(Transformer):
         if isinstance(src, ir.AssignNode):
             self.mapping[src.lvalue] = src.rvalue
         elif isinstance(src, ir.CallNode):
-            for succ in self._adj_list[src]:
+            for succ in self.successors(src):
                 assert guard(succ, ir.FuncNode)
                 for arg, param in zip(src.args, succ.params):
                     self.mapping[param] = arg
@@ -708,7 +708,7 @@ class rmv_loops(Transformer):
                 print(f"{e=} {str(self.mapping[key])=}")
 
         self.visited_count[src] = self.visited_count.get(src, 0) + 1
-        for succ in self._adj_list[src]:
+        for succ in self.successors(src):
             self.single(succ)
 
 
@@ -798,7 +798,7 @@ class lower_to_fsm(Transformer):
                 self.mapping = {}
 
                 self.truely_visited.add(src)
-                res = self.clone(list(self._adj_list[src])[0], need)
+                res = self.clone(list(self.successors(src))[0], need)
                 self.new.exit_to_entry[new_node] = res
                 print(f"{self.new.exit_to_entry}")
 
@@ -815,12 +815,12 @@ class lower_to_fsm(Transformer):
                 self.mapping[src.lvalue] = src.rvalue
         elif isinstance(src, ir.CallNode):
             # print(f"Inner")
-            for succ in self._adj_list[src]:
+            for succ in self.successors(src):
                 assert guard(succ, ir.FuncNode)
                 for arg, param in zip(src.args, succ.params):
                     self.mapping[param] = arg
 
-        for node in self._adj_list[src]:
+        for node in self.successors(src):
             print(f"Add node {src=} -> {new_node=}")
             new_child = self.clone(node)
             print(f"Add edge {new_node=} -> {new_child=}")
@@ -850,8 +850,10 @@ class make_nonblocking(Transformer):
             mapping = {}
         if isinstance(src, ir.FuncNode):
             yield "  " * indent + f"def func({str(src.params)[1:-1]}):"
-            if len(list(self._adj_list[src])) == 1:
-                yield from self.start(list(self._adj_list[src])[0], indent + 1, mapping)
+            if len(list(self.successors(src))) == 1:
+                yield from self.start(
+                    list(self.successors(src))[0], indent + 1, mapping
+                )
         elif isinstance(src, ir.AssignNode):
             self.counter += 1
             if self.counter > 1000:
@@ -860,14 +862,14 @@ class make_nonblocking(Transformer):
             src.rvalue = backwards_replace(src.rvalue, mapping)
             mapping[src.lvalue] = src.rvalue
             yield "  " * indent + f"{src.lvalue} = {src.rvalue}"
-            yield from self.start(list(self._adj_list[src])[0], indent, mapping)
+            yield from self.start(list(self.successors(src))[0], indent, mapping)
         elif isinstance(src, ir.CallNode):
             new_args = []
             for arg in src.args:
                 new_args.append(backwards_replace(arg, mapping))
             src.args = new_args
 
-            func = list(self._adj_list[src])[0]
+            func = list(self.successors(src))[0]
             assert guard(func, ir.FuncNode)
 
             assign_nodes = []
@@ -880,9 +882,9 @@ class make_nonblocking(Transformer):
             for assign in assign_nodes:
                 succ = self.add_node(assign, succ)
 
-            if len(list(self._adj_list[func])) == 1:
-                self.add_edge(assign_nodes[-1], list(self._adj_list[func])[0])
-                yield from self.start(list(self._adj_list[func])[0], indent, mapping)
+            if len(list(self.successors(func))) == 1:
+                self.add_edge(assign_nodes[-1], list(self.successors(func))[0])
+                yield from self.start(list(self.successors(func))[0], indent, mapping)
                 del self[src]
                 del self[func]
 
@@ -890,15 +892,15 @@ class make_nonblocking(Transformer):
             src.cond = backwards_replace(src.cond, mapping)
 
             yield "  " * indent + f"if {src.cond}:"
-            true, false = list(self._adj_list[src])
+            true, false = list(self.successors(src))
             if isinstance(false, ir.TrueNode):
                 false, true = true, false
             yield from self.start(
-                list(self._adj_list[true])[0], indent + 1, copy.deepcopy(mapping)
+                list(self.successors(true))[0], indent + 1, copy.deepcopy(mapping)
             )
             yield "  " * indent + "else:"
             yield from self.start(
-                list(self._adj_list[false])[0], indent + 1, copy.deepcopy(mapping)
+                list(self.successors(false))[0], indent + 1, copy.deepcopy(mapping)
             )
         elif isinstance(src, ir.EndNode):
             new_values = []
@@ -929,8 +931,10 @@ class codegen(Transformer):
             mapping = {}
         if isinstance(src, ir.FuncNode):
             yield "  " * indent + f"def func({str(src.params)[1:-1]}):"
-            if len(list(self._adj_list[src])) == 1:
-                yield from self.start(list(self._adj_list[src])[0], indent + 1, mapping)
+            if len(list(self.successors(src))) == 1:
+                yield from self.start(
+                    list(self.successors(src))[0], indent + 1, mapping
+                )
         elif isinstance(src, ir.AssignNode):
             self.counter += 1
             if self.counter > 1000:
@@ -939,15 +943,15 @@ class codegen(Transformer):
             src.rvalue = backwards_replace(src.rvalue, mapping)
             mapping[src.lvalue] = src.rvalue
             yield "  " * indent + f"{src.lvalue} = {src.rvalue}"
-            yield from self.start(list(self._adj_list[src])[0], indent, mapping)
+            yield from self.start(list(self.successors(src))[0], indent, mapping)
         elif isinstance(src, ir.CallNode):
             new_args = []
             for arg in src.args:
                 new_args.append(backwards_replace(arg, mapping))
             src.args = new_args
 
-            if len(list(self._adj_list[src])) > 0:
-                func = list(self._adj_list[src])[0]
+            if len(list(self.successors(src))) > 0:
+                func = list(self.successors(src))[0]
                 assert guard(func, ir.FuncNode)
 
                 # assign_nodes = []
@@ -956,24 +960,24 @@ class codegen(Transformer):
                     # yield "  " * indent + f"{param} = {arg}"
                     # assign_nodes.append(AssignNode(param, arg))
 
-                if len(list(self._adj_list[func])) == 1:
+                if len(list(self.successors(func))) == 1:
                     yield from self.start(
-                        list(self._adj_list[func])[0], indent, mapping
+                        list(self.successors(func))[0], indent, mapping
                     )
 
         elif isinstance(src, ir.BranchNode):
             src.cond = backwards_replace(src.cond, mapping)
 
             yield "  " * indent + f"if {src.cond}:"
-            true, false = list(self._adj_list[src])
+            true, false = list(self.successors(src))
             if isinstance(false, ir.TrueNode):
                 false, true = true, false
             yield from self.start(
-                list(self._adj_list[true])[0], indent + 1, copy.deepcopy(mapping)
+                list(self.successors(true))[0], indent + 1, copy.deepcopy(mapping)
             )
             yield "  " * indent + "else:"
             yield from self.start(
-                list(self._adj_list[false])[0], indent + 1, copy.deepcopy(mapping)
+                list(self.successors(false))[0], indent + 1, copy.deepcopy(mapping)
             )
         elif isinstance(src, ir.EndNode):
             new_values = []
