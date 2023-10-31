@@ -153,7 +153,7 @@ def make_even_fib_graph_no_clocks():
     return graph
 
 
-def multiplier():
+def make_seq_multiplier():
     """
     Multiplier
     """
@@ -176,6 +176,27 @@ def multiplier():
     prev = graph.add_node(TrueNode(), ifelse)
 
     prev = graph.add_node(AssignNode(c, BinOp(c, "+", b)), prev)
+    prev = graph.add_node(AssignNode(i, BinOp(i, "+", Int(1))), prev, children=[ifelse])
+
+    return graph
+
+
+def make_range():
+    i = Var("i")
+    n = Var("n")
+
+    graph = CFG()
+
+    prev = graph.add_node(AssignNode(i, Int(0)))
+
+    prev = ifelse = graph.add_node(BranchNode(BinOp(i, "<", n)), prev)
+
+    prev = graph.add_node(FalseNode(), ifelse)
+    graph.add_node(EndNode([]), prev)
+
+    prev = graph.add_node(TrueNode(), ifelse)
+
+    prev = graph.add_node(EndNode([i]), prev)
     prev = graph.add_node(AssignNode(i, BinOp(i, "+", Int(1))), prev, children=[ifelse])
 
     return graph
@@ -377,7 +398,8 @@ class TestGraph(unittest.TestCase):
     def test_ssa_funcs(self):
         # graph = make_even_fib_graph_no_clocks()
         # graph = make_chain()
-        graph = multiplier()
+        # graph = make_seq_multiplier()
+        graph = make_range()
         # graph = make_basic_branch()
         # graph = make_const_loop()
 

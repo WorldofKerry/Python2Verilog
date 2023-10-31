@@ -913,7 +913,9 @@ class rmv_loops(Transformer):
 
 
 class lower_to_fsm(Transformer):
-    def __init__(self, graph: CFG | None = None, *, apply: bool = True, threshold: int = 1):
+    def __init__(
+        self, graph: CFG | None = None, *, apply: bool = True, threshold: int = 1
+    ):
         self.new: ir.CFG = ir.CFG()
         self.new.unique_counter = 100
         self.visited_count: dict[ir.Element, int] = {}
@@ -983,25 +985,20 @@ class lower_to_fsm(Transformer):
         if self.visited_count[src] > self.threshold and isinstance(src, CallNode):
             print(f"DONE {src=}")
 
+            need = self.get_used_vars(src)
+            assert guard(new_node, CallNode)
+            print(f"{need=} {new_node=}")
+            new_node.args.extend([backwards_replace(var, self.mapping) for var in need])
+
             if src not in self.truely_visited:
                 print(f"RECURSE {src=} {self.mapping=}")
 
                 self.visited_count = {}
                 self.mapping = {}
 
-                assert guard(new_node, CallNode)
-                need = self.get_used_vars(src)
-                print(f"{need=} {new_node=}")
-                new_node.args.extend(
-                    [backwards_replace(var, self.mapping) for var in need]
-                )
-
                 self.truely_visited.add(src)
-                if len(list(self.adj_list[src])) > 0:
-                    res = self.clone(list(self.adj_list[src])[0], need)
-                    self.exit_to_entry[new_node] = res
-                else:
-                    raise RuntimeError(f"{str(src)=} {len(list(self.adj_list[src]))}")
+                res = self.clone(list(self.adj_list[src])[0], need)
+                self.exit_to_entry[new_node] = res
 
             return new_node
 
