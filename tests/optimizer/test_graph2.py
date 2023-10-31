@@ -10,6 +10,7 @@ from python2verilog.optimizer.graph2optimizer import (  # nopycln: import
     Transformer,
     add_block_head_after_branch,
     codegen,
+    make_nonblocking,
     dataflow,
     insert_merge_nodes,
     insert_phis,
@@ -400,7 +401,7 @@ class TestGraph(unittest.TestCase):
         )
 
         lowered = CFG()
-        lowered = graph | lower_to_fsm
+        lowered = graph | lower_to_fsm | make_nonblocking | rmv_dead_assigns_and_params
 
         print(f"{lowered.entries=} {lowered.adj_list=}")
         for entry in lowered.entries:

@@ -746,11 +746,15 @@ class rmv_redundant_branches(Transformer):
 
 
 class rmv_dead_assigns_and_params(Transformer):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, graph: CFG | None = None, *, apply: bool = True):
         self.var_to_definition: dict[expr.Var, ir.Element] = {}
         self.var_to_ref_count: dict[expr.Var, int] = {}
         self.to_be_removed: set[expr.Var] = set()
-        super().__init__(*args, **kwargs)
+        try:
+            self.entries = graph.entries
+        except:
+            pass
+        super().__init__(graph, apply=apply)
 
     def apply(self):
         for node in self.adj_list:
@@ -801,7 +805,7 @@ class rmv_dead_assigns_and_params(Transformer):
                 self.var_to_ref_count[var] -= 1
 
             succs = set(self.adj_list[src])
-            assert len(succs) == 1
+            # assert len(succs) == 1
             preds = set(self.predecessors(src))
             for pred in preds:
                 self.adj_list[pred] |= succs
@@ -972,12 +976,16 @@ class lower_to_fsm(Transformer):
         return new_node
 
 
-class codegen(Transformer):
+class make_nonblocking(Transformer):
     def __init__(self, graph: CFG | None = None, *, apply: bool = True):
         self.counter = 0
+        self.entries = graph.entries
         super().__init__(graph, apply=apply)
 
     def apply(self):
+        print(f"{self.entries}")
+        for entry in self.entries:
+            self.start(entry)
         return super().apply()
 
     def start(
@@ -1009,12 +1017,98 @@ class codegen(Transformer):
 
             func = list(self.adj_list[src])[0]
             assert guard(func, ir.FuncNode)
+
+            assign_nodes = []
             for arg, param in zip(src.args, func.params):
                 mapping[param] = arg
                 yield "  " * indent + f"{param} = {arg}"
+                assign_nodes.append(AssignNode(param, arg))
+
+            succ = list(self.predecessors(src))[0]
+            for assign in assign_nodes:
+                succ = self.add_node(assign, succ)
+
+            if len(list(self.adj_list[func])) == 1:
+                self.add_edge(assign_nodes[-1], list(self.adj_list[func])[0])
+                yield from self.start(list(self.adj_list[func])[0], indent, mapping)
+                del self[src]
+                del self[func]
+
+        elif isinstance(src, ir.BranchNode):
+            src.cond = backwards_replace(src.cond, mapping)
+
+            yield "  " * indent + f"if {src.cond}:"
+            true, false = list(self.adj_list[src])
+            if isinstance(false, ir.TrueNode):
+                false, true = true, false
+            yield from self.start(
+                list(self.adj_list[true])[0], indent + 1, copy.deepcopy(mapping)
+            )
+            yield "  " * indent + "else:"
+            yield from self.start(
+                list(self.adj_list[false])[0], indent + 1, copy.deepcopy(mapping)
+            )
+        elif isinstance(src, ir.EndNode):
+            new_values = []
+            for value in src.values:
+                new_values.append(backwards_replace(value, mapping))
+            src.values = new_values
+            yield "  " * indent + f"return {src.values}"
+
+
+class codegen(Transformer):
+    def __init__(self, graph: CFG | None = None, *, apply: bool = True):
+        self.counter = 0
+        self.entries = graph.entries
+        super().__init__(graph, apply=apply)
+
+    def apply(self):
+        for entry in self.entries:
+            self.start(entry)
+        return super().apply()
+
+    def start(
+        self,
+        src: ir.Element,
+        indent: int = 0,
+        mapping: Optional[dict[expr.Var, expr.Expression]] = None,
+    ):
+        if mapping is None:
+            mapping = {}
+        if isinstance(src, ir.FuncNode):
+            yield "  " * indent + f"def func({str(src.params)[1:-1]}):"
+            if len(list(self.adj_list[src])) == 1:
+                yield from self.start(list(self.adj_list[src])[0], indent + 1, mapping)
+        elif isinstance(src, ir.AssignNode):
+            self.counter += 1
+            if self.counter > 1000:
+                return
+            print(f"{src} {mapping=}")
+            src.rvalue = backwards_replace(src.rvalue, mapping)
+            mapping[src.lvalue] = src.rvalue
+            yield "  " * indent + f"{src.lvalue} = {src.rvalue}"
+            yield from self.start(list(self.adj_list[src])[0], indent, mapping)
+        elif isinstance(src, ir.CallNode):
+            new_args = []
+            for arg in src.args:
+                new_args.append(backwards_replace(arg, mapping))
+            src.args = new_args
+
+            func = list(self.adj_list[src])[0]
+            assert guard(func, ir.FuncNode)
+
+            # assign_nodes = []
+            for arg, param in zip(src.args, func.params):
+                mapping[param] = arg
+                # yield "  " * indent + f"{param} = {arg}"
+                # assign_nodes.append(AssignNode(param, arg))
+
             if len(list(self.adj_list[func])) == 1:
                 yield from self.start(list(self.adj_list[func])[0], indent, mapping)
+
         elif isinstance(src, ir.BranchNode):
+            src.cond = backwards_replace(src.cond, mapping)
+
             yield "  " * indent + f"if {src.cond}:"
             true, false = list(self.adj_list[src])
             if isinstance(false, ir.TrueNode):
