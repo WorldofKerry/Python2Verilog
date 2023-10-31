@@ -963,6 +963,8 @@ class lower_to_fsm(Transformer):
 
                 need = self.get_used_vars(src)
                 print(f"{need=}")
+                assert guard(new_node, FuncNode)
+                new_node.params.extend(need)
 
                 self.truely_visited.add(src)
                 self.clone(src)

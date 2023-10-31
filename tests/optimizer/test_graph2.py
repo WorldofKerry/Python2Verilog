@@ -375,9 +375,9 @@ class TestGraph(unittest.TestCase):
         run_dash(graph.to_cytoscape())
 
     def test_ssa_funcs(self):
-        # graph = make_even_fib_graph_no_clocks()
+        graph = make_even_fib_graph_no_clocks()
         # graph = make_chain()
-        graph = multiplier()
+        # graph = multiplier()
         # graph = make_basic_branch()
         # graph = make_const_loop()
 
