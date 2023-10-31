@@ -14,7 +14,7 @@ from python2verilog.utils.lines import Lines
 from python2verilog.utils.typed import guard, typed, typed_list, typed_set, typed_strict
 
 
-class Element:
+class Node2:
     """
     Element, base class for vertex or edge
     """
@@ -27,7 +27,7 @@ class Element:
         return hash(self.unique_id)
 
     def __eq__(self, value: object):
-        if isinstance(value, Element):
+        if isinstance(value, Node2):
             return self.unique_id == value.unique_id
         return False
 
@@ -62,8 +62,8 @@ class Element:
         return f"{self.unique_id}"
 
 
-class BasicBlock(Element):
-    def __init__(self, operations: Optional[list[Element]] = None, unique_id: str = ""):
+class BasicBlock(Node2):
+    def __init__(self, operations: Optional[list[Node2]] = None, unique_id: str = ""):
         super().__init__(unique_id)
         self.statements = [] if operations is None else operations
 
@@ -74,14 +74,14 @@ class BasicBlock(Element):
         return lines.to_string()
 
 
-class BlockHead(Element):
+class BlockHead(Node2):
     """
     Similar to MLIR block arguments
     """
 
     def __init__(self, unique_id: str = ""):
         super().__init__(unique_id)
-        self.phis: dict[expr.Var, dict[Element, expr.Var]] = {}
+        self.phis: dict[expr.Var, dict[Node2, expr.Var]] = {}
 
     def stringify_phis(self):
         lines = Lines()
@@ -92,7 +92,7 @@ class BlockHead(Element):
         return str(lines)
 
 
-class AssignNode(Element):
+class AssignNode(Node2):
     """
     Variable assignment
     """
@@ -112,7 +112,7 @@ class AssignNode(Element):
         return super().__str__() + f"{self.lvalue} = {self.rvalue}"
 
 
-class ClockNode(Element):
+class ClockNode(Node2):
     """
     A clock edge occurs, includes phi of variables
     """
@@ -121,7 +121,7 @@ class ClockNode(Element):
         return super().__str__() + "Clock"
 
 
-class BranchNode(Element):
+class BranchNode(Node2):
     """
     Conditional branch
     """
@@ -165,7 +165,7 @@ class FalseNode(BlockHead):
         )
 
 
-class EndNode(Element):
+class EndNode(Node2):
     """
     A node indicate the end of a frame,
     whether it be a function return or a coroutine yield
@@ -179,7 +179,7 @@ class EndNode(Element):
         return super().__str__() + f"{EndNode.__name__[:-4]}\n" + f"{self.values}"
 
 
-class CallNode(Element):
+class CallNode(Node2):
     def __init__(self, unique_id: str = ""):
         super().__init__(unique_id)
         self.args: list[expr.Var] = []
@@ -188,7 +188,7 @@ class CallNode(Element):
         return super().__str__() + f"{self.__class__.__name__[:-4]}" + f"\n{self.args}"
 
 
-class FuncNode(Element):
+class FuncNode(Node2):
     def __init__(self, unique_id: str = ""):
         super().__init__(unique_id)
         self.params: list[expr.Var] = []
@@ -204,10 +204,10 @@ class CFG:
     Graph
     """
 
-    DUMMY = Element("___DUMMY___")
+    DUMMY = Node2("___DUMMY___")
 
     def __init__(self, prefix: str = ""):
-        self._adj_list: dict[Element, set[Element]] = {}
+        self._adj_list: dict[Node2, set[Node2]] = {}
 
         # Unused
         self.prefix = typed_strict(prefix, str)
@@ -233,56 +233,56 @@ class CFG:
         self.exit_to_entry = {}
         for exit, entry in graph.exit_to_entry.items():
             if exit is None:
-                self.exit_to_entry[None] = self.id_to_element(entry.unique_id)
+                self.exit_to_entry[None] = self.id_to_node(entry.unique_id)
             else:
-                self.exit_to_entry[
-                    self.id_to_element(exit.unique_id)
-                ] = self.id_to_element(entry.unique_id)
+                self.exit_to_entry[self.id_to_node(exit.unique_id)] = self.id_to_node(
+                    entry.unique_id
+                )
 
         return self
 
-    def id_to_element(self, id: str):
+    def id_to_node(self, id: str):
         for key in self._adj_list:
             if key.unique_id == id:
                 return key
         raise RuntimeError()
 
-    def successors(self, element: Element) -> set[Element]:
-        return set(self._adj_list[element])
+    def successors(self, node: Node2) -> set[Node2]:
+        return set(self._adj_list[node])
 
-    def elements(self):
+    def nodes(self):
         return list(self._adj_list.keys())
 
     def add_node(
         self,
-        element: Element,
-        *parents: Collection[Element],
-        children: Optional[Collection[Element]] = None,
-    ) -> Element:
+        node: Node2,
+        *parents: Collection[Node2],
+        children: Optional[Collection[Node2]] = None,
+    ) -> Node2:
         """
         Add node with new unique_id
 
         Gives node a unique id if it doesn't have one
         """
-        assert guard(element, Element)
+        assert guard(node, Node2)
 
-        if not element.unique_id:
-            element.set_unique_id(self._next_unique())
+        if not node.unique_id:
+            node.set_unique_id(self._next_unique())
 
-        if element in self.elements():
+        if node in self.nodes():
             raise RuntimeError(
-                "Element already exists" f" {self._adj_list[element]} {element}"
+                "Element already exists" f" {self._adj_list[node]} {node}"
             )
 
-        self._adj_list[element] = set()
+        self._adj_list[node] = set()
         for parent in parents:
-            self.add_edge(parent, element, strict=True)
+            self.add_edge(parent, node, strict=True)
         if children:
-            self.add_edge(element, *children, strict=True)
+            self.add_edge(node, *children, strict=True)
 
-        self.exit_to_entry[None] = self.exit_to_entry.get(None, element)
+        self.exit_to_entry[None] = self.exit_to_entry.get(None, node)
 
-        return element
+        return node
 
     def validate(self):
         """
@@ -290,20 +290,20 @@ class CFG:
         """
         assert guard(self._adj_list, dict)
         for elem, children in self._adj_list.items():
-            assert guard(elem, Element)
+            assert guard(elem, Node2)
             assert guard(children, set), f"{children} {type(children)}"
             for child in children:
-                assert guard(child, Element)
+                assert guard(child, Node2)
                 assert child in self._adj_list
         assert guard(self.prefix, str)
         assert guard(self.unique_counter, int)
 
-    def add_edge(self, source: Element, *targets: Element, strict: bool = False):
+    def add_edge(self, source: Node2, *targets: Node2, strict: bool = False):
         """
         Add directed edge
         """
-        assert guard(source, Element)
-        assert all(guard(target, Element) for target in targets)
+        assert guard(source, Node2)
+        assert all(guard(target, Node2) for target in targets)
 
         if strict:
             # Check that edge doesn't already exist
@@ -311,12 +311,12 @@ class CFG:
 
         self._adj_list[source] = self._adj_list[source].union(targets)
 
-    def remove_edge(self, source: Element, target: Element):
-        assert guard(source, Element)
-        assert guard(target, Element)
+    def remove_edge(self, source: Node2, target: Node2):
+        assert guard(source, Node2)
+        assert guard(target, Node2)
         self._adj_list[source].remove(target)
 
-    def remove_node(self, key: Element):
+    def remove_node(self, key: Node2):
         del self._adj_list[key]
         for children in self._adj_list.values():
             if key in children:
@@ -327,13 +327,13 @@ class CFG:
             if v == key:
                 del self.exit_to_entry[k]
 
-    def __delitem__(self, key: Union[Element, str]):
-        if isinstance(key, Element):
+    def __delitem__(self, key: Union[Node2, str]):
+        if isinstance(key, Node2):
             self.remove_node(key)
             return
         raise TypeError()
 
-    def predecessors(self, element: Element) -> Iterator[Element]:
+    def predecessors(self, element: Node2) -> Iterator[Node2]:
         """
         Get immediate successors/parents of a element
         """
@@ -399,8 +399,8 @@ class CFG:
         return {"nodes": nodes, "edges": edges}
 
     def dfs(
-        graph: CFG, source: Element, visited: Optional[set[Element]] = None
-    ) -> Iterator[Element]:
+        graph: CFG, source: Node2, visited: Optional[set[Node2]] = None
+    ) -> Iterator[Node2]:
         """
         Depth-first search
         """
@@ -415,7 +415,7 @@ class CFG:
         for child in graph.successors(source):
             yield from graph.dfs(child, visited)
 
-    def dominance(graph: CFG) -> dict[Element, set[Element]]:
+    def dominance(graph: CFG) -> dict[Node2, set[Node2]]:
         """
         Returns dict dominance relations,
 
@@ -433,7 +433,7 @@ class CFG:
         # logging.debug(f"\n{print_tree(dominance_, graph.entry)}")
         return dominance_
 
-    def dominance_frontier(graph: CFG, n: Element):
+    def dominance_frontier(graph: CFG, n: Node2):
         """
         Gets dominator frontier of n with respect to graph entry
 
@@ -506,7 +506,7 @@ class CFG:
                 if child != cur:
                     queue.append(child)
 
-    def subtree_excluding(self, source: Element, elem_type: type[Element]):
+    def subtree_excluding(self, source: Node2, elem_type: type[Node2]):
         """
         Builds a subtree rooted at source,
         where every leaf is type elem_type,
@@ -526,9 +526,9 @@ class CFG:
 
     def subtree_leaves(
         self,
-        source: Element,
-        elem_type: type[Element],
-        visited: Optional[set[Element]] = None,
+        source: Node2,
+        elem_type: type[Node2],
+        visited: Optional[set[Node2]] = None,
     ):
         """
         Builds a subtree rooted at source,

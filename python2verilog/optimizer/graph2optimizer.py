@@ -107,7 +107,7 @@ class insert_merge_nodes(Transformer):
         self.exit_to_entry[None] = entry
         return super().apply(graph)
 
-    def single(self, node: ir.Element):
+    def single(self, node: ir.Node2):
         parents = list(self.predecessors(node))
         if len(parents) <= 1:
             return
@@ -135,9 +135,9 @@ class insert_phis(Transformer):
         return super().apply(graph)
 
     def apply_to_var(self, v: expr.Var):
-        worklist: set[ir.Element] = set()
-        ever_on_worklist: set[ir.Element] = set()
-        already_has_phi: set[ir.Element] = set()
+        worklist: set[ir.Node2] = set()
+        ever_on_worklist: set[ir.Node2] = set()
+        already_has_phi: set[ir.Node2] = set()
 
         for node in self.dfs(self.exit_to_entry[None]):
             if isinstance(node, ir.AssignNode):
@@ -244,7 +244,7 @@ class make_ssa(Transformer):
             replacement[vn] = phis
         block.phis = replacement
 
-    def update_lhs_rhs_stack(self, stmt: Element):
+    def update_lhs_rhs_stack(self, stmt: Node2):
         if isinstance(stmt, AssignNode):
             for var in get_variables(stmt.rvalue):
                 self.stacks(var)
@@ -296,15 +296,15 @@ class make_ssa(Transformer):
 class replace_merge_with_call_and_func(Transformer):
     def __init__(self, *args, **kwargs):
         # Mapping of call node to merge node
-        self.mapping: dict[ir.Element, ir.Element] = {}
+        self.mapping: dict[ir.Node2, ir.Node2] = {}
 
         super().__init__(*args, **kwargs)
 
     def apply(self, graph: ir.CFG):
         self.copy(graph)
-        for node in self.elements():
+        for node in self.nodes():
             self.insert_call(node)
-        for node in self.elements():
+        for node in self.nodes():
             self.replace_merge_with_func(node)
 
         # Replace entry with FuncNode
@@ -317,14 +317,14 @@ class replace_merge_with_call_and_func(Transformer):
 
         return super().apply(graph)
 
-    def insert_call(self, src: ir.Element):
+    def insert_call(self, src: ir.Node2):
         if not isinstance(src, ir.BlockHead):
             return
         leaves = set(self.subtree_leaves(src, MergeNode))
         subtree = set(self.subtree_excluding(src, BlockHead)) | {src}
 
         # Pairs of succ(node) -> node, where node is a BlockHead
-        pairs: list[tuple[ir.Element, ir.BlockHead]] = []
+        pairs: list[tuple[ir.Node2, ir.BlockHead]] = []
         print(f"checking {src=} {leaves=} {subtree=}")
         for leaf in leaves:
             for node in subtree:
@@ -347,7 +347,7 @@ class replace_merge_with_call_and_func(Transformer):
 
         return self
 
-    def replace_merge_with_func(self, src: ir.Element):
+    def replace_merge_with_func(self, src: ir.Node2):
         if not isinstance(src, ir.MergeNode):
             return
         preds = self.predecessors(src)
@@ -372,23 +372,23 @@ class propagate_vars_and_consts(Transformer):
     def __init__(self, *args, **kwargs):
         self.mapping: dict[expr.Var, expr.Expression] = {}
         self.used: set[expr.Var] = set()
-        self.core: dict[expr.Var, ir.Element] = {}
-        self.visited: set[ir.Element] = set()
+        self.core: dict[expr.Var, ir.Node2] = {}
+        self.visited: set[ir.Node2] = set()
         self.reference_count: dict[expr.Var, int] = {}
         super().__init__(*args, **kwargs)
 
     def apply(self, graph: ir.CFG):
         self.copy(graph)
-        for node in self.elements():
+        for node in self.nodes():
             self.make_ssa_mapping(node)
-        for node in self.elements():
+        for node in self.nodes():
             self.make_core_mapping(node)
         print(f"{self.core=}")
-        for node in self.elements():
+        for node in self.nodes():
             self.dfs_make_mapping(node)
         return super().apply(graph)
 
-    def make_reference_count(self, node: Element):
+    def make_reference_count(self, node: Node2):
         if isinstance(node, AssignNode):
             for var in get_variables(node.rvalue):
                 self.reference_count[var] = self.reference_count.get(var, 0) + 1
@@ -399,7 +399,7 @@ class propagate_vars_and_consts(Transformer):
             for var in node.args:
                 self.reference_count[var] = self.reference_count.get(var, 0) + 1
 
-    def make_core_mapping(self, node: Element):
+    def make_core_mapping(self, node: Node2):
         """
         Variables that are params for function nodes are core variables.
         That is, they cannot be optimized away (except their removal),
@@ -410,7 +410,7 @@ class propagate_vars_and_consts(Transformer):
                 assert guard(var, expr.Var)
                 self.core[var] = node
 
-    def dfs_make_mapping(self, node: Element):
+    def dfs_make_mapping(self, node: Node2):
         """
         Recursively make mapping
         """
@@ -454,11 +454,11 @@ class propagate_vars_and_consts(Transformer):
             if all(isinstance(value, expr.Var) for value in new_values):
                 node.values = new_values
 
-    def make_ssa_mapping(self, node: Element):
+    def make_ssa_mapping(self, node: Node2):
         if isinstance(node, AssignNode):
             self.mapping[node.lvalue] = node.rvalue
 
-    def replace(self, src: ir.Element):
+    def replace(self, src: ir.Node2):
         if not isinstance(src, FuncNode):
             return
         for node in set(self.subtree_excluding(src, CallNode)) | set(
@@ -473,7 +473,7 @@ class propagate_vars_and_consts(Transformer):
             #     for arg in node.args:
             #         new_args.append(backwards_replace(arg, self.mapping))
 
-    def get_used(self, src: ir.Element):
+    def get_used(self, src: ir.Node2):
         if isinstance(src, ir.AssignNode):
             for var in get_variables(src.rvalue):
                 self.used.add(var)
@@ -487,7 +487,7 @@ class propagate_vars_and_consts(Transformer):
             for var in src.values:
                 self.used.add(var)
 
-    def rmv_unused_assigns(self, src: ir.Element):
+    def rmv_unused_assigns(self, src: ir.Node2):
         if not isinstance(src, AssignNode):
             return
         if src.lvalue not in self.used:
@@ -498,7 +498,7 @@ class propagate_vars_and_consts(Transformer):
                 self.add_edge(pred, *succs)
             del self[src]
 
-    def rmv_unused_phis(self, src: ir.Element):
+    def rmv_unused_phis(self, src: ir.Node2):
         if not isinstance(src, FuncNode):
             return
         for param in src.params.copy():
@@ -514,11 +514,11 @@ class propagate_vars_and_consts(Transformer):
 class rmv_argless_calls(Transformer):
     def apply(self, graph: ir.CFG):
         self.copy(graph)
-        for node in self.elements():
+        for node in self.nodes():
             self.single(node)
         return super().apply(graph)
 
-    def single(self, src: ir.Element):
+    def single(self, src: ir.Node2):
         if not isinstance(src, FuncNode):
             return
         if len(src.params) == 0:
@@ -537,11 +537,11 @@ class rmv_argless_calls(Transformer):
 class rmv_redundant_branches(Transformer):
     def apply(self, graph: ir.CFG):
         self.copy(graph)
-        for node in self.elements():
+        for node in self.nodes():
             self.single(node)
         return super().apply(graph)
 
-    def single(self, src: ir.Element):
+    def single(self, src: ir.Node2):
         if not isinstance(src, BranchNode):
             return
 
@@ -560,7 +560,7 @@ class rmv_redundant_branches(Transformer):
 
 class rmv_dead_assigns_and_params(Transformer):
     def __init__(self, graph: CFG | None = None, *, apply: bool = True):
-        self.var_to_definition: dict[expr.Var, ir.Element] = {}
+        self.var_to_definition: dict[expr.Var, ir.Node2] = {}
         self.var_to_ref_count: dict[expr.Var, int] = {}
         self.to_be_removed: set[expr.Var] = set()
         super().__init__(graph, apply=apply)
@@ -571,7 +571,7 @@ class rmv_dead_assigns_and_params(Transformer):
         except:
             pass
         self.copy(graph)
-        for node in self.elements():
+        for node in self.nodes():
             self.create_ref_count(node)
         print(f"{self.var_to_definition=} {self.var_to_ref_count=}")
 
@@ -591,7 +591,7 @@ class rmv_dead_assigns_and_params(Transformer):
         print(f"{self.var_to_definition=} {self.var_to_ref_count=}")
         return super().apply(graph)
 
-    def create_ref_count(self, src: ir.Element):
+    def create_ref_count(self, src: ir.Node2):
         if isinstance(src, AssignNode):
             self.var_to_definition[src.lvalue] = src
             for var in get_variables(src.rvalue):
@@ -612,7 +612,7 @@ class rmv_dead_assigns_and_params(Transformer):
     def remove_unreferenced(self, var: expr.Var):
         print(f"{var=}")
         src = self.var_to_definition[var]
-        if src not in self.elements():
+        if src not in self.nodes():
             return
         if isinstance(src, AssignNode):
             for var in get_variables(src.rvalue):
@@ -640,14 +640,14 @@ class parallelize(Transformer):
 
     def apply(self, graph: ir.CFG):
         self.copy(graph)
-        self.stack = self.elements()
+        self.stack = self.nodes()
         while self.stack:
             self.single(self.stack.pop())
         # self.single(self[1])
         # self.single(self[2])
         return super().apply(graph)
 
-    def single(self, src: ir.Element):
+    def single(self, src: ir.Node2):
         if not isinstance(src, ir.AssignNode):
             return
         preds = list(self.predecessors(src))
@@ -663,7 +663,7 @@ class parallelize(Transformer):
                 self.remove_edge(pred, src)
                 self.add_edge(pred, *succs)
 
-    def check(self, src: ir.Element, var: expr.Var):
+    def check(self, src: ir.Node2, var: expr.Var):
         if isinstance(src, ir.AssignNode):
             return var != src.lvalue
         if isinstance(src, ir.FuncNode):
@@ -672,7 +672,7 @@ class parallelize(Transformer):
 
 class rmv_loops(Transformer):
     def __init__(self, graph: CFG | None = None, *, apply: bool = True):
-        self.visited_count: dict[ir.Element, int] = {}
+        self.visited_count: dict[ir.Node2, int] = {}
         self.mapping: dict[expr.Var, expr.Expression] = {}
         super().__init__(graph, apply=apply)
 
@@ -684,7 +684,7 @@ class rmv_loops(Transformer):
         print(f"{self.mapping=}")
         return super().apply(graph)
 
-    def single(self, src: ir.Element):
+    def single(self, src: ir.Node2):
         if any(count == 8 for count in self.visited_count.values()):
             return
 
@@ -714,9 +714,9 @@ class lower_to_fsm(Transformer):
     ):
         self.new: ir.CFG = ir.CFG()
         self.new.unique_counter = 100
-        self.visited_count: dict[ir.Element, int] = {}
+        self.visited_count: dict[ir.Node2, int] = {}
         self.mapping: dict[expr.Var, expr.Expression] = {}
-        self.truely_visited: set[ir.Element] = set()
+        self.truely_visited: set[ir.Node2] = set()
         self.threshold = threshold
         super().__init__(graph, apply=apply)
 
@@ -728,7 +728,7 @@ class lower_to_fsm(Transformer):
         self.copy(self.new)
         return super().apply(graph)
 
-    def get_used_vars(self, src: ir.Element):
+    def get_used_vars(self, src: ir.Node2):
         wrote = set()
         for node in self.dfs(src):
             if isinstance(node, ir.AssignNode):
@@ -750,7 +750,7 @@ class lower_to_fsm(Transformer):
                     read.add(var)
         return read - wrote
 
-    def clone(self, src: ir.Element, extra_args: Optional[list[expr.Var]] = None):
+    def clone(self, src: ir.Node2, extra_args: Optional[list[expr.Var]] = None):
         """
         :param extra_args: extra args due to src potentially being a new head
         """
@@ -838,7 +838,7 @@ class make_nonblocking(Transformer):
 
     def start(
         self,
-        src: ir.Element,
+        src: ir.Node2,
         indent: int = 0,
         mapping: Optional[dict[expr.Var, expr.Expression]] = None,
     ):
@@ -919,7 +919,7 @@ class codegen(Transformer):
 
     def start(
         self,
-        src: ir.Element,
+        src: ir.Node2,
         indent: int = 0,
         mapping: Optional[dict[expr.Var, expr.Expression]] = None,
     ):

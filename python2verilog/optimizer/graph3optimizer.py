@@ -93,7 +93,7 @@ class rename_blocks(Transformer):
             replacement[vn] = phis
         block.phis = replacement
 
-    def update_lhs_rhs_stack(self, statement: Element):
+    def update_lhs_rhs_stack(self, statement: Node2):
         if isinstance(statement, AssignNode):
             statement.rvalue = backwards_replace(
                 statement.rvalue, self.make_mapping(self.stacks)
