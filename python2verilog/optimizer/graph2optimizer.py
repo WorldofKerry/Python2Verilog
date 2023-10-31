@@ -982,6 +982,7 @@ class lower_to_fsm(Transformer):
         self.new.add_node(new_node)
 
         self.visited_count[src] = self.visited_count.get(src, 0) + 1
+
         if self.visited_count[src] > self.threshold and isinstance(src, CallNode):
             print(f"DONE {src=}")
 

@@ -195,9 +195,9 @@ def make_range():
     graph.add_node(EndNode([]), prev)
 
     prev = graph.add_node(TrueNode(), ifelse)
-
     prev = graph.add_node(EndNode([i]), prev)
-    prev = graph.add_node(AssignNode(i, BinOp(i, "+", Int(1))), prev, children=[ifelse])
+    prev = graph.add_node(EndNode([BinOp(i, "+", Int(1))]), prev)
+    prev = graph.add_node(AssignNode(i, BinOp(i, "+", Int(2))), prev, children=[ifelse])
 
     return graph
 

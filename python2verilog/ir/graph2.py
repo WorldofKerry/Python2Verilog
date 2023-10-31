@@ -172,9 +172,9 @@ class EndNode(Element):
     whether it be a function return or a coroutine yield
     """
 
-    def __init__(self, values: set[expr.Var], unique_id: str = ""):
+    def __init__(self, values: list[expr.Expression], unique_id: str = ""):
         super().__init__(unique_id)
-        self.values: list[expr.Var] = typed_list(values, expr.Var)
+        self.values: list[expr.Expression] = typed_list(values, expr.Expression)
 
     def __str__(self) -> str:
         return super().__str__() + f"{EndNode.__name__[:-4]}\n" + f"{self.values}"
