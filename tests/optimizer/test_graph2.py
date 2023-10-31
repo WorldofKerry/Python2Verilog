@@ -396,8 +396,8 @@ class TestGraph(unittest.TestCase):
     def test_ssa_funcs(self):
         # graph = make_even_fib_graph_no_clocks()
         # graph = make_chain()
-        graph = make_seq_multiplier()
-        # graph = make_range()
+        # graph = make_seq_multiplier()
+        graph = make_range()
         # graph = make_basic_branch()
         # graph = make_const_loop()
 
@@ -425,17 +425,17 @@ class TestGraph(unittest.TestCase):
             graph
             | lower_to_fsm(threshold=1)
             | make_nonblocking()
-            | rmv_dead_assigns_and_params()
+            # | rmv_dead_assigns_and_params()
             # | rmv_argless_calls()
             # | rmv_redundant_branches()
         )
-        print(f"{type(lowered)} {lowered}")
+        # print(f"{type(lowered)} {lowered}")
 
-        for entry in lowered.exit_to_entry.values():
-            result = lowered | codegen()
-            output = list(result.start(entry))
-            text = "\n".join(output).replace(".", "")
-            print(f"{text}")
+        # for entry in lowered.exit_to_entry.values():
+        #     result = lowered | codegen()
+        #     output = list(result.start(entry))
+        #     text = "\n".join(output).replace(".", "")
+        #     print(f"{text}")
 
         # graph = rmv_assigns_and_phis.debug(graph).apply()
         # graph = rmv_redundant_calls(graph)

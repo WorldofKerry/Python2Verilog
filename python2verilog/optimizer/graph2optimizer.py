@@ -856,6 +856,7 @@ class make_nonblocking(Transformer):
         indent: int = 0,
         mapping: Optional[dict[expr.Var, expr.Expression]] = None,
     ):
+        print(f"{src} {mapping=} {list(self.successors(src))}")
         if mapping is None:
             mapping = {}
         if isinstance(src, ir.FuncNode):
@@ -864,11 +865,12 @@ class make_nonblocking(Transformer):
         elif isinstance(src, ir.AssignNode):
             self.counter += 1
             if self.counter > 1000:
-                return
-            print(f"{src} {mapping=}")
+                raise RuntimeError()
+
             src.rvalue = backwards_replace(src.rvalue, mapping)
             mapping[src.lvalue] = src.rvalue
             self.start(list(self.successors(src))[0], indent, mapping)
+
         elif isinstance(src, ir.CallNode):
             new_args = []
             for arg in src.args:
@@ -890,6 +892,7 @@ class make_nonblocking(Transformer):
 
                 if len(list(self.successors(func))) == 1:
                     self.add_edge(assign_nodes[-1], list(self.successors(func))[0])
+                    print(f"Visit {list(self.successors(func))[0]} from {src=}")
                     self.start(list(self.successors(func))[0], indent, mapping)
                     del self[src]
                     del self[func]
@@ -911,6 +914,8 @@ class make_nonblocking(Transformer):
             for value in src.values:
                 new_values.append(backwards_replace(value, mapping))
             src.values = new_values
+            if self.successors(src):
+                self.start(list(self.successors(src))[0], indent, mapping)
 
 
 class codegen(Transformer):
@@ -933,7 +938,7 @@ class codegen(Transformer):
         if mapping is None:
             mapping = {}
         if isinstance(src, ir.FuncNode):
-            yield "  " * indent + f"def func({str(src.params)[1:-1]}):"
+            yield "  " * indent + f"def func{src.unique_id}({str(src.params)[1:-1]}):"
             if len(list(self.successors(src))) == 1:
                 yield from self.start(
                     list(self.successors(src))[0], indent + 1, mapping
@@ -943,15 +948,15 @@ class codegen(Transformer):
             if self.counter > 1000:
                 return
             print(f"{src} {mapping=}")
-            src.rvalue = backwards_replace(src.rvalue, mapping)
+            # src.rvalue = backwards_replace(src.rvalue, mapping)
             mapping[src.lvalue] = src.rvalue
             yield "  " * indent + f"{src.lvalue} = {src.rvalue}"
             yield from self.start(list(self.successors(src))[0], indent, mapping)
         elif isinstance(src, ir.CallNode):
-            new_args = []
-            for arg in src.args:
-                new_args.append(backwards_replace(arg, mapping))
-            src.args = new_args
+            # new_args = []
+            # for arg in src.args:
+            #     new_args.append(backwards_replace(arg, mapping))
+            # src.args = new_args
 
             if len(list(self.successors(src))) > 0:
                 func = list(self.successors(src))[0]
@@ -971,13 +976,13 @@ class codegen(Transformer):
                 try:
                     yield (
                         "  " * indent
-                        + f"func{self.exit_to_entry[src].unique_id}({str(src.args)[1:-1]})"
+                        + f"yield from func{self.exit_to_entry[src].unique_id}({str(src.args)[1:-1]})"
                     )
                 except Exception as e:
                     print(f"{e=} {self.exit_to_entry}")
 
         elif isinstance(src, ir.BranchNode):
-            src.cond = backwards_replace(src.cond, mapping)
+            # src.cond = backwards_replace(src.cond, mapping)
 
             yield "  " * indent + f"if {src.cond}:"
             true, false = list(self.successors(src))
@@ -991,8 +996,14 @@ class codegen(Transformer):
                 list(self.successors(false))[0], indent + 1, copy.deepcopy(mapping)
             )
         elif isinstance(src, ir.EndNode):
-            new_values = []
-            for value in src.values:
-                new_values.append(backwards_replace(value, mapping))
-            src.values = new_values
-            yield "  " * indent + f"return {src.values}"
+            # new_values = []
+            # for value in src.values:
+            #     new_values.append(backwards_replace(value, mapping))
+            # src.values = new_values
+
+            if src.values:
+                yield "  " * indent + f"yield {src.values}"
+            else:
+                yield "  " * indent + f"return"
+            if self.successors(src):
+                yield from self.start(list(self.successors(src))[0], indent, mapping)
