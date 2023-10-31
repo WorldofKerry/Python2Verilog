@@ -831,12 +831,8 @@ class make_nonblocking(Transformer):
 
     def apply(self, graph: ir.CFG):
         self.copy(graph)
-        print(f"make_nonblocking start {self.exit_to_entry}")
         for entry in self.exit_to_entry.values():
-            print(f"start {entry=} {self=}")
-            # breakpoint()
-            list(self.start(entry))
-            print(f"Done")
+            self.start(entry)
         return super().apply(graph)
 
     def start(
@@ -845,15 +841,11 @@ class make_nonblocking(Transformer):
         indent: int = 0,
         mapping: Optional[dict[expr.Var, expr.Expression]] = None,
     ):
-        print("AmazingJoe")
         if mapping is None:
             mapping = {}
         if isinstance(src, ir.FuncNode):
-            yield "  " * indent + f"def func({str(src.params)[1:-1]}):"
             if len(list(self.successors(src))) == 1:
-                yield from self.start(
-                    list(self.successors(src))[0], indent + 1, mapping
-                )
+                self.start(list(self.successors(src))[0], indent + 1, mapping)
         elif isinstance(src, ir.AssignNode):
             self.counter += 1
             if self.counter > 1000:
@@ -861,8 +853,7 @@ class make_nonblocking(Transformer):
             print(f"{src} {mapping=}")
             src.rvalue = backwards_replace(src.rvalue, mapping)
             mapping[src.lvalue] = src.rvalue
-            yield "  " * indent + f"{src.lvalue} = {src.rvalue}"
-            yield from self.start(list(self.successors(src))[0], indent, mapping)
+            self.start(list(self.successors(src))[0], indent, mapping)
         elif isinstance(src, ir.CallNode):
             new_args = []
             for arg in src.args:
@@ -876,7 +867,6 @@ class make_nonblocking(Transformer):
                 assign_nodes = []
                 for arg, param in zip(src.args, func.params):
                     mapping[param] = arg
-                    yield "  " * indent + f"{param} = {arg}"
                     assign_nodes.append(AssignNode(param, arg))
 
                 succ = list(self.predecessors(src))[0]
@@ -885,24 +875,20 @@ class make_nonblocking(Transformer):
 
                 if len(list(self.successors(func))) == 1:
                     self.add_edge(assign_nodes[-1], list(self.successors(func))[0])
-                    yield from self.start(
-                        list(self.successors(func))[0], indent, mapping
-                    )
+                    self.start(list(self.successors(func))[0], indent, mapping)
                     del self[src]
                     del self[func]
 
         elif isinstance(src, ir.BranchNode):
             src.cond = backwards_replace(src.cond, mapping)
 
-            yield "  " * indent + f"if {src.cond}:"
             true, false = list(self.successors(src))
             if isinstance(false, ir.TrueNode):
                 false, true = true, false
-            yield from self.start(
+            self.start(
                 list(self.successors(true))[0], indent + 1, copy.deepcopy(mapping)
             )
-            yield "  " * indent + "else:"
-            yield from self.start(
+            self.start(
                 list(self.successors(false))[0], indent + 1, copy.deepcopy(mapping)
             )
         elif isinstance(src, ir.EndNode):
@@ -910,7 +896,6 @@ class make_nonblocking(Transformer):
             for value in src.values:
                 new_values.append(backwards_replace(value, mapping))
             src.values = new_values
-            yield "  " * indent + f"return {src.values}"
 
 
 class codegen(Transformer):
@@ -967,6 +952,14 @@ class codegen(Transformer):
                     yield from self.start(
                         list(self.successors(func))[0], indent, mapping
                     )
+            else:
+                try:
+                    yield (
+                        "  " * indent
+                        + f"func{self.exit_to_entry[src].unique_id}({str(src.args)[1:-1]})"
+                    )
+                except Exception as e:
+                    print(f"{e=} {self.exit_to_entry}")
 
         elif isinstance(src, ir.BranchNode):
             src.cond = backwards_replace(src.cond, mapping)
