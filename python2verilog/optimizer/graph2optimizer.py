@@ -951,10 +951,19 @@ class lower_to_fsm(Transformer):
                     read.add(var)
         return read - wrote
 
-    def clone(self, src: ir.Element):
+    def clone(self, src: ir.Element, extra_args: Optional[list[expr.Var]] = None):
+        """
+        :param extra_args: extra args due to src potentially being a new head
+        """
+
         new_node = copy.deepcopy(src)
         new_node.graph = None
+
         new_node._unique_id = ""
+
+        if extra_args is not None:
+            assert guard(new_node, FuncNode)
+            new_node.params.extend(extra_args)
 
         # print(f"{new_node=} {str(new_node)=} {self.mapping=}")
         print(f"{self.visited_count=} {self.mapping=}")
@@ -973,7 +982,7 @@ class lower_to_fsm(Transformer):
             self.entries.add(new_node)
 
         self.visited_count[src] = self.visited_count.get(src, 0) + 1
-        if self.visited_count[src] > 3 and isinstance(src, FuncNode):
+        if self.visited_count[src] > 3 and isinstance(src, CallNode):
             print(f"DONE {src=}")
 
             if src not in self.truely_visited:
@@ -982,13 +991,18 @@ class lower_to_fsm(Transformer):
                 self.visited_count = {}
                 self.mapping = {}
 
-                assert guard(new_node, FuncNode)
+                assert guard(new_node, CallNode)
                 need = self.get_used_vars(src)
                 print(f"{need=} {new_node=}")
-                new_node.params.extend(need)
+                new_node.args.extend(
+                    [backwards_replace(var, self.mapping) for var in need]
+                )
 
                 self.truely_visited.add(src)
-                self.clone(src)
+                if len(list(self.adj_list[src])) > 0:
+                    self.clone(list(self.adj_list[src])[0], need)
+                else:
+                    raise RuntimeError(f"{str(src)=} {len(list(self.adj_list[src]))}")
 
             return new_node
 
@@ -1145,17 +1159,18 @@ class codegen(Transformer):
                 new_args.append(backwards_replace(arg, mapping))
             src.args = new_args
 
-            func = list(self.adj_list[src])[0]
-            assert guard(func, ir.FuncNode)
+            if len(list(self.adj_list[src])) > 0:
+                func = list(self.adj_list[src])[0]
+                assert guard(func, ir.FuncNode)
 
-            # assign_nodes = []
-            for arg, param in zip(src.args, func.params):
-                mapping[param] = arg
-                # yield "  " * indent + f"{param} = {arg}"
-                # assign_nodes.append(AssignNode(param, arg))
+                # assign_nodes = []
+                for arg, param in zip(src.args, func.params):
+                    mapping[param] = arg
+                    # yield "  " * indent + f"{param} = {arg}"
+                    # assign_nodes.append(AssignNode(param, arg))
 
-            if len(list(self.adj_list[func])) == 1:
-                yield from self.start(list(self.adj_list[func])[0], indent, mapping)
+                if len(list(self.adj_list[func])) == 1:
+                    yield from self.start(list(self.adj_list[func])[0], indent, mapping)
 
         elif isinstance(src, ir.BranchNode):
             src.cond = backwards_replace(src.cond, mapping)
