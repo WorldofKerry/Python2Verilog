@@ -241,7 +241,8 @@ class CFG:
 
         return self
 
-    def id_to_node(self, id: str):
+    def id_to_node(self, id: object):
+        id = str(id)
         for key in self._adj_list:
             if key.unique_id == id:
                 return key

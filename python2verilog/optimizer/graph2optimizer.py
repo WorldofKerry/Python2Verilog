@@ -846,7 +846,8 @@ class make_nonblocking(Transformer):
 
     def apply(self, graph: ir.CFG):
         self.copy(graph)
-        for entry in self.exit_to_entry.values():
+        # self.start(self.id_to_node(122))
+        for entry in set(self.exit_to_entry.values()):
             self.start(entry)
         return super().apply(graph)
 
@@ -864,8 +865,9 @@ class make_nonblocking(Transformer):
                 self.start(list(self.successors(src))[0], indent + 1, mapping)
         elif isinstance(src, ir.AssignNode):
             self.counter += 1
-            if self.counter > 1000:
+            if self.counter > 20:
                 raise RuntimeError()
+                return
 
             src.rvalue = backwards_replace(src.rvalue, mapping)
             mapping[src.lvalue] = src.rvalue

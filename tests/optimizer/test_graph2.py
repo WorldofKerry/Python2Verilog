@@ -431,11 +431,11 @@ class TestGraph(unittest.TestCase):
         )
         # print(f"{type(lowered)} {lowered}")
 
-        # for entry in lowered.exit_to_entry.values():
-        #     result = lowered | codegen()
-        #     output = list(result.start(entry))
-        #     text = "\n".join(output).replace(".", "")
-        #     print(f"{text}")
+        for entry in lowered.exit_to_entry.values():
+            result = lowered | codegen()
+            output = list(result.start(entry))
+            text = "\n".join(output).replace(".", "")
+            print(f"{text}")
 
         # graph = rmv_assigns_and_phis.debug(graph).apply()
         # graph = rmv_redundant_calls(graph)
