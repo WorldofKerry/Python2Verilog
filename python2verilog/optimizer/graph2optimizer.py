@@ -566,10 +566,6 @@ class rmv_dead_assigns_and_params(Transformer):
         super().__init__(graph, apply=apply)
 
     def apply(self, graph: ir.CFG):
-        try:
-            self.entries = graph.entries
-        except:
-            pass
         self.copy(graph)
         for node in self.nodes():
             self.create_ref_count(node)
@@ -832,8 +828,12 @@ class make_nonblocking(Transformer):
 
     def apply(self, graph: ir.CFG):
         self.copy(graph)
+        print(f"make_nonblocking start {self.exit_to_entry}")
         for entry in self.exit_to_entry.values():
-            self.start(entry)
+            print(f"start {entry=} {self=}")
+            # breakpoint()
+            list(self.start(entry))
+            print(f"Done")
         return super().apply(graph)
 
     def start(
@@ -842,6 +842,7 @@ class make_nonblocking(Transformer):
         indent: int = 0,
         mapping: Optional[dict[expr.Var, expr.Expression]] = None,
     ):
+        print("AmazingJoe")
         if mapping is None:
             mapping = {}
         if isinstance(src, ir.FuncNode):
@@ -865,24 +866,27 @@ class make_nonblocking(Transformer):
                 new_args.append(backwards_replace(arg, mapping))
             src.args = new_args
 
-            func = list(self.successors(src))[0]
-            assert guard(func, ir.FuncNode)
+            if list(self.successors(src)):
+                func = list(self.successors(src))[0]
+                assert guard(func, ir.FuncNode)
 
-            assign_nodes = []
-            for arg, param in zip(src.args, func.params):
-                mapping[param] = arg
-                yield "  " * indent + f"{param} = {arg}"
-                assign_nodes.append(AssignNode(param, arg))
+                assign_nodes = []
+                for arg, param in zip(src.args, func.params):
+                    mapping[param] = arg
+                    yield "  " * indent + f"{param} = {arg}"
+                    assign_nodes.append(AssignNode(param, arg))
 
-            succ = list(self.predecessors(src))[0]
-            for assign in assign_nodes:
-                succ = self.add_node(assign, succ)
+                succ = list(self.predecessors(src))[0]
+                for assign in assign_nodes:
+                    succ = self.add_node(assign, succ)
 
-            if len(list(self.successors(func))) == 1:
-                self.add_edge(assign_nodes[-1], list(self.successors(func))[0])
-                yield from self.start(list(self.successors(func))[0], indent, mapping)
-                del self[src]
-                del self[func]
+                if len(list(self.successors(func))) == 1:
+                    self.add_edge(assign_nodes[-1], list(self.successors(func))[0])
+                    yield from self.start(
+                        list(self.successors(func))[0], indent, mapping
+                    )
+                    del self[src]
+                    del self[func]
 
         elif isinstance(src, ir.BranchNode):
             src.cond = backwards_replace(src.cond, mapping)

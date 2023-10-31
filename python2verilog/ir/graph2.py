@@ -391,7 +391,19 @@ class CFG:
                             "source": f"{id_prefix}{elem.unique_id}",
                             "target": f"{id_prefix}{child.unique_id}",
                             "class": "ControlFlow",
-                            "label": "ControlFlow",
+                            "label": "",
+                        }
+                    }
+                )
+        for k, v in self.exit_to_entry.items():
+            if k is not None:
+                edges.append(
+                    {
+                        "data": {
+                            "source": f"{id_prefix}{k.unique_id}",
+                            "target": f"{id_prefix}{v.unique_id}",
+                            "class": "Mapper",
+                            "label": "",
                         }
                     }
                 )

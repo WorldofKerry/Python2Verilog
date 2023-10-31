@@ -422,7 +422,12 @@ class TestGraph(unittest.TestCase):
 
         lowered = CFG()
         lowered = (
-            graph | lower_to_fsm() | make_nonblocking() | rmv_dead_assigns_and_params()
+            graph
+            | lower_to_fsm(threshold=1)
+            | make_nonblocking()
+            | rmv_dead_assigns_and_params()
+            # | rmv_argless_calls()
+            # | rmv_redundant_branches()
         )
         print(f"{type(lowered)} {lowered}")
 
