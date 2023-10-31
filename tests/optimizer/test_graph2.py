@@ -424,7 +424,10 @@ class TestGraph(unittest.TestCase):
         lowered = (
             graph
             | lower_to_fsm(threshold=1)
-            | make_nonblocking()
+            # | insert_merge_nodes()
+            # | insert_phis()
+            # | make_ssa()
+            # | make_nonblocking()
             # | rmv_dead_assigns_and_params()
             # | rmv_argless_calls()
             # | rmv_redundant_branches()

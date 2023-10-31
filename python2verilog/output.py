@@ -18,21 +18,20 @@ def func101(n0):
 
 
 def func122(i1, n0):
-    print(locals())
-    if i1 < n0:
-        yield [i1]
-        yield [i1 + 1]
-        i2 = i1 + 2
-        i1 = i1 + 2
-        if (i1 + 2) < n0:
-            yield [i1 + 2]
-            yield [(i1 + 2) + 1]
-            i2 = (i1 + 2) + 2
-            yield from func122((i1 + 2) + 2, n0)
-        else:
-            return
+  if (i1 < n0):
+    yield [i1]
+    yield [i1 + 1]
+    i2 = (i1 + 2)
+    i1 = (i1 + 2)
+    if ((i1 + 2) < n0):
+      yield [i1 + 2]
+      yield [(i1 + 2) + 1]
+      i2 = ((i1 + 2) + 2)
+      yield from func122((i1 + 2) + 2, n0)
     else:
-        return
+      return
+  else:
+    return
 
 
 inst = func101(50)
