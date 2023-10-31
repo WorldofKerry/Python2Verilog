@@ -227,9 +227,7 @@ class CFG:
         self.unique_counter = graph.unique_counter
         self.prefix = graph.prefix
 
-        self.adj_list = {}
-        for elem, edge_list in graph.adj_list.items():
-            self.adj_list[elem] = copy.copy(edge_list)
+        self.adj_list = copy.deepcopy(graph.adj_list)
 
         # Make sure exit to entry uses same elements as new copy used in of adj_list
         self.exit_to_entry = {}

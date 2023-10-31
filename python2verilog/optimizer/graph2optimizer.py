@@ -212,11 +212,11 @@ class make_ssa(Transformer):
         if b in self.visited:
             return
         self.visited.add(b)
-        print(f"rename {b=}")
 
         assert guard(b, BlockHead)
         self.update_phi_lhs(b)
 
+        print(f"{id(b)} {id(self[b.unique_id])}")
         for stmt in self.subtree_excluding(b, BlockHead):
             print(f"{id(stmt)} {id(self[stmt.unique_id])}")
             self.update_lhs_rhs_stack(stmt)
@@ -433,6 +433,7 @@ class propagate_vars_and_consts(Transformer):
         """
         if isinstance(node, FuncNode):
             for var in node.params:
+                assert guard(var, expr.Var)
                 self.core[var] = node
 
     def dfs_make_mapping(self, node: Element):
@@ -445,7 +446,7 @@ class propagate_vars_and_consts(Transformer):
         if isinstance(node, AssignNode):
             done = False
             while not done:
-                print(f"Iter {node=}")
+                print(f"Iter {node=} {self.core=}")
                 vars = list(get_variables(node.rvalue))
                 if all(var in self.core for var in vars):
                     done = True
@@ -453,7 +454,7 @@ class propagate_vars_and_consts(Transformer):
         elif isinstance(node, BranchNode):
             done = False
             while not done:
-                print(f"Iter {node=}")
+                print(f"Iter {node=} {self.core=}")
                 vars = list(get_variables(node.cond))
                 if all(var in self.core for var in vars):
                     done = True
