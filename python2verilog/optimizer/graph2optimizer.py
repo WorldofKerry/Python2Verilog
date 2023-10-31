@@ -717,13 +717,22 @@ class lower_to_fsm(Transformer):
         self.mapping: dict[expr.Var, expr.Expression] = {}
         self.truely_visited: set[ir.Node2] = set()
         self.threshold = threshold
+
+        # Map original func call to new func call
+        self.old_to_new: dict[ir.Node2, ir.Node2] = {}
+
+        # Map new func call to old func call
+        self.deferred: dict[ir.Node2, ir.Node2] = {}
+
         super().__init__(graph, apply=apply)
 
     def apply(self, graph: ir.CFG):
         self.copy(graph)
         self.clone(self.exit_to_entry[None])
         # self.clone(self[12])
-        print(f"{self.new.exit_to_entry=}")
+        for key, value in self.deferred.items():
+            self.new.exit_to_entry[key] = self.old_to_new[value]
+        print(f"FINALLY {self.new.exit_to_entry=}")
         self.copy(self.new)
         return super().apply(graph)
 
@@ -762,6 +771,9 @@ class lower_to_fsm(Transformer):
             assert guard(new_node, FuncNode)
             new_node.params.extend(extra_args)
 
+        if isinstance(new_node, FuncNode):
+            self.old_to_new[src] = new_node
+
         # print(f"{new_node=} {str(new_node)=} {self.mapping=}")
         print(f"{self.visited_count=} {self.mapping=}")
         if isinstance(new_node, ir.AssignNode):
@@ -779,8 +791,6 @@ class lower_to_fsm(Transformer):
         self.visited_count[src] = self.visited_count.get(src, 0) + 1
 
         if self.visited_count[src] > self.threshold and isinstance(src, CallNode):
-            print(f"DONE {src=}")
-
             need = self.get_used_vars(src)
             assert guard(new_node, CallNode)
             print(f"{need=} {new_node=}")
@@ -795,8 +805,13 @@ class lower_to_fsm(Transformer):
                 self.truely_visited.add(src)
                 res = self.clone(list(self.successors(src))[0], need)
                 self.new.exit_to_entry[new_node] = res
+                self.old_to_new[src] = res
                 print(f"{self.new.exit_to_entry}")
-
+            else:
+                self.deferred[new_node] = src
+            print(
+                f"DONE {src=} {new_node=} {self.new.exit_to_entry=} {self.old_to_new=}"
+            )
             return new_node
 
         if isinstance(src, ir.FuncNode):
