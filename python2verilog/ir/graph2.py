@@ -233,9 +233,11 @@ class CFG:
         self.exit_to_entry = {}
         for exit, entry in graph.exit_to_entry.items():
             if exit is None:
-                self.exit_to_entry[None] = self[entry.unique_id]
+                self.exit_to_entry[None] = self.id_to_element(entry.unique_id)
             else:
-                self.exit_to_entry[self[exit.unique_id]] = self[entry.unique_id]
+                self.exit_to_entry[
+                    self.id_to_element(exit.unique_id)
+                ] = self.id_to_element(entry.unique_id)
 
         return self
 
@@ -314,26 +316,21 @@ class CFG:
         assert guard(target, Element)
         self._adj_list[source].remove(target)
 
-    def __getitem__(self, key: Union[Element, str, int]):
-        if isinstance(key, Element):
-            return self._adj_list[key]
-        if isinstance(key, (str, int)):
-            key = str(key)
-            for elem in self._adj_list:
-                if elem.unique_id == key:
-                    return elem
-        raise TypeError(f"{key} {type(key)}")
+    def remove_node(self, key: Element):
+        del self._adj_list[key]
+        for children in self._adj_list.values():
+            if key in children:
+                children.remove(key)
+        for k, v in list(self.exit_to_entry.items()):
+            if k == key:
+                del self.exit_to_entry[k]
+            if v == key:
+                del self.exit_to_entry[k]
 
     def __delitem__(self, key: Union[Element, str]):
         if isinstance(key, Element):
-            del self._adj_list[key]
-            for children in self._adj_list.values():
-                if key in children:
-                    children.remove(key)
+            self.remove_node(key)
             return
-        if self.dope_entry_hehe == key:
-            self.dope_entry_hehe = CFG.DUMMY
-            del self.exit_to_entry[None]
         raise TypeError()
 
     def predecessors(self, element: Element) -> Iterator[Element]:
@@ -415,7 +412,7 @@ class CFG:
             return
         visited.add(source)
         yield source
-        for child in graph[source]:
+        for child in graph.successors(source):
             yield from graph.dfs(child, visited)
 
     def dominance(graph: CFG) -> dict[Element, set[Element]]:

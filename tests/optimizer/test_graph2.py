@@ -395,8 +395,8 @@ class TestGraph(unittest.TestCase):
 
     def test_ssa_funcs(self):
         # graph = make_even_fib_graph_no_clocks()
-        graph = make_chain()
-        # graph = make_seq_multiplier()
+        # graph = make_chain()
+        graph = make_seq_multiplier()
         # graph = make_range()
         # graph = make_basic_branch()
         # graph = make_const_loop()

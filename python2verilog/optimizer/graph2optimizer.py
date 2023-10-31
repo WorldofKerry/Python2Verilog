@@ -194,11 +194,8 @@ class make_ssa(Transformer):
         assert guard(b, BlockHead)
         self.update_phi_lhs(b)
 
-        print(f"{id(b)} {id(self[b.unique_id])}")
         for stmt in self.subtree_excluding(b, BlockHead):
-            print(f"{id(stmt)} {id(self[stmt.unique_id])}")
             self.update_lhs_rhs_stack(stmt)
-            print(f"{str(self[0])=}")
 
         for s in self.subtree_leaves(b, BlockHead):
             # For each successor in CFG
@@ -255,7 +252,6 @@ class make_ssa(Transformer):
                 stmt.rvalue, self.make_mapping(self._stacks)
             )
             stmt.lvalue = self.gen_name(stmt.lvalue)
-            print(f"{str(stmt)=} {str(self[stmt.unique_id])=}")
         if isinstance(stmt, BranchNode):
             for var in get_variables(stmt.cond):
                 self.stacks(var)
