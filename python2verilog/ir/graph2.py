@@ -212,18 +212,7 @@ class CFG:
         self.data_flow: set[tuple[Element, Element]] = set()
         self.unique_counter = -1
         self.prefix = typed_strict(prefix, str)
-        self.entry = CFG.DUMMY
-
-    def move(self, graph: CFG):
-        """
-        Move constructor
-        """
-        self.adj_list = graph.adj_list
-        self.unique_counter = graph.unique_counter
-        self.prefix = graph.prefix
-        self.entry = graph.entry
-        self.data_flow = graph.data_flow
-        return self
+        self.exit_to_entry: dict[Optional[CallNode], FuncNode] = {}
 
     def copy(self, graph: CFG):
         """
@@ -237,7 +226,7 @@ class CFG:
             self.data_flow.add((source, target))
         self.unique_counter = graph.unique_counter
         self.prefix = graph.prefix
-        self.entry = graph.entry
+        self.exit_to_entry = copy.deepcopy(graph.exit_to_entry)
         return self
 
     def add_node(
@@ -272,8 +261,7 @@ class CFG:
             self.adj_list[parent].add(element)
         self.adj_list[element] = set(children) if children else set()
 
-        if self.entry is CFG.DUMMY:
-            self.entry = element
+        self.exit_to_entry[None] = self.exit_to_entry.get(None, element)
 
         return element
 
@@ -315,8 +303,9 @@ class CFG:
                 if key in children:
                     children.remove(key)
             return
-        if self.entry == key:
-            self.entry = None
+        if self.dope_entry_hehe == key:
+            self.dope_entry_hehe = CFG.DUMMY
+            del self.exit_to_entry[None]
         raise TypeError()
 
     def predecessors(self, element: Element) -> Iterator[Element]:
@@ -419,13 +408,13 @@ class CFG:
 
         i.e. k in ret[n] means n dominates k
         """
-        vertices = set(graph.dfs(graph.entry))
+        vertices = set(graph.dfs(graph.exit_to_entry[None]))
         dominance_ = {}
 
         for vertex in vertices:
             temp_graph = CFG().copy(graph)
             del temp_graph[vertex]
-            new_vertices = set(temp_graph.dfs(graph.entry))
+            new_vertices = set(temp_graph.dfs(graph.exit_to_entry[None]))
             delta = vertices - new_vertices
             dominance_[vertex] = delta
         # logging.debug(f"\n{print_tree(dominance_, graph.entry)}")
@@ -467,7 +456,7 @@ class CFG:
         Returns dict representing dominator tree
         """
         visited = set()
-        nodes = reversed(list(self.dfs(self.entry)))
+        nodes = reversed(list(self.dfs(self.exit_to_entry[None])))
         dom_tree = {}
         dominance_ = self.dominance()
         for node in nodes:
@@ -496,7 +485,7 @@ class CFG:
 
         dom_tree = self.dominator_tree()
         # print(f"{dom_tree=}")
-        queue = [self.entry]
+        queue = [self.exit_to_entry[None]]
         while queue:
             cur = queue.pop(0)
             yield cur

@@ -98,13 +98,13 @@ class insert_merge_nodes(Transformer):
 
     def apply(self, graph: CFG):
         self.copy(graph)
-        nodes = list(self.dfs(self.entry))
+        nodes = list(self.dfs(self.exit_to_entry[None]))
         for node in nodes:
             self.single(node)
 
         # Update entry
-        entry = self.add_node(ir.BlockHead(), children=[self.entry])
-        self.entry = entry
+        entry = self.add_node(ir.BlockHead(), children=[self.exit_to_entry[None]])
+        self.exit_to_entry[None] = entry
         return super().apply(graph)
 
     def single(self, node: ir.Element):
@@ -125,7 +125,7 @@ class add_block_head_after_branch(Transformer):
 
     def apply(self, graph: ir.CFG):
         self.copy(graph)
-        nodes = list(self.dfs(self.entry))
+        nodes = list(self.dfs(self.exit_to_entry[None]))
         for node in nodes:
             self.single(node)
         return self
@@ -149,7 +149,7 @@ class insert_phis(Transformer):
         self.copy(graph)
         vars = [
             node.lvalue
-            for node in self.dfs(self.entry)
+            for node in self.dfs(self.exit_to_entry[None])
             if isinstance(node, ir.AssignNode)
         ]
         for var in vars:
@@ -161,7 +161,7 @@ class insert_phis(Transformer):
         ever_on_worklist: set[ir.Element] = set()
         already_has_phi: set[ir.Element] = set()
 
-        for node in self.dfs(self.entry):
+        for node in self.dfs(self.exit_to_entry[None]):
             if isinstance(node, ir.AssignNode):
                 if node.lvalue == v:
                     worklist.add(node)
@@ -198,10 +198,10 @@ class make_ssa(Transformer):
 
     def apply(self, graph: ir.CFG, recursion: bool = True):
         self.copy(graph)
-        self.rename(b=self.entry, recursion=recursion)
-        assert guard(self.entry, BlockHead)
+        self.rename(b=self.exit_to_entry[None], recursion=recursion)
+        assert guard(self.exit_to_entry[None], BlockHead)
         print(f"{self.global_vars=}")
-        self.entry.phis = {x: {} for x in self.global_vars}
+        self.exit_to_entry[None].phis = {x: {} for x in self.global_vars}
         return self
 
     def rename(self, b: BlockHead, recursion: bool = True):
@@ -346,12 +346,12 @@ class dataflow(Transformer):
         #     self.add_df_to_cf(node)
 
         # Cleanup data flow
-        for node in list(self.dfs(self.entry)):
+        for node in list(self.dfs(self.exit_to_entry[None])):
             self.add_df_to_df_edges(node)
-        # for node in list(self.dfs(self.entry)):
+        # for node in list(self.dfs(self.exit_to_entry[None])):
         #     self.rmv_df_to_df_edges(node)
 
-        # for node in list(self.dfs(self.entry)):
+        # for node in list(self.dfs(self.exit_to_entry[None])):
         #     self.rmv_cf_to_df_edges(node)
         return super().apply(graph)
 
@@ -513,12 +513,12 @@ class replace_merge_with_call_and_func(Transformer):
             self.replace_merge_with_func(node)
 
         # Replace entry with FuncNode
-        assert guard(self.entry, ir.BlockHead)
+        assert guard(self.exit_to_entry[None], ir.BlockHead)
         func_node = FuncNode()
-        func_node.params = [key for key in self.entry.phis]
-        self.add_node(func_node, children=self.adj_list[self.entry])
-        del self[self.entry]
-        self.entry = func_node
+        func_node.params = [key for key in self.exit_to_entry[None].phis]
+        self.add_node(func_node, children=self.adj_list[self.exit_to_entry[None]])
+        del self[self.exit_to_entry[None]]
+        self.exit_to_entry[None] = func_node
 
         return super().apply(graph)
 
@@ -884,7 +884,7 @@ class rmv_loops(Transformer):
         self.copy(graph)
         self.visited_count = {}
         self.mapping = {}
-        self.single(self.entry)
+        self.single(self.exit_to_entry[None])
         print(f"{self.mapping=}")
         return super().apply(graph)
 
@@ -913,18 +913,18 @@ class rmv_loops(Transformer):
 
 
 class lower_to_fsm(Transformer):
-    def __init__(self, graph: CFG | None = None, *, apply: bool = True):
+    def __init__(self, graph: CFG | None = None, *, apply: bool = True, threshold: int = 1):
         self.new: ir.CFG = ir.CFG()
         self.new.unique_counter = 100
         self.visited_count: dict[ir.Element, int] = {}
         self.mapping: dict[expr.Var, expr.Expression] = {}
         self.truely_visited: set[ir.Element] = set()
-        self.entries = set()
+        self.threshold = threshold
         super().__init__(graph, apply=apply)
 
     def apply(self, graph: ir.CFG):
         self.copy(graph)
-        self.clone(self.entry)
+        self.clone(self.exit_to_entry[None])
         # self.clone(self[12])
         self.copy(self.new)
         return super().apply(graph)
@@ -978,11 +978,9 @@ class lower_to_fsm(Transformer):
             new_node.values = new_values
 
         self.new.add_node(new_node)
-        if len(self.visited_count) == 0:
-            self.entries.add(new_node)
 
         self.visited_count[src] = self.visited_count.get(src, 0) + 1
-        if self.visited_count[src] > 3 and isinstance(src, CallNode):
+        if self.visited_count[src] > self.threshold and isinstance(src, CallNode):
             print(f"DONE {src=}")
 
             if src not in self.truely_visited:
@@ -1000,7 +998,8 @@ class lower_to_fsm(Transformer):
 
                 self.truely_visited.add(src)
                 if len(list(self.adj_list[src])) > 0:
-                    self.clone(list(self.adj_list[src])[0], need)
+                    res = self.clone(list(self.adj_list[src])[0], need)
+                    self.exit_to_entry[new_node] = res
                 else:
                     raise RuntimeError(f"{str(src)=} {len(list(self.adj_list[src]))}")
 
@@ -1045,10 +1044,8 @@ class make_nonblocking(Transformer):
         super().__init__(graph, apply=apply)
 
     def apply(self, graph: ir.CFG):
-        self.entries = graph.entries
         self.copy(graph)
-        print(f"{self.entries}")
-        for entry in self.entries:
+        for entry in self.exit_to_entry.values():
             self.start(entry)
         return super().apply(graph)
 
@@ -1126,9 +1123,8 @@ class codegen(Transformer):
         super().__init__(graph, apply=apply)
 
     def apply(self, graph: ir.CFG):
-        self.entries = graph.entries
         self.copy(graph)
-        for entry in self.entries:
+        for entry in self.exit_to_entry.values():
             self.start(entry)
         return super().apply(graph)
 

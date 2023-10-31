@@ -336,8 +336,8 @@ class TestGraph(unittest.TestCase):
         nonclocked = list(visit_nonclocked(graph, graph["11"]))
         logging.error(nonclocked)
 
-        result = dominance(graph, graph.entry)[graph["7"]]
-        result = list(dominance_frontier(graph, graph["12"], graph.entry))
+        result = dominance(graph, graph.dope_entry_hehe)[graph["7"]]
+        result = list(dominance_frontier(graph, graph["12"], graph.dope_entry_hehe))
         print(f"{result=}")
 
         with open("graph2_cytoscape.log", mode="w") as f:
@@ -346,15 +346,15 @@ class TestGraph(unittest.TestCase):
     def test_dominator_algorithms(self):
         graph = make_pdf_example()
 
-        dom_frontier = set(dominance_frontier(graph, graph["4"], graph.entry))
+        dom_frontier = set(graph.dominance_frontier(graph["4"]))
         # print(f"{dom_frontier=}")
         self.assertEqual({graph[3], graph[4], graph[8]}, dom_frontier)
 
-        dom_frontier = set(dominance_frontier(graph, graph["2"], graph.entry))
+        dom_frontier = set(graph.dominance_frontier(graph["2"]))
         # print(f"{dom_frontier=}")
         self.assertEqual({graph[3]}, dom_frontier)
 
-        dom_tree = dominator_tree(graph)
+        dom_tree = graph.dominator_tree()
         # print(f"{dom_tree=}")
         self.assertEqual(
             {
@@ -406,8 +406,7 @@ class TestGraph(unittest.TestCase):
         )
         print(f"{type(lowered)} {lowered}")
 
-        print(f"{lowered.entries=} {lowered.adj_list=}")
-        for entry in lowered.entries:
+        for entry in lowered.exit_to_entry.values():
             result = lowered | codegen()
             output = list(result.start(entry))
             text = "\n".join(output).replace(".", "")
