@@ -65,7 +65,7 @@ class rename_blocks(Transformer):
         for statement in b.statements:
             self.update_lhs_rhs_stack(statement)
 
-        for s in self.adj_list[b]:
+        for s in self._adj_list[b]:
             # For each successor in CFG
             assert guard(s, BasicBlock)
             for statement in s.statements:

@@ -7,7 +7,7 @@ from __future__ import annotations
 import copy
 import logging
 import reprlib
-from typing import Collection, Iterator, Optional, Union
+from typing import Collection, Iterator, Optional, Sequence, Union
 
 from python2verilog.ir import expressions as expr
 from python2verilog.utils.lines import Lines
@@ -207,7 +207,7 @@ class CFG:
     DUMMY = Element("___DUMMY___")
 
     def __init__(self, prefix: str = ""):
-        self.adj_list: dict[Element, set[Element]] = {}
+        self._adj_list: dict[Element, set[Element]] = {}
 
         # Unused
         self.prefix = typed_strict(prefix, str)
@@ -227,7 +227,7 @@ class CFG:
         self.unique_counter = graph.unique_counter
         self.prefix = graph.prefix
 
-        self.adj_list = copy.deepcopy(graph.adj_list)
+        self._adj_list = copy.deepcopy(graph._adj_list)
 
         # Make sure exit to entry uses same elements as new copy used in of adj_list
         self.exit_to_entry = {}
@@ -238,6 +238,18 @@ class CFG:
                 self.exit_to_entry[self[exit.unique_id]] = self[entry.unique_id]
 
         return self
+
+    def id_to_element(self, id: str):
+        for key in self._adj_list:
+            if key.unique_id == id:
+                return key
+        raise RuntimeError()
+
+    def successors(self, element: Element):
+        return self._adj_list[element]
+
+    def elements(self):
+        return list(self._adj_list.keys())
 
     def add_node(
         self,
@@ -255,15 +267,16 @@ class CFG:
         if not element.unique_id:
             element.set_unique_id(self._next_unique())
 
-        if element in self.adj_list:
+        if element in self.elements():
             raise RuntimeError(
-                "Element already exists" f" {self.adj_list[element]} {element}"
+                "Element already exists" f" {self._adj_list[element]} {element}"
             )
 
+        self._adj_list[element] = set()
         for parent in parents:
-            assert guard(parent, Element)
-            self.adj_list[parent].add(element)
-        self.adj_list[element] = set(children) if children else set()
+            self.add_edge(parent, element, strict=True)
+        if children:
+            self.add_edge(element, *children, strict=True)
 
         self.exit_to_entry[None] = self.exit_to_entry.get(None, element)
 
@@ -273,37 +286,43 @@ class CFG:
         """
         Validate graph instance
         """
-        assert guard(self.adj_list, dict)
-        for elem, children in self.adj_list.items():
+        assert guard(self._adj_list, dict)
+        for elem, children in self._adj_list.items():
             assert guard(elem, Element)
             assert guard(children, set), f"{children} {type(children)}"
             for child in children:
                 assert guard(child, Element)
-                assert child in self.adj_list
+                assert child in self._adj_list
         assert guard(self.prefix, str)
         assert guard(self.unique_counter, int)
 
-    def add_edge(self, source: Element, *targets: Element):
+    def add_edge(self, source: Element, *targets: Element, strict: bool = False):
         """
         Add directed edge
         """
-        assert all(target not in self.adj_list[source] for target in targets)
-        self.adj_list[source] = self.adj_list[source].union(targets)
+        assert guard(source, Element)
+        assert all(guard(target, Element) for target in targets)
+
+        if strict:
+            # Check that edge doesn't already exist
+            assert all(target not in self._adj_list[source] for target in targets)
+
+        self._adj_list[source] = self._adj_list[source].union(targets)
 
     def __getitem__(self, key: Union[Element, str, int]):
         if isinstance(key, Element):
-            return self.adj_list[key]
+            return self._adj_list[key]
         if isinstance(key, (str, int)):
             key = str(key)
-            for elem in self.adj_list:
+            for elem in self._adj_list:
                 if elem.unique_id == key:
                     return elem
         raise TypeError(f"{key} {type(key)}")
 
     def __delitem__(self, key: Union[Element, str]):
         if isinstance(key, Element):
-            del self.adj_list[key]
-            for children in self.adj_list.values():
+            del self._adj_list[key]
+            for children in self._adj_list.values():
                 if key in children:
                     children.remove(key)
             return
@@ -316,7 +335,7 @@ class CFG:
         """
         Get immediate successors/parents of a element
         """
-        for parent, children in self.adj_list.items():
+        for parent, children in self._adj_list.items():
             if element in children:
                 yield parent
 
@@ -342,7 +361,7 @@ class CFG:
         nodes = []
         edges = []
 
-        for elem, children in self.adj_list.items():
+        for elem, children in self._adj_list.items():
             nodes.append(
                 {
                     "data": {
@@ -387,7 +406,7 @@ class CFG:
             visited = set()
         if source in visited:
             return
-        if source not in graph.adj_list:
+        if source not in graph._adj_list:
             return
         visited.add(source)
         yield source
@@ -422,13 +441,13 @@ class CFG:
         """
         dominance_ = graph.dominance()
 
-        zs = graph.adj_list.keys()
-        ms = graph.adj_list.keys()
+        zs = graph._adj_list.keys()
+        ms = graph._adj_list.keys()
 
         for z in zs:
             for m in ms:
                 # M -> Z
-                m_to_z = z in graph.adj_list[m]
+                m_to_z = z in graph._adj_list[m]
 
                 # N dom M
                 n_dom_m = m in dominance_[n]
@@ -494,13 +513,13 @@ class CFG:
 
         Yields all nodes in subtree, excluding leaves
         """
-        stack = list(self.adj_list[source])
+        stack = list(self._adj_list[source])
         while stack:
             cur = stack.pop()
             if isinstance(cur, elem_type):
                 continue
             yield cur
-            for child in self.adj_list[cur]:
+            for child in self._adj_list[cur]:
                 stack.append(child)
 
     def subtree_leaves(
@@ -522,7 +541,7 @@ class CFG:
         if source in visited:
             return
         visited.add(source)
-        for child in self.adj_list[source]:
+        for child in self._adj_list[source]:
             if isinstance(child, elem_type):
                 yield child
             else:
