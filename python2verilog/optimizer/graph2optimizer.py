@@ -908,6 +908,28 @@ class lower_to_fsm(Transformer):
         self.copy(self.new)
         return super().apply()
 
+    def get_used_vars(self, src: ir.Element):
+        wrote = set()
+        for node in self.dfs(src):
+            if isinstance(node, ir.AssignNode):
+                wrote.add(node.lvalue)
+            elif isinstance(node, FuncNode):
+                for param in node.params:
+                    wrote.add(param)
+
+        read = set()
+        for node in self.dfs(src):
+            if isinstance(node, ir.AssignNode):
+                for var in get_variables(node.rvalue):
+                    read.add(var)
+            elif isinstance(node, ir.CallNode):
+                for arg in node.args:
+                    read.add(arg)
+            elif isinstance(node, ir.BranchNode):
+                for var in get_variables(node.cond):
+                    read.add(var)
+        return read - wrote
+
     def clone(self, src: ir.Element):
         new_node = copy.copy(src)
         new_node.graph = None
@@ -938,6 +960,10 @@ class lower_to_fsm(Transformer):
 
                 self.visited_count = {}
                 self.mapping = {}
+
+                need = self.get_used_vars(src)
+                print(f"{need=}")
+
                 self.truely_visited.add(src)
                 self.clone(src)
 
