@@ -11,7 +11,6 @@ from python2verilog.optimizer.graph2optimizer import (  # nopycln: import
     add_block_head_after_branch,
     codegen,
     make_nonblocking,
-    dataflow,
     insert_merge_nodes,
     insert_phis,
     lower_to_fsm,

@@ -21,7 +21,6 @@ class Element:
 
     def __init__(self, unique_id: str = ""):
         self._unique_id = typed_strict(unique_id, str)
-        self.graph: Optional[CFG] = None
 
     def __hash__(self) -> int:
         assert len(self.unique_id) > 0, f'"{self.unique_id}"'
@@ -226,7 +225,14 @@ class CFG:
             self.data_flow.add((source, target))
         self.unique_counter = graph.unique_counter
         self.prefix = graph.prefix
-        self.exit_to_entry = copy.deepcopy(graph.exit_to_entry)
+
+        # Make sure exit to entry uses same elements as the deepcopy of adj_list
+        self.exit_to_entry = {}
+        for key, value in graph.exit_to_entry.items():
+            if key is None:
+                self.exit_to_entry[None] = self[value.unique_id]
+            else:
+                self.exit_to_entry[self[key.unique_id]] = self[value.unique_id]
         return self
 
     def add_node(
@@ -241,12 +247,6 @@ class CFG:
         Gives node a unique id if it doesn't have one
         """
         assert guard(element, Element)
-
-        if element.graph:
-            raise RuntimeError(
-                f"Element is already apart of a graph {element} {element.graph}"
-            )
-        element.graph = self
 
         if not element.unique_id:
             element.set_unique_id(self._next_unique())
@@ -504,7 +504,6 @@ class CFG:
         """
         stack = list(self.adj_list[source])
         while stack:
-            print(f"stuck {stack=}")
             cur = stack.pop()
             if isinstance(cur, elem_type):
                 continue

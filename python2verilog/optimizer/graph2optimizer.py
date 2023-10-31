@@ -218,14 +218,15 @@ class make_ssa(Transformer):
         self.update_phi_lhs(b)
 
         for stmt in self.subtree_excluding(b, BlockHead):
+            print(f"{id(stmt)} {id(self[stmt.unique_id])}")
             self.update_lhs_rhs_stack(stmt)
+            print(f"{str(self[0])=}")
 
         for s in self.subtree_leaves(b, BlockHead):
             # For each successor in CFG
             assert guard(s, BlockHead)
             for var, phi in s.phis.items():
                 phi[b] = self.stacks(var)[-1]
-            print(f"{s=} {b=} {str(s)=} {self._stacks=}")
 
         # DFS in dominator tree
         if recursion is True:
@@ -276,6 +277,7 @@ class make_ssa(Transformer):
                 stmt.rvalue, self.make_mapping(self._stacks)
             )
             stmt.lvalue = self.gen_name(stmt.lvalue)
+            print(f"{str(stmt)=} {str(self[stmt.unique_id])=}")
         if isinstance(stmt, BranchNode):
             for var in get_variables(stmt.cond):
                 self.stacks(var)
@@ -315,187 +317,6 @@ class make_ssa(Transformer):
             if value:
                 mapping[key] = value[-1]
         return mapping
-
-
-class dataflow(Transformer):
-    """
-    Adds data flow edges to graph
-    """
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        # Maps each assignment mode to their SSA variable
-        mapping = {}
-        self.control_entry = Element()  # Temporary
-
-    def apply(self, graph: ir.CFG):
-        self.copy(graph)
-
-        for node in self.adj_list:
-            self.make_ssa_mapping(node)
-
-        # for node in self.adj_list:
-        #     self.add_cf_to_cf_edges(node)
-
-        # for node in self.adj_list:
-        #     self.add_df_to_cf_edges(node)
-        # for node in self.adj_list:
-        #     self.rm_df_to_cf(node)
-        # for node in self.adj_list:
-        #     self.add_df_to_cf(node)
-
-        # Cleanup data flow
-        for node in list(self.dfs(self.exit_to_entry[None])):
-            self.add_df_to_df_edges(node)
-        # for node in list(self.dfs(self.exit_to_entry[None])):
-        #     self.rmv_df_to_df_edges(node)
-
-        # for node in list(self.dfs(self.exit_to_entry[None])):
-        #     self.rmv_cf_to_df_edges(node)
-        return super().apply(graph)
-
-    def rm_df_to_cf(self, src: Element):
-        """
-        Removes all data flow to control flow edges whose src is not a FuncNode
-        """
-        if isinstance(src, (TrueNode, FalseNode, EndNode)):
-            for child in set(self.adj_list[src]):
-                if isinstance(child, (FuncNode, AssignNode, CallNode)):
-                    self.adj_list[src].remove(child)
-        if isinstance(src, BranchNode):
-            for child in set(self.adj_list[src]):
-                if isinstance(child, (AssignNode, EndNode)):
-                    self.adj_list[src].remove(child)
-
-    def add_df_to_cf_edges(self, src: Element):
-        """
-        Adds edge from data flow to its first control flow edge
-        """
-        # assert len(set(self.subtree_leaves(src, ir.BranchNode))) == 1
-        if not isinstance(src, FuncNode):
-            return
-        for leaf in set(self.subtree_leaves(src, ir.BranchNode)):
-            self.adj_list[leaf].add(src)
-
-    def add_df_to_cf(self, node: Element):
-        """
-        Add data flow edges between data flow nodes
-        """
-        try:
-            if isinstance(node, BranchNode):
-                for var in get_variables(node.cond):
-                    self.adj_list[self.mapping[var]].add(node)
-            if isinstance(node, EndNode):
-                for phi in node.phis.values():
-                    for var in phi.values():
-                        self.adj_list[self.mapping[var]].add(node)
-
-        except Exception as e:
-            # print(f"{var=} {self.mapping} {e=}")
-            raise e
-
-    def rmv_cf_to_df_edges(self, node: ir.Element):
-        """
-        Removes control flow to data flow edges
-        """
-        if isinstance(node, (TrueNode, FalseNode, BranchNode, EndNode)):
-            print(f"iter {node=}")
-            for child in set(self.adj_list[node]):
-                print(f"iter {child=}")
-                if isinstance(child, (AssignNode, MergeNode)):
-                    self.adj_list[node].remove(child)
-                    print(f"Rmv {node=} {child=}")
-
-    def add_cf_to_cf_edges(self, src: Element):
-        # Requires to be ran before adding data flow edges
-        if isinstance(src, (TrueNode, FalseNode, EndNode)):
-            print(f"add_control_flow_edge {src=}")
-            for node in list(self.subtree_leaves(src, BranchNode)):
-                print(f"adding {node=}")
-                self.adj_list[src].add(node)
-
-    def make_ssa_mapping(self, node: Element):
-        if isinstance(node, AssignNode):
-            self.mapping[node.lvalue] = node
-        if isinstance(node, BlockHead):
-            for var in node.phis:
-                self.mapping[var] = node
-        if isinstance(node, FuncNode):
-            for var in node.params:
-                self.mapping[var] = node
-
-    def add_df_to_df_edges(self, node: Element):
-        """
-        Add data flow edges between data flow nodes
-        """
-        try:
-            if isinstance(node, AssignNode):
-                for var in get_variables(node.rvalue):
-                    self.data_flow.add((self.mapping[var], node))
-                    # self.adj_list[self.mapping[var]].add(node)
-            if isinstance(node, CallNode):
-                for var in node.args:
-                    self.data_flow.add((self.mapping[var], node))
-                    # self.adj_list[self.mapping[var]].add(node)
-
-        except Exception as e:
-            # print(f"{var=} {self.mapping} {e=}")
-            raise e
-
-    def make_phis_immediate(self, node: Element):
-        """
-        The element label in PHI nodes replaced with their immediate successor,
-        and not their immedate merge node successor
-        """
-        if not isinstance(node, BlockHead):
-            return
-        new_phis = {}
-        for lhs, phi in node.phis.items():
-            new_phis[lhs] = {}
-            for rhs in phi.values():
-                new_phis[lhs][self.mapping[rhs]] = rhs
-        print(f"{repr(node)=}\n{node.phis=}\n{new_phis=}")
-        node.phis = new_phis
-
-    def rmv_df_to_df_edges(self, node: Element):
-        """
-        Remove edges that don't have data flow
-        """
-        try:
-            preds = self.predecessors(node)
-            if isinstance(node, AssignNode):
-                vars = set(get_variables(node.rvalue))
-            elif isinstance(node, CallNode):
-                vars = set(node.args)
-            else:
-                return
-
-            for pred in preds:
-                if isinstance(pred, AssignNode):
-                    if pred.lvalue not in vars:
-                        print(f"remove {repr(pred)} to {repr(node)}")
-                        self.adj_list[pred].remove(node)
-                elif isinstance(pred, FuncNode):
-                    # If all parameters do not include vars
-                    for var in pred.params:
-                        if var in vars:
-                            break
-                    else:
-                        print(f"remove {repr(pred)} to {repr(node)} {vars=}")
-                        self.adj_list[pred].remove(node)
-                # elif isinstance(pred, BlockHead):
-                #     # If all phi LHSs do not include vars
-                #     for var in pred.phis:
-                #         if var in vars:
-                #             break
-                #     else:
-                #         print(f"remove {repr(pred)} to {repr(node)} {vars=}")
-                #         self.adj_list[pred].remove(node)
-
-        except Exception as e:
-            print(f"{var=} {self.mapping} {e=}")
-            # raise e
 
 
 class replace_merge_with_call_and_func(Transformer):
@@ -928,6 +749,7 @@ class lower_to_fsm(Transformer):
         self.copy(graph)
         self.clone(self.exit_to_entry[None])
         # self.clone(self[12])
+        print(f"{self.new.exit_to_entry=}")
         self.copy(self.new)
         return super().apply(graph)
 
@@ -959,7 +781,6 @@ class lower_to_fsm(Transformer):
         """
 
         new_node = copy.deepcopy(src)
-        new_node.graph = None
 
         new_node._unique_id = ""
 
@@ -999,7 +820,8 @@ class lower_to_fsm(Transformer):
 
                 self.truely_visited.add(src)
                 res = self.clone(list(self.adj_list[src])[0], need)
-                self.exit_to_entry[new_node] = res
+                self.new.exit_to_entry[new_node] = res
+                print(f"{self.new.exit_to_entry}")
 
             return new_node
 
@@ -1020,14 +842,6 @@ class lower_to_fsm(Transformer):
                     self.mapping[param] = arg
 
         for node in self.adj_list[src]:
-            # print(f"{self.mapping=}")
-
-            # for key in self.mapping:
-            #     if self.mapping[key] in get_variables(self.mapping[key]):
-            #         # temp fix to prevent infinite recursion
-            #         continue
-            #     self.mapping[key] = backwards_replace(self.mapping[key], self.mapping)
-
             print(f"Add node {src=} -> {new_node=}")
             new_child = self.clone(node)
             print(f"Add edge {new_node=} -> {new_child=}")
