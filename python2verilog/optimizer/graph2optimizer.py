@@ -964,11 +964,14 @@ class codegen(Transformer):
                 func = list(self.successors(src))[0]
                 assert guard(func, ir.FuncNode)
 
-                # assign_nodes = []
+                assign_nodes: list[AssignNode] = []
                 for arg, param in zip(src.args, func.params):
                     mapping[param] = arg
-                    # yield "  " * indent + f"{param} = {arg}"
-                    # assign_nodes.append(AssignNode(param, arg))
+                    yield "  " * indent + f"{param} = {arg}"
+                    assign_nodes.append(AssignNode(param, arg))
+
+                for assign_node in assign_nodes:
+                    yield "  " * indent + f"{assign_node.lvalue} = {assign_node.rvalue}"
 
                 if len(list(self.successors(func))) == 1:
                     yield from self.start(
