@@ -424,7 +424,7 @@ class TestGraph(unittest.TestCase):
         lowered = CFG()
         lowered = (
             graph
-            | make_single_end_per_subgraph(threshold=2)
+            | make_single_end_per_subgraph(threshold=1)
             # | lower_to_fsm(threshold=1)
             # | insert_merge_nodes()
             # | insert_phis()
