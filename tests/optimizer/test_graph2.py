@@ -424,15 +424,15 @@ class TestGraph(unittest.TestCase):
         lowered = CFG()
         lowered = (
             graph
-            | make_single_end_per_subgraph()
+            | make_single_end_per_subgraph(threshold=2)
             # | lower_to_fsm(threshold=1)
             # | insert_merge_nodes()
             # | insert_phis()
             # | make_ssa()
             # | make_nonblocking()
-            # | rmv_dead_assigns_and_params()
-            # | rmv_argless_calls()
-            # | rmv_redundant_branches()
+            | rmv_dead_assigns_and_params()
+            | rmv_argless_calls()
+            | rmv_redundant_branches()
         )
         # print(f"{type(lowered)} {lowered}")
 

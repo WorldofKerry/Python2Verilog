@@ -1110,9 +1110,9 @@ class make_single_end_per_subgraph(Transformer):
         else:
             call_node = succ
             func_node = list(self.successors(call_node))[0]
-            
+
             assert guard(func_node, ir.FuncNode)
-            
+
             # call_node.args.extend(need)
             # func_node.params.extend(need)
 
