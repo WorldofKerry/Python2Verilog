@@ -259,7 +259,9 @@ class make_ssa(Transformer):
         if isinstance(stmt, EndNode):
             new_values = []
             for var in stmt.values:
-                new_values.append(backwards_replace(var, self.make_mapping(self._stacks)))
+                new_values.append(
+                    backwards_replace(var, self.make_mapping(self._stacks))
+                )
             stmt.values = new_values
 
     def gen_name(self, var: expr.Var):
@@ -1057,7 +1059,6 @@ class make_single_end_per_subgraph(Transformer):
     ):
         self.new: ir.CFG = ir.CFG()
         self.new.unique_counter = 100
-        self.visited_count: dict[ir.Node2, int] = {}
         self.mapping: dict[expr.Var, expr.Expression] = {}
         self.truely_visited: set[ir.Node2] = set()
         self.threshold = threshold
@@ -1143,14 +1144,17 @@ class make_single_end_per_subgraph(Transformer):
             return
         self.truely_visited.add(src)
 
-        self.visited_count = {}
-
         assert guard(src, FuncNode)
-        result = self.rec(src, extra_args)
+        result = self.rec(src, {}, extra_args)
         self.old_to_new[src] = result
 
-    def rec(self, src: ir.Node2, extra_args: Optional[list[expr.Var]] = None):
-        self.visited_count[src] = self.visited_count.get(src, 0) + 1
+    def rec(
+        self,
+        src: ir.Node2,
+        visited_count: dict[ir.Node2, int],
+        extra_args: Optional[list[expr.Var]] = None,
+    ):
+        visited_count[src] = visited_count.get(src, 0) + 1
 
         new_node = copy.deepcopy(src)
         new_node._unique_id = ""
@@ -1180,7 +1184,7 @@ class make_single_end_per_subgraph(Transformer):
 
             return new_node
 
-        if isinstance(new_node, CallNode) and self.visited_count[src] > self.threshold:
+        if isinstance(new_node, CallNode) and visited_count[src] > self.threshold:
             succ = list(self.successors(src))[0]
             assert guard(succ, ir.FuncNode)
 
@@ -1197,6 +1201,6 @@ class make_single_end_per_subgraph(Transformer):
             return new_node
 
         for node in self.successors(src):
-            new_child = self.rec(node)
+            new_child = self.rec(node, copy.deepcopy(visited_count))
             self.new.add_edge(new_node, new_child)
         return new_node
