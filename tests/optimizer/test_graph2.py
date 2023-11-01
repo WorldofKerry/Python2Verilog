@@ -436,8 +436,8 @@ class TestGraph(unittest.TestCase):
         )
         # print(f"{type(lowered)} {lowered}")
 
-        for entry in lowered.exit_to_entry.values():
-            result = lowered | codegen()
+        result = lowered | codegen()
+        for entry in set(lowered.exit_to_entry.values()):
             output = list(result.start(entry))
             text = "\n".join(output).replace(".", "")
             print(f"{text}")

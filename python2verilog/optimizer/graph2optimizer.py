@@ -521,13 +521,20 @@ class rmv_argless_calls(Transformer):
     def single(self, src: ir.Node2):
         if not isinstance(src, FuncNode):
             return
-        if len(src.params) == 0:
-            func_succs = set(self.successors(src))
-            assert len(func_succs) == 1
-            call_nodes = set(self.predecessors(src))
+
+        func_succs = set(self.successors(src))
+        assert len(func_succs) == 1
+        call_nodes = set(self.predecessors(src))
+
+        # If args and params are same variable
+        other_condition = len(call_nodes) == 1
+        if other_condition:
+            for arg, param in zip(list(call_nodes)[0].args, src.params):
+                other_condition &= arg == param
+
+        if len(src.params) == 0 or other_condition:
             for call_node in call_nodes:
                 assert guard(call_node, ir.CallNode)
-                assert len(call_node.args) == 0
                 for call_preds in set(self.predecessors(call_node)):
                     self.add_edge(call_preds, *func_succs)
                 del self[call_node]
@@ -923,12 +930,13 @@ class make_nonblocking(Transformer):
 class codegen(Transformer):
     def __init__(self, graph: CFG | None = None, *, apply: bool = True):
         self.counter = 0
+        self.visited: set[ir.Node2] = set()
         super().__init__(graph, apply=apply)
 
     def apply(self, graph: ir.CFG):
         self.copy(graph)
-        for entry in self.exit_to_entry.values():
-            self.start(entry)
+        # for entry in set(self.exit_to_entry.values()):
+        #     self.start(entry)
         return super().apply(graph)
 
     def start(
@@ -1020,7 +1028,7 @@ class make_single_end_per_subgraph(Transformer):
     """
 
     def __init__(
-        self, graph: CFG | None = None, *, apply: bool = True, threshold: int = 1
+        self, graph: CFG | None = None, *, apply: bool = True, threshold: int = 0
     ):
         self.new: ir.CFG = ir.CFG()
         self.new.unique_counter = 100
@@ -1087,19 +1095,26 @@ class make_single_end_per_subgraph(Transformer):
         succ = list(self.successors(src))[0]
         need = self.get_used_vars(succ)
 
-        # print(f"{src} {need=} {self._adj_list}")
+        if not isinstance(succ, ir.CallNode):
+            func_node = FuncNode()
+            func_node.params = list(need)
 
-        func_node = FuncNode()
-        func_node.params = list(need)
+            call_node = CallNode()
+            call_node.args = list(need)
 
-        call_node = CallNode()
-        call_node.args = list(need)
+            self.add_node(func_node)
+            self.add_node(call_node)
 
-        self.add_node(func_node)
-        self.add_node(call_node)
-
-        self.insert_after(src, call_node)
-        self.insert_after(call_node, func_node)
+            self.insert_after(src, call_node)
+            self.insert_after(call_node, func_node)
+        else:
+            call_node = succ
+            func_node = list(self.successors(call_node))[0]
+            
+            assert guard(func_node, ir.FuncNode)
+            
+            # call_node.args.extend(need)
+            # func_node.params.extend(need)
 
     def clone(self, src: ir.Node2, extra_args: Optional[list[expr.Var]] = None):
         """
@@ -1108,6 +1123,9 @@ class make_single_end_per_subgraph(Transformer):
         if src in self.truely_visited:
             return
         self.truely_visited.add(src)
+
+        self.visited_count = {}
+
         assert guard(src, FuncNode)
         result = self.rec(src, extra_args)
         self.old_to_new[src] = result
