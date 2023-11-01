@@ -429,10 +429,10 @@ class TestGraph(unittest.TestCase):
             # | insert_merge_nodes()
             # | insert_phis()
             # | make_ssa()
-            # | make_nonblocking()
             | rmv_dead_assigns_and_params()
             | rmv_argless_calls()
             | rmv_redundant_branches()
+            | make_nonblocking()
         )
         # print(f"{type(lowered)} {lowered}")
 

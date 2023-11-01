@@ -889,13 +889,21 @@ class make_nonblocking(Transformer):
                 self.start(list(self.successors(src))[0], indent + 1, mapping)
         elif isinstance(src, ir.AssignNode):
             self.counter += 1
-            if self.counter > 20:
+            if self.counter > 1000:
                 raise RuntimeError()
                 return
 
             src.rvalue = backwards_replace(src.rvalue, mapping)
             mapping[src.lvalue] = src.rvalue
-            self.start(list(self.successors(src))[0], indent, mapping)
+
+            # remove node
+            preds = self.predecessors(src)
+            succs = self.successors(src)
+            for pred in preds:
+                self.add_edge(pred, *succs)
+            del self[src]
+
+            self.start(list(succs)[0], indent, mapping)
 
         elif isinstance(src, ir.CallNode):
             new_args = []
