@@ -257,7 +257,7 @@ class make_ssa(Transformer):
                 self.stacks(var)
             stmt.cond = backwards_replace(stmt.cond, self.make_mapping(self._stacks))
         if isinstance(stmt, EndNode):
-            new_values = set()
+            new_values = []
             for var in stmt.values:
                 new_values.add(backwards_replace(var, self.make_mapping(self._stacks)))
             stmt.values = new_values
