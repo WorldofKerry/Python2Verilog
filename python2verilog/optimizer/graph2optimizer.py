@@ -259,7 +259,7 @@ class make_ssa(Transformer):
         if isinstance(stmt, EndNode):
             new_values = []
             for var in stmt.values:
-                new_values.add(backwards_replace(var, self.make_mapping(self._stacks)))
+                new_values.append(backwards_replace(var, self.make_mapping(self._stacks)))
             stmt.values = new_values
 
     def gen_name(self, var: expr.Var):

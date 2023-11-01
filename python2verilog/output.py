@@ -1,83 +1,29 @@
-def func139(a1, b1, i1, n0):
-    if i1 < n0:
-        if a1 % 2:
-            yield [a1]
-            yield from func175(b1, n0, a1, i1)
-        else:
-            if (i1 + 1) < n0:
-                if b1 % 2:
-                    yield [b1]
-                    yield from func175(a1 + b1, n0, b1, i1 + 1)
-                else:
-                    if ((i1 + 1) + 1) < n0:
-                        if (a1 + b1) % 2:
-                            yield [a1 + b1]
-                            yield from func175(
-                                b1 + (a1 + b1), n0, a1 + b1, (i1 + 1) + 1
-                            )
-                        else:
-                            yield from func139(
-                                b1 + (a1 + b1),
-                                (a1 + b1) + (b1 + (a1 + b1)),
-                                ((i1 + 1) + 1) + 1,
-                                n0,
-                            )
-                    else:
-                        return
+def func101(b0, a0):
+    if 0 < a0:
+        if 1 < a0:
+            if 2 < a0:
+                yield from func123(3, ((0 + b0) + b0) + b0, b0, a0)
             else:
-                return
-    else:
-        return
-
-
-def func101(n0):
-    if 0 < n0:
-        if 0:
-            yield [0]
-            yield from func175(1, n0, 0, 0)
+                yield [(0 + b0) + b0]
         else:
-            if 1 < n0:
-                if 1:
-                    yield [1]
-                    yield from func175(1, n0, 1, 1)
-                else:
-                    if 2 < n0:
-                        if 1:
-                            yield [1]
-                            yield from func175(2, n0, 1, 2)
-                        else:
-                            yield from func139(2, 3, 3, n0)
-                    else:
-                        return
-            else:
-                return
+            yield [0 + b0]
     else:
-        return
+        yield [0]
 
 
-def func175(b1, n0, a1, i1):
-    if (i1 + 1) < n0:
-        if b1 % 2:
-            yield [b1]
-            yield from func175(a1 + b1, n0, b1, i1 + 1)
+def func123(i1, c1, b0, a0):
+    if i1 < a0:
+        if (i1 + 1) < a0:
+            if ((i1 + 1) + 1) < a0:
+                yield from func123(((i1 + 1) + 1) + 1, ((c1 + b0) + b0) + b0, b0, a0)
+            else:
+                yield [(c1 + b0) + b0]
         else:
-            if ((i1 + 1) + 1) < n0:
-                if (a1 + b1) % 2:
-                    yield [a1 + b1]
-                    yield from func175(b1 + (a1 + b1), n0, a1 + b1, (i1 + 1) + 1)
-                else:
-                    yield from func139(
-                        b1 + (a1 + b1),
-                        (a1 + b1) + (b1 + (a1 + b1)),
-                        ((i1 + 1) + 1) + 1,
-                        n0,
-                    )
-            else:
-                return
+            yield [c1 + b0]
     else:
-        return
+        yield [c1]
 
 
-inst = func101(50)
+inst = func101(50, 10)
 for _ in range(20):
     print(next(inst))
