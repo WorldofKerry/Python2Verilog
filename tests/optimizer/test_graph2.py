@@ -13,6 +13,7 @@ from python2verilog.optimizer.graph2optimizer import (  # nopycln: import
     insert_merge_nodes,
     insert_phis,
     lower_to_fsm,
+    make_single_end_per_subgraph,
     make_ssa,
     parallelize,
     propagate_vars_and_consts,
@@ -423,7 +424,8 @@ class TestGraph(unittest.TestCase):
         lowered = CFG()
         lowered = (
             graph
-            | lower_to_fsm(threshold=1)
+            | make_single_end_per_subgraph()
+            # | lower_to_fsm(threshold=1)
             # | insert_merge_nodes()
             # | insert_phis()
             # | make_ssa()
@@ -434,11 +436,11 @@ class TestGraph(unittest.TestCase):
         )
         # print(f"{type(lowered)} {lowered}")
 
-        for entry in lowered.exit_to_entry.values():
-            result = lowered | codegen()
-            output = list(result.start(entry))
-            text = "\n".join(output).replace(".", "")
-            print(f"{text}")
+        # for entry in lowered.exit_to_entry.values():
+        #     result = lowered | codegen()
+        #     output = list(result.start(entry))
+        #     text = "\n".join(output).replace(".", "")
+        #     print(f"{text}")
 
         # graph = rmv_assigns_and_phis.debug(graph).apply()
         # graph = rmv_redundant_calls(graph)

@@ -12,6 +12,8 @@ import ast
 import dash_cytoscape as cyto  # type: ignore # pylint: disable=import-error
 from dash import Dash, html  # type: ignore # pylint: disable=import-error
 
+cyto.load_extra_layouts()
+
 
 def main():
     """
@@ -38,7 +40,7 @@ def run_dash(elements):
 
     cytoscape = cyto.Cytoscape(
         id="cytoscape-two-nodes",
-        layout={"name": "cose", "nodeRepulsion": 80000},
+        layout={"name": "cose-bilkent", "nodeRepulsion": 80000},
         style={"width": "100%", "height": "1920px"},
         stylesheet=[
             {

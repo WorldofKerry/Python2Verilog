@@ -246,7 +246,7 @@ class CFG:
         for key in self._adj_list:
             if key.unique_id == id:
                 return key
-        raise RuntimeError()
+        raise RuntimeError(f"{id=}")
 
     def successors(self, node: Node2) -> set[Node2]:
         return set(self._adj_list[node])
@@ -411,7 +411,7 @@ class CFG:
 
         return {"nodes": nodes, "edges": edges}
 
-    def dfs(
+    def descendants(
         graph: CFG, source: Node2, visited: Optional[set[Node2]] = None
     ) -> Iterator[Node2]:
         """
@@ -426,7 +426,7 @@ class CFG:
         visited.add(source)
         yield source
         for child in graph.successors(source):
-            yield from graph.dfs(child, visited)
+            yield from graph.descendants(child, visited)
 
     def dominance(graph: CFG) -> dict[Node2, set[Node2]]:
         """
@@ -434,13 +434,13 @@ class CFG:
 
         i.e. k in ret[n] means n dominates k
         """
-        vertices = set(graph.dfs(graph.exit_to_entry[None]))
+        vertices = set(graph.descendants(graph.exit_to_entry[None]))
         dominance_ = {}
 
         for vertex in vertices:
             temp_graph = CFG().copy(graph)
             del temp_graph[vertex]
-            new_vertices = set(temp_graph.dfs(graph.exit_to_entry[None]))
+            new_vertices = set(temp_graph.descendants(graph.exit_to_entry[None]))
             delta = vertices - new_vertices
             dominance_[vertex] = delta
         # logging.debug(f"\n{print_tree(dominance_, graph.entry)}")
@@ -482,7 +482,7 @@ class CFG:
         Returns dict representing dominator tree
         """
         visited = set()
-        nodes = reversed(list(self.dfs(self.exit_to_entry[None])))
+        nodes = reversed(list(self.descendants(self.exit_to_entry[None])))
         dom_tree = {}
         dominance_ = self.dominance()
         for node in nodes:
@@ -561,3 +561,13 @@ class CFG:
                 yield child
             else:
                 yield from self.subtree_leaves(child, elem_type, visited)
+
+    def insert_after(self, before: Node2, after: Node2):
+        """
+        succ(after) := succ(before) U succ(after)
+        succ(before) := {after}
+        """
+        print(f"calling insert_after {before} {after}")
+        assert after in self._adj_list, "Node not in graph"
+        self._adj_list[after] |= self.successors(before)
+        self._adj_list[before] = {after}

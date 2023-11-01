@@ -98,7 +98,7 @@ class insert_merge_nodes(Transformer):
 
     def apply(self, graph: CFG):
         self.copy(graph)
-        nodes = list(self.dfs(self.exit_to_entry[None]))
+        nodes = list(self.descendants(self.exit_to_entry[None]))
         for node in nodes:
             self.single(node)
 
@@ -127,7 +127,7 @@ class insert_phis(Transformer):
         self.copy(graph)
         vars = [
             node.lvalue
-            for node in self.dfs(self.exit_to_entry[None])
+            for node in self.descendants(self.exit_to_entry[None])
             if isinstance(node, ir.AssignNode)
         ]
         for var in vars:
@@ -139,7 +139,7 @@ class insert_phis(Transformer):
         ever_on_worklist: set[ir.Node2] = set()
         already_has_phi: set[ir.Node2] = set()
 
-        for node in self.dfs(self.exit_to_entry[None]):
+        for node in self.descendants(self.exit_to_entry[None]):
             if isinstance(node, ir.AssignNode):
                 if node.lvalue == v:
                     worklist.add(node)
@@ -738,7 +738,7 @@ class lower_to_fsm(Transformer):
 
     def get_used_vars(self, src: ir.Node2):
         wrote = set()
-        for node in self.dfs(src):
+        for node in self.descendants(src):
             if isinstance(node, ir.AssignNode):
                 wrote.add(node.lvalue)
             elif isinstance(node, FuncNode):
@@ -746,7 +746,7 @@ class lower_to_fsm(Transformer):
                     wrote.add(param)
 
         read = set()
-        for node in self.dfs(src):
+        for node in self.descendants(src):
             if isinstance(node, ir.AssignNode):
                 for var in get_variables(node.rvalue):
                     read.add(var)
@@ -1009,3 +1009,195 @@ class codegen(Transformer):
                 yield "  " * indent + f"return"
             if self.successors(src):
                 yield from self.start(list(self.successors(src))[0], indent, mapping)
+
+
+class make_single_end_per_subgraph(Transformer):
+    """
+    Creates sub-DAGs that contain a end node or func call at all leaves
+    """
+
+    def __init__(
+        self, graph: CFG | None = None, *, apply: bool = True, threshold: int = 1
+    ):
+        self.new: ir.CFG = ir.CFG()
+        self.new.unique_counter = 100
+        self.visited_count: dict[ir.Node2, int] = {}
+        self.mapping: dict[expr.Var, expr.Expression] = {}
+        self.truely_visited: set[ir.Node2] = set()
+        self.threshold = threshold
+
+        # Map original func call to new func call
+        self.old_to_new: dict[ir.Node2, ir.Node2] = {}
+
+        # Map new func call to old func call
+        self.deferred: dict[ir.Node2, ir.Node2] = {}
+
+        super().__init__(graph, apply=apply)
+
+    def apply(self, graph: ir.CFG):
+        self.copy(graph)
+        # self.new.copy(graph)
+        for node in self.nodes():
+            if isinstance(node, EndNode) and self.successors(node):
+                self.cut(node)
+
+        self.clone(self.exit_to_entry[None])
+        # self.clone(self[12])
+        # self.cut(self.id_to_node(5))
+
+        print(f"FINALLY {self.old_to_new=} {self.deferred=}")
+        for key, value in self.deferred.items():
+            self.new.exit_to_entry[key] = self.old_to_new[value]
+        self.copy(self.new)
+        return super().apply(graph)
+
+    def get_used_vars(self, src: ir.Node2):
+        need = set()
+        wrote = set()
+        read = set()
+        for node in self.descendants(src):
+            if isinstance(node, ir.AssignNode):
+                for var in get_variables(node.rvalue):
+                    read.add(var)
+                wrote.add(node.lvalue)
+            elif isinstance(node, FuncNode):
+                for param in node.params:
+                    wrote.add(param)
+            elif isinstance(node, ir.CallNode):
+                for arg in node.args:
+                    read.add(arg)
+            elif isinstance(node, ir.BranchNode):
+                for var in get_variables(node.cond):
+                    read.add(var)
+            elif isinstance(node, EndNode):
+                for var in node.values:
+                    read.update(get_variables(var))
+            # print(f"{node} {read=}")
+
+            need |= read - wrote
+
+        return need
+
+    def cut(self, src: ir.Node2):
+        """
+        Cuts a graph into two
+        """
+        succ = list(self.successors(src))[0]
+        need = self.get_used_vars(succ)
+
+        # print(f"{src} {need=} {self._adj_list}")
+
+        func_node = FuncNode()
+        func_node.params = list(need)
+
+        call_node = CallNode()
+        call_node.args = list(need)
+
+        self.add_node(func_node)
+        self.add_node(call_node)
+
+        self.insert_after(src, call_node)
+        self.insert_after(call_node, func_node)
+
+    def clone(self, src: ir.Node2, extra_args: Optional[list[expr.Var]] = None):
+        """
+        :param extra_args: extra args due to src potentially being a new head
+        """
+
+        new_node = copy.deepcopy(src)
+
+        new_node._unique_id = ""
+
+        if extra_args is not None:
+            assert guard(new_node, FuncNode)
+            new_node.params.extend(extra_args)
+
+        if isinstance(new_node, FuncNode):
+            self.old_to_new[src] = new_node
+
+        # print(f"{new_node=} {str(new_node)=} {self.mapping=}")
+        # print(f"{self.visited_count=} {self.mapping=}")
+        if isinstance(new_node, ir.AssignNode):
+            new_node.rvalue = backwards_replace(new_node.rvalue, self.mapping)
+        elif isinstance(new_node, BranchNode):
+            new_node.cond = backwards_replace(new_node.cond, self.mapping)
+        elif isinstance(new_node, EndNode):
+            new_values = []
+            for value in new_node.values:
+                new_values.append(backwards_replace(value, self.mapping))
+            new_node.values = new_values
+
+        self.new.add_node(new_node)
+
+        self.visited_count[src] = self.visited_count.get(src, 0) + 1
+
+        if self.visited_count[src] > self.threshold or isinstance(src, EndNode):
+            print(f"OVERHERE {src=}")
+            if self.successors(src):
+                call_node = list(self.successors(src))[0]
+                assert guard(call_node, ir.CallNode)
+
+                func_node = list(self.successors(call_node))[0]
+                if call_node not in self.truely_visited:
+                    self.visited_count = {}
+                    self.mapping = {}
+                    self.truely_visited.add(call_node)
+
+                    res = self.clone(func_node)
+                    self.old_to_new[func_node] = res
+
+                new_call_node = CallNode()
+                new_call_node.args = list(call_node.args)
+
+                self.new.add_node(new_call_node)
+                self.new.insert_after(new_node, new_call_node)
+
+                self.deferred[new_call_node] = func_node
+
+            return new_node
+            # need = self.get_used_vars(src)
+            # assert guard(new_node, CallNode)
+            # print(f"{need=} {new_node=}")
+            # new_node.args.extend([backwards_replace(var, self.mapping) for var in need])
+
+            # if src not in self.truely_visited:
+            #     print(f"RECURSE {src=} {self.mapping=}")
+
+            #     self.visited_count = {}
+            #     self.mapping = {}
+
+            #     self.truely_visited.add(src)
+            #     res = self.clone(list(self.successors(src))[0], need)
+            #     self.new.exit_to_entry[new_node] = res
+            #     self.old_to_new[src] = res
+            #     print(f"{self.new.exit_to_entry}")
+            # else:
+            #     self.deferred[new_node] = src
+            # print(
+            #     f"DONE {src=} {new_node=} {self.new.exit_to_entry=} {self.old_to_new=}"
+            # )
+            # return new_node
+
+        if isinstance(src, ir.FuncNode):
+            for param in src.params:
+                self.mapping[param] = param
+        elif isinstance(src, ir.AssignNode):
+            if src.lvalue in self.mapping:
+                # raise RuntimeError(f"{src.lvalue=}")
+                pass
+            else:
+                self.mapping[src.lvalue] = src.rvalue
+        elif isinstance(src, ir.CallNode):
+            # print(f"Inner")
+            for succ in self.successors(src):
+                assert guard(succ, ir.FuncNode)
+                for arg, param in zip(src.args, succ.params):
+                    self.mapping[param] = arg
+
+        for node in self.successors(src):
+            # print(f"Add node {src=} -> {new_node=}")
+            new_child = self.clone(node)
+            # print(f"Add edge {new_node=} -> {new_child=}")
+
+            self.new.add_edge(new_node, new_child)
+        return new_node
