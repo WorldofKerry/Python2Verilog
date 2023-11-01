@@ -445,7 +445,7 @@ class propagate_vars_and_consts(Transformer):
                 for value in new_values:
                     variables.extend(list(get_variables(value)))
 
-                print(f"{new_values=} {variables=} {node.values=} {self.mapping=}")
+                # print(f"{new_values=} {variables=} {node.values=} {self.mapping=}")
                 if all(var in self.core for var in variables):
                     done = True
 
@@ -526,18 +526,35 @@ class rmv_argless_calls(Transformer):
         assert len(func_succs) == 1
         call_nodes = set(self.predecessors(src))
 
-        # If args and params are same variable
-        other_condition = len(call_nodes) == 1
-        if other_condition:
-            for arg, param in zip(list(call_nodes)[0].args, src.params):
-                other_condition &= arg == param
-
-        if len(src.params) == 0 or other_condition:
+        if len(src.params) == 0:
+            # No parameters so delete
             for call_node in call_nodes:
                 assert guard(call_node, ir.CallNode)
                 for call_preds in set(self.predecessors(call_node)):
                     self.add_edge(call_preds, *func_succs)
                 del self[call_node]
+            del self[src]
+
+        elif len(call_nodes) == 1:
+            # return
+            # single successor to func means equivalent to assignment
+            assign_nodes = []
+            call_node = list(call_nodes)[0]
+            assert guard(call_node, ir.CallNode)
+
+            call_preds = list(self.predecessors(call_node))
+            assert len(call_preds) == 1
+            call_pred = call_preds[0]
+
+            for arg, param in zip(call_node.args, src.params):
+                assign_nodes.append(self.add_node(AssignNode(param, arg)))
+
+            for assign in assign_nodes:
+                self.insert_after(call_pred, assign)
+
+            for call_preds in set(self.predecessors(call_node)):
+                self.add_edge(call_preds, *func_succs)
+            del self[call_node]
             del self[src]
 
 
@@ -957,7 +974,7 @@ class codegen(Transformer):
             self.counter += 1
             if self.counter > 1000:
                 return
-            print(f"{src} {mapping=}")
+            # print(f"{src} {mapping=}")
             # src.rvalue = backwards_replace(src.rvalue, mapping)
             mapping[src.lvalue] = src.rvalue
             yield "  " * indent + f"{src.lvalue} = {src.rvalue}"
@@ -1052,13 +1069,15 @@ class make_single_end_per_subgraph(Transformer):
             if isinstance(node, EndNode) and self.successors(node):
                 self.cut(node)
 
+        # self.truely_visited = set(self.nodes()) - {self.exit_to_entry[None]}
         self.clone(self.exit_to_entry[None])
         # self.clone(self[12])
         # self.cut(self.id_to_node(5))
 
         print(f"FINALLY {self.old_to_new=} {self.deferred=}")
         for key, value in self.deferred.items():
-            self.new.exit_to_entry[key] = self.old_to_new[value]
+            if value in self.old_to_new:
+                self.new.exit_to_entry[key] = self.old_to_new[value]
         self.copy(self.new)
         return super().apply(graph)
 
@@ -1090,7 +1109,7 @@ class make_single_end_per_subgraph(Transformer):
 
     def cut(self, src: ir.Node2):
         """
-        Cuts a graph into two
+        Cuts a graph into two after every end node not followed by call
         """
         succ = list(self.successors(src))[0]
         need = self.get_used_vars(succ)
@@ -1107,14 +1126,6 @@ class make_single_end_per_subgraph(Transformer):
 
             self.insert_after(src, call_node)
             self.insert_after(call_node, func_node)
-        else:
-            call_node = succ
-            func_node = list(self.successors(call_node))[0]
-
-            assert guard(func_node, ir.FuncNode)
-
-            # call_node.args.extend(need)
-            # func_node.params.extend(need)
 
     def clone(self, src: ir.Node2, extra_args: Optional[list[expr.Var]] = None):
         """

@@ -132,7 +132,7 @@ def make_even_fib_graph_no_clocks():
     if_a_mod_2 = graph.add_node(BranchNode(Mod(a, Int(2))), prev)
 
     prev = graph.add_node(TrueNode(), if_a_mod_2)
-    prev = graph.add_node(AssignNode(a, BinOp(a, "+", Int(10))), prev)
+    # prev = graph.add_node(AssignNode(a, BinOp(a, "+", Int(10))), prev)
     out_node = graph.add_node(EndNode([a]), prev)
 
     prev = graph.add_node(FalseNode(), if_a_mod_2)
