@@ -1072,7 +1072,6 @@ class make_single_end_per_subgraph(Transformer):
             elif isinstance(node, EndNode):
                 for var in node.values:
                     read.update(get_variables(var))
-            # print(f"{node} {read=}")
 
             need |= read - wrote
 
@@ -1103,101 +1102,61 @@ class make_single_end_per_subgraph(Transformer):
         """
         :param extra_args: extra args due to src potentially being a new head
         """
+        if src in self.truely_visited:
+            return
+        self.truely_visited.add(src)
+        assert guard(src, FuncNode)
+        result = self.rec(src, extra_args)
+        self.old_to_new[src] = result
+
+    def rec(self, src: ir.Node2, extra_args: Optional[list[expr.Var]] = None):
+        self.visited_count[src] = self.visited_count.get(src, 0) + 1
 
         new_node = copy.deepcopy(src)
-
         new_node._unique_id = ""
+        self.new.add_node(new_node)
 
-        if extra_args is not None:
+        if extra_args:
             assert guard(new_node, FuncNode)
             new_node.params.extend(extra_args)
 
-        if isinstance(new_node, FuncNode):
-            self.old_to_new[src] = new_node
+        if (
+            isinstance(new_node, CallNode)
+            and len(self.successors(src)) == 1
+            and isinstance(list(self.predecessors(src))[0], EndNode)
+        ):
+            succ = list(self.successors(src))[0]
+            assert guard(succ, ir.FuncNode)
 
-        # print(f"{new_node=} {str(new_node)=} {self.mapping=}")
-        # print(f"{self.visited_count=} {self.mapping=}")
-        if isinstance(new_node, ir.AssignNode):
-            new_node.rvalue = backwards_replace(new_node.rvalue, self.mapping)
-        elif isinstance(new_node, BranchNode):
-            new_node.cond = backwards_replace(new_node.cond, self.mapping)
-        elif isinstance(new_node, EndNode):
-            new_values = []
-            for value in new_node.values:
-                new_values.append(backwards_replace(value, self.mapping))
-            new_node.values = new_values
+            need = self.get_used_vars(succ)
 
-        self.new.add_node(new_node)
+            new_node.args.extend(need)
 
-        self.visited_count[src] = self.visited_count.get(src, 0) + 1
+            print(f"New state from {new_node} to {succ}")
 
-        if self.visited_count[src] > self.threshold or isinstance(src, EndNode):
-            print(f"OVERHERE {src=}")
-            if self.successors(src):
-                call_node = list(self.successors(src))[0]
-                assert guard(call_node, ir.CallNode)
+            self.clone(succ, need)
 
-                func_node = list(self.successors(call_node))[0]
-                if call_node not in self.truely_visited:
-                    self.visited_count = {}
-                    self.mapping = {}
-                    self.truely_visited.add(call_node)
-
-                    res = self.clone(func_node)
-                    self.old_to_new[func_node] = res
-
-                new_call_node = CallNode()
-                new_call_node.args = list(call_node.args)
-
-                self.new.add_node(new_call_node)
-                self.new.insert_after(new_node, new_call_node)
-
-                self.deferred[new_call_node] = func_node
+            self.deferred[new_node] = succ
 
             return new_node
-            # need = self.get_used_vars(src)
-            # assert guard(new_node, CallNode)
-            # print(f"{need=} {new_node=}")
-            # new_node.args.extend([backwards_replace(var, self.mapping) for var in need])
 
-            # if src not in self.truely_visited:
-            #     print(f"RECURSE {src=} {self.mapping=}")
+        if isinstance(new_node, CallNode) and self.visited_count[src] > self.threshold:
+            succ = list(self.successors(src))[0]
+            assert guard(succ, ir.FuncNode)
 
-            #     self.visited_count = {}
-            #     self.mapping = {}
+            need = self.get_used_vars(succ)
 
-            #     self.truely_visited.add(src)
-            #     res = self.clone(list(self.successors(src))[0], need)
-            #     self.new.exit_to_entry[new_node] = res
-            #     self.old_to_new[src] = res
-            #     print(f"{self.new.exit_to_entry}")
-            # else:
-            #     self.deferred[new_node] = src
-            # print(
-            #     f"DONE {src=} {new_node=} {self.new.exit_to_entry=} {self.old_to_new=}"
-            # )
-            # return new_node
+            new_node.args.extend(need)
 
-        if isinstance(src, ir.FuncNode):
-            for param in src.params:
-                self.mapping[param] = param
-        elif isinstance(src, ir.AssignNode):
-            if src.lvalue in self.mapping:
-                # raise RuntimeError(f"{src.lvalue=}")
-                pass
-            else:
-                self.mapping[src.lvalue] = src.rvalue
-        elif isinstance(src, ir.CallNode):
-            # print(f"Inner")
-            for succ in self.successors(src):
-                assert guard(succ, ir.FuncNode)
-                for arg, param in zip(src.args, succ.params):
-                    self.mapping[param] = arg
+            print(f"New state from {new_node} to {succ}")
+
+            self.clone(succ, need)
+
+            self.deferred[new_node] = succ
+
+            return new_node
 
         for node in self.successors(src):
-            # print(f"Add node {src=} -> {new_node=}")
-            new_child = self.clone(node)
-            # print(f"Add edge {new_node=} -> {new_child=}")
-
+            new_child = self.rec(node)
             self.new.add_edge(new_node, new_child)
         return new_node

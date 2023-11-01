@@ -395,10 +395,10 @@ class TestGraph(unittest.TestCase):
         run_dash(graph.to_cytoscape())
 
     def test_ssa_funcs(self):
-        # graph = make_even_fib_graph_no_clocks()
+        graph = make_even_fib_graph_no_clocks()
         # graph = make_chain()
         # graph = make_seq_multiplier()
-        graph = make_range()
+        # graph = make_range()
         # graph = make_basic_branch()
         # graph = make_const_loop()
 
@@ -436,11 +436,11 @@ class TestGraph(unittest.TestCase):
         )
         # print(f"{type(lowered)} {lowered}")
 
-        # for entry in lowered.exit_to_entry.values():
-        #     result = lowered | codegen()
-        #     output = list(result.start(entry))
-        #     text = "\n".join(output).replace(".", "")
-        #     print(f"{text}")
+        for entry in lowered.exit_to_entry.values():
+            result = lowered | codegen()
+            output = list(result.start(entry))
+            text = "\n".join(output).replace(".", "")
+            print(f"{text}")
 
         # graph = rmv_assigns_and_phis.debug(graph).apply()
         # graph = rmv_redundant_calls(graph)
