@@ -256,7 +256,7 @@ class make_ssa(Transformer):
             for var in get_variables(stmt.cond):
                 self.stacks(var)
             stmt.cond = backwards_replace(stmt.cond, self.make_mapping(self._stacks))
-        if isinstance(stmt, EndNode):
+        if isinstance(stmt, TermNode):
             new_values = []
             for var in stmt.values:
                 new_values.append(
@@ -435,7 +435,7 @@ class propagate_vars_and_consts(Transformer):
                 if all(var in self.core for var in vars):
                     done = True
                 node.cond = backwards_replace(node.cond, self.mapping)
-        elif isinstance(node, EndNode):
+        elif isinstance(node, TermNode):
             done = False
             old_values = node.values
             while not done:
@@ -485,7 +485,7 @@ class propagate_vars_and_consts(Transformer):
         elif isinstance(src, ir.CallNode):
             for var in src.args:
                 self.used.add(var)
-        elif isinstance(src, ir.EndNode):
+        elif isinstance(src, ir.TermNode):
             for var in src.values:
                 self.used.add(var)
 
@@ -517,10 +517,12 @@ class rmv_argless_calls(Transformer):
     def apply(self, graph: ir.CFG):
         self.copy(graph)
         for node in self.nodes():
-            self.single(node)
+            self.within_graph(node)
+        for entry in set(self.exit_to_entry.values()):
+            self.across_graphs(entry)
         return super().apply(graph)
 
-    def single(self, src: ir.Node2):
+    def within_graph(self, src: ir.Node2):
         if not isinstance(src, FuncNode):
             return
 
@@ -538,26 +540,45 @@ class rmv_argless_calls(Transformer):
             del self[src]
 
         elif len(call_nodes) == 1:
-            # return
-            # single successor to func means equivalent to assignment
-            assign_nodes = []
-            call_node = list(call_nodes)[0]
-            assert guard(call_node, ir.CallNode)
+            return self.single_successor(src, list(call_nodes)[0], func_succs)
 
-            call_preds = list(self.predecessors(call_node))
-            assert len(call_preds) == 1
-            call_pred = call_preds[0]
+    def single_successor(
+        self, func_node: ir.FuncNode, call_node: ir.CallNode, func_succs: list[ir.Node2]
+    ):
+        # single successor to func means equivalent to assignment
+        assign_nodes = []
+        assert guard(call_node, ir.CallNode)
 
-            for arg, param in zip(call_node.args, src.params):
-                assign_nodes.append(self.add_node(AssignNode(param, arg)))
+        call_preds = list(self.predecessors(call_node))
+        assert len(call_preds) == 1
+        call_pred = call_preds[0]
 
-            for assign in assign_nodes:
-                self.insert_after(call_pred, assign)
+        for arg, param in zip(call_node.args, func_node.params):
+            assign_nodes.append(self.add_node(AssignNode(param, arg)))
 
-            for call_preds in set(self.predecessors(call_node)):
-                self.add_edge(call_preds, *func_succs)
-            del self[call_node]
-            del self[src]
+        for assign in assign_nodes:
+            self.insert_after(call_pred, assign)
+
+        for call_preds in set(self.predecessors(call_node)):
+            self.add_edge(call_preds, *func_succs)
+        del self[call_node]
+        del self[func_node]
+
+    def across_graphs(self, entry: ir.Node2):
+        print(f"{self.exit_to_entry=}")
+        exits = [
+            exitt for exitt, entryy in self.exit_to_entry.items() if entryy == entry
+        ]
+        if len(exits) != 1 or exits[0] is None:
+            return
+        call_node = exits[0]
+        func_succs = self.successors(entry)
+        func_node = entry
+        self.single_successor(func_node, call_node, func_succs)
+        print(f"{self.exit_to_entry=}")
+        # for key, value in self.exit_to_entry.items():
+        #     assert key is None or key in self.nodes(), f"{key=} {call_node=} {func_node=}"
+        #     assert value in self.nodes()
 
 
 class rmv_redundant_branches(Transformer):
@@ -631,7 +652,7 @@ class rmv_dead_assigns_and_params(Transformer):
                 self.var_to_definition[var] = self.var_to_definition.get(var, []) + [
                     src
                 ]
-        elif isinstance(src, EndNode):
+        elif isinstance(src, TermNode):
             for var in src.values:
                 self.var_to_ref_count[var] = self.var_to_ref_count.get(var, 0) + 1
 
@@ -806,7 +827,7 @@ class lower_to_fsm(Transformer):
             new_node.rvalue = backwards_replace(new_node.rvalue, self.mapping)
         elif isinstance(new_node, BranchNode):
             new_node.cond = backwards_replace(new_node.cond, self.mapping)
-        elif isinstance(new_node, EndNode):
+        elif isinstance(new_node, TermNode):
             new_values = []
             for value in new_node.values:
                 new_values.append(backwards_replace(value, self.mapping))
@@ -945,7 +966,7 @@ class make_nonblocking(Transformer):
             self.start(
                 list(self.successors(false))[0], indent + 1, copy.deepcopy(mapping)
             )
-        elif isinstance(src, ir.EndNode):
+        elif isinstance(src, ir.TermNode):
             new_values = []
             for value in src.values:
                 new_values.append(backwards_replace(value, mapping))
@@ -1035,7 +1056,7 @@ class codegen(Transformer):
             yield from self.start(
                 list(self.successors(false))[0], indent + 1, copy.deepcopy(mapping)
             )
-        elif isinstance(src, ir.EndNode):
+        elif isinstance(src, ir.TermNode):
             # new_values = []
             # for value in src.values:
             #     new_values.append(backwards_replace(value, mapping))
@@ -1075,7 +1096,7 @@ class make_single_end_per_subgraph(Transformer):
         self.copy(graph)
         # self.new.copy(graph)
         for node in self.nodes():
-            if isinstance(node, EndNode) and self.successors(node):
+            if isinstance(node, TermNode) and self.successors(node):
                 self.cut(node)
 
         # self.truely_visited = set(self.nodes()) - {self.exit_to_entry[None]}
@@ -1108,7 +1129,7 @@ class make_single_end_per_subgraph(Transformer):
             elif isinstance(node, ir.BranchNode):
                 for var in get_variables(node.cond):
                     read.add(var)
-            elif isinstance(node, EndNode):
+            elif isinstance(node, TermNode):
                 for var in node.values:
                     read.update(get_variables(var))
 
@@ -1167,7 +1188,7 @@ class make_single_end_per_subgraph(Transformer):
         if (
             isinstance(new_node, CallNode)
             and len(self.successors(src)) == 1
-            and isinstance(list(self.predecessors(src))[0], EndNode)
+            and isinstance(list(self.predecessors(src))[0], TermNode)
         ):
             succ = list(self.successors(src))[0]
             assert guard(succ, ir.FuncNode)

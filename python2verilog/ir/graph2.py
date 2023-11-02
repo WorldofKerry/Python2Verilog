@@ -165,7 +165,7 @@ class FalseNode(BlockHead):
         )
 
 
-class EndNode(Node2):
+class TermNode(Node2):
     """
     A node indicate the end of a frame,
     whether it be a function return or a coroutine yield
@@ -176,7 +176,17 @@ class EndNode(Node2):
         self.values: list[expr.Expression] = typed_list(values, expr.Expression)
 
     def __str__(self) -> str:
-        return super().__str__() + f"{EndNode.__name__[:-4]}\n" + f"{self.values}"
+        return (
+            super().__str__() + f"{self.__class__.__name__[:-4]}\n" + f"{self.values}"
+        )
+
+
+class ReturnNode(TermNode):
+    pass
+
+
+class YieldNode(TermNode):
+    pass
 
 
 class CallNode(Node2):

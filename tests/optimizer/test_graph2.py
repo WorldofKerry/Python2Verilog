@@ -126,14 +126,14 @@ def make_even_fib_graph_no_clocks():
     prev = if_i_lt_n_prev = graph.add_node(BranchNode(BinOp(i, "<", n)), prev)
 
     prev = graph.add_node(FalseNode(), if_i_lt_n_prev)
-    prev = graph.add_node(EndNode([]), prev)
+    prev = graph.add_node(ReturnNode([]), prev)
 
     prev = graph.add_node(TrueNode(), if_i_lt_n_prev)
     if_a_mod_2 = graph.add_node(BranchNode(Mod(a, Int(2))), prev)
 
     prev = graph.add_node(TrueNode(), if_a_mod_2)
     # prev = graph.add_node(AssignNode(a, BinOp(a, "+", Int(10))), prev)
-    out_node = graph.add_node(EndNode([a]), prev)
+    out_node = graph.add_node(YieldNode([a]), prev)
 
     prev = graph.add_node(FalseNode(), if_a_mod_2)
 
@@ -170,7 +170,7 @@ def make_seq_multiplier():
     prev = ifelse = graph.add_node(BranchNode(BinOp(i, "<", a)), prev)
 
     prev = graph.add_node(FalseNode(), ifelse)
-    out_node = graph.add_node(EndNode([c]), prev)
+    out_node = graph.add_node(TermNode([c]), prev)
 
     prev = graph.add_node(TrueNode(), ifelse)
 
@@ -191,11 +191,11 @@ def make_range():
     prev = ifelse = graph.add_node(BranchNode(BinOp(i, "<", n)), prev)
 
     prev = graph.add_node(FalseNode(), ifelse)
-    graph.add_node(EndNode([]), prev)
+    graph.add_node(TermNode([]), prev)
 
     prev = graph.add_node(TrueNode(), ifelse)
-    prev = graph.add_node(EndNode([i]), prev)
-    prev = graph.add_node(EndNode([BinOp(i, "+", Int(1))]), prev)
+    prev = graph.add_node(TermNode([i]), prev)
+    prev = graph.add_node(TermNode([BinOp(i, "+", Int(1))]), prev)
     prev = graph.add_node(AssignNode(i, BinOp(i, "+", Int(2))), prev, children=[ifelse])
 
     return graph
@@ -232,7 +232,7 @@ def make_basic_branch():
     prev = postifelse = graph.add_node(AssignNode(n, i))
     prev = graph.add_node(AssignNode(i, i), prev)
     prev = graph.add_node(AssignNode(i, Int(10)), prev)
-    prev = graph.add_node(EndNode([i]), prev)
+    prev = graph.add_node(TermNode([i]), prev)
 
     prev = graph.add_node(TrueNode(), ifelse)
     prev = graph.add_node(AssignNode(i, i), prev)
@@ -268,7 +268,7 @@ def make_chain():
     prev = graph.add_node(AssignNode(a, b), prev)
     # prev = graph.add_node(AssignNode(c, BinOp(a, "+", Int(1))), prev)
     prev = graph.add_node(AssignNode(c, a), prev)
-    prev = graph.add_node(EndNode([c]), prev)
+    prev = graph.add_node(TermNode([c]), prev)
 
     return graph
 
@@ -287,7 +287,7 @@ def make_const_loop():
     prev = graph.add_node(AssignNode(i, BinOp(i, "+", Int(1))), prev, children=[ifelse])
 
     prev = graph.add_node(FalseNode(), ifelse)
-    prev = graph.add_node(EndNode([x]), prev)
+    prev = graph.add_node(TermNode([x]), prev)
 
     return graph
 
@@ -395,9 +395,9 @@ class TestGraph(unittest.TestCase):
         run_dash(graph.to_cytoscape())
 
     def test_ssa_funcs(self):
-        # graph = make_even_fib_graph_no_clocks()
+        graph = make_even_fib_graph_no_clocks()
         # graph = make_chain()
-        graph = make_seq_multiplier()
+        # graph = make_seq_multiplier()
         # graph = make_range()
         # graph = make_basic_branch()
         # graph = make_const_loop()
@@ -431,6 +431,7 @@ class TestGraph(unittest.TestCase):
             # | make_ssa()
             | rmv_dead_assigns_and_params()
             | rmv_argless_calls()
+            | rmv_dead_assigns_and_params()
             | rmv_redundant_branches()
             | make_nonblocking()
         )
