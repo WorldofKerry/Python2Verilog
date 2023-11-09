@@ -9,19 +9,19 @@ from python2verilog.ir.graph2 import *
 from python2verilog.optimizer.graph2optimizer import (  # nopycln: import
     Transformer,
     codegen,
-    make_nonblocking,
     insert_merge_nodes,
     insert_phis,
     lower_to_fsm,
+    make_nonblocking,
     make_single_end_per_subgraph,
     make_ssa,
     parallelize,
     propagate_vars_and_consts,
     replace_merge_with_call_and_func,
+    rmv_argless_calls,
     rmv_dead_assigns_and_params,
     rmv_loops,
     rmv_redundant_branches,
-    rmv_argless_calls,
 )
 from python2verilog.utils.cytoscape import run_dash
 
@@ -324,6 +324,57 @@ def make_basic_while():
     return graph
 
 
+def make_pssa_example():
+    """
+        Example from https://cseweb.ucsd.edu/~calder/papers/PACT-99-PSSA.pdf
+
+    func(a, c):
+        d = c * 2
+        if a > c:
+            b = 7
+            if b > d:
+                return 123
+        else:
+            b = 6
+            if b < d:
+                a = b + 4
+        c = a + b
+        return c
+    """
+    a = Var("a")
+    b = Var("b")
+    c = Var("c")
+    d = Var("d")
+
+    graph = CFG()
+
+    prev = graph.add_node(AssignNode(d, BinOp(c, "*", Int(2))))
+    prev = ifelse = graph.add_node(BranchNode(BinOp(a, ">", c)), prev)
+
+    prev = graph.add_node(TrueNode(), ifelse)
+    prev = graph.add_node(AssignNode(b, Int(7)), prev)
+    prev = ifelse1 = graph.add_node(BranchNode(BinOp(b, ">", d)), prev)
+
+    prev = graph.add_node(TrueNode(), ifelse1)
+    graph.add_node(ReturnNode([Int(123)]), prev)
+
+    prev = end1 = graph.add_node(FalseNode(), ifelse1)
+
+    prev = graph.add_node(FalseNode(), ifelse)
+    prev = graph.add_node(AssignNode(b, Int(6)), prev)
+    prev = ifelse1 = graph.add_node(BranchNode(BinOp(b, "<", d)), prev)
+
+    prev = graph.add_node(TrueNode(), ifelse1)
+    prev = end3 = graph.add_node(AssignNode(a, BinOp(b, "+", Int(4))), prev)
+
+    prev = end2 = graph.add_node(FalseNode(), ifelse1)
+
+    prev = graph.add_node(AssignNode(c, BinOp(a, "+", b)), end1, end2, end3)
+    prev = graph.add_node(ReturnNode([c]), prev)
+
+    return graph
+
+
 def make_pdf_example():
     """
     Example from PDF "Building Static Single Assignment Form" by Yeoul NA, UCI
@@ -395,7 +446,8 @@ class TestGraph(unittest.TestCase):
         run_dash(graph.to_cytoscape())
 
     def test_ssa_funcs(self):
-        graph = make_even_fib_graph_no_clocks()
+        graph = make_pssa_example()
+        # graph = make_even_fib_graph_no_clocks()
         # graph = make_chain()
         # graph = make_seq_multiplier()
         # graph = make_range()
@@ -424,7 +476,7 @@ class TestGraph(unittest.TestCase):
         lowered = CFG()
         lowered = (
             graph
-            | make_single_end_per_subgraph(threshold=0)
+            | make_single_end_per_subgraph(threshold=1)
             # | lower_to_fsm(threshold=1)
             # | insert_merge_nodes()
             # | insert_phis()
