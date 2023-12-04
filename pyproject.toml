@@ -9,6 +9,9 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
 ]
+dependencies = [
+    "typing-extensions"
+]
 
 [project.urls]
 "Homepage" = "https://github.com/WorldofKerry/Python2Verilog/"
