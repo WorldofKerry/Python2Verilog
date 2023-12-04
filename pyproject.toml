@@ -10,7 +10,8 @@ classifiers = [
     "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
 ]
 dependencies = [
-    "typing-extensions"
+    "typing-extensions",
+    "pytohdl @ git+ssh://git@github.com/worldofkerry/tohdl.git#subdirectory=pytohdl",
 ]
 
 [project.urls]
