@@ -11,7 +11,7 @@ classifiers = [
 ]
 dependencies = [
     "typing-extensions",
-    "pytohdl @ git+ssh://git@github.com/worldofkerry/tohdl.git#subdirectory=pytohdl",
+    "pytohdl @ git+http://git@github.com/worldofkerry/tohdl.git#subdirectory=pytohdl",
 ]
 
 [project.urls]
