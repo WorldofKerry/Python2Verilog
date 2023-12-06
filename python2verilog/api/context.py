@@ -5,6 +5,8 @@ Functions that take text as input
 
 import logging
 
+import pytohdl
+
 from python2verilog import ir
 from python2verilog.backend import verilog
 from python2verilog.backend.verilog.config import CodegenConfig, TestbenchConfig
@@ -45,9 +47,17 @@ def context_to_verilog(context: ir.Context, config: CodegenConfig) -> tuple[str,
     typed(context, ir.Context)
     ver_code_gen, _ = context_to_codegen(context)
 
-    module_str = ver_code_gen.get_module_str()
-    tb_str = ver_code_gen.get_testbench_str(config)
+    # Filter for generators and contexts that do not reference other contexts
+    if context.is_generator and "multiplier_generator" in context.name:
+        try:
+            to_hdl = pytohdl.translate(context.py_string)
+            module_str = to_hdl
+        except Exception as _:
+            module_str = ver_code_gen.get_module_str()
+    else:
+        module_str = ver_code_gen.get_module_str()
 
+    tb_str = ver_code_gen.get_testbench_str(config)
     return module_str, tb_str
 
 
