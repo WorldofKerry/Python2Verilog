@@ -8,7 +8,6 @@ from python2verilog import ir
 from python2verilog.backend.verilog import ast as ver
 from python2verilog.backend.verilog.ast import Statement
 from python2verilog.backend.verilog.config import TestbenchConfig
-from python2verilog.ir.expressions import BinOp, Int, UInt, Var
 from python2verilog.optimizer.helpers import backwards_replace
 from python2verilog.utils.lines import Lines
 from python2verilog.utils.typed import guard_dict
@@ -68,7 +67,7 @@ class Testbench(ver.Module):
             )
         )
         if config.random_ready:
-            random_wait_counter = Var("random_wait_counter")
+            random_wait_counter = ir.Var("random_wait_counter")
             setups.append(ver.Declaration(random_wait_counter.ver_name, reg=True))
 
         initial_body: list[ver.Statement | ver.While] = []
@@ -80,7 +79,7 @@ class Testbench(ver.Module):
         initial_body.append(ver.AtNegedgeStatement(self.context.signals.clock))
         initial_body.append(ver.BlockingSub(self.context.signals.reset, ir.UInt(0)))
         if config.random_ready:
-            initial_body.append(ver.BlockingSub(random_wait_counter, Int(8)))
+            initial_body.append(ver.BlockingSub(random_wait_counter, ir.Int(8)))
 
         initial_body.append(ver.Statement())
 
@@ -121,7 +120,7 @@ class Testbench(ver.Module):
             while_body.append(ver.AtPosedgeStatement(self.context.signals.clock))
             then_body = [make_display_stmt()]
             if config.random_ready:
-                then_body.append(ver.BlockingSub(random_wait_counter, Int(4)))
+                then_body.append(ver.BlockingSub(random_wait_counter, ir.Int(4)))
             while_body.append(
                 ver.IfElse(
                     condition=self.context.signals.ready,
@@ -133,19 +132,27 @@ class Testbench(ver.Module):
             if config.random_ready:
                 while_body.append(
                     ver.BlockingSub(
-                        random_wait_counter, BinOp(random_wait_counter, "-", Int(1))
+                        random_wait_counter,
+                        ir.BinOp(random_wait_counter, "-", ir.Int(1)),
                     )
                 )
                 while_body.append(
                     ver.BlockingSub(
                         self.context.signals.ready,
-                        BinOp(random_wait_counter, "===", Int(0)),
+                        ir.BinOp(random_wait_counter, "===", ir.Int(0)),
                     )
                 )
             initial_body.append(
                 ver.While(
                     condition=ir.UBinOp(
-                        ir.UnaryOp("!", self.context.signals.done),
+                        ir.UnaryOp(
+                            "!",
+                            ir.BinOp(
+                                self.context.signals.done,
+                                "&&",
+                                self.context.signals.valid,
+                            ),
+                        ),
                         "||",
                         ir.UnaryOp("!", self.context.signals.ready),
                     ),
