@@ -436,4 +436,3 @@ module quad_multiply (
         end
     end
 endmodule
-

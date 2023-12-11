@@ -5,7 +5,7 @@ Functions that take text as input
 
 import logging
 
-import pytohdl # pylint: disable=import-error
+import pytohdl  # pylint: disable=import-error
 
 from python2verilog import ir
 from python2verilog.backend import verilog
@@ -48,12 +48,16 @@ def context_to_verilog(context: ir.Context, config: CodegenConfig) -> tuple[str,
     ver_code_gen, _ = context_to_codegen(context)
 
     # Filter for generators and contexts that do not reference other contexts
-    if context.is_generator and ("multiplier_generator" in context.name or "fib" in context.name):
-    # if False:
+    if context.is_generator:
         try:
+            # assert False, f"{context.name} {context.is_generator}"
             to_hdl = pytohdl.translate(context.py_string)
             module_str = to_hdl
-        except:
+            # assert False
+        except AssertionError:
+            module_str = ver_code_gen.get_module_str()
+        except:  # pylint: disable=bare-except
+            # assert False, sys.exc_info().__str__()
             module_str = ver_code_gen.get_module_str()
     else:
         module_str = ver_code_gen.get_module_str()
