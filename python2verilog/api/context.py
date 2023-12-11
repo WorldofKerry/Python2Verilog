@@ -48,12 +48,12 @@ def context_to_verilog(context: ir.Context, config: CodegenConfig) -> tuple[str,
     ver_code_gen, _ = context_to_codegen(context)
 
     # Filter for generators and contexts that do not reference other contexts
-    if context.is_generator:
+    if context.is_generator and context.optimization_level == 0:
         try:
             # assert False, f"{context.name} {context.is_generator}"
             to_hdl = pytohdl.translate(context.py_string)
             module_str = to_hdl
-            assert False
+            # assert False
         except AssertionError:
             module_str = ver_code_gen.get_module_str()
         except:  # pylint: disable=bare-except

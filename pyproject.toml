@@ -11,6 +11,7 @@ classifiers = [
 ]
 
 # python3 -m pip install git+http://git@github.com/worldofkerry/tohdl.git#subdirectory=pytohdl --force-reinstall --upgrade
+# python3 -m pip install git+http://git@github.com/worldofkerry/tohdl.git@bugfix#subdirectory=pytohdl --force-reinstall --upgrade
 dependencies = [
     "typing-extensions",
     "pytohdl @ git+http://git@github.com/worldofkerry/tohdl.git#subdirectory=pytohdl",
