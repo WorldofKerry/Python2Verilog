@@ -53,7 +53,7 @@ def context_to_verilog(context: ir.Context, config: CodegenConfig) -> tuple[str,
             # assert False, f"{context.name} {context.is_generator}"
             to_hdl = pytohdl.translate(context.py_string)
             module_str = to_hdl
-            # assert False
+            assert False
         except AssertionError:
             module_str = ver_code_gen.get_module_str()
         except:  # pylint: disable=bare-except
