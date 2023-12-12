@@ -8,7 +8,6 @@ from python2verilog import ir
 from python2verilog.backend.verilog import ast as ver
 from python2verilog.backend.verilog.ast import Statement
 from python2verilog.backend.verilog.config import TestbenchConfig
-from python2verilog.ir.expressions import UInt
 from python2verilog.optimizer.helpers import backwards_replace
 from python2verilog.utils.lines import Lines
 from python2verilog.utils.typed import guard_dict
@@ -20,6 +19,7 @@ class Testbench(ver.Module):
     """
 
     def __init__(self, context: ir.Context, config: TestbenchConfig):
+        # pylint: disable=too-many-locals
         self.context = context
         logging.debug("%s", config)
 
@@ -66,6 +66,9 @@ class Testbench(ver.Module):
                 f"!{context.signals.clock.ver_name};"
             )
         )
+        if config.random_ready:
+            random_wait_counter = ir.Var("random_wait_counter")
+            setups.append(ver.Declaration(random_wait_counter.ver_name, reg=True))
 
         initial_body: list[ver.Statement | ver.While] = []
         initial_body.append(ver.BlockingSub(self.context.signals.clock, ir.UInt(0)))
@@ -75,6 +78,9 @@ class Testbench(ver.Module):
 
         initial_body.append(ver.AtNegedgeStatement(self.context.signals.clock))
         initial_body.append(ver.BlockingSub(self.context.signals.reset, ir.UInt(0)))
+        if config.random_ready:
+            initial_body.append(ver.BlockingSub(random_wait_counter, ir.Int(8)))
+
         initial_body.append(ver.Statement())
 
         logging.debug("Making test cases")
@@ -112,24 +118,41 @@ class Testbench(ver.Module):
             # While loop
             while_body: list[ver.Statement] = []
             while_body.append(ver.AtPosedgeStatement(self.context.signals.clock))
+            then_body = [make_display_stmt()]
+            if config.random_ready:
+                then_body.append(ver.BlockingSub(random_wait_counter, ir.Int(4)))
             while_body.append(
                 ver.IfElse(
                     condition=self.context.signals.ready,
-                    then_body=[make_display_stmt()],
+                    then_body=then_body,
                     else_body=[],
                 )
             )
             while_body.append(ver.AtNegedgeStatement(self.context.signals.clock))
             if config.random_ready:
                 while_body.append(
-                    ver.Statement(
-                        f"{context.signals.ready.ver_name} = $urandom_range(0, 4) === 0;"
+                    ver.BlockingSub(
+                        random_wait_counter,
+                        ir.BinOp(random_wait_counter, "-", ir.Int(1)),
+                    )
+                )
+                while_body.append(
+                    ver.BlockingSub(
+                        self.context.signals.ready,
+                        ir.BinOp(random_wait_counter, "===", ir.Int(0)),
                     )
                 )
             initial_body.append(
                 ver.While(
                     condition=ir.UBinOp(
-                        ir.UnaryOp("!", self.context.signals.done),
+                        ir.UnaryOp(
+                            "!",
+                            ir.BinOp(
+                                self.context.signals.done,
+                                "&&",
+                                self.context.signals.valid,
+                            ),
+                        ),
                         "||",
                         ir.UnaryOp("!", self.context.signals.ready),
                     ),

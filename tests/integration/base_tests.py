@@ -65,9 +65,6 @@ class BaseTestWrapper:
 
                 logging.debug("Testing Verilog")
 
-                if config.random_ready:
-                    assert "urandom_range" in testbench
-
                 test_name = str(
                     Path(__file__).parent
                     / (self.__dict__["_testMethodName"] + f"::O{opti_level}")
