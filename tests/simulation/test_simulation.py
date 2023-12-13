@@ -1,7 +1,6 @@
 import logging
 import tempfile
 import unittest
-import warnings
 from importlib import util
 from pathlib import Path
 
@@ -366,7 +365,6 @@ def func() -> int:
                 "read32to8_tb",
                 [mod_path, tb_path],
             )
-            warnings.warn(cmd)
         self.assertListEqual(
             list(get_actual(read32to8, module, testbench, timeout=1)),
             list(get_expected(read32to8)),
@@ -411,7 +409,6 @@ def func() -> int:
                 "read32to8_2_tb",
                 [mod_path, tb_path],
             )
-            warnings.warn(cmd)
         self.assertListEqual(
             list(get_actual(read32to8_2, module, testbench, timeout=1)),
             list(get_expected(read32to8_2)),

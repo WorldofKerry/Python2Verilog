@@ -134,18 +134,19 @@ class BaseTestWrapper:
                     "Ver Clks": len(actual_with_invalid),
                 }
                 if self.args.synthesis and self.args.write:
-                    logging.info("Running yosys for synthesis")
+                    cmd = " ".join(
+                        [
+                            "./extern/yosys/oss-cad-suite/bin/yosys",
+                            "-QT",
+                            "-fverilog",
+                            file_stem + ".sv",
+                            "-p",
+                            "'proc; opt; fsm; opt; stat'",
+                        ]
+                    )
+                    logging.info(f"Running yosys for synthesis {cmd}")
                     with subprocess.Popen(
-                        " ".join(
-                            [
-                                "yosys",
-                                "-QT",
-                                "-fverilog",
-                                file_stem + ".sv",
-                                "-p",
-                                "'proc; opt; stat'",
-                            ]
-                        ),
+                        cmd,
                         shell=True,
                         text=True,
                         stdout=subprocess.PIPE,

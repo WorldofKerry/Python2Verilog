@@ -78,9 +78,7 @@ jobs:
 
       - name: Download OSS CAD Suite for yosys
         run: |
-          wget -nv https://github.com/YosysHQ/oss-cad-suite-build/releases/download/2023-08-02/oss-cad-suite-linux-x64-20230802.tgz
-          tar -xzf oss-cad-suite-linux-x64-20230802.tgz
-          echo "$GITHUB_WORKSPACE/oss-cad-suite/bin" >> $GITHUB_PATH
+          ./extern/yosys_setup.sh
 
       - name: Run Pytest
         run: |
@@ -119,9 +117,7 @@ jobs:
       - name: Download OSS CAD Suite for yosys
         if: ${{ contains(matrix.pytest-args, 'S') }}
         run: |
-          wget -nv https://github.com/YosysHQ/oss-cad-suite-build/releases/download/2023-08-02/oss-cad-suite-linux-x64-20230802.tgz
-          tar -xzf oss-cad-suite-linux-x64-20230802.tgz
-          echo "$GITHUB_WORKSPACE/oss-cad-suite/bin" >> $GITHUB_PATH
+          ./extern/yosys_setup.sh
 
       - name: Run Pytest
         run: |
