@@ -142,7 +142,8 @@ class BaseTestWrapper:
                                 "-QT",
                                 "-fverilog",
                                 file_stem + ".sv",
-                                "-pstat",
+                                "-p",
+                                "'proc; opt; stat'",
                             ]
                         ),
                         shell=True,
