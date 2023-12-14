@@ -145,18 +145,11 @@ class BaseTestWrapper:
                         ]
                     )
                     logging.info(f"Running yosys for synthesis {cmd}")
-                    with subprocess.Popen(
+                    stdout = subprocess.check_output(
                         cmd,
                         shell=True,
                         text=True,
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE,
-                    ) as syn_process:
-                        syn_process.wait()
-                        stdout = syn_process.stdout.read()
-                        stderr = syn_process.stderr.read()
-
-                    self.assertFalse(stderr.strip())
+                    )
                     stats = stdout[stdout.find("Printing statistics.") :]
 
                     def snake_case(text):
