@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -xe
 
 # From https://github.com/steveicarus/iverilog/actions/runs/6154732831/workflow
 cd extern/iverilog/

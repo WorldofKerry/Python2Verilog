@@ -134,27 +134,22 @@ class BaseTestWrapper:
                     "Ver Clks": len(actual_with_invalid),
                 }
                 if self.args.synthesis and self.args.write:
-                    logging.info("Running yosys for synthesis")
-                    with subprocess.Popen(
-                        " ".join(
-                            [
-                                "yosys",
-                                "-QT",
-                                "-fverilog",
-                                file_stem + ".sv",
-                                "-pstat",
-                            ]
-                        ),
+                    cmd = " ".join(
+                        [
+                            "./extern/yosys/oss-cad-suite/bin/yosys",
+                            "-QT",
+                            "-fverilog",
+                            file_stem + ".sv",
+                            "-p",
+                            "'proc; opt; fsm; opt; stat'",
+                        ]
+                    )
+                    logging.info(f"Running yosys for synthesis {cmd}")
+                    stdout = subprocess.check_output(
+                        cmd,
                         shell=True,
                         text=True,
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE,
-                    ) as syn_process:
-                        syn_process.wait()
-                        stdout = syn_process.stdout.read()
-                        stderr = syn_process.stderr.read()
-
-                    self.assertFalse(stderr.strip())
+                    )
                     stats = stdout[stdout.find("Printing statistics.") :]
 
                     def snake_case(text):
