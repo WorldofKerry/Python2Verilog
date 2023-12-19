@@ -6,6 +6,8 @@
 
 # python2verilog
 
+Archived in favour of https://github.com/WorldofKerry/ToHDL
+
 - This tool facilitates the conversion of select Python functions (including generators!) into synthesizable sequential SystemVerilog
 - Ideal for quickly translating higher-level "CPU code" into hardware descriptions for use on FPGAs, without needing to interface with or including a CPU in the design
 - Testbenches can be automatically generated if the user uses the function within their Python code or provides explicit test cases
